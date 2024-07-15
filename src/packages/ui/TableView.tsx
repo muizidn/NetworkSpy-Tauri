@@ -2,15 +2,25 @@ import { emit, listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useRef, useState, ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
+import { ContextMenu, showMenu } from "tauri-plugin-context-menu";
 
 interface TableViewProps<T> {
   headers: string[];
   data: T[];
   renderRow: (item: T, index: number) => ReactNode;
+  renderContextMenu: (selectedItems: T[]) => ContextMenu.Options;
 }
 
-export const TableView = <T,>({ headers, data, renderRow }: TableViewProps<T>) => {
-  const [selectedRows, setSelectedRows] = useState<{firstSelect?: number, rows: number[]}>({rows: []});
+export const TableView = <T,>({
+  headers,
+  data,
+  renderRow,
+  renderContextMenu,
+}: TableViewProps<T>) => {
+  const [selectedRows, setSelectedRows] = useState<{
+    firstSelect?: number;
+    rows: number[];
+  }>({ rows: [] });
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
 
@@ -35,17 +45,23 @@ export const TableView = <T,>({ headers, data, renderRow }: TableViewProps<T>) =
             { length: index - firstSelected + 1 },
             (_, i) => firstSelected + i
           );
-          setSelectedRows({firstSelect: firstSelected, rows: newSelectedRows});
+          setSelectedRows({
+            firstSelect: firstSelected,
+            rows: newSelectedRows,
+          });
         } else {
           const newSelectedRows = Array.from(
             { length: firstSelected - index + 1 },
             (_, i) => index + i
           );
-          setSelectedRows({firstSelect: firstSelected, rows: newSelectedRows});
+          setSelectedRows({
+            firstSelect: firstSelected,
+            rows: newSelectedRows,
+          });
         }
       }
     } else {
-      setSelectedRows({firstSelect: index, rows: [index]});
+      setSelectedRows({ firstSelect: index, rows: [index] });
     }
   }
 
@@ -55,37 +71,18 @@ export const TableView = <T,>({ headers, data, renderRow }: TableViewProps<T>) =
       return;
     }
 
-    const index = Number(indexString);
+    let selectedItems = [data[Number(indexString)]];
+    if (selectedRows.rows.length > 1) {
+      selectedItems = selectedRows.rows.map((i) => data[i]);
+    }
 
-    console.log("Context menu should show at index", index);
+    const contextMenuData = renderContextMenu(selectedItems);
 
-    await invoke("plugin:context_menu|show_context_menu", {
-      items: [
-        {
-          label: "Item 1",
-          disabled: false,
-          event: "item1clicked",
-          payload: "Hello World!",
-          shortcut: "ctrl+M",
-          subitems: [
-            {
-              label: "Subitem 1",
-              disabled: true,
-              event: "subitem1clicked",
-            },
-            {
-              is_separator: true,
-            },
-            {
-              label: "Subitem 2",
-              disabled: false,
-              checked: true,
-              event: "subitem2clicked",
-            },
-          ],
-        },
-      ],
-    });
+    await invoke(
+      "plugin:context_menu|show_context_menu",
+      // `as any` because otherwise mismatch type
+      contextMenuData as any
+    );
   }
 
   function _animateScroll() {

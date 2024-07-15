@@ -62,6 +62,36 @@ export const TrafficList: React.FC = () => {
     startStream();
   }, []);
 
+  function renderContextMenu(data: any[]) {
+    return {
+      items: [
+        {
+          label: `Select ${data.length}`,
+          disabled: false,
+          event: "item1clicked",
+          payload: "Hello World!",
+          shortcut: "ctrl+M",
+          subitems: [
+            {
+              label: "Subitem 1",
+              disabled: true,
+              event: "subitem1clicked",
+            },
+            {
+              is_separator: true,
+            },
+            {
+              label: "Subitem 2",
+              disabled: false,
+              checked: true,
+              event: "subitem2clicked",
+            },
+          ],
+        },
+      ],
+    }
+  }
+
   return (
     <TableView
       headers={headers}
@@ -80,6 +110,7 @@ export const TrafficList: React.FC = () => {
           <td className="select-none">{item.response}</td>
         </>
       )}
+      renderContextMenu={renderContextMenu}
     />
   );
 };
