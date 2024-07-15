@@ -1,40 +1,37 @@
-import { emit, listen } from "@tauri-apps/api/event";
-import { invoke } from "@tauri-apps/api/tauri";
-import { useEffect, useRef, useState } from "react";
-import { twMerge } from "tailwind-merge";
-import {
-  showMenu,
-  onEventShowMenu,
-  assetToPath,
-} from "tauri-plugin-context-menu";
+import { listen } from "@tauri-apps/api/event";
+import { useEffect, useState } from "react";
 import { TableView } from "../ui/TableView";
+import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
+import { TrafficItemMap } from "./model/TrafficItemMap";
 
 export const TrafficList: React.FC = () => {
   const headers = [
-    "ID",
-    "URL",
-    "Client",
-    "Method",
-    "Status",
-    "Code",
-    "Time",
-    "Duration",
-    "Request",
-    "Response",
-  ];
+    { title: "ID", renderer: new TextRenderer('id') },
+    { title: "Tags", renderer: new TagsRenderer('tags') },
+    { title: "URL", renderer: new TextRenderer('url') },
+    { title: "Client", renderer: new ImageRenderer('client') },
+    { title: "Method", renderer: new TextRenderer('method') },
+    { title: "Status", renderer: new TextRenderer('status') },
+    { title: "Code", renderer: new TextRenderer('code') },
+    { title: "Time", renderer: new TextRenderer('time') },
+    { title: "Duration", renderer: new TextRenderer('duration') },
+    { title: "Request", renderer: new TextRenderer('request') },
+    { title: "Response", renderer: new TextRenderer('response') }
+];
 
-  const [data, setData] = useState([
+  const [data, setData] = useState<TrafficItemMap[]>([
     {
-      id: "8753",
-      url: "https://example.com",
-      client: "Client A",
-      method: "GET",
-      status: "Completed",
-      code: 200,
-      time: "732 ms",
-      duration: "16 bytes",
-      request: "Request Details",
-      response: "Response Details",
+      "id": "8753",
+      "tags": ["LOGIN DOCKER"],
+      "url": "https://example.com",
+      "client": "Client A",
+      "method": "GET",
+      "status": "Completed",
+      "code": "200",
+      "time": "732 ms",
+      "duration": "16 bytes",
+      "request": "Request Details",
+      "response": "Response Details",
     },
   ]);
 
@@ -43,16 +40,17 @@ export const TrafficList: React.FC = () => {
       setData((prevData) => [
         ...prevData,
         {
-          id: "8753",
-          url: "https://example.com",
-          client: (event.payload as any).message as string,
-          method: "GET",
-          status: "Completed",
-          code: 200,
-          time: "732 ms",
-          duration: "16 bytes",
-          request: "Request Details",
-          response: "Response Details",
+          "id": "8753",
+          "tags": ["LOGIN DOCKER", "AKAMAI Testing Robot"],
+          "url": "https://example.com",
+          "client": (event.payload as any).message as string,
+          "method": "GET",
+          "status": "Completed",
+          "code": "200",
+          "time": "732 ms",
+          "duration": "16 bytes",
+          "request": "Request Details",
+          "response": "Response Details",
         },
       ]);
     });
@@ -96,20 +94,6 @@ export const TrafficList: React.FC = () => {
     <TableView
       headers={headers}
       data={data}
-      renderRow={(item, index) => (
-        <>
-          <td className="select-none">{item.id}</td>
-          <td className="select-none">{item.url}</td>
-          <td className="select-none">{item.client}</td>
-          <td className="select-none">{item.method}</td>
-          <td className="select-none">{item.status}</td>
-          <td className="select-none">{item.code}</td>
-          <td className="select-none">{item.time}</td>
-          <td className="select-none">{item.duration}</td>
-          <td className="select-none">{item.request}</td>
-          <td className="select-none">{item.response}</td>
-        </>
-      )}
       renderContextMenu={renderContextMenu}
     />
   );

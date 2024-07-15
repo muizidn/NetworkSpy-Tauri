@@ -1,20 +1,19 @@
 import { emit, listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useRef, useState, ReactNode } from "react";
+import { Renderer } from ".";
 import { twMerge } from "tailwind-merge";
 import { ContextMenu, showMenu } from "tauri-plugin-context-menu";
 
 interface TableViewProps<T> {
-  headers: string[];
+  headers: {title:string, renderer: Renderer<T>}[];
   data: T[];
-  renderRow: (item: T, index: number) => ReactNode;
-  renderContextMenu: (selectedItems: T[]) => ContextMenu.Options;
+  renderContextMenu?: (selectedItems: T[]) => ContextMenu.Options;
 }
 
 export const TableView = <T,>({
   headers,
   data,
-  renderRow,
   renderContextMenu,
 }: TableViewProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<{
@@ -66,6 +65,10 @@ export const TableView = <T,>({
   }
 
   async function showContextMenu(e: any) {
+    if (!renderContextMenu) {
+      return;
+    }
+
     const indexString = getRowIndex(e);
     if (!indexString) {
       return;
@@ -158,7 +161,7 @@ export const TableView = <T,>({
           <tr>
             {headers.map((header, index) => (
               <th key={index} className="px-4 py-2">
-                {header}
+                {header.title}
               </th>
             ))}
           </tr>
@@ -179,7 +182,7 @@ export const TableView = <T,>({
               )}
               data-index={index}
             >
-              {renderRow(item, index)}
+              {headers.map((e) => e.renderer.render(item))}
             </tr>
           ))}
         </tbody>
