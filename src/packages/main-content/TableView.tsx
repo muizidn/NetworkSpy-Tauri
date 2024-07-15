@@ -1,5 +1,11 @@
 import { emit, listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useRef, useState } from "react";
+import {
+  showMenu,
+  onEventShowMenu,
+  assetToPath,
+} from "tauri-plugin-context-menu";
 
 interface StreamData {
   message: string;
@@ -16,6 +22,87 @@ export const TableView = () => {
         ...prevData,
         (event.payload as StreamData).message,
       ]);
+    });
+  }
+
+  const options = {
+    items: [
+      {
+        label: "My first item",
+        disabled: false,
+        event: (e: any) => {
+          alert(e.payload?.message);
+        },
+        payload: { message: "Hello from the payload!" },
+        shortcut: "alt+m",
+        // icon: {
+        //     path: await assetToPath('assets/16x16.png'),
+        //     width: 32,
+        //     height: 32
+        // }
+      },
+      {
+        is_separator: true,
+      },
+      {
+        label: "My second item",
+        disabled: false,
+        event: "my_second_item",
+        shortcut: "cmd+C",
+      },
+      {
+        label: "My third item",
+        disabled: false,
+        subitems: [
+          {
+            label: "My first subitem",
+            checked: true,
+            event: () => {
+              alert("My first subitem clicked");
+            },
+            shortcut: "ctrl+m",
+          },
+          {
+            label: "My second subitem",
+            checked: false,
+            disabled: true,
+          },
+        ],
+      },
+    ],
+  };
+
+  async function showContextMenu(e: any) {
+    const index = (e.target as Node).parentElement?.getAttribute("data-index")
+    if (!index) { return }
+    console.log("Context menu should show at index", index);
+   
+    await invoke("plugin:context_menu|show_context_menu", {
+      items: [
+        {
+          label: "Item 1",
+          disabled: false,
+          event: "item1clicked",
+          payload: "Hello World!",
+          shortcut: "ctrl+M",
+          subitems: [
+            {
+              label: "Subitem 1",
+              disabled: true,
+              event: "subitem1clicked",
+            },
+            {
+              is_separator: true,
+            },
+            {
+              label: "Subitem 2",
+              disabled: false,
+              checked: true,
+              event: "subitem2clicked",
+            },
+          ],
+        },
+      ],
     });
   }
 
@@ -58,7 +145,7 @@ export const TableView = () => {
 
   useEffect(() => {
     if (autoScrollEnabled && tbodyRef.current) {
-      _animateScroll()
+      _animateScroll();
     }
   }, [data, autoScrollEnabled]);
 
@@ -123,7 +210,12 @@ export const TableView = () => {
           onScroll={handleScroll}
         >
           {data.map((e, i) => (
-            <tr key={`item-${i}`}>
+            <tr
+              key={`item-${i}`}
+              onContextMenu={showContextMenu}
+              className="hover:bg-green-700"
+              data-index={i}
+              >
               <td>8753</td>
               <td>https://example.com</td>
               <td>{e}</td>
