@@ -1,83 +1,23 @@
 import { emit, listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/tauri";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
-import {
-  showMenu,
-  onEventShowMenu,
-  assetToPath,
-} from "tauri-plugin-context-menu";
 
-interface StreamData {
-  message: string;
+interface TableViewProps<T> {
+  headers: string[];
+  data: T[];
+  renderRow: (item: T, index: number) => ReactNode;
 }
 
-export const TableView = () => {
-  const [data, setData] = useState<string[]>([]);
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+export const TableView = <T,>({ headers, data, renderRow }: TableViewProps<T>) => {
+  const [selectedRows, setSelectedRows] = useState<{firstSelect?: number, rows: number[]}>({rows: []});
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true); // State to track autoscroll enablement
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
 
   function getRowIndex(e: any) {
     const index = (e.target as Node).parentElement?.getAttribute("data-index");
     return index;
   }
-
-  async function startStream() {
-    await listen("count_event", (event: any) => {
-      setData((prevData) => [
-        ...prevData,
-        (event.payload as StreamData).message,
-      ]);
-    });
-  }
-
-  const options = {
-    items: [
-      {
-        label: "My first item",
-        disabled: false,
-        event: (e: any) => {
-          alert(e.payload?.message);
-        },
-        payload: { message: "Hello from the payload!" },
-        shortcut: "alt+m",
-        // icon: {
-        //     path: await assetToPath('assets/16x16.png'),
-        //     width: 32,
-        //     height: 32
-        // }
-      },
-      {
-        is_separator: true,
-      },
-      {
-        label: "My second item",
-        disabled: false,
-        event: "my_second_item",
-        shortcut: "cmd+C",
-      },
-      {
-        label: "My third item",
-        disabled: false,
-        subitems: [
-          {
-            label: "My first subitem",
-            checked: true,
-            event: () => {
-              alert("My first subitem clicked");
-            },
-            shortcut: "ctrl+m",
-          },
-          {
-            label: "My second subitem",
-            checked: false,
-            disabled: true,
-          },
-        ],
-      },
-    ],
-  };
 
   async function onClickRow(e: any) {
     const indexString = getRowIndex(e);
@@ -88,24 +28,24 @@ export const TableView = () => {
     const index = Number(indexString);
 
     if (e.shiftKey) {
-      if (selectedRows.length > 0) {
-        const firstSelected = selectedRows[0];
+      if (selectedRows.firstSelect) {
+        const firstSelected = selectedRows.firstSelect;
         if (firstSelected < index) {
           const newSelectedRows = Array.from(
             { length: index - firstSelected + 1 },
             (_, i) => firstSelected + i
           );
-          setSelectedRows(newSelectedRows);
+          setSelectedRows({firstSelect: firstSelected, rows: newSelectedRows});
         } else {
           const newSelectedRows = Array.from(
             { length: firstSelected - index + 1 },
             (_, i) => index + i
           );
-          setSelectedRows(newSelectedRows);
+          setSelectedRows({firstSelect: firstSelected, rows: newSelectedRows});
         }
       }
     } else {
-      setSelectedRows([index]);
+      setSelectedRows({firstSelect: index, rows: [index]});
     }
   }
 
@@ -148,10 +88,6 @@ export const TableView = () => {
     });
   }
 
-  useEffect(() => {
-    startStream();
-  }, []);
-
   function _animateScroll() {
     if (tbodyRef.current) {
       const tbody = tbodyRef.current;
@@ -160,7 +96,6 @@ export const TableView = () => {
       const maxScrollTop = scrollHeight - clientHeight;
       const currentScrollTop = tbody.scrollTop;
 
-      // Animate scrolling
       const animateScroll = (startTime: number) => {
         const currentTime = Date.now();
         const elapsed = currentTime - startTime;
@@ -180,7 +115,6 @@ export const TableView = () => {
         }
       };
 
-      // Start animation
       animateScroll(Date.now());
     }
   }
@@ -221,25 +155,11 @@ export const TableView = () => {
   };
 
   return (
-    <div className="w-4/5 p-4">
-      <button onClick={() => emit("start_stream", { payload: "Nonde" })}>
-        click me
-      </button>
+    <div className="p-4">
       <table className="table-auto w-full">
         <thead>
           <tr>
-            {[
-              "ID",
-              "URL",
-              "Client",
-              "Method",
-              "Status",
-              "Code",
-              "Time",
-              "Duration",
-              "Request",
-              "Response",
-            ].map((header, index) => (
+            {headers.map((header, index) => (
               <th key={index} className="px-4 py-2">
                 {header}
               </th>
@@ -251,27 +171,18 @@ export const TableView = () => {
           className="block overflow-y-scroll max-h-96"
           onScroll={handleScroll}
         >
-          {data.map((e, i) => (
+          {data.map((item, index) => (
             <tr
-              key={`item-${i}`}
+              key={`item-${index}`}
               onContextMenu={showContextMenu}
               onClick={onClickRow}
               className={twMerge(
                 "hover:bg-green-700",
-                selectedRows.includes(i) && "bg-green-400"
+                selectedRows.rows.includes(index) && "bg-green-400"
               )}
-              data-index={i}
+              data-index={index}
             >
-              <td className="select-none">8753</td>
-              <td className="select-none">https://example.com</td>
-              <td className="select-none">{e}</td>
-              <td className="select-none">GET</td>
-              <td className="select-none">Completed</td>
-              <td className="select-none">200</td>
-              <td className="select-none">732 ms</td>
-              <td className="select-none">16 bytes</td>
-              <td className="select-none">Request Details</td>
-              <td className="select-none">Response Details</td>
+              {renderRow(item, index)}
             </tr>
           ))}
         </tbody>

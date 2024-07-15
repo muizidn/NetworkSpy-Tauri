@@ -13,7 +13,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...rest
 }) => {
   return (
-    <button {...rest} className={twMerge("btn btn-primary", className)}>
+    <button {...rest} className={twMerge("btn btn-primary btn-sm", className)}>
       {title}
     </button>
   );
