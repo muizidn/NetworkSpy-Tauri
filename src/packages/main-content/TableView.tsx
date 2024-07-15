@@ -1,6 +1,7 @@
 import { emit, listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useRef, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import {
   showMenu,
   onEventShowMenu,
@@ -13,8 +14,14 @@ interface StreamData {
 
 export const TableView = () => {
   const [data, setData] = useState<string[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true); // State to track autoscroll enablement
+
+  function getRowIndex(e: any) {
+    const index = (e.target as Node).parentElement?.getAttribute("data-index");
+    return index;
+  }
 
   async function startStream() {
     await listen("count_event", (event: any) => {
@@ -72,11 +79,46 @@ export const TableView = () => {
     ],
   };
 
+  async function onClickRow(e: any) {
+    const indexString = getRowIndex(e);
+    if (!indexString) {
+      return;
+    }
+
+    const index = Number(indexString);
+
+    if (e.shiftKey) {
+      if (selectedRows.length > 0) {
+        const firstSelected = selectedRows[0];
+        if (firstSelected < index) {
+          const newSelectedRows = Array.from(
+            { length: index - firstSelected + 1 },
+            (_, i) => firstSelected + i
+          );
+          setSelectedRows(newSelectedRows);
+        } else {
+          const newSelectedRows = Array.from(
+            { length: firstSelected - index + 1 },
+            (_, i) => index + i
+          );
+          setSelectedRows(newSelectedRows);
+        }
+      }
+    } else {
+      setSelectedRows([index]);
+    }
+  }
+
   async function showContextMenu(e: any) {
-    const index = (e.target as Node).parentElement?.getAttribute("data-index")
-    if (!index) { return }
+    const indexString = getRowIndex(e);
+    if (!indexString) {
+      return;
+    }
+
+    const index = Number(indexString);
+
     console.log("Context menu should show at index", index);
-   
+
     await invoke("plugin:context_menu|show_context_menu", {
       items: [
         {
@@ -213,19 +255,23 @@ export const TableView = () => {
             <tr
               key={`item-${i}`}
               onContextMenu={showContextMenu}
-              className="hover:bg-green-700"
+              onClick={onClickRow}
+              className={twMerge(
+                "hover:bg-green-700",
+                selectedRows.includes(i) && "bg-green-400"
+              )}
               data-index={i}
-              >
-              <td>8753</td>
-              <td>https://example.com</td>
-              <td>{e}</td>
-              <td>GET</td>
-              <td>Completed</td>
-              <td>200</td>
-              <td>732 ms</td>
-              <td>16 bytes</td>
-              <td>Request Details</td>
-              <td>Response Details</td>
+            >
+              <td className="select-none">8753</td>
+              <td className="select-none">https://example.com</td>
+              <td className="select-none">{e}</td>
+              <td className="select-none">GET</td>
+              <td className="select-none">Completed</td>
+              <td className="select-none">200</td>
+              <td className="select-none">732 ms</td>
+              <td className="select-none">16 bytes</td>
+              <td className="select-none">Request Details</td>
+              <td className="select-none">Response Details</td>
             </tr>
           ))}
         </tbody>
