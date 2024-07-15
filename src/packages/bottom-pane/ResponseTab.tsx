@@ -1,6 +1,5 @@
 import { Editor } from "@monaco-editor/react";
 import { useState } from "react";
-import "react-tabs/style/react-tabs.css";
 
 export const ResponseTab = () => {
   const [currentTab, setCurrentTab] = useState("body");
