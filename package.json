@@ -10,6 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
     "@tauri-apps/api": "^1.4.0",
     "autoprefixer": "^10.4.14",
     "clsx": "^1.2.1",
@@ -20,6 +21,7 @@
     "react-dom": "^18.2.0",
     "react-icons": "^4.10.1",
     "react-router-dom": "^6.14.1",
+    "react-tabs": "^6.0.2",
     "sort-by": "^1.2.0",
     "tailwind-merge": "^2.4.0",
     "tailwindcss": "^3.3.2"
