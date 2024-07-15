@@ -11,7 +11,7 @@ export default function Layout() {
 
   return (
     <div className="flex flex-row min-w-screen min-h-screen overflow-hidden">
-      <div className="w-14 bg-base-200 flex flex-col gap-3 px-2 pt-3">
+      {/* <div className="w-14 bg-base-200 flex flex-col gap-3 px-2 pt-3">
         <Link className={linkClass} to="/">
           <AiOutlineHome
             className={clsx(defaultClass, {
@@ -27,7 +27,7 @@ export default function Layout() {
             })}
           />
         </Link>
-      </div>
+      </div> */}
       <div className="w-screen h-screen">
         <Outlet />
       </div>
