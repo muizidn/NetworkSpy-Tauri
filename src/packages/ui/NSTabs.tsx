@@ -21,7 +21,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ tag, current, children }) => {
 };
 
 interface NSTabsProps {
-  title: string;
+  title?: string;
   tabs: Tab[];
   initialTab?: string;
 }
@@ -32,7 +32,7 @@ export const NSTabs: React.FC<NSTabsProps> = ({ title,tabs, initialTab }) => {
   return (
     <div className="flex flex-col h-full bg-gray-800 text-white border w-full">
       <div className="flex space-x-2">
-        <h3 className="p-2">{title}</h3>
+        {title && <h3 className="p-2">{title}</h3>}
         {tabs.map((tab) => (
           <button key={tab.id} onClick={() => setCurrentTab(tab.id)}>
             {tab.title}
