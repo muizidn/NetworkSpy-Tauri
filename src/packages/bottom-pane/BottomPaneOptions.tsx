@@ -7,8 +7,10 @@ export const BottomPaneOptions = () => {
   ];
 
   return (
-    <div className="flex">
-      <button className="btn btn-sm">+ Add New Viewer</button>
+    <div className='flex px-2 py-1 border-y border-gray-400'>
+      <button className='btn btn-xs bg-[#333333] rounded'>
+        + Add New Viewer
+      </button>
 
       {options.map((e, i) => (
         <Button key={`button-options-${i}`} {...e} />

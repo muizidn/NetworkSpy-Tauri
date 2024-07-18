@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, ReactNode } from "react";
 import { Renderer } from ".";
 import { twMerge } from "tailwind-merge";
 import { ContextMenu, showMenu } from "tauri-plugin-context-menu";
+import React from "react";
 
 interface TableViewProps<T> {
-  headers: {title:string, renderer: Renderer<T>}[];
+  headers: { title: string; renderer: Renderer<T> }[];
   data: T[];
   renderContextMenu?: (selectedItems: T[]) => ContextMenu.Options;
 }
@@ -155,38 +156,36 @@ export const TableView = <T,>({
   };
 
   return (
-    <div className="p-4">
-      <table className="table-auto w-full">
-        <thead>
-          <tr>
-            {headers.map((header, index) => (
-              <th key={index} className="px-4 py-2">
-                {header.title}
-              </th>
+    <table className='table-auto w-full '>
+      <thead>
+        <tr>
+          {headers.map((header, index) => (
+            <th key={index} className='px-4 py-2 text-left text-sm'>
+              {header.title}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody
+        ref={tbodyRef}
+        className='overflow-y-auto max-h-96'
+        onScroll={handleScroll}>
+        {data.map((item, index) => (
+          <tr
+            key={`item-${index}`}
+            onContextMenu={showContextMenu}
+            onClick={onClickRow}
+            className={twMerge(
+              "hover:bg-green-700",
+              selectedRows.rows.includes(index) && "bg-green-400"
+            )}
+            data-index={index}>
+            {headers.map((e, i) => (
+              <React.Fragment key={i}>{e.renderer.render(item)}</React.Fragment>
             ))}
           </tr>
-        </thead>
-        <tbody
-          ref={tbodyRef}
-          className="block overflow-y-scroll max-h-96"
-          onScroll={handleScroll}
-        >
-          {data.map((item, index) => (
-            <tr
-              key={`item-${index}`}
-              onContextMenu={showContextMenu}
-              onClick={onClickRow}
-              className={twMerge(
-                "hover:bg-green-700",
-                selectedRows.rows.includes(index) && "bg-green-400"
-              )}
-              data-index={index}
-            >
-              {headers.map((e) => e.renderer.render(item))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 };

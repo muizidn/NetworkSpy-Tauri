@@ -9,7 +9,7 @@ export class TextRenderer implements Renderer<TrafficItemMap> {
   }
   render(input: TrafficItemMap) {
     return (
-      <td className="select-none">
+      <td className='select-none text-sm text-nowrap px-4'>
         {input[this.type] as string}
       </td>
     );

@@ -6,25 +6,31 @@ import { CenterPane } from "./CenterPane";
 
 const App = () => {
   return (
-    <div className="flex flex-col h-screen">
+    <div className='flex flex-col h-screen'>
       <Header />
-      <div className="flex flex-grow overflow-hidden">
-        <LeftSidebar />
-        <NSTabs
-          tabs={[
-            {
-              id: "1",
-              title: "Facebook API",
-              content: <CenterPane />,
-            },
-            {
-              id: "2",
-              title: "Local Webserver Test",
-              content: <CenterPane />,
-            },
-          ]}
-        />
-        <RightSidebar />
+      <div className='flex flex-grow overflow-hidden'>
+        <div className='w-[18%]'>
+          <LeftSidebar />
+        </div>
+        <div className='w-[64%]'>
+          <NSTabs
+            tabs={[
+              {
+                id: "1",
+                title: "Facebook API",
+                content: <CenterPane />,
+              },
+              {
+                id: "2",
+                title: "Local Webserver Test",
+                content: <CenterPane />,
+              },
+            ]}
+          />
+        </div>
+        <div className='w-[18%]'>
+          <RightSidebar />
+        </div>
       </div>
     </div>
   );
