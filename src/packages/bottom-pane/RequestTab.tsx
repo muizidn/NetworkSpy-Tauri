@@ -72,9 +72,7 @@ export const RequestTab = () => {
     {
       id: "body",
       title: "Body",
-      content: (
-        <DynamicRenderer data={JSON.stringify(data.json)} />
-      ),
+      content: <DynamicRenderer data={JSON.stringify(data.json)} />,
     },
     {
       id: "raw",
@@ -116,7 +114,7 @@ export const RequestTab = () => {
       title: "CSS",
       content: (
         <Editor
-          defaultLanguage="css"
+          defaultLanguage='css'
           defaultValue={data.json.body.content}
           options={{ minimap: { enabled: false } }}
         />
@@ -178,5 +176,5 @@ export const RequestTab = () => {
     },
   ];
 
-  return <NSTabs title="Request" tabs={tabs} initialTab="body" />;
+  return <NSTabs title='REQUEST' tabs={tabs} initialTab='body' />;
 };

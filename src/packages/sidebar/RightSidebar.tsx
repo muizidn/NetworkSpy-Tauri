@@ -9,7 +9,7 @@ export const RightSidebar = () => {
         {["Path", "Host", "SSL", "Duration", "Hex"].map((tab) => (
           <button
             key={tab}
-            className={`btn btn-base rounded text-xs bg-[#23262a] ${
+            className={`btn btn-sm rounded text-xs bg-[#23262a] ${
               activeTab === tab ? "text-red-400" : "text-white "
             }`}
             onClick={() => setActiveTab(tab)}>
@@ -30,6 +30,7 @@ export const RightSidebar = () => {
         {activeTab === "Path" && <div>Path Content</div>}
         {activeTab === "Host" && <div>Host Content</div>}
         {activeTab === "SSL" && <div>SSL Content</div>}
+        {activeTab === "Hex" && <div>Hex Content</div>}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import Expand from "../../packages/ui/Sidebar/Expand";
 
 export const LeftSidebar = () => {
   return (
-    <div className='bg-[#23262a] p-4 border border-gray-400 h-full'>
+    <div className='bg-[#23262a] p-4 border border-gray-400 h-full w-full'>
       <h2 className='font-bold text-white'>All Traffic</h2>
       <ul>
         <li>

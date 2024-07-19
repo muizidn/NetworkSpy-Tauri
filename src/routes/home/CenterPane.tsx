@@ -8,10 +8,10 @@ export const CenterPane: React.FC = () => {
       <div>
         <FilterBar />
       </div>
-      <div className='h-[35vh] bg-[#23262a]'>
+      <div className='h-[35vh] bg-[#23262a] overflow-auto'>
         <MainContent />
       </div>
-      <div className='h-[60vh]'>
+      <div className='h-[60vh] overflow-auto'>
         <BottomPane />
       </div>
     </div>

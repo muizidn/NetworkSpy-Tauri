@@ -7,6 +7,7 @@ import Home from "./routes/home";
 import Settings from "./routes/settings";
 import { TauriProvider } from "./context/TauriProvider";
 import "./styles.css";
+import "split-pane-react/esm/themes/default.css";
 import { SettingsProvider } from "./context/SettingsProvider";
 
 const router = createBrowserRouter([

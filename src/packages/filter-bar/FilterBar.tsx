@@ -27,19 +27,19 @@ export const FilterBar = () => {
       </div>
       <div className='flex space-x-2 w-full p-2 border-b border-gray-400'>
         <input type='checkbox' />
-        <select className='select select-sm border border-white rounded'>
+        <select className='select select-sm border border-gray-400 rounded'>
           <option>URL</option>
           <option>Starts with</option>
           <option>Ends with</option>
         </select>
-        <select className='select select-sm  border border-white rounded'>
+        <select className='select select-sm  border border-gray-400 rounded'>
           <option>Contains</option>
           <option>Starts with</option>
           <option>Ends with</option>
         </select>
         <input
           type='text'
-          className='input input-sm w-48 flex-grow rounded'
+          className='input input-sm w-48 flex-grow rounded bg-[#474b49]'
           placeholder='URL'
         />
 

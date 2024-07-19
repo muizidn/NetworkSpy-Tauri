@@ -119,7 +119,7 @@ export const ResponseTab = () => {
       title: "CSS",
       content: (
         <Editor
-          defaultLanguage="css"
+          defaultLanguage='css'
           defaultValue={data.json.body.content}
           options={{ minimap: { enabled: false } }}
         />
@@ -181,5 +181,5 @@ export const ResponseTab = () => {
     },
   ];
 
-  return <NSTabs title="Response" tabs={tabs} initialTab="body" />;
+  return <NSTabs title='RESPONSE' tabs={tabs} initialTab='body' />;
 };
