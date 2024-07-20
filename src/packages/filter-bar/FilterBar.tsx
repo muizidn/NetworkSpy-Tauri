@@ -3,7 +3,7 @@ import React from "react";
 export const FilterBar = () => {
   return (
     <div className='bg-[#202020] text-white flex flex-col w-full'>
-      <div className='flex items-center space-x-1 border-y border-gray-400 py-1 px-2 overflow-auto no-scrollbar'>
+      <div className='flex items-center space-x-1 border-y border-black py-1 px-2 overflow-auto no-scrollbar'>
         <button className='btn btn-xs bg-[#353737] rounded text-white'>
           + Create New
         </button>
@@ -25,16 +25,16 @@ export const FilterBar = () => {
           })}
         </div>
       </div>
-      <div className='flex space-x-2 w-full p-2 border-b border-gray-400'>
+      <div className='flex space-x-2 w-full p-2 border-b border-black'>
         <div className='flex items-center justify-center'>
           <input type='checkbox' />
         </div>
-        <select className='select select-xs border border-gray-400 rounded'>
+        <select className='select select-xs border border-black rounded'>
           <option>URL</option>
           <option>Starts with</option>
           <option>Ends with</option>
         </select>
-        <select className='select select-xs border border-gray-400 rounded'>
+        <select className='select select-xs border border-black rounded'>
           <option>Contains</option>
           <option>Starts with</option>
           <option>Ends with</option>

@@ -3,11 +3,11 @@ export const SelectionViewer = () => {
   const url = "https://example.com/api/users?id=12345&page=1";
 
   return (
-    <div className='flex flex-col border-t border-gray-400'>
-      <div id='url-viewer' className='border-b border-gray-400'>
+    <div className='flex flex-col border-t border-black'>
+      <div id='url-viewer' className='border-b border-black'>
         <p className='p-2 text-sm'>{url}</p>
       </div>
-      <div className='flex border-b border-gray-400'>
+      <div className='flex border-b border-black'>
         {tags.map((e, i) => (
           <div
             key={`tag-${i}`}

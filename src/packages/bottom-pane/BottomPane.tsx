@@ -20,7 +20,7 @@ export const BottomPane = () => {
               <RequestTab />
             </div>
           </Pane>
-          <div className='h-full no-scrollbar flex items-center justify-center overflow-auto border-l border-gray-400'>
+          <div className='h-full no-scrollbar flex items-center justify-center overflow-auto border-l border-black'>
             <ResponseTab />
           </div>
         </SplitPane>

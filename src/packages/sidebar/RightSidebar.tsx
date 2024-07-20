@@ -4,7 +4,7 @@ export const RightSidebar = () => {
   const [activeTab, setActiveTab] = useState("Duration");
 
   return (
-    <div className='w-full h-full bg-[#23262a] border-x border-b border-gray-400 overflow-block'>
+    <div className='w-full h-full bg-[#23262a] border-x border-b border-black overflow-block'>
       <div className='block mb-4 bg-[#15181a]'>
         {["Path", "Host", "SSL", "Duration", "Hex"].map((tab) => (
           <button

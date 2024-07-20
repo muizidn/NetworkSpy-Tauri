@@ -14,7 +14,7 @@ const App = () => {
   return (
     <div className='flex flex-col h-screen'>
       <Header />
-      <div className='flex flex-grow overflow-hidden w-full h-full border-t border-gray-400'>
+      <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
         <SplitPane split='vertical' sizes={sizes} onChange={setSizes}>
           <Pane minSize='10%' maxSize='18%'>
             <div className='flex items-center justify-center h-full'>

@@ -7,7 +7,7 @@ export const BottomPaneOptions = () => {
   ];
 
   return (
-    <div className='flex px-2 py-1 border-y border-gray-400'>
+    <div className='flex px-2 py-1 border-y border-black'>
       <button className='btn btn-xs bg-[#333333] rounded'>
         + Add New Viewer
       </button>
