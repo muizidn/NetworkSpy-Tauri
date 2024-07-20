@@ -1,0 +1,48 @@
+.directory {
+  font-size: 16px;
+  color: white;
+  user-select: none;
+  border-radius: 0.4em;
+}
+
+.directory .tree,
+.directory .tree-node,
+.directory .tree-node-group {
+  list-style: none;
+  margin: 0;
+  padding: 2px 0px;
+}
+
+.directory .tree-branch-wrapper,
+.directory .tree-node__leaf {
+  outline: none;
+  outline: none;
+}
+
+.directory .tree-node {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.directory .tree-leaf-list-item {
+  padding: 2px 0px;
+}
+
+.directory .tree-node:hover {
+  background: #464646;
+  border-radius: 3px;
+}
+
+.directory .tree .tree-node--focused {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.directory .tree .tree-node--selected {
+  background: #464646;
+  border-radius: 3px;
+}
+
+.directory .tree-node__branch {
+  display: flex;
+}
