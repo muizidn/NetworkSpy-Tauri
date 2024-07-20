@@ -11,11 +11,11 @@ export class TagsRenderer implements Renderer<TrafficItemMap> {
   render(input: TrafficItemMap) {
     const tags = input[this.type] as string[];
     return (
-      <td className='select-none flex items-center justify-center overflow-hidden'>
+      <td className='select-none flex items-center justify-start overflow-hidden'>
         {tags.map((tag, index) => (
           <span
             key={index}
-            className='tag bg-red-500 rounded-full text-nowrap text-xs px-2 py-1'>
+            className='tag bg-red-500 rounded-full text-nowrap text-xs px-2 py-1 my-2 mr-1'>
             {tag}
           </span>
         ))}

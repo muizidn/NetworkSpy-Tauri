@@ -7,7 +7,7 @@ export const SelectionViewer = () => {
       <div id='url-viewer' className='border-b border-gray-400'>
         <p className='p-2 text-sm'>{url}</p>
       </div>
-      <div className='flex'>
+      <div className='flex border-b border-gray-400'>
         {tags.map((e, i) => (
           <div
             key={`tag-${i}`}
