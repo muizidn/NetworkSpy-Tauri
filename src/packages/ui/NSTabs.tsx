@@ -30,8 +30,8 @@ export const NSTabs: React.FC<NSTabsProps> = ({ title, tabs, initialTab }) => {
   const [currentTab, setCurrentTab] = useState(initialTab || tabs[0].id);
 
   return (
-    <div className='flex flex-col h-full bg-gray-800 text-white border-t border-gray-400 w-full'>
-      <div className='flex overflow-x-auto bg-[#171818]'>
+    <div className='flex flex-col h-full bg-gray-800 text-white w-full relative'>
+      <div className='sticky top-0 flex overflow-x-auto no-scrollbar bg-[#171818] z-10'>
         {title && <h3 className='p-2 text-sm flex items-center'>{title}</h3>}
         {tabs.map((tab) => (
           <button

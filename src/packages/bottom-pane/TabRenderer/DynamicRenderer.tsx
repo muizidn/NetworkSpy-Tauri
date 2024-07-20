@@ -88,7 +88,7 @@ const DynamicRenderer: React.FC<{ data: string }> = ({ data }) => {
           <option value='M3U8View'>M3U8 View</option>
         </select>
       </div>
-      <div className='flex-grow overflow-auto pl-2'>{renderView()}</div>
+      <div className='flex-grow h-full overflow-auto'>{renderView()}</div>
     </div>
   );
 };

@@ -9,10 +9,10 @@ export class ImageRenderer implements Renderer<TrafficItemMap> {
   }
   render(input: TrafficItemMap) {
     return (
-      <td className="select-none">
+      <td className='select-none my-2'>
         <img
           src={input[this.type] as string}
-          alt="Image"
+          alt='Image'
           style={{ maxWidth: "100%", height: "auto" }}
         />
       </td>

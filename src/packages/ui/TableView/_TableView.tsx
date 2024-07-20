@@ -156,8 +156,8 @@ export const TableView = <T,>({
   };
 
   return (
-    <table className='table-auto w-full '>
-      <thead>
+    <table className='table-auto w-full block relative'>
+      <thead className='sticky top-0 absolute bg-[#23262a]'>
         <tr>
           {headers.map((header, index) => (
             <th key={index} className='px-4 py-2 text-left text-sm'>
@@ -166,10 +166,7 @@ export const TableView = <T,>({
           ))}
         </tr>
       </thead>
-      <tbody
-        ref={tbodyRef}
-        className='overflow-y-auto max-h-96'
-        onScroll={handleScroll}>
+      <tbody ref={tbodyRef} className='overflow-y-auto' onScroll={handleScroll}>
         {data.map((item, index) => (
           <tr
             key={`item-${index}`}

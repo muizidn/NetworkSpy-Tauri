@@ -1,29 +1,29 @@
 import SplitPane, { Pane } from "split-pane-react";
 import { useState } from "react";
 
-import { BottomPaneOptions } from "./BottomPaneOptions";
 import { RequestTab } from "./RequestTab";
 import { ResponseTab } from "./ResponseTab";
+import { SelectionViewer } from "../main-content/SelectionViewer";
+import { useSettingsContext } from "../../context/SettingsProvider";
 
 export const BottomPane = () => {
+  const { sizesCenterPane } = useSettingsContext();
   const [sizes, setSizes] = useState(["50%", "50%"]);
 
   return (
-    <div className='flex flex-col w-full h-full'>
-      <div className='h-screen pb-10'>
+    <div className='flex flex-col w-full h-full relative'>
+      <SelectionViewer />
+      <div style={{ height: sizesCenterPane[1] - 195 }}>
         <SplitPane split='vertical' sizes={sizes} onChange={setSizes}>
           <Pane minSize='20%' maxSize='80%'>
-            <div className='border-r border-gray-400 flex items-center justify-center'>
+            <div className='h-full no-scrollbar flex items-center justify-center overflow-auto'>
               <RequestTab />
             </div>
           </Pane>
-          <div className='flex items-center justify-center h-full'>
+          <div className='h-full no-scrollbar flex items-center justify-center overflow-auto border-l border-gray-400'>
             <ResponseTab />
           </div>
         </SplitPane>
-      </div>
-      <div className='absolute bottom-0 w-full bg-[#1e1e1e] z-10'>
-        <BottomPaneOptions />
       </div>
     </div>
   );

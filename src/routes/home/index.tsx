@@ -6,6 +6,7 @@ import { LeftSidebar } from "../../packages/sidebar/LeftSidebar";
 import { RightSidebar } from "../../packages/sidebar/RightSidebar";
 import { NSTabs } from "../../packages/ui/NSTabs";
 import { CenterPane } from "./CenterPane";
+import { BottomPaneOptions } from "../../packages/bottom-pane/BottomPaneOptions";
 
 const App = () => {
   const [sizes, setSizes] = useState(["18%", "75%", "15%"]);
@@ -13,7 +14,7 @@ const App = () => {
   return (
     <div className='flex flex-col h-screen'>
       <Header />
-      <div className='flex flex-grow overflow-hidden'>
+      <div className='flex flex-grow overflow-hidden w-full h-full border-t border-gray-400'>
         <SplitPane split='vertical' sizes={sizes} onChange={setSizes}>
           <Pane minSize='10%' maxSize='18%'>
             <div className='flex items-center justify-center h-full'>
@@ -21,7 +22,7 @@ const App = () => {
             </div>
           </Pane>
           <Pane>
-            <div className='flex items-center justify-center h-full'>
+            <div className='flex items-center justify-center h-full relative'>
               <NSTabs
                 tabs={[
                   {
@@ -36,6 +37,9 @@ const App = () => {
                   },
                 ]}
               />
+              <div className='absolute bottom-0 w-full bg-[#1e1e1e] z-10'>
+                <BottomPaneOptions />
+              </div>
             </div>
           </Pane>
           <Pane minSize='10%' maxSize='18%'>
