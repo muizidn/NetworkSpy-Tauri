@@ -8,6 +8,7 @@ import Settings from "./routes/settings";
 import { TauriProvider } from "./context/TauriProvider";
 import "./styles.css";
 import "./styles/treeview.css";
+import "./styles/table.css";
 import "split-pane-react/esm/themes/default.css";
 import { SettingsProvider } from "./context/SettingsProvider";
 

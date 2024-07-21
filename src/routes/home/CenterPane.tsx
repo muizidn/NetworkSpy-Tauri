@@ -17,11 +17,10 @@ export const CenterPane: React.FC = () => {
       <SplitPane
         split='horizontal'
         sizes={sizesCenterPane}
-        onChange={setSizesCenterPane}>
+        onChange={setSizesCenterPane}
+        sashRender={() => null}>
         <Pane minSize='0%' maxSize='85%'>
-          <div
-            style={{ height: sizesCenterPane[0] }}
-            className='bg-[#23262a] overflow-auto'>
+          <div className='bg-[#23262a] overflow-auto'>
             <MainContent />
           </div>
         </Pane>

@@ -16,7 +16,7 @@ const App = () => {
       <Header />
       <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
         <SplitPane split='vertical' sizes={sizes} onChange={setSizes}>
-          <Pane minSize='10%' maxSize='18%'>
+          <Pane minSize='10%' maxSize='50%'>
             <div className='flex items-center justify-center h-full'>
               <LeftSidebar />
             </div>

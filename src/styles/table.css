@@ -1,0 +1,23 @@
+.css-118d58w-MuiButtonBase-root-MuiTableSortLabel-root.Mui-active
+  .MuiTableSortLabel-icon {
+  color: #fff !important;
+}
+
+.css-1j43wpm-MuiButtonBase-root-MuiTableSortLabel-root.Mui-active
+  .MuiTableSortLabel-icon {
+  color: #fff !important;
+}
+
+.css-f5y87h-MuiDivider-root {
+  border-color: #aaa !important;
+  border-width: 1px !important;
+  color: #f1f1f1 !important;
+}
+
+.css-f5y87h-MuiDivider-root:hover {
+  cursor: col-resize !important;
+}
+
+table td {
+  padding: 2px !important;
+}
