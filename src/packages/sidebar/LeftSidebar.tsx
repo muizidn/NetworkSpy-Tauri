@@ -1,17 +1,7 @@
-import React from "react";
-import TreeView, { flattenTree } from "react-accessible-treeview";
-import { ArrowDown2, ArrowRight2, Document } from "iconsax-react";
+import { SidebarTreeView, TreeNode } from "./TreeView";
 
-interface ArrowIconProps {
-  isOpen: boolean;
-}
-
-interface FolderIconProps {
-  filename: string;
-}
-
-const path = {
-  name: "",
+const pinned: TreeNode = {
+  name: "Pin",
   children: [
     {
       name: "src",
@@ -39,56 +29,120 @@ const path = {
   ],
 };
 
-const data = flattenTree(path);
-
-export const LeftSidebar = () => {
-  return (
-    <div className='bg-[#23262a] p-2 border-x border-b border-black h-full w-full'>
-      <DirectoryTreeView />
-    </div>
-  );
+const saved: TreeNode = {
+  name: "Saved",
+  children: [
+    {
+      name: "src",
+      children: [{ name: "index.js" }, { name: "styles.css" }],
+    },
+    {
+      name: "node_modules",
+      children: [
+        {
+          name: "treeview",
+          children: [{ name: "index.js" }],
+        },
+        { name: "react", children: [{ name: "index.js" }] },
+      ],
+    },
+    {
+      name: ".npmignore",
+    },
+    {
+      name: "package.json",
+    },
+    {
+      name: "webpack.config.js",
+    },
+  ],
 };
 
-function DirectoryTreeView() {
+const app: TreeNode = {
+  name: "App",
+  children: [
+    {
+      name: "src",
+      children: [{ name: "index.js" }, { name: "styles.css" }],
+    },
+    {
+      name: "node_modules",
+      children: [
+        {
+          name: "treeview",
+          children: [{ name: "index.js" }],
+        },
+        { name: "react", children: [{ name: "index.js" }] },
+      ],
+    },
+    {
+      name: ".npmignore",
+    },
+    {
+      name: "package.json",
+    },
+    {
+      name: "webpack.config.js",
+    },
+  ],
+};
+
+const domain: TreeNode = {
+  name: "Domain",
+  children: [
+    {
+      name: "src",
+      children: [{ name: "index.js" }, { name: "styles.css" }],
+    },
+    {
+      name: "node_modules",
+      children: [
+        {
+          name: "treeview",
+          children: [{ name: "index.js" }],
+        },
+        { name: "react", children: [{ name: "index.js" }] },
+      ],
+    },
+    {
+      name: ".npmignore",
+    },
+    {
+      name: "package.json",
+    },
+    {
+      name: "webpack.config.js",
+    },
+  ],
+};
+
+export const LeftSidebar = () => {
+  async function onClickNode(name: string) {}
+  const favoriteTrees = [pinned, saved];
+  const allTrees = [app, domain];
+
   return (
-    <div>
-      <div className='directory'>
-        <TreeView
-          data={data}
-          aria-label='directory tree'
-          nodeRenderer={({
-            element,
-            isBranch,
-            isExpanded,
-            getNodeProps,
-            level,
-          }) => (
-            <div {...getNodeProps()} style={{ paddingLeft: 20 * (level - 1) }}>
-              {isBranch ? (
-                <ArrowIcon isOpen={isExpanded} />
-              ) : (
-                <FolderIcon filename={element.name} />
-              )}
-              <p className='pl-1'>{element.name}</p>
-            </div>
-          )}
-        />
+    <div className="p-2 bg-[#23262a] border border-black h-full w-full flex flex-col space-y-4 items-start overflow-scroll">
+      <div className="flex flex-col space-y-2 items-start w-full">
+        <h2 className="font-bold text-lg text-white">Favorites</h2>
+        {favoriteTrees.map((e) => (
+          <SidebarTreeView
+            key={e.name}
+            node={e}
+            onClick={(name) => onClickNode(name)}
+          />
+        ))}
+      </div>
+      <div className="flex flex-col space-y-2 items-start w-full">
+        <h2 className="font-bold text-lg text-white">All</h2>
+        {allTrees.map((e) => (
+          <SidebarTreeView
+            key={e.name}
+            node={e}
+            onClick={(name) => onClickNode(name)}
+          />
+        ))}
       </div>
     </div>
   );
-}
-
-const ArrowIcon: React.FC<ArrowIconProps> = ({ isOpen }) =>
-  isOpen ? (
-    <ArrowDown2 color='#fff' size={20} className='ml-2' />
-  ) : (
-    <ArrowRight2 color='#fff' size={20} className='ml-2' />
-  );
-
-const FolderIcon: React.FC<FolderIconProps> = ({ filename }) => {
-  const extension = filename.slice(filename.lastIndexOf(".") + 1);
-  switch (extension) {
-    default:
-      return <Document size={20} className='ml-2' />;
-  }
 };
