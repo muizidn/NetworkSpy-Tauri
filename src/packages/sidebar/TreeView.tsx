@@ -15,6 +15,26 @@ export interface TreeNode {
   children?: TreeNode[];
 }
 
+export function filterNode(query: string, node: TreeNode): TreeNode | null {
+  let filteredChildren: TreeNode[] | undefined;
+
+  if (node.children) {
+    filteredChildren = node.children
+      .map((child) => filterNode(query, child))
+      .filter((child) => child !== null) as TreeNode[];
+  }
+
+  if (filteredChildren && filteredChildren.length > 0) {
+    return { ...node, children: filteredChildren };
+  }
+
+  if (node.name.includes(query)) {
+    return { ...node, children: filteredChildren };
+  }
+
+  return null;
+}
+
 interface SidebarTreeViewProps {
   node: TreeNode;
   onClick: (name: string) => void;
@@ -24,14 +44,19 @@ export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
   node,
   onClick,
 }) => {
-  const [isShown, setIsShown] = useState(false);
+  const [isShown, setIsShown] = useState(true);
 
   const data = flattenTree(node);
   return (
     <div className="bg-[#23262a] w-full flex flex-col items-start">
-      <button onClick={() => setIsShown(!isShown)} className="flex space-x-2 hover:bg-gray-700 rounded-md w-full p-1 items-center">
+      <button
+        onClick={() => setIsShown(!isShown)}
+        className="flex space-x-2 hover:bg-gray-700 rounded-md w-full p-1 items-center"
+      >
         <ArrowIcon isOpen={isShown} />
-        <label className="font-bold text-white cursor-pointer">{node.name}</label>
+        <label className="font-bold text-white cursor-pointer">
+          {node.name}
+        </label>
       </button>
       {isShown && (
         <div className="pl-2 directory w-full">
