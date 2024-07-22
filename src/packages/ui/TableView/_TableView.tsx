@@ -10,6 +10,7 @@ export interface TableViewHeader<T> {
   renderer: Renderer<T>;
   sortable?: boolean;
   minWidth?: number;
+  compareValue?: (a: any, b: any) => number;
 }
 
 export interface TableViewProps<T> {
@@ -61,28 +62,31 @@ const HeaderCell = <T,>({
 
   return (
     <th
-      className='px-2 py-2 text-left text-sm relative'
+      className="px-2 py-2 text-left text-sm relative"
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
         position: "relative",
-      }}>
+      }}
+    >
       <div
         ref={ref}
-        className='flex items-center justify-between cursor-grab'
-        style={{ width: columnWidth, minWidth: header.minWidth }}>
+        className="flex items-center justify-between cursor-grab"
+        style={{ width: columnWidth, minWidth: header.minWidth }}
+      >
         <span>{header.title}</span>
 
         {sortConfig.key === header.title.toLowerCase() && (
-          <span className='cursor-pointer mr-2'>
+          <span className="cursor-pointer mr-2">
             {sortConfig.order === "asc" ? "🔼" : "🔽"}
           </span>
         )}
       </div>
       <div
         onMouseDown={(e) => startResize(index, e.clientX)}
-        className='absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2'
-        style={{ transform: "translateX(50%)" }}></div>
+        className="absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2"
+        style={{ transform: "translateX(50%)" }}
+      ></div>
     </th>
   );
 };
@@ -292,20 +296,25 @@ export const TableView = <T,>({
     if (sortConfig.key === null) {
       return data;
     }
+    const key = sortConfig.key as keyof T;
+    const defaultComparer = (a: any, b: any) => (a < b ? -1 : 1);
+    const comparer =
+      headers.find((e) => (e.title.toLowerCase() as keyof T) === key)
+        ?.compareValue || defaultComparer;
+
     return [...data].sort((a, b) => {
-      if (a[sortConfig.key as keyof T] < b[sortConfig.key as keyof T]) {
-        return sortConfig.order === "asc" ? -1 : 1;
-      }
-      if (a[sortConfig.key as keyof T] > b[sortConfig.key as keyof T]) {
-        return sortConfig.order === "asc" ? 1 : -1;
+      if (sortConfig.order === "asc") {
+        return comparer(a[key], b[key]);
+      } else if (sortConfig.order === "desc") {
+        return comparer(b[key], a[key]);
       }
       return 0;
     });
   }, [data, sortConfig]);
 
   return (
-    <table className='table-auto w-full block relative'>
-      <thead className='sticky top-0 bg-[#23262a]'>
+    <table className="table-auto w-full block relative">
+      <thead className="sticky top-0 bg-[#23262a]">
         <tr>
           {headers.map((header, index) => (
             <HeaderCell
@@ -321,7 +330,7 @@ export const TableView = <T,>({
           ))}
         </tr>
       </thead>
-      <tbody ref={tbodyRef} className='overflow-y-auto' onScroll={handleScroll}>
+      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
         {sortedData.map((item, index) => (
           <tr
             key={`item-${index}`}
@@ -331,7 +340,8 @@ export const TableView = <T,>({
               "hover:bg-green-700",
               selectedRows.rows.includes(index) && "bg-green-400"
             )}
-            data-index={index}>
+            data-index={index}
+          >
             {headers.map((header, i) => (
               <td key={i} style={{ width: columnWidths[i] }}>
                 {header.renderer.render({
