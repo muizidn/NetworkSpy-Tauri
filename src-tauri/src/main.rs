@@ -77,6 +77,8 @@ fn main() {
                         // 1 カウントする
                         count += 1;
 
+                        println!("SEND EVENT COUNT #{}", count);
+
                         // イベントを emit。
                         let result = app_handle.emit_all(
                             "count_event",

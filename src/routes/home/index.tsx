@@ -30,11 +30,6 @@ const App = () => {
                     title: "Facebook API",
                     content: <CenterPane />,
                   },
-                  {
-                    id: "2",
-                    title: "Local Webserver Test",
-                    content: <CenterPane />,
-                  },
                 ]}
               />
               <div className='absolute bottom-0 w-full bg-[#1e1e1e] z-10'>

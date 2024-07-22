@@ -1,12 +1,13 @@
 import { listen } from "@tauri-apps/api/event";
-import { useEffect, useState } from "react";
-import { TableView } from "../ui/TableView";
+import { useEffect, useState, useRef } from "react";
+import { TableView, TableViewHeader } from "../ui/TableView";
 import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { TrafficItemMap } from "./model/TrafficItemMap";
+import { v4 as uuidv4 } from "uuid";
 
 export const TrafficList: React.FC = () => {
-  const headers = [
-    { title: "ID", renderer: new TextRenderer('id') },
+  const headers: TableViewHeader<TrafficItemMap>[] = [
+    { title: "ID", renderer: new TextRenderer('id'), minWidth: 100, sortable: true },
     { title: "Tags", renderer: new TagsRenderer('tags') },
     { title: "URL", renderer: new TextRenderer('url') },
     { title: "Client", renderer: new ImageRenderer('client') },
@@ -17,11 +18,11 @@ export const TrafficList: React.FC = () => {
     { title: "Duration", renderer: new TextRenderer('duration') },
     { title: "Request", renderer: new TextRenderer('request') },
     { title: "Response", renderer: new TextRenderer('response') }
-];
+  ];
 
   const [data, setData] = useState<TrafficItemMap[]>([
     {
-      "id": "8753",
+      "id": "0",
       "tags": ["LOGIN DOCKER"],
       "url": "https://example.com",
       "client": "Client A",
@@ -35,15 +36,19 @@ export const TrafficList: React.FC = () => {
     },
   ]);
 
+  const streamStarted = useRef(false);
+
   async function startStream() {
+    console.log("CALL START STREAM", uuidv4());
     await listen("count_event", (event: any) => {
+      console.log("COUNT EVENT", uuidv4(), (event.payload as any).message as string);
       setData((prevData) => [
         ...prevData,
         {
-          "id": "8753",
+          "id": (event.payload as any).message as string,
           "tags": ["LOGIN DOCKER", "AKAMAI Testing Robot"],
           "url": "https://example.com",
-          "client": (event.payload as any).message as string,
+          "client": "Google Map",
           "method": "GET",
           "status": "Completed",
           "code": "200",
@@ -57,7 +62,10 @@ export const TrafficList: React.FC = () => {
   }
 
   useEffect(() => {
-    startStream();
+    if (!streamStarted.current) {
+      startStream();
+      streamStarted.current = true;
+    }
   }, []);
 
   function renderContextMenu(data: any[]) {

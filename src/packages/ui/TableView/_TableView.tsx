@@ -1,16 +1,29 @@
-import { emit, listen } from "@tauri-apps/api/event";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+  MouseEvent,
+} from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { useEffect, useRef, useState, ReactNode } from "react";
-import { Renderer } from ".";
 import { twMerge } from "tailwind-merge";
-import { ContextMenu, showMenu } from "tauri-plugin-context-menu";
-import React from "react";
+import { ContextMenu } from "tauri-plugin-context-menu";
+import { Renderer } from "./_Renderer";
 
-interface TableViewProps<T> {
-  headers: { title: string; renderer: Renderer<T> }[];
+export interface TableViewHeader<T>  {
+  title: string;
+  renderer: Renderer<T>;
+  sortable?: boolean;
+  minWidth?: number;
+}
+
+export interface TableViewProps<T> {
+  headers: TableViewHeader<T>[];
   data: T[];
   renderContextMenu?: (selectedItems: T[]) => ContextMenu.Options;
 }
+
+type SortOrder = "asc" | "desc";
 
 export const TableView = <T,>({
   headers,
@@ -23,13 +36,22 @@ export const TableView = <T,>({
   }>({ rows: [] });
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [columnWidths, setColumnWidths] = useState<number[]>(
+    headers.map(() => 150)
+  );
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof T | null;
+    order: SortOrder | null;
+  }>({ key: null, order: null });
 
-  function getRowIndex(e: any) {
-    const index = (e.target as Node).parentElement?.getAttribute("data-index");
+  function getRowIndex(e: MouseEvent) {
+    const index = (e.target as HTMLElement).parentElement?.getAttribute(
+      "data-index"
+    );
     return index;
   }
 
-  async function onClickRow(e: any) {
+  async function onClickRow(e: MouseEvent) {
     const indexString = getRowIndex(e);
     if (!indexString) {
       return;
@@ -38,7 +60,7 @@ export const TableView = <T,>({
     const index = Number(indexString);
 
     if (e.shiftKey) {
-      if (selectedRows.firstSelect) {
+      if (selectedRows.firstSelect !== undefined) {
         const firstSelected = selectedRows.firstSelect;
         if (firstSelected < index) {
           const newSelectedRows = Array.from(
@@ -65,7 +87,7 @@ export const TableView = <T,>({
     }
   }
 
-  async function showContextMenu(e: any) {
+  async function showContextMenu(e: MouseEvent) {
     if (!renderContextMenu) {
       return;
     }
@@ -142,7 +164,50 @@ export const TableView = <T,>({
     }
   };
 
-  // Easing function for smooth scroll animation
+  const startResize = (index: number, startX: number) => {
+    const handleMouseMove = (e: any) => {
+      const dx = e.clientX - startX;
+      setColumnWidths((prev) => {
+        const newWidths = [...prev];
+        newWidths[index] += dx;
+        return newWidths;
+      });
+      startX = e.clientX;
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleSort = (index: number) => {
+    const key = headers[index].title as keyof T;
+    let order: SortOrder = "asc";
+    if (sortConfig.key === key && sortConfig.order === "asc") {
+      order = "desc";
+    }
+    setSortConfig({ key, order });
+  };
+
+  const sortedData = React.useMemo(() => {
+    if (sortConfig.key === null) {
+      return data;
+    }
+    return [...data].sort((a, b) => {
+      if (a[sortConfig.key as keyof T] < b[sortConfig.key as keyof T]) {
+        return sortConfig.order === "asc" ? -1 : 1;
+      }
+      if (a[sortConfig.key as keyof T] > b[sortConfig.key as keyof T]) {
+        return sortConfig.order === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [data, sortConfig]);
+
   const easeInOutQuad = (
     t: number,
     b: number,
@@ -156,18 +221,37 @@ export const TableView = <T,>({
   };
 
   return (
-    <table className='table-auto w-full block relative'>
-      <thead className='sticky top-0 absolute bg-[#23262a]'>
+    <table className="table-auto w-full block relative">
+      <thead className="sticky top-0 bg-[#23262a]">
         <tr>
           {headers.map((header, index) => (
-            <th key={index} className='px-4 py-2 text-left text-sm'>
-              {header.title}
+            <th
+              key={index}
+              className="px-4 py-2 text-left text-sm cursor-pointer"
+              onClick={() => handleSort(index)}
+              style={{
+                width: columnWidths[index],
+                minWidth: header.minWidth,
+                position: "relative",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span>{header.title}</span>
+                <div
+                  onMouseDown={(e) => startResize(index, e.clientX)}
+                  className="absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2"
+                  style={{ transform: "translateX(50%)" }}
+                ></div>
+                {sortConfig.key === header.title && (
+                  <span>{sortConfig.order === "asc" ? "🔼" : "🔽"}</span>
+                )}
+              </div>
             </th>
           ))}
         </tr>
       </thead>
-      <tbody ref={tbodyRef} className='overflow-y-auto' onScroll={handleScroll}>
-        {data.map((item, index) => (
+      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
+        {sortedData.map((item, index) => (
           <tr
             key={`item-${index}`}
             onContextMenu={showContextMenu}
@@ -176,9 +260,10 @@ export const TableView = <T,>({
               "hover:bg-green-700",
               selectedRows.rows.includes(index) && "bg-green-400"
             )}
-            data-index={index}>
-            {headers.map((e, i) => (
-              <React.Fragment key={i}>{e.renderer.render(item)}</React.Fragment>
+            data-index={index}
+          >
+            {headers.map((header, i) => (
+              <td key={i}>{header.renderer.render(item)}</td>
             ))}
           </tr>
         ))}
