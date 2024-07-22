@@ -61,27 +61,28 @@ const HeaderCell = <T,>({
 
   return (
     <th
-      ref={ref}
-      className="px-4 py-2 text-left text-sm cursor-pointer"
+      className='px-2 py-2 text-left text-sm relative'
       onClick={() => handleSort(index)}
       style={{
-        width: columnWidth,
-        minWidth: header.minWidth,
         opacity: isDragging ? 0.5 : 1,
         position: "relative",
-      }}
-    >
-      <div className="flex items-center justify-between">
+      }}>
+      <div
+        ref={ref}
+        className='flex items-center justify-between cursor-grab'
+        style={{ width: columnWidth, minWidth: header.minWidth }}>
         <span>{header.title}</span>
-        <div
-          onMouseDown={(e) => startResize(index, e.clientX)}
-          className="absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2"
-          style={{ transform: "translateX(50%)" }}
-        ></div>
-        {sortConfig.key === header.title && (
-          <span>{sortConfig.order === "asc" ? "🔼" : "🔽"}</span>
+
+        {sortConfig.key === header.title.toLowerCase() && (
+          <span className='cursor-pointer mr-2'>
+            {sortConfig.order === "asc" ? "🔼" : "🔽"}
+          </span>
         )}
       </div>
+      <div
+        onMouseDown={(e) => startResize(index, e.clientX)}
+        className='absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2'
+        style={{ transform: "translateX(50%)" }}></div>
     </th>
   );
 };
@@ -272,7 +273,7 @@ export const TableView = <T,>({
   };
 
   const handleSort = (index: number) => {
-    const key = headers[index].title as keyof T;
+    const key = headers[index].title.toLocaleLowerCase() as keyof T;
     let order: SortOrder = "asc";
     if (sortConfig.key === key && sortConfig.order === "asc") {
       order = "desc";
@@ -303,8 +304,8 @@ export const TableView = <T,>({
   }, [data, sortConfig]);
 
   return (
-    <table className="table-auto w-full block relative">
-      <thead className="sticky top-0 bg-[#23262a]">
+    <table className='table-auto w-full block relative'>
+      <thead className='sticky top-0 bg-[#23262a]'>
         <tr>
           {headers.map((header, index) => (
             <HeaderCell
@@ -320,7 +321,7 @@ export const TableView = <T,>({
           ))}
         </tr>
       </thead>
-      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
+      <tbody ref={tbodyRef} className='overflow-y-auto' onScroll={handleScroll}>
         {sortedData.map((item, index) => (
           <tr
             key={`item-${index}`}
@@ -330,8 +331,7 @@ export const TableView = <T,>({
               "hover:bg-green-700",
               selectedRows.rows.includes(index) && "bg-green-400"
             )}
-            data-index={index}
-          >
+            data-index={index}>
             {headers.map((header, i) => (
               <td key={i} style={{ width: columnWidths[i] }}>
                 {header.renderer.render({

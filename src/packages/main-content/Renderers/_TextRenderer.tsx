@@ -9,7 +9,7 @@ export class TextRenderer implements Renderer<TrafficItemMap> {
   }
   render({ input }: { input: TrafficItemMap }): React.ReactNode {
     return (
-      <div className="select-none text-sm text-nowrap px-4 py-2">
+      <div className='select-none text-sm text-nowrap px-2 py-2 truncate'>
         {input[this.type] as string}
       </div>
     );
