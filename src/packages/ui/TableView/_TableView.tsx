@@ -84,9 +84,11 @@ const HeaderCell = <T,>({
       </div>
       <div
         onMouseDown={(e) => startResize(index, e.clientX)}
-        className="absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2"
+        className="absolute right-0 top-0 h-full w-1 cursor-col-resize mx-2 flex items-center justify-center"
         style={{ transform: "translateX(50%)" }}
-      ></div>
+      >
+        <div className="hover:bg-blue-500 bg-gray-600 rounded-sm w-0.5 hover:w-full h-[50%]"></div>
+      </div>
     </th>
   );
 };
