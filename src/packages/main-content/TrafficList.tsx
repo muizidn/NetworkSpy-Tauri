@@ -1,9 +1,9 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect, useState, useRef } from "react";
-import { TableView, TableViewHeader } from "../ui/TableView";
+import { TableView, TableViewContextMenuRenderer, TableViewHeader } from "../ui/TableView";
 import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { TrafficItemMap } from "./model/TrafficItemMap";
-import { v4 as uuidv4 } from "uuid";
+import { invoke } from "@tauri-apps/api/tauri";
 
 export const TrafficList: React.FC = () => {
   const headers: TableViewHeader<TrafficItemMap>[] = [
@@ -72,11 +72,22 @@ export const TrafficList: React.FC = () => {
     }
   }, []);
 
-  function renderContextMenu(data: any[]) {
-    return {
+  return (
+    <TableView
+      headers={headers}
+      data={data}
+      contextMenuRenderer={new TrafficListContextMenuRenderer()}
+    />
+  );
+};
+
+
+class TrafficListContextMenuRenderer implements TableViewContextMenuRenderer<TrafficItemMap> {
+  async render(items: TrafficItemMap[]): Promise<void> {
+    const contextMenuData = {
       items: [
         {
-          label: `Select ${data.length}`,
+          label: `Select ${items.length}`,
           disabled: false,
           event: "item1clicked",
           payload: "Hello World!",
@@ -100,13 +111,11 @@ export const TrafficList: React.FC = () => {
         },
       ],
     };
-  }
 
-  return (
-    <TableView
-      headers={headers}
-      data={data}
-      renderContextMenu={renderContextMenu}
-    />
-  );
-};
+    await invoke(
+      "plugin:context_menu|show_context_menu",
+      // `as any` because otherwise mismatch type
+      contextMenuData as any
+    );
+  }
+}

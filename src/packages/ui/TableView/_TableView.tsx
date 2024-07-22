@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect, MouseEvent } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
 import { twMerge } from "tailwind-merge";
-import { ContextMenu } from "tauri-plugin-context-menu";
 import { Renderer } from "./_Renderer";
 import { useDrag, useDrop } from "react-dnd";
+import { TableViewContextMenuRenderer } from "./_ContextMenu";
 
 export interface TableViewHeader<T> {
   title: string;
@@ -16,7 +15,7 @@ export interface TableViewHeader<T> {
 export interface TableViewProps<T> {
   headers: TableViewHeader<T>[];
   data: T[];
-  renderContextMenu?: (selectedItems: T[]) => ContextMenu.Options;
+  contextMenuRenderer?: TableViewContextMenuRenderer<T>;
 }
 
 type SortOrder = "asc" | "desc";
@@ -91,7 +90,7 @@ const HeaderCell = <T,>({
 export const TableView = <T,>({
   headers: initialHeaders,
   data,
-  renderContextMenu,
+  contextMenuRenderer,
 }: TableViewProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<{
     firstSelect?: number;
@@ -162,7 +161,7 @@ export const TableView = <T,>({
   }
 
   async function showContextMenu(e: MouseEvent) {
-    if (!renderContextMenu) {
+    if (!contextMenuRenderer) {
       return;
     }
 
@@ -178,13 +177,7 @@ export const TableView = <T,>({
       selectedItems = selectedRows.rows.map((i) => data[i]);
     }
 
-    const contextMenuData = renderContextMenu(selectedItems);
-
-    await invoke(
-      "plugin:context_menu|show_context_menu",
-      // `as any` because otherwise mismatch type
-      contextMenuData as any
-    );
+    await contextMenuRenderer.render(selectedItems)
   }
 
   function _animateScroll() {
