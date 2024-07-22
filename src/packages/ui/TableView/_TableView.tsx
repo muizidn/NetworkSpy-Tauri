@@ -1,16 +1,12 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-  MouseEvent,
-} from "react";
+import React, { useState, useRef, useEffect, MouseEvent } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import { twMerge } from "tailwind-merge";
 import { ContextMenu } from "tauri-plugin-context-menu";
 import { Renderer } from "./_Renderer";
+import { useDrag, useDrop } from "react-dnd";
+import { v4 } from "uuid";
 
-export interface TableViewHeader<T>  {
+export interface TableViewHeader<T> {
   title: string;
   renderer: Renderer<T>;
   sortable?: boolean;
@@ -25,8 +21,74 @@ export interface TableViewProps<T> {
 
 type SortOrder = "asc" | "desc";
 
+const HeaderCell = <T,>({
+  header,
+  index,
+  moveHeader,
+  sortConfig,
+  handleSort,
+  startResize,
+  columnWidth,
+}: {
+  header: TableViewHeader<T>;
+  index: number;
+  moveHeader: (dragIndex: number, hoverIndex: number) => void;
+  sortConfig: { key: keyof T | null; order: SortOrder | null };
+  handleSort: (index: number) => void;
+  startResize: (index: number, startX: number) => void;
+  columnWidth: number;
+}) => {
+  const ref = useRef<HTMLTableHeaderCellElement>(null);
+
+  const [{ isDragging }, drag] = useDrag({
+    type: "header",
+    item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  const [, drop] = useDrop({
+    accept: "header",
+    hover: (item: { index: number }) => {
+      if (item.index !== index) {
+        moveHeader(item.index, index);
+        item.index = index;
+      }
+    },
+  });
+
+  drag(drop(ref));
+
+  return (
+    <th
+      ref={ref}
+      className="px-4 py-2 text-left text-sm cursor-pointer"
+      onClick={() => handleSort(index)}
+      style={{
+        width: columnWidth,
+        minWidth: header.minWidth,
+        opacity: isDragging ? 0.5 : 1,
+        position: "relative",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span>{header.title}</span>
+        <div
+          onMouseDown={(e) => startResize(index, e.clientX)}
+          className="absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2"
+          style={{ transform: "translateX(50%)" }}
+        ></div>
+        {sortConfig.key === header.title && (
+          <span>{sortConfig.order === "asc" ? "🔼" : "🔽"}</span>
+        )}
+      </div>
+    </th>
+  );
+};
+
 export const TableView = <T,>({
-  headers,
+  headers: initialHeaders,
   data,
   renderContextMenu,
 }: TableViewProps<T>) => {
@@ -37,8 +99,9 @@ export const TableView = <T,>({
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [columnWidths, setColumnWidths] = useState<number[]>(
-    headers.map(() => 150)
+    initialHeaders.map(() => 150)
   );
+  const [headers, setHeaders] = useState(initialHeaders);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof T | null;
     order: SortOrder | null;
@@ -193,6 +256,13 @@ export const TableView = <T,>({
     setSortConfig({ key, order });
   };
 
+  const moveHeader = (dragIndex: number, hoverIndex: number) => {
+    const newHeaders = [...headers];
+    const [draggedHeader] = newHeaders.splice(dragIndex, 1);
+    newHeaders.splice(hoverIndex, 0, draggedHeader);
+    setHeaders(newHeaders);
+  };
+
   const sortedData = React.useMemo(() => {
     if (sortConfig.key === null) {
       return data;
@@ -220,54 +290,46 @@ export const TableView = <T,>({
     return (-c / 2) * (t * (t - 2) - 1) + b;
   };
 
+  console.log("TABLE VIEW", v4())
+
   return (
-    <table className="table-auto w-full block relative">
-      <thead className="sticky top-0 bg-[#23262a]">
-        <tr>
-          {headers.map((header, index) => (
-            <th
-              key={index}
-              className="px-4 py-2 text-left text-sm cursor-pointer"
-              onClick={() => handleSort(index)}
-              style={{
-                width: columnWidths[index],
-                minWidth: header.minWidth,
-                position: "relative",
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <span>{header.title}</span>
-                <div
-                  onMouseDown={(e) => startResize(index, e.clientX)}
-                  className="absolute right-0 top-1 h-[80%] w-1 cursor-col-resize hover:bg-blue-500 bg-gray-600 rounded-sm mx-2"
-                  style={{ transform: "translateX(50%)" }}
-                ></div>
-                {sortConfig.key === header.title && (
-                  <span>{sortConfig.order === "asc" ? "🔼" : "🔽"}</span>
-                )}
-              </div>
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
-        {sortedData.map((item, index) => (
-          <tr
-            key={`item-${index}`}
-            onContextMenu={showContextMenu}
-            onClick={onClickRow}
-            className={twMerge(
-              "hover:bg-green-700",
-              selectedRows.rows.includes(index) && "bg-green-400"
-            )}
-            data-index={index}
-          >
-            {headers.map((header, i) => (
-              <td key={i}>{header.renderer.render(item)}</td>
+      <table className="table-auto w-full block relative">
+        <thead className="sticky top-0 bg-[#23262a]">
+          <tr>
+            {headers.map((header, index) => (
+              <HeaderCell
+                key={index}
+                header={header}
+                index={index}
+                moveHeader={moveHeader}
+                sortConfig={sortConfig}
+                handleSort={handleSort}
+                startResize={startResize}
+                columnWidth={columnWidths[index]}
+              />
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
+          {sortedData.map((item, index) => (
+            <tr
+              key={`item-${index}`}
+              onContextMenu={showContextMenu}
+              onClick={onClickRow}
+              className={twMerge(
+                "hover:bg-green-700",
+                selectedRows.rows.includes(index) && "bg-green-400"
+              )}
+              data-index={index}
+            >
+              {headers.map((header, i) => (
+                <td key={i} style={{ width: columnWidths[i] }}>
+                  {header.renderer.render(item)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
   );
 };

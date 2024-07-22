@@ -20,6 +20,8 @@
     "postcss": "^8.4.25",
     "react": "^18.2.0",
     "react-accessible-treeview": "^2.9.1",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.2.0",
     "react-icons": "^4.10.1",
     "react-router-dom": "^6.14.1",
