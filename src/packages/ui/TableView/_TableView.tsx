@@ -62,31 +62,27 @@ const HeaderCell = <T,>({
 
   return (
     <th
-      className="px-2 py-2 relative"
+      className='px-2 py-2 relative'
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
-        position: "relative",
-      }}
-    >
+      }}>
       <div
         ref={ref}
-        className="flex items-center justify-between cursor-grab w-full"
-        style={{ width: columnWidth, minWidth: header.minWidth }}
-      >
+        className='flex items-center justify-between cursor-grab w-full'
+        style={{ width: columnWidth, minWidth: header.minWidth }}>
         <span>{header.title}</span>
         {sortConfig.key === header.title.toLowerCase() && (
-          <span className="cursor-pointer mr-2">
+          <span className='cursor-pointer mr-2'>
             {sortConfig.order === "asc" ? "↓" : "↑"}
           </span>
         )}
       </div>
       <div
         onMouseDown={(e) => startResize(index, e.clientX)}
-        className="absolute right-0 top-0 h-full w-1 cursor-col-resize mx-2 flex items-center justify-center"
-        style={{ transform: "translateX(50%)" }}
-      >
-        <div className="hover:bg-blue-500 bg-gray-600 rounded-sm w-0.5 hover:w-full h-[50%]"></div>
+        className='absolute right-0 top-0 h-full w-1 cursor-col-resize mx-2 flex items-center justify-center'
+        style={{ transform: "translateX(50%)" }}>
+        <div className='hover:bg-blue-500 bg-gray-600 rounded-sm w-0.5 hover:w-full h-[50%]'></div>
       </div>
     </th>
   );
@@ -314,8 +310,8 @@ export const TableView = <T,>({
   }, [data, sortConfig]);
 
   return (
-    <table className="table-auto w-full block relative">
-      <thead className="sticky top-0 bg-[#23262a]">
+    <table className='table-auto w-full block relative'>
+      <thead className='sticky top-0 bg-[#23262a]'>
         <tr>
           {headers.map((header, index) => (
             <HeaderCell
@@ -331,7 +327,7 @@ export const TableView = <T,>({
           ))}
         </tr>
       </thead>
-      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
+      <tbody ref={tbodyRef} className='overflow-y-auto' onScroll={handleScroll}>
         {sortedData.map((item, index) => (
           <tr
             key={`item-${index}`}
@@ -341,12 +337,12 @@ export const TableView = <T,>({
               "hover:bg-green-700",
               selectedRows.rows.includes(index) && "bg-green-400"
             )}
-            data-index={index}
-          >
+            data-index={index}>
             {headers.map((header, i) => (
               <td key={i} style={{ width: columnWidths[i] }}>
                 {header.renderer.render({
                   input: item,
+                  width: columnWidths[i],
                 })}
               </td>
             ))}

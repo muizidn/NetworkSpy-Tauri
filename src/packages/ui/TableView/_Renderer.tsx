@@ -1,3 +1,3 @@
 export interface Renderer<T> {
-  render({ input }: { input: T }): React.ReactNode;
+  render({ input, width }: { input: T; width: number }): React.ReactNode;
 }
