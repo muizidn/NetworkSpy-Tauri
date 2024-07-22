@@ -62,7 +62,7 @@ const HeaderCell = <T,>({
 
   return (
     <th
-      className="px-2 py-2 text-left text-sm relative"
+      className="px-2 py-2 relative"
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
@@ -71,14 +71,13 @@ const HeaderCell = <T,>({
     >
       <div
         ref={ref}
-        className="flex items-center justify-between cursor-grab"
+        className="flex items-center justify-between cursor-grab w-full"
         style={{ width: columnWidth, minWidth: header.minWidth }}
       >
         <span>{header.title}</span>
-
         {sortConfig.key === header.title.toLowerCase() && (
           <span className="cursor-pointer mr-2">
-            {sortConfig.order === "asc" ? "🔼" : "🔽"}
+            {sortConfig.order === "asc" ? "↓" : "↑"}
           </span>
         )}
       </div>
@@ -105,7 +104,7 @@ export const TableView = <T,>({
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [columnWidths, setColumnWidths] = useState<number[]>(
-    initialHeaders.map(() => 150)
+    initialHeaders.map((e) => e.minWidth || 150)
   );
   const [headers, setHeaders] = useState(initialHeaders);
   const [sortConfig, setSortConfig] = useState<{
