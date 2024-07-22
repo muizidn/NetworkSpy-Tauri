@@ -7,11 +7,11 @@ export class TextRenderer implements Renderer<TrafficItemMap> {
   constructor(type: string) {
     this.type = type;
   }
-  render(input: TrafficItemMap) {
+  render({ input }: { input: TrafficItemMap }): React.ReactNode {
     return (
-      <td className='select-none text-sm text-nowrap px-4 py-2'>
+      <div className="select-none text-sm text-nowrap px-4 py-2">
         {input[this.type] as string}
-      </td>
+      </div>
     );
   }
 }

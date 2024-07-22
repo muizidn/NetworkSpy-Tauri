@@ -7,15 +7,15 @@ export class ImageRenderer implements Renderer<TrafficItemMap> {
   constructor(type: string) {
     this.type = type;
   }
-  render(input: TrafficItemMap) {
+  render({ input }: { input: TrafficItemMap }): React.ReactNode {
     return (
-      <td className='select-none my-2'>
+      <div className="select-none my-2">
         <img
           src={input[this.type] as string}
-          alt='Image'
+          alt="Image"
           style={{ maxWidth: "100%", height: "auto" }}
         />
-      </td>
+      </div>
     );
   }
 }

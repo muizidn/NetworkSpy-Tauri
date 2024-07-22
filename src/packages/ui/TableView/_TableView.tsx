@@ -4,7 +4,6 @@ import { twMerge } from "tailwind-merge";
 import { ContextMenu } from "tauri-plugin-context-menu";
 import { Renderer } from "./_Renderer";
 import { useDrag, useDrop } from "react-dnd";
-import { v4 } from "uuid";
 
 export interface TableViewHeader<T> {
   title: string;
@@ -107,11 +106,21 @@ export const TableView = <T,>({
     order: SortOrder | null;
   }>({ key: null, order: null });
 
-  function getRowIndex(e: MouseEvent) {
-    const index = (e.target as HTMLElement).parentElement?.getAttribute(
-      "data-index"
-    );
-    return index;
+  function getRowIndex(e: MouseEvent): string | null {
+    let target = e.target as HTMLElement;
+
+    // Traverse up the DOM tree until a <tr> element is found
+    while (target && target.tagName !== "TR") {
+      target = target.parentElement as HTMLElement;
+    }
+
+    // Check if the <tr> element was found and has the data-index attribute
+    if (target && target.tagName === "TR") {
+      const index = target.getAttribute("data-index");
+      return index;
+    }
+
+    return null;
   }
 
   async function onClickRow(e: MouseEvent) {
@@ -159,6 +168,8 @@ export const TableView = <T,>({
     if (!indexString) {
       return;
     }
+
+    e.preventDefault();
 
     let selectedItems = [data[Number(indexString)]];
     if (selectedRows.rows.length > 1) {
@@ -290,46 +301,46 @@ export const TableView = <T,>({
     return (-c / 2) * (t * (t - 2) - 1) + b;
   };
 
-  console.log("TABLE VIEW", v4())
-
   return (
-      <table className="table-auto w-full block relative">
-        <thead className="sticky top-0 bg-[#23262a]">
-          <tr>
-            {headers.map((header, index) => (
-              <HeaderCell
-                key={index}
-                header={header}
-                index={index}
-                moveHeader={moveHeader}
-                sortConfig={sortConfig}
-                handleSort={handleSort}
-                startResize={startResize}
-                columnWidth={columnWidths[index]}
-              />
+    <table className="table-auto w-full block relative">
+      <thead className="sticky top-0 bg-[#23262a]">
+        <tr>
+          {headers.map((header, index) => (
+            <HeaderCell
+              key={index}
+              header={header}
+              index={index}
+              moveHeader={moveHeader}
+              sortConfig={sortConfig}
+              handleSort={handleSort}
+              startResize={startResize}
+              columnWidth={columnWidths[index]}
+            />
+          ))}
+        </tr>
+      </thead>
+      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
+        {sortedData.map((item, index) => (
+          <tr
+            key={`item-${index}`}
+            onContextMenu={showContextMenu}
+            onClick={onClickRow}
+            className={twMerge(
+              "hover:bg-green-700",
+              selectedRows.rows.includes(index) && "bg-green-400"
+            )}
+            data-index={index}
+          >
+            {headers.map((header, i) => (
+              <td key={i} style={{ width: columnWidths[i] }}>
+                {header.renderer.render({
+                  input: item,
+                })}
+              </td>
             ))}
           </tr>
-        </thead>
-        <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
-          {sortedData.map((item, index) => (
-            <tr
-              key={`item-${index}`}
-              onContextMenu={showContextMenu}
-              onClick={onClickRow}
-              className={twMerge(
-                "hover:bg-green-700",
-                selectedRows.rows.includes(index) && "bg-green-400"
-              )}
-              data-index={index}
-            >
-              {headers.map((header, i) => (
-                <td key={i} style={{ width: columnWidths[i] }}>
-                  {header.renderer.render(item)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        ))}
+      </tbody>
+    </table>
   );
 };

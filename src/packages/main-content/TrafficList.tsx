@@ -39,9 +39,7 @@ export const TrafficList: React.FC = () => {
   const streamStarted = useRef(false);
 
   async function startStream() {
-    console.log("CALL START STREAM", uuidv4());
     await listen("count_event", (event: any) => {
-      console.log("COUNT EVENT", uuidv4(), (event.payload as any).message as string);
       setData((prevData) => [
         ...prevData,
         {
