@@ -238,6 +238,19 @@ export const TableView = <T,>({
     }
   };
 
+  // Easing function for smooth scroll animation
+  const easeInOutQuad = (
+    t: number,
+    b: number,
+    c: number,
+    d: number
+  ): number => {
+    t /= d / 2;
+    if (t < 1) return (c / 2) * t * t + b;
+    t--;
+    return (-c / 2) * (t * (t - 2) - 1) + b;
+  };
+
   const startResize = (index: number, startX: number) => {
     const handleMouseMove = (e: any) => {
       const dx = e.clientX - startX;
@@ -288,18 +301,6 @@ export const TableView = <T,>({
       return 0;
     });
   }, [data, sortConfig]);
-
-  const easeInOutQuad = (
-    t: number,
-    b: number,
-    c: number,
-    d: number
-  ): number => {
-    t /= d / 2;
-    if (t < 1) return (c / 2) * t * t + b;
-    t--;
-    return (-c / 2) * (t * (t - 2) - 1) + b;
-  };
 
   return (
     <table className="table-auto w-full block relative">
