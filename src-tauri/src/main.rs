@@ -6,6 +6,8 @@ use cron::Schedule;
 use serde::Serialize;
 use std::{env, str::FromStr, thread::sleep, time::Duration};
 use tauri::{AppHandle, Invoke, Manager, Result, State};
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+use tauri::WindowBuilder;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -38,8 +40,98 @@ fn greet(name: &str) -> String {
 //     Ok(())
 // }
 
+fn create_menu() -> Menu {
+    // File submenu items
+    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
+    let close = CustomMenuItem::new("close".to_string(), "Close");
+    let file_submenu = Submenu::new("File", Menu::new().add_item(quit).add_item(close));
+
+    // Edit submenu items
+    let edit_submenu = Submenu::new("Edit", Menu::new().add_native_item(MenuItem::Copy));
+
+    // View submenu (can be extended with more items if needed)
+    let view_submenu = Submenu::new("View", Menu::new());
+
+    // Flow submenu (can be extended with more items if needed)
+    let flow_submenu = Submenu::new("Flow", Menu::new());
+
+    // Tools submenu (can be extended with more items if needed)
+    let tools_submenu = Submenu::new("Tools", Menu::new());
+
+    // Diff submenu (can be extended with more items if needed)
+    let diff_submenu = Submenu::new("Diff", Menu::new());
+
+    // Scripting submenu items
+    let script_list = CustomMenuItem::new("script_list".to_string(), "Script List ...");
+    let scripting_submenu = Submenu::new("Scripting", Menu::new().add_item(script_list));
+
+    // Certificate submenu items
+    let install_cert = CustomMenuItem::new("install_cert".to_string(), "Install Certificate on This Computer...");
+    let certificate_submenu = Submenu::new("Certificate", Menu::new().add_item(install_cert));
+
+    // Setup submenu (can be extended with more items if needed)
+    let setup_submenu = Submenu::new("Setup", Menu::new());
+
+    // Window submenu (can be extended with more items if needed)
+    let window_submenu = Submenu::new("Window", Menu::new());
+
+    // Help submenu (can be extended with more items if needed)
+    let help_submenu = Submenu::new("Help", Menu::new());
+
+    // Main menu
+    let menu = Menu::new()
+        .add_submenu(file_submenu)
+        .add_submenu(edit_submenu)
+        .add_submenu(view_submenu)
+        .add_submenu(flow_submenu)
+        .add_submenu(tools_submenu)
+        .add_submenu(diff_submenu)
+        .add_submenu(scripting_submenu)
+        .add_submenu(certificate_submenu)
+        .add_submenu(setup_submenu)
+        .add_submenu(window_submenu)
+        .add_submenu(help_submenu);
+
+    menu
+}
+
 fn main() {
     tauri::Builder::default()
+        .menu(create_menu())
+        .on_menu_event(|event| {
+            match event.menu_item_id() {
+                "script_list" => {
+                    let window = event.window().clone();
+                    tauri::async_runtime::spawn(async move {
+                        WindowBuilder::new(
+                            &window,
+                            "script_list",
+                            tauri::WindowUrl::App("/".into()),
+                        )
+                        .title("Script List")
+                        .build()
+                        .unwrap();
+                    });
+                }
+                "install_cert" => {
+                    let window = event.window().clone();
+                    tauri::async_runtime::spawn(async move {
+                        WindowBuilder::new(
+                            &window,
+                            "install_cert",
+                            tauri::WindowUrl::App("/settings".into()),
+                        )
+                        .title("Install Certificate")
+                        .build()
+                        .unwrap();
+                    });
+                }
+                "quit" => {
+                    std::process::exit(0);
+                }
+                _ => {}
+            }
+        })
         .invoke_handler(tauri::generate_handler![greet])
         .setup(|app| {
             // listen to the `start_stream` (emitted on any window)
