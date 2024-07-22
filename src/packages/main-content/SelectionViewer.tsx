@@ -5,7 +5,7 @@ export const SelectionViewer = () => {
   return (
     <div className='flex flex-col border-t border-black'>
       <div id='url-viewer' className='border-b border-black'>
-        <p className='p-2 text-sm'>{url}</p>
+        <p className='select-text p-2 text-sm'>{url}</p>
       </div>
       <div className='flex border-b border-black'>
         {tags.map((e, i) => (

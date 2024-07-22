@@ -15,7 +15,7 @@ const App = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col h-screen">
+      <div className="select-none flex flex-col h-screen">
         <Header />
         <div className="flex flex-grow overflow-hidden w-full h-full border-t border-black">
           <SplitPane split="vertical" sizes={sizes} onChange={setSizes}>
