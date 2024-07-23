@@ -10,6 +10,7 @@ import "./styles.css";
 import "./styles/treeview.css";
 import "split-pane-react/esm/themes/default.css";
 import { SettingsProvider } from "./context/SettingsProvider";
+import ScriptList from "./routes/script-list";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
       {
         path: "/settings",
         element: <Settings />,
+      },
+      {
+        path: "/script-list",
+        element: <ScriptList />,
       },
     ],
   },

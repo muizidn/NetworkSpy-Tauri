@@ -106,7 +106,7 @@ fn main() {
                         WindowBuilder::new(
                             &window,
                             "script_list",
-                            tauri::WindowUrl::App("/".into()),
+                            tauri::WindowUrl::App("/script-list".into()),
                         )
                         .title("Script List")
                         .menu(Menu::new())
