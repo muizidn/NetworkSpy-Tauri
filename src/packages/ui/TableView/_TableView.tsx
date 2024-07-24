@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect, MouseEvent } from "react";
 import { twMerge } from "tailwind-merge";
-import { Renderer } from "./_Renderer";
+import { TableVirtuoso } from "react-virtuoso";
 import { useDrag, useDrop } from "react-dnd";
+
+import { Renderer } from "./_Renderer";
 import { TableViewContextMenuRenderer } from "./_ContextMenu";
 
 export interface TableViewHeader<T> {
@@ -177,7 +179,7 @@ export const TableView = <T,>({
       selectedItems = selectedRows.rows.map((i) => data[i]);
     }
 
-    await contextMenuRenderer.render(selectedItems)
+    await contextMenuRenderer.render(selectedItems);
   }
 
   function _animateScroll() {
@@ -303,45 +305,58 @@ export const TableView = <T,>({
   }, [data, sortConfig]);
 
   return (
-    <table className='table-auto w-full block relative'>
-      <thead className='sticky top-0 bg-[#23262a]'>
-        <tr>
-          {headers.map((header, index) => (
-            <HeaderCell
-              key={index}
-              header={header}
-              index={index}
-              moveHeader={moveHeader}
-              sortConfig={sortConfig}
-              handleSort={handleSort}
-              startResize={startResize}
-              columnWidth={columnWidths[index]}
-            />
-          ))}
-        </tr>
-      </thead>
-      <tbody ref={tbodyRef} className='overflow-y-auto' onScroll={handleScroll}>
-        {sortedData.map((item, index) => (
-          <tr
-            key={`item-${index}`}
-            onContextMenu={showContextMenu}
-            onClick={onClickRow}
-            className={twMerge(
-              "hover:bg-green-700",
-              selectedRows.rows.includes(index) && "bg-green-400"
-            )}
-            data-index={index}>
-            {headers.map((header, i) => (
-              <td key={i} style={{ width: columnWidths[i] }}>
-                {header.renderer.render({
-                  input: item,
-                  width: columnWidths[i],
-                })}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <TableVirtuoso
+      totalCount={sortedData.length}
+      components={{
+        Table: ({ style, ...props }) => (
+          <table
+            {...props}
+            style={{ ...style }}
+            className='table-auto w-full block relative'>
+            <thead className='sticky top-0 bg-[#23262a]'>
+              <tr>
+                {headers.map((header, index) => (
+                  <HeaderCell
+                    key={index}
+                    header={header}
+                    index={index}
+                    moveHeader={moveHeader}
+                    sortConfig={sortConfig}
+                    handleSort={handleSort}
+                    startResize={startResize}
+                    columnWidth={columnWidths[index]}
+                  />
+                ))}
+              </tr>
+            </thead>
+            <tbody
+              ref={tbodyRef}
+              className='overflow-y-auto'
+              onScroll={handleScroll}>
+              {sortedData.map((item, index) => (
+                <tr
+                  key={`item-${index}`}
+                  onContextMenu={showContextMenu}
+                  onClick={onClickRow}
+                  className={twMerge(
+                    "hover:bg-green-700",
+                    selectedRows.rows.includes(index) && "bg-green-400"
+                  )}
+                  data-index={index}>
+                  {headers.map((header, i) => (
+                    <td key={i} style={{ width: columnWidths[i] }}>
+                      {header.renderer.render({
+                        input: item,
+                        width: columnWidths[i],
+                      })}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ),
+      }}
+    />
   );
 };
