@@ -109,6 +109,7 @@ fn main() {
                             tauri::WindowUrl::App("/".into()),
                         )
                         .title("Script List")
+                        .menu(Menu::new())
                         .build()
                         .unwrap();
                     });
@@ -122,6 +123,7 @@ fn main() {
                             tauri::WindowUrl::App("/settings".into()),
                         )
                         .title("Install Certificate")
+                        .menu(Menu::default())
                         .build()
                         .unwrap();
                     });
