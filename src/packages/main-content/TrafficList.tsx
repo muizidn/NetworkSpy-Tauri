@@ -1,11 +1,16 @@
-import { listen } from "@tauri-apps/api/event";
-import { useEffect, useState, useRef } from "react";
-import { TableView, TableViewContextMenuRenderer, TableViewHeader } from "../ui/TableView";
+import {
+  TableView,
+  TableViewContextMenuRenderer,
+  TableViewHeader,
+} from "../ui/TableView";
 import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
+import { useTrafficListContext } from "./context/TrafficList";
 import { TrafficItemMap } from "./model/TrafficItemMap";
 import { invoke } from "@tauri-apps/api/tauri";
 
 export const TrafficList: React.FC = () => {
+  const { data } = useTrafficListContext();
+
   const headers: TableViewHeader<TrafficItemMap>[] = [
     {
       title: "ID",
@@ -26,52 +31,6 @@ export const TrafficList: React.FC = () => {
     { title: "Response", renderer: new TextRenderer("response") },
   ];
 
-  const [data, setData] = useState<TrafficItemMap[]>([
-    {
-      id: "0",
-      tags: ["LOGIN DOCKER"],
-      url: "https://example.com",
-      client: "Client A",
-      method: "GET",
-      status: "Completed",
-      code: "200",
-      time: "732 ms",
-      duration: "16 bytes",
-      request: "Request Details",
-      response: "Response Details",
-    },
-  ]);
-
-  const streamStarted = useRef(false);
-
-  async function startStream() {
-    await listen("count_event", (event: any) => {
-      setData((prevData) => [
-        ...prevData,
-        {
-          id: (event.payload as any).message as string,
-          tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
-          url: "https://example.com",
-          client: "Google Map",
-          method: "GET",
-          status: "Completed",
-          code: "200",
-          time: "732 ms",
-          duration: "16 bytes",
-          request: "Request Details",
-          response: "Response Details",
-        },
-      ]);
-    });
-  }
-
-  useEffect(() => {
-    if (!streamStarted.current) {
-      startStream();
-      streamStarted.current = true;
-    }
-  }, []);
-
   return (
     <TableView
       headers={headers}
@@ -81,8 +40,9 @@ export const TrafficList: React.FC = () => {
   );
 };
 
-
-class TrafficListContextMenuRenderer implements TableViewContextMenuRenderer<TrafficItemMap> {
+class TrafficListContextMenuRenderer
+  implements TableViewContextMenuRenderer<TrafficItemMap>
+{
   async render(items: TrafficItemMap[]): Promise<void> {
     const contextMenuData = {
       items: [
