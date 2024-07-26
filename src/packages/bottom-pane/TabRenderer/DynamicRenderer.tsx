@@ -65,30 +65,31 @@ const DynamicRenderer: React.FC<{ data: string }> = ({ data }) => {
   };
 
   return (
-    <div className='flex flex-col space-y-2'>
-      <div className='flex space-x-2 p-2'>
+    <div className="flex flex-col space-y-2">
+      <div className="flex space-x-2 p-2">
         <label>Select View:</label>
         <select
           value={selectedView}
-          onChange={(e) => setSelectedView(e.target.value as DataViewType)}>
-          <option value='TreeView'>Tree View</option>
-          <option value='HexView'>Hex View</option>
-          <option value='FormURLEncodedView'>Form URL Encoded View</option>
-          <option value='MultipartFormDataView'>
+          onChange={(e) => setSelectedView(e.target.value as DataViewType)}
+        >
+          <option value="TreeView">Tree View</option>
+          <option value="HexView">Hex View</option>
+          <option value="FormURLEncodedView">Form URL Encoded View</option>
+          <option value="MultipartFormDataView">
             Multipart Form Data View
           </option>
-          <option value='XMLView'>XML View</option>
-          <option value='ImageView'>Image View</option>
-          <option value='HTMLView'>HTML View</option>
-          <option value='HTMLWebView'>HTML Web View</option>
-          <option value='MessagePackView'>Message Pack View</option>
-          <option value='ProtobufView'>Protobuf View</option>
-          <option value='JavaScriptView'>JavaScript View</option>
-          <option value='CMLView'>CML View</option>
-          <option value='M3U8View'>M3U8 View</option>
+          <option value="XMLView">XML View</option>
+          <option value="ImageView">Image View</option>
+          <option value="HTMLView">HTML View</option>
+          <option value="HTMLWebView">HTML Web View</option>
+          <option value="MessagePackView">Message Pack View</option>
+          <option value="ProtobufView">Protobuf View</option>
+          <option value="JavaScriptView">JavaScript View</option>
+          <option value="CMLView">CML View</option>
+          <option value="M3U8View">M3U8 View</option>
         </select>
       </div>
-      <div className='flex-grow h-full overflow-auto'>{renderView()}</div>
+      <div className="flex-grow h-full overflow-auto">{renderView()}</div>
     </div>
   );
 };
