@@ -124,15 +124,19 @@ fn main() {
             // Define a function to create a window based on menu item ID
             fn create_window(window: tauri::Window, id: &'static str, title: &'static str, url: &'static str) {
                 tauri::async_runtime::spawn(async move {
-                    WindowBuilder::new(
+                    let mut window_builder = WindowBuilder::new(
                         &window,
                         id,
                         tauri::WindowUrl::App(url.into()),
                     )
-                    .title(title)
-                    .menu(Menu::default())
-                    .build()
-                    .unwrap();
+                    .title(title);
+            
+                    #[cfg(target_os = "linux")]
+                    {
+                        window_builder = window_builder.menu(Menu::default());
+                    }
+            
+                    window_builder.build().unwrap();
                 });
             }
         
