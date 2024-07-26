@@ -5,9 +5,9 @@ use chrono::Utc;
 use cron::Schedule;
 use serde::Serialize;
 use std::{env, str::FromStr, thread::sleep, time::Duration};
+use tauri::WindowBuilder;
 use tauri::{AppHandle, Invoke, Manager, Result, State};
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
-use tauri::WindowBuilder;
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
@@ -66,8 +66,30 @@ fn create_menu() -> Menu {
     let scripting_submenu = Submenu::new("Scripting", Menu::new().add_item(script_list));
 
     // Certificate submenu items
-    let install_cert = CustomMenuItem::new("install_cert".to_string(), "Install Certificate on This Computer...");
-    let certificate_submenu = Submenu::new("Certificate", Menu::new().add_item(install_cert));
+    let install_cert_computer = CustomMenuItem::new(
+        "install_cert_computer".to_string(),
+        "Install Certificate on This Computer...",
+    );
+    let install_cert_mobile = CustomMenuItem::new(
+        "install_cert_mobile".to_string(),
+        "Install Certificate on Mobile...",
+    );
+    let install_cert_vm = CustomMenuItem::new(
+        "install_cert_vm".to_string(),
+        "Install Certificate on VM...",
+    );
+    let install_cert_dev = CustomMenuItem::new(
+        "install_cert_dev".to_string(),
+        "Install Certificate on Development...",
+    );
+    let certificate_submenu = Submenu::new(
+        "Certificate",
+        Menu::new()
+            .add_item(install_cert_computer)
+            .add_item(install_cert_mobile)
+            .add_item(install_cert_vm)
+            .add_item(install_cert_dev)
+    );
 
     // Setup submenu (can be extended with more items if needed)
     let setup_submenu = Submenu::new("Setup", Menu::new());
@@ -99,38 +121,44 @@ fn main() {
     tauri::Builder::default()
         .menu(create_menu())
         .on_menu_event(|event| {
+            // Define a function to create a window based on menu item ID
+            fn create_window(window: tauri::Window, id: &'static str, title: &'static str, url: &'static str) {
+                tauri::async_runtime::spawn(async move {
+                    WindowBuilder::new(
+                        &window,
+                        id,
+                        tauri::WindowUrl::App(url.into()),
+                    )
+                    .title(title)
+                    .menu(Menu::default())
+                    .build()
+                    .unwrap();
+                });
+            }
+        
+            // Match on the menu item ID and call the function accordingly
             match event.menu_item_id() {
                 "script_list" => {
                     let window = event.window().clone();
-                    tauri::async_runtime::spawn(async move {
-                        WindowBuilder::new(
-                            &window,
-                            "script_list",
-                            tauri::WindowUrl::App("/script-list".into()),
-                        )
-                        .title("Script List")
-                        .menu(Menu::new())
-                        .build()
-                        .unwrap();
-                    });
+                    create_window(window, "script_list", "Script List", "/script-list");
                 }
-                "install_cert" => {
+                "install_cert_computer" => {
                     let window = event.window().clone();
-                    tauri::async_runtime::spawn(async move {
-                        WindowBuilder::new(
-                            &window,
-                            "install_cert",
-                            tauri::WindowUrl::App("/settings".into()),
-                        )
-                        .title("Install Certificate")
-                        .menu(Menu::default())
-                        .build()
-                        .unwrap();
-                    });
+                    create_window(window, "install_cert_computer", "Install Certificate in This Computer", "/computer-certificate-installer");
                 }
-                "quit" => {
-                    std::process::exit(0);
+                "install_cert_mobile" => {
+                    let window = event.window().clone();
+                    create_window(window, "install_cert_mobile", "Install Certificate on Mobile", "/mobile-certificate-installer");
                 }
+                "install_cert_vm" => {
+                    let window = event.window().clone();
+                    create_window(window, "install_cert_vm", "Install Certificate in Virtual Machine", "/vm-certificate-installer");
+                }
+                "install_cert_dev" => {
+                    let window = event.window().clone();
+                    create_window(window, "install_cert_dev", "Install Certificate in Development", "/development-certificate-installer");
+                }
+                "quit" => std::process::exit(0),
                 _ => {}
             }
         })
