@@ -51,10 +51,10 @@ export const NSTabs: React.FC<NSTabsProps> = ({
     const previousTab = memoizedTabs[tabIndex - 1]?.id;
     const nextTab = memoizedTabs[tabIndex + 1]?.id;
 
-    if (previousTab) {
-      setCurrentTab(previousTab);
-    } else if (nextTab) {
+    if (nextTab) {
       setCurrentTab(nextTab);
+    } else if (previousTab) {
+      setCurrentTab(previousTab);
     } else {
       setCurrentTab(memoizedTabs[0]?.id || '');
     }
