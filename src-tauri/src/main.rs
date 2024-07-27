@@ -1,17 +1,31 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use chrono::Utc;
-use cron::Schedule;
+use bytes::Bytes;
+use hyper::{Request, Response, Version};
+use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
 use serde::Serialize;
-use std::{env, str::FromStr, thread::sleep, time::Duration};
+use std::collections::HashMap;
+use std::env;
+use std::sync::Arc;
 use tauri::WindowBuilder;
-use tauri::{AppHandle, Invoke, Manager, Result, State};
+use tauri::{AppHandle, Manager};
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, Serialize)]
+struct PayloadTraffic {
+    uri: Option<String>,
+    method: Option<String>,
+    version: Option<String>,
+    body: Option<String>,
+    headers: HashMap<String, String>,
+}
+
+#[derive(Clone, Serialize)]
 struct Payload {
-    message: String,
+    id: String,
+    is_request: bool,
+    data: PayloadTraffic,
 }
 
 #[derive(Clone, Serialize)]
@@ -88,7 +102,7 @@ fn create_menu() -> Menu {
             .add_item(install_cert_computer)
             .add_item(install_cert_mobile)
             .add_item(install_cert_vm)
-            .add_item(install_cert_dev)
+            .add_item(install_cert_dev),
     );
 
     // Setup submenu (can be extended with more items if needed)
@@ -118,28 +132,33 @@ fn create_menu() -> Menu {
 }
 
 fn main() {
+    let key_pair = include_str!("ca/hudsucker.key");
+    let ca_cert = include_str!("ca/hudsucker.cer");
+
     tauri::Builder::default()
         .menu(create_menu())
         .on_menu_event(|event| {
             // Define a function to create a window based on menu item ID
-            fn create_window(window: tauri::Window, id: &'static str, title: &'static str, url: &'static str) {
+            fn create_window(
+                window: tauri::Window,
+                id: &'static str,
+                title: &'static str,
+                url: &'static str,
+            ) {
                 tauri::async_runtime::spawn(async move {
-                    let mut window_builder = WindowBuilder::new(
-                        &window,
-                        id,
-                        tauri::WindowUrl::App(url.into()),
-                    )
-                    .title(title);
-            
+                    let mut window_builder =
+                        WindowBuilder::new(&window, id, tauri::WindowUrl::App(url.into()))
+                            .title(title);
+
                     #[cfg(target_os = "linux")]
                     {
                         window_builder = window_builder.menu(Menu::default());
                     }
-            
+
                     window_builder.build().unwrap();
                 });
             }
-        
+
             // Match on the menu item ID and call the function accordingly
             match event.menu_item_id() {
                 "script_list" => {
@@ -148,19 +167,39 @@ fn main() {
                 }
                 "install_cert_computer" => {
                     let window = event.window().clone();
-                    create_window(window, "install_cert_computer", "Install Certificate in This Computer", "/computer-certificate-installer");
+                    create_window(
+                        window,
+                        "install_cert_computer",
+                        "Install Certificate in This Computer",
+                        "/computer-certificate-installer",
+                    );
                 }
                 "install_cert_mobile" => {
                     let window = event.window().clone();
-                    create_window(window, "install_cert_mobile", "Install Certificate on Mobile", "/mobile-certificate-installer");
+                    create_window(
+                        window,
+                        "install_cert_mobile",
+                        "Install Certificate on Mobile",
+                        "/mobile-certificate-installer",
+                    );
                 }
                 "install_cert_vm" => {
                     let window = event.window().clone();
-                    create_window(window, "install_cert_vm", "Install Certificate in Virtual Machine", "/vm-certificate-installer");
+                    create_window(
+                        window,
+                        "install_cert_vm",
+                        "Install Certificate in Virtual Machine",
+                        "/vm-certificate-installer",
+                    );
                 }
                 "install_cert_dev" => {
                     let window = event.window().clone();
-                    create_window(window, "install_cert_dev", "Install Certificate in Development", "/development-certificate-installer");
+                    create_window(
+                        window,
+                        "install_cert_dev",
+                        "Install Certificate in Development",
+                        "/development-certificate-installer",
+                    );
                 }
                 "quit" => std::process::exit(0),
                 _ => {}
@@ -186,44 +225,132 @@ fn main() {
 
             // app_handle.emit_all("start_stream_listen_id", ListenId { id: id });
 
-            // そのままループを作るとメイン処理が固まるので、tauri::async_runtime
-            // で非同期ランタイムを作成
-            let _count_handle = tauri::async_runtime::spawn(async move {
-                // cron 式で3秒ごとのイベントをスケジュールする。
-                let schedule = Schedule::from_str("0/3 * * * * *").unwrap();
-                let mut count: u32 = 0;
-                let mut next_tick = schedule.upcoming(Utc).next().unwrap();
+            let mut proxy = Proxy::new(key_pair, ca_cert, 9090);
 
-                loop {
-                    let now = Utc::now();
+            struct MyTrafficListener {
+                app_handle: AppHandle,
+            }
 
-                    // 条件に入った際の処理
-                    if now >= next_tick {
-                        next_tick = schedule.upcoming(Utc).next().unwrap();
-                        // 1 カウントする
-                        count += 1;
+            impl TrafficListener for MyTrafficListener {
+                fn request(&self, id: u64, request: Request<Bytes>) {
+                    let uri = request.uri().to_string(); // Extract URI
+                    let http_version = match request.version() {
+                        Version::HTTP_10 => "HTTP/1.0".to_string(),
+                        Version::HTTP_11 => "HTTP/1.1".to_string(),
+                        Version::HTTP_2 => "HTTP/2".to_string(),
+                        Version::HTTP_3 => "HTTP/3".to_string(),
+                        _ => "Unknown".to_string(),
+                    };
 
-                        println!("SEND EVENT COUNT #{}", count);
+                    let method = request.method().as_str().to_string();
 
-                        // イベントを emit。
-                        let result = app_handle.emit_all(
-                            "count_event",
-                            Payload {
-                                message: count.to_string(),
+                    let headers = request
+                        .headers()
+                        .iter()
+                        .map(|(key, value)| {
+                            (key.to_string(), value.to_str().unwrap_or("").to_string())
+                        })
+                        .collect::<HashMap<_, _>>();
+
+                    let body = String::from_utf8_lossy(request.body().as_ref()).to_string();
+
+                    let result = self.app_handle.emit_all(
+                        "traffic_event",
+                        Payload {
+                            id: id.to_string(),
+                            is_request: true,
+                            data: PayloadTraffic {
+                                uri: Some(uri),
+                                version: Some(http_version),
+                                method: Some(method),
+                                headers: headers,
+                                body: Some(body),
                             },
-                        );
-                        match result {
-                            Err(ref err) => println!("{:?}", err),
-                            _ => (),
-                        }
-                    }
-
-                    sleep(Duration::from_secs(std::cmp::min(
-                        (next_tick - now).num_seconds() as u64,
-                        60,
-                    )));
+                        },
+                    );
                 }
+
+                fn response(&self, id: u64, response: Response<Bytes>) {
+                    let http_version = match response.version() {
+                        Version::HTTP_10 => "HTTP/1.0".to_string(),
+                        Version::HTTP_11 => "HTTP/1.1".to_string(),
+                        Version::HTTP_2 => "HTTP/2".to_string(),
+                        Version::HTTP_3 => "HTTP/3".to_string(),
+                        _ => "Unknown".to_string(),
+                    };
+
+                    let headers = response
+                        .headers()
+                        .iter()
+                        .map(|(key, value)| {
+                            (key.to_string(), value.to_str().unwrap_or("").to_string())
+                        })
+                        .collect::<HashMap<_, _>>();
+
+                    let body = String::from_utf8_lossy(response.body().as_ref()).to_string();
+
+
+                    let result = self.app_handle.emit_all(
+                        "traffic_event",
+                        Payload {
+                            id: id.to_string(),
+                            is_request: false,
+                            data: PayloadTraffic {
+                                uri: None,
+                                version: Some(http_version),
+                                method: None,
+                                headers: headers,
+                                body: Some(body),
+                            },
+                        },
+                    );
+                }
+            }
+
+            let listener = Arc::new(MyTrafficListener { app_handle });
+
+            tauri::async_runtime::spawn(async move {
+                proxy.run_proxy(listener).await;
             });
+
+            // // そのままループを作るとメイン処理が固まるので、tauri::async_runtime
+            // // で非同期ランタイムを作成
+            // let _count_handle = tauri::async_runtime::spawn(async move {
+            //     // cron 式で3秒ごとのイベントをスケジュールする。
+            //     let schedule = Schedule::from_str("0/3 * * * * *").unwrap();
+            //     let mut count: u32 = 0;
+            //     let mut next_tick = schedule.upcoming(Utc).next().unwrap();
+
+            //     loop {
+            //         let now = Utc::now();
+
+            //         // 条件に入った際の処理
+            //         if now >= next_tick {
+            //             next_tick = schedule.upcoming(Utc).next().unwrap();
+            //             // 1 カウントする
+            //             count += 1;
+
+            //             println!("SEND EVENT COUNT #{}", count);
+
+            //             // イベントを emit。
+            //             let result = app_handle.emit_all(
+            //                 "traffic_event",
+            //                 Payload {
+            //                     id: count.to_string(),
+            //                 },
+            //             );
+            //             match result {
+            //                 Err(ref err) => println!("{:?}", err),
+            //                 _ => (),
+            //             }
+            //         }
+
+            //         sleep(Duration::from_secs(std::cmp::min(
+            //             (next_tick - now).num_seconds() as u64,
+            //             60,
+            //         )));
+            //     }
+            // });
 
             Ok(())
         })

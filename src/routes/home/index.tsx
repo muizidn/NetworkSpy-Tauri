@@ -15,6 +15,7 @@ import {
   useTrafficListContext,
 } from "../../packages/main-content/context/TrafficList";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
+import { Payload } from "../../models/Payload";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -73,8 +74,8 @@ const Content = () => {
         code: "200",
         time: "732 ms",
         duration: "16 bytes",
-        request: "Request Details",
-        response: "Response Details",
+        request: "Request data",
+        response: "Response data",
       },
     ]);
   }, []);
@@ -84,21 +85,22 @@ const Content = () => {
       return;
     }
     streamState.current = true;
-    listen("count_event", (event: any) => {
+    listen("traffic_event", (event: any) => {
+      const payload = (event.payload as Payload);
       setData((prevData) => [
         ...prevData,
         {
-          id: (event.payload as any).message as string,
+          id: payload.id,
           tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
-          url: "https://example.com",
+          url: payload.data.uri || '-',
           client: "Google Map",
-          method: "GET",
+          method: payload.data.method || '-',
           status: "Completed",
           code: "200",
           time: "732 ms",
           duration: "16 bytes",
-          request: "Request Details",
-          response: "Response Details",
+          request: "Request data",
+          response: "Response data",
         },
       ]);
     });

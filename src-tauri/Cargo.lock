@@ -1514,7 +1514,7 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 [[package]]
 name = "hudsucker"
 version = "0.22.0"
-source = "git+https://github.com/muizidn/NetworkSpyProxy.git#80acee79777a4703ebb5fa32d6b84c03184c3245"
+source = "git+https://github.com/muizidn/NetworkSpyProxy.git#cacfc40e03b95dcd9910b8ccb43893dadbc3a6d5"
 dependencies = [
  "async-compression",
  "bstr",
@@ -2069,9 +2069,9 @@ dependencies = [
  "bytes",
  "chrono",
  "cron",
+ "hyper",
  "network_spy_proxy",
  "serde",
- "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-context-menu",
@@ -2080,9 +2080,8 @@ dependencies = [
 [[package]]
 name = "network_spy_proxy"
 version = "0.1.0"
-source = "git+https://github.com/muizidn/NetworkSpyProxy.git#80acee79777a4703ebb5fa32d6b84c03184c3245"
+source = "git+https://github.com/muizidn/NetworkSpyProxy.git#cacfc40e03b95dcd9910b8ccb43893dadbc3a6d5"
 dependencies = [
- "async-trait",
  "bstr",
  "bytes",
  "cc",
