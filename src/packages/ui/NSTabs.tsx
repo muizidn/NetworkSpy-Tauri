@@ -1,5 +1,6 @@
 import { useState, ReactNode, useMemo, useCallback } from "react";
 import { Icon } from "./Icon";
+import { twMerge } from "tailwind-merge";
 
 export interface Tab {
   id: string;
@@ -34,31 +35,34 @@ export const NSTabs: React.FC<NSTabsProps> = ({
   initialTab,
   onClose,
 }) => {
-  const [currentTab, setCurrentTab] = useState(initialTab || (tabs[0]?.id || ''));
+  const [currentTab, setCurrentTab] = useState(initialTab || tabs[0]?.id || "");
 
   // Memoize tabs to avoid unnecessary re-renders
   const memoizedTabs = useMemo(() => tabs, [tabs]);
 
-  const handleTabClose = useCallback((tabId: string) => {
-    if (onClose) {
-      onClose(tabId);
-    }
+  const handleTabClose = useCallback(
+    (tabId: string) => {
+      if (onClose) {
+        onClose(tabId);
+      }
 
-    const tabIndex = memoizedTabs.findIndex(tab => tab.id === tabId);
+      const tabIndex = memoizedTabs.findIndex((tab) => tab.id === tabId);
 
-    if (tabIndex === -1) return; // Tab not found
+      if (tabIndex === -1) return; // Tab not found
 
-    const previousTab = memoizedTabs[tabIndex - 1]?.id;
-    const nextTab = memoizedTabs[tabIndex + 1]?.id;
+      const previousTab = memoizedTabs[tabIndex - 1]?.id;
+      const nextTab = memoizedTabs[tabIndex + 1]?.id;
 
-    if (nextTab) {
-      setCurrentTab(nextTab);
-    } else if (previousTab) {
-      setCurrentTab(previousTab);
-    } else {
-      setCurrentTab(memoizedTabs[0]?.id || '');
-    }
-  }, [memoizedTabs, onClose]);
+      if (nextTab) {
+        setCurrentTab(nextTab);
+      } else if (previousTab) {
+        setCurrentTab(previousTab);
+      } else {
+        setCurrentTab(memoizedTabs[0]?.id || "");
+      }
+    },
+    [memoizedTabs, onClose]
+  );
 
   return (
     <div className="flex flex-col h-full bg-[#23262a] text-white w-full relative">
@@ -67,11 +71,12 @@ export const NSTabs: React.FC<NSTabsProps> = ({
         {memoizedTabs.map((tab) => (
           <div
             key={tab.id}
-            className={`flex group space-x-1 rounded-t border border-black px-1 ${
+            className={twMerge(
+              "flex group space-x-1 rounded-t border border-black px-1",
               currentTab === tab.id
                 ? "bg-white text-black"
                 : "bg-[#1e1e1e] mt-1"
-            }`}
+            )}
           >
             <button
               className="px-2 py-1 text-xs text-nowrap"
