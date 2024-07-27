@@ -14,7 +14,7 @@ interface TabPanelProps {
 
 const TabPanel: React.FC<TabPanelProps> = ({ tag, current, children }) => {
   return (
-    <div className='absolute w-full h-full' hidden={current !== tag}>
+    <div className='absolute w-full h-full overflow-auto' hidden={current !== tag}>
       {children}
     </div>
   );

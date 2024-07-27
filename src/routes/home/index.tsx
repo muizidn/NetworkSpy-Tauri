@@ -16,6 +16,16 @@ import {
 } from "../../packages/main-content/context/TrafficList";
 
 const Content = () => {
+  const paneSizeConfig = {
+    leftPane: {
+      min: "10%",
+      max: "80%",
+    },
+    rightPane: {
+      min: "10%",
+      max: "80%",
+    },
+  };
   const [sizes, setSizes] = useState(["18%", "75%", "15%"]);
   const [isRun, setIsRun] = useState(true);
   const streamState = useRef(false);
@@ -73,7 +83,7 @@ const Content = () => {
         </button>
         <div className="flex flex-grow overflow-hidden w-full h-full border-t border-black">
           <SplitPane split="vertical" sizes={sizes} onChange={setSizes}>
-            <Pane minSize="10%" maxSize="18%">
+            <Pane minSize={paneSizeConfig.leftPane.min} maxSize={paneSizeConfig.leftPane.max}>
               <div className="flex items-center justify-center h-full">
                 <LeftSidebar />
               </div>
@@ -114,7 +124,7 @@ const Content = () => {
                 </div>
               </div>
             </Pane>
-            <Pane minSize="10%" maxSize="18%">
+            <Pane minSize={paneSizeConfig.rightPane.min} maxSize={paneSizeConfig.rightPane.max}>
               <div className="flex items-center justify-center h-full">
                 <RightSidebar />
               </div>

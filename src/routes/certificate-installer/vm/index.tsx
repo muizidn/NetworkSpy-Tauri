@@ -1,30 +1,33 @@
 import React from 'react';
-import { CertificateHelp, Tab } from '..'; // Assuming CertificateHelp component is imported from another file
+import { CertificateHelp, Tab } from '..';
+import { DockerInstaller } from './Docker';
+import { VirtualBoxInstaller } from './VirtualBox';
+import { VMWareInstaller } from './VMWare';
+import { KVMInstaller } from './KVM';
 
 
 
 const Page: React.FC<{}> = () => {
-    // Define the tabs array containing information for each device
     const tabs: Tab[] = [
         {
             id: "docker-vm",
             title: "Docker Virtual Machine",
-            content: <div>How to install in Docker Virtual Machine</div>
+            content: <DockerInstaller />
         },
         {
             id: "virtualbox-vm",
             title: "VirtualBox",
-            content: <div>How to install in VirtualBox Virtual Machine</div>
+            content: <VirtualBoxInstaller />
         },
         {
             id: "vmware-vm",
             title: "VMware Virtual Machine",
-            content: <div>How to install in VMware Virtual Machine</div>
+            content: <VMWareInstaller />
         },
         {
             id: "kvm-vm",
             title: "KVM Virtual Machine",
-            content: <div>How to install in KVM Virtual Machine</div>
+            content: <KVMInstaller />
         },
     ];
 
