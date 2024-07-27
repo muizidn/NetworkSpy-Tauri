@@ -1,9 +1,13 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+pub mod proxy_toggle;
+
 use bytes::Bytes;
 use hyper::{Request, Response, Version};
 use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
+use once_cell::sync::OnceCell;
+use proxy_toggle::{ProxyToggle};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::env;
@@ -131,9 +135,26 @@ fn create_menu() -> Menu {
     menu
 }
 
+static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
+
+#[tauri::command]
+fn turn_on_proxy() {
+    PROXY_TOGGLE.get().unwrap().turn_on();
+}
+
+#[tauri::command]
+fn turn_off_proxy() {
+    PROXY_TOGGLE.get().unwrap().turn_off();
+}
+
 fn main() {
     let key_pair = include_str!("ca/hudsucker.key");
     let ca_cert = include_str!("ca/hudsucker.cer");
+    let proxy_port: u64 = 9090;
+
+    let proxy_toggle = ProxyToggle { port: proxy_port };
+    PROXY_TOGGLE.set(proxy_toggle).expect("Failed to set proxy_toggle instance");
+
 
     tauri::Builder::default()
         .menu(create_menu())
@@ -205,7 +226,6 @@ fn main() {
                 _ => {}
             }
         })
-        .invoke_handler(tauri::generate_handler![greet])
         .setup(|app| {
             // listen to the `start_stream` (emitted on any window)
             let id = app.listen_global("start_stream", |event| {
@@ -355,6 +375,7 @@ fn main() {
             Ok(())
         })
         .plugin(tauri_plugin_context_menu::init())
+        .invoke_handler(tauri::generate_handler![greet, turn_on_proxy, turn_off_proxy])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

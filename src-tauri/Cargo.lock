@@ -2071,6 +2071,7 @@ dependencies = [
  "cron",
  "hyper",
  "network_spy_proxy",
+ "once_cell",
  "serde",
  "tauri",
  "tauri-build",

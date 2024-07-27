@@ -16,6 +16,7 @@ import {
 } from "../../packages/main-content/context/TrafficList";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
 import { Payload } from "../../models/Payload";
+import { invoke } from "@tauri-apps/api/tauri";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -107,6 +108,14 @@ const Content = () => {
   }, []);
 
   useEffect(() => {}, [isDisplayPane]);
+
+  useEffect(() => {
+    if (isRun) {
+      invoke("turn_on_proxy")
+    } else {
+      invoke("turn_off_proxy")
+    }
+  }, [isRun])
 
   const clearData = () => {
     setData([]);
