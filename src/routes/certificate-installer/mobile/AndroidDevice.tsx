@@ -4,7 +4,7 @@ export function AndroidDeviceInstaller() {
   // Example usage for Android
   const androidSteps: GuideStep[] = [
     {
-      title: "Install Root Proxyman Certificate to this Mac",
+      title: "Install Root NetworkSpy Certificate to this Mac",
       description: (
         <div className="bg-gray-800 p-4 rounded-md mt-2 flex items-center space-x-2">
           <div className="w-3 h-3 rounded-full bg-green-500"></div>
@@ -13,7 +13,7 @@ export function AndroidDeviceInstaller() {
       ),
     },
     {
-      title: "Config Wifi Proxy on Android device to Proxyman",
+      title: "Config Wifi Proxy on Android device to NetworkSpy",
       description: (
         <div>
           <p>
@@ -49,14 +49,14 @@ export function AndroidDeviceInstaller() {
           <p>
             Visit Website:{" "}
             <a
-              href="http://cert.proxyman.io"
+              href="http://cert.NetworkSpy.io"
               className="text-blue-400 hover:underline"
             >
-              http://cert.proxyman.io
+              http://cert.NetworkSpy.io
             </a>
           </p>
           <p className="mt-2">
-            Let install the 'Proxyman CA' certificate and Select VPN and App
+            Let install the 'NetworkSpy CA' certificate and Select VPN and App
             Section
           </p>
           <p className="mt-2">
@@ -67,7 +67,7 @@ export function AndroidDeviceInstaller() {
       ),
     },
     {
-      title: "Trust Proxyman Certificate in Setting app (Android 11 later)",
+      title: "Trust NetworkSpy Certificate in Setting app (Android 11 later)",
       description: (
         <div>
           <p>
@@ -75,11 +75,11 @@ export function AndroidDeviceInstaller() {
             Install a Certificate &gt; CA Certificate
           </p>
           <p className="mt-2">
-            Select "Install Anyway" and select "CA Proxyman Certificate" that
+            Select "Install Anyway" and select "CA NetworkSpy Certificate" that
             you downloaded from Step 3
           </p>
           <p className="mt-2">
-            Verify that Proxyman Certificate is on Trusted Credentials -&gt;
+            Verify that NetworkSpy Certificate is on Trusted Credentials -&gt;
             User Tab
           </p>
         </div>
@@ -87,7 +87,7 @@ export function AndroidDeviceInstaller() {
     },
     {
       title:
-        "Add Proxyman Configs to your Android project (Android 10 or later)",
+        "Add NetworkSpy Configs to your Android project (Android 10 or later)",
       description: (
         <div>
           <p>

@@ -3,30 +3,30 @@ import Guide, { GuideStep } from "../Guide";
 export function VirtualBoxInstaller() {
   const VirtualBoxSteps: GuideStep[] = [
     {
-      title: "Download and Install Proxyman",
+      title: "Download and Install NetworkSpy",
       description: (
         <div>
           <p>
-            Visit the Proxyman website and download the installer for VirtualBox:{" "}
+            Visit the NetworkSpy website and download the installer for VirtualBox:{" "}
             <a
-              href="https://proxyman.io"
+              href="https://NetworkSpy.io"
               className="text-blue-400 hover:underline"
             >
-              https://proxyman.io
+              https://NetworkSpy.io
             </a>
           </p>
           <p className="mt-2">
-            Open the downloaded file and drag the Proxyman app to your
+            Open the downloaded file and drag the NetworkSpy app to your
             Applications folder.
           </p>
         </div>
       ),
     },
     {
-      title: "Install Root Proxyman Certificate",
+      title: "Install Root NetworkSpy Certificate",
       description: (
         <div>
-          <p>Open Proxyman and go to:</p>
+          <p>Open NetworkSpy and go to:</p>
           <p className="mt-2 font-medium">
             Preferences &gt; Certificates &gt; Install Certificate
           </p>
@@ -76,14 +76,14 @@ export function VirtualBoxInstaller() {
           <p>
             Visit Website:{" "}
             <a
-              href="http://cert.proxyman.io"
+              href="http://cert.NetworkSpy.io"
               className="text-blue-400 hover:underline"
             >
-              http://cert.proxyman.io
+              http://cert.NetworkSpy.io
             </a>
           </p>
           <p className="mt-2">
-            Let it install the 'Proxyman CA' certificate and follow the prompts.
+            Let it install the 'NetworkSpy CA' certificate and follow the prompts.
           </p>
           <p className="mt-2">
             If you could not download the certificate, please read the
@@ -93,7 +93,7 @@ export function VirtualBoxInstaller() {
       ),
     },
     {
-      title: "Trust Proxyman Certificate in Keychain Access",
+      title: "Trust NetworkSpy Certificate in Keychain Access",
       description: (
         <div>
           <p>
@@ -104,7 +104,7 @@ export function VirtualBoxInstaller() {
             In the left sidebar, select <span className="font-medium">System</span> and then <span className="font-medium">Certificates</span>.
           </p>
           <p className="mt-2">
-            Find the Proxyman CA certificate, right-click on it, and select{" "}
+            Find the NetworkSpy CA certificate, right-click on it, and select{" "}
             <span className="font-medium">Get Info</span>.
           </p>
           <p className="mt-2">
@@ -133,7 +133,7 @@ export function VirtualBoxInstaller() {
             to ensure the proxy settings are correctly configured.
           </p>
           <p className="mt-2">
-            You should see the traffic being captured by Proxyman.
+            You should see the traffic being captured by NetworkSpy.
           </p>
         </div>
       ),

@@ -152,6 +152,18 @@ export const LeftSidebar = () => {
 
   return (
     <div className="bg-[#23262a] border-r border-black h-full w-full flex flex-col space-y-4">
+      <div className="flex items-end space-x-2 w-full px-2 h-8">
+        <button className="btn btn-xs bg-[#474b49] rounded text-white">
+          +
+        </button>
+        <input
+          type="text"
+          className="input input-xs flex-grow rounded bg-[#474b49] w-full"
+          placeholder="Search"
+          value={query}
+          onChange={(e) => filterNodes(e.target.value)}
+        />
+      </div>
       <div
         className={twMerge(
           "p-2 flex flex-col space-y-4 h-full w-full  items-start overflow-scroll",
@@ -194,18 +206,6 @@ export const LeftSidebar = () => {
             onClick={(name) => onClickNode(name)}
           />
         </div>
-      </div>
-      <div className="p-2 flex space-x-2 w-full border-t border-black">
-        <button className="btn btn-xs bg-[#474b49] rounded text-white">
-          +
-        </button>
-        <input
-          type="text"
-          className="input input-xs flex-grow rounded bg-[#474b49] w-full"
-          placeholder="Search"
-          value={query}
-          onChange={(e) => filterNodes(e.target.value)}
-        />
       </div>
     </div>
   );

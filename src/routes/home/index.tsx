@@ -14,6 +14,7 @@ import {
   TrafficListProvider,
   useTrafficListContext,
 } from "../../packages/main-content/context/TrafficList";
+import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -26,10 +27,39 @@ const Content = () => {
       max: "80%",
     },
   };
-  const [sizes, setSizes] = useState(["18%", "75%", "15%"]);
+  const [sizes, setSizes] = useState(["15%", "70%", "15%"]);
   const [isRun, setIsRun] = useState(true);
   const streamState = useRef(false);
-  const { data, setData } = useTrafficListContext();
+  const { setData } = useTrafficListContext();
+  const { isDisplayPane, setIsDisplayPane } = usePaneContext();
+
+  const [tabs, setTabs] = useState([
+    {
+      id: "1",
+      title: "Facebook API",
+      content: <CenterPane />,
+    },
+    {
+      id: "2",
+      title: "Local Webserver",
+      content: <CenterPane />,
+    },
+    {
+      id: "3",
+      title: "GraphQL API Instragram",
+      content: <CenterPane />,
+    },
+    {
+      id: "4",
+      title: "Machine Learning Prediction",
+      content: <CenterPane />,
+    },
+    {
+      id: "5",
+      title: "LLM API TomioAI",
+      content: <CenterPane />,
+    },
+  ]);
 
   useEffect(() => {
     setData([
@@ -74,16 +104,41 @@ const Content = () => {
     });
   }, []);
 
+  useEffect(() => {}, [isDisplayPane]);
+
+  const clearData = () => {
+    setData([]);
+  };
+
+  const toggleLeftPane = () => {
+    setIsDisplayPane((prev) => ({ ...prev, left: !prev.left }));
+  };
+
+  const toggleBottomPane = () => {
+    setIsDisplayPane((prev) => ({ ...prev, bottom: !prev.bottom }));
+  };
+
+  const toggleRightPane = () => {
+    setIsDisplayPane((prev) => ({ ...prev, right: !prev.right }));
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="select-none flex flex-col h-screen">
-        <Header />
-        <button onClick={() => setIsRun((prev) => !prev)}>
-          {isRun ? "PAUSE" : "RUN"}
-        </button>
+        <Header
+          isRun={isRun}
+          setIsRun={setIsRun}
+          clearData={clearData}
+          toggleLeftPane={toggleLeftPane}
+          toggleBottomPane={toggleBottomPane}
+          toggleRightPane={toggleRightPane}
+        />
         <div className="flex flex-grow overflow-hidden w-full h-full border-t border-black">
           <SplitPane split="vertical" sizes={sizes} onChange={setSizes}>
-            <Pane minSize={paneSizeConfig.leftPane.min} maxSize={paneSizeConfig.leftPane.max}>
+            <Pane
+              minSize={paneSizeConfig.leftPane.min}
+              maxSize={paneSizeConfig.leftPane.max}
+            >
               <div className="flex items-center justify-center h-full">
                 <LeftSidebar />
               </div>
@@ -91,40 +146,20 @@ const Content = () => {
             <Pane>
               <div className="flex items-center justify-center h-full relative">
                 <NSTabs
-                  tabs={[
-                    {
-                      id: "1",
-                      title: "Facebook API",
-                      content: <CenterPane />,
-                    },
-                    {
-                      id: "2",
-                      title: "Local Webserver",
-                      content: <CenterPane />,
-                    },
-                    {
-                      id: "3",
-                      title: "GraphQL API Instragram",
-                      content: <CenterPane />,
-                    },
-                    {
-                      id: "4",
-                      title: "Machine Learning Prediction",
-                      content: <CenterPane />,
-                    },
-                    {
-                      id: "5",
-                      title: "LLM API TomioAI",
-                      content: <CenterPane />,
-                    },
-                  ]}
+                  tabs={tabs}
+                  onClose={(id) =>
+                    setTabs((prev) => [...prev.filter((e) => e.id !== id)])
+                  }
                 />
                 <div className="absolute bottom-0 w-full bg-[#1e1e1e] z-10">
                   <BottomPaneOptions />
                 </div>
               </div>
             </Pane>
-            <Pane minSize={paneSizeConfig.rightPane.min} maxSize={paneSizeConfig.rightPane.max}>
+            <Pane
+              minSize={paneSizeConfig.rightPane.min}
+              maxSize={paneSizeConfig.rightPane.max}
+            >
               <div className="flex items-center justify-center h-full">
                 <RightSidebar />
               </div>
@@ -139,7 +174,9 @@ const Content = () => {
 const App: React.FC = () => {
   return (
     <TrafficListProvider>
-      <Content />
+      <PaneProvider>
+        <Content />
+      </PaneProvider>
     </TrafficListProvider>
   );
 };

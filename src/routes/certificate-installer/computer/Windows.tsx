@@ -3,30 +3,30 @@ import Guide, { GuideStep } from "../Guide";
 export function WindowsInstaller() {
   const windowsSteps: GuideStep[] = [
     {
-      title: "Download and Install Proxyman",
+      title: "Download and Install NetworkSpy",
       description: (
         <div>
           <p>
-            Visit the Proxyman website and download the installer for Windows:{" "}
+            Visit the NetworkSpy website and download the installer for Windows:{" "}
             <a
-              href="https://proxyman.io"
+              href="https://NetworkSpy.io"
               className="text-blue-400 hover:underline"
             >
-              https://proxyman.io
+              https://NetworkSpy.io
             </a>
           </p>
           <p className="mt-2">
             Run the installer and follow the on-screen instructions to install
-            Proxyman on your Windows machine.
+            NetworkSpy on your Windows machine.
           </p>
         </div>
       ),
     },
     {
-      title: "Install Root Proxyman Certificate",
+      title: "Install Root NetworkSpy Certificate",
       description: (
         <div>
-          <p>Open Proxyman and go to:</p>
+          <p>Open NetworkSpy and go to:</p>
           <p className="mt-2 font-medium">
             Certificates &gt; Install Certificate
           </p>
@@ -72,14 +72,14 @@ export function WindowsInstaller() {
           <p>
             Visit Website:{" "}
             <a
-              href="http://cert.proxyman.io"
+              href="http://cert.NetworkSpy.io"
               className="text-blue-400 hover:underline"
             >
-              http://cert.proxyman.io
+              http://cert.NetworkSpy.io
             </a>
           </p>
           <p className="mt-2">
-            Let it install the 'Proxyman CA' certificate and follow the
+            Let it install the 'NetworkSpy CA' certificate and follow the
             prompts.
           </p>
           <p className="mt-2">
@@ -90,7 +90,7 @@ export function WindowsInstaller() {
       ),
     },
     {
-      title: "Trust Proxyman Certificate in Settings",
+      title: "Trust NetworkSpy Certificate in Settings",
       description: (
         <div>
           <p>
@@ -101,7 +101,7 @@ export function WindowsInstaller() {
           </p>
           <p className="mt-2">
             Select the <span className="font-medium">Trusted Root Certification Authorities</span> tab and verify that the
-            Proxyman Certificate is listed and trusted.
+            NetworkSpy Certificate is listed and trusted.
           </p>
         </div>
       ),
@@ -121,7 +121,7 @@ export function WindowsInstaller() {
             to ensure the proxy settings are correctly configured.
           </p>
           <p className="mt-2">
-            You should see the traffic being captured by Proxyman.
+            You should see the traffic being captured by NetworkSpy.
           </p>
         </div>
       ),

@@ -327,8 +327,8 @@ export const TableView = <T,>({
             onContextMenu={showContextMenu}
             onClick={onClickRow}
             className={twMerge(
-              "hover:bg-green-700",
-              selectedRows.rows.includes(index) && "bg-green-400"
+              "hover:bg-[#181a1d]",
+              selectedRows.rows.includes(index) && "bg-[#191b1e]"
             )}
             data-index={index}>
             {headers.map((header, i) => (

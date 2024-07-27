@@ -3,25 +3,25 @@ import Guide, { GuideStep } from "../Guide";
 export function DockerInstaller() {
   const DockerSteps: GuideStep[] = [
     {
-      title: "Download and Install Proxyman",
+      title: "Download and Install NetworkSpy",
       description: (
         <div>
           <p>
-            Visit the Proxyman website and download the installer for Docker:{" "}
+            Visit the NetworkSpy website and download the installer for Docker:{" "}
             <a
-              href="https://proxyman.io"
+              href="https://NetworkSpy.io"
               className="text-blue-400 hover:underline"
             >
-              https://proxyman.io
+              https://NetworkSpy.io
             </a>
           </p>
           <p className="mt-2">
             Open a terminal and navigate to the download directory. Run the
-            following commands to install Proxyman:
+            following commands to install NetworkSpy:
           </p>
           <div className="bg-gray-800 p-4 rounded-md mt-2">
             <p>
-              <code>sudo dpkg -i proxyman-setup.deb</code>
+              <code>sudo dpkg -i NetworkSpy-setup.deb</code>
             </p>
             <p>
               <code>sudo apt-get install -f</code>
@@ -31,10 +31,10 @@ export function DockerInstaller() {
       ),
     },
     {
-      title: "Install Root Proxyman Certificate",
+      title: "Install Root NetworkSpy Certificate",
       description: (
         <div>
-          <p>Open Proxyman and go to:</p>
+          <p>Open NetworkSpy and go to:</p>
           <p className="mt-2 font-medium">
             Preferences &gt; Certificates &gt; Install Certificate
           </p>
@@ -84,14 +84,14 @@ export function DockerInstaller() {
           <p>
             Visit Website:{" "}
             <a
-              href="http://cert.proxyman.io"
+              href="http://cert.NetworkSpy.io"
               className="text-blue-400 hover:underline"
             >
-              http://cert.proxyman.io
+              http://cert.NetworkSpy.io
             </a>
           </p>
           <p className="mt-2">
-            Let it install the 'Proxyman CA' certificate and follow the prompts.
+            Let it install the 'NetworkSpy CA' certificate and follow the prompts.
           </p>
           <p className="mt-2">
             If you could not download the certificate, please read the
@@ -101,7 +101,7 @@ export function DockerInstaller() {
       ),
     },
     {
-      title: "Trust Proxyman Certificate in System Settings",
+      title: "Trust NetworkSpy Certificate in System Settings",
       description: (
         <div>
           <p>
@@ -110,7 +110,7 @@ export function DockerInstaller() {
             <span className="font-medium">Certificates</span>.
           </p>
           <p className="mt-2">
-            Add the Proxyman CA certificate to the list of trusted certificates.
+            Add the NetworkSpy CA certificate to the list of trusted certificates.
           </p>
         </div>
       ),
@@ -130,7 +130,7 @@ export function DockerInstaller() {
             to ensure the proxy settings are correctly configured.
           </p>
           <p className="mt-2">
-            You should see the traffic being captured by Proxyman.
+            You should see the traffic being captured by NetworkSpy.
           </p>
         </div>
       ),
