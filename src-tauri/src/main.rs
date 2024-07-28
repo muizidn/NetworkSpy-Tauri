@@ -1,20 +1,23 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+pub mod certificate_installer;
 pub mod proxy_toggle;
 
 use bytes::Bytes;
+use certificate_installer::CertificateInstaller;
 use hyper::{Request, Response, Version};
 use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
 use once_cell::sync::OnceCell;
-use proxy_toggle::{ProxyToggle};
+use proxy_toggle::ProxyToggle;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::env;
-use std::sync::Arc;
-use tauri::WindowBuilder;
+use std::process::Command;
+use std::sync::{mpsc, Arc};
+use std::{env, thread};
 use tauri::{AppHandle, Manager};
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+use tauri::{RunEvent, WindowBuilder};
 
 #[derive(Clone, Serialize)]
 struct PayloadTraffic {
@@ -136,10 +139,11 @@ fn create_menu() -> Menu {
 }
 
 static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
+static CERTIFICATE_INSTALLER: OnceCell<CertificateInstaller> = OnceCell::new();
 
 #[tauri::command]
-fn turn_on_proxy() {
-    PROXY_TOGGLE.get().unwrap().turn_on();
+fn turn_on_proxy(port: u64) {
+    PROXY_TOGGLE.get().unwrap().turn_on(port);
 }
 
 #[tauri::command]
@@ -147,16 +151,24 @@ fn turn_off_proxy() {
     PROXY_TOGGLE.get().unwrap().turn_off();
 }
 
+#[tauri::command]
+fn install_certificate(cert_path: String) -> Result<String, String> {
+    CERTIFICATE_INSTALLER.get().unwrap().install(cert_path)
+}
+
 fn main() {
     let key_pair = include_str!("ca/hudsucker.key");
     let ca_cert = include_str!("ca/hudsucker.cer");
-    let proxy_port: u64 = 9090;
 
-    let proxy_toggle = ProxyToggle { port: proxy_port };
-    PROXY_TOGGLE.set(proxy_toggle).expect("Failed to set proxy_toggle instance");
+    let proxy_toggle = ProxyToggle { };
+    PROXY_TOGGLE
+        .set(proxy_toggle)
+        .expect("Failed to set proxy_toggle instance");
+    CERTIFICATE_INSTALLER
+        .set(CertificateInstaller {})
+        .expect("Failed to set certificate_installer instance");
 
-
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .menu(create_menu())
         .on_menu_event(|event| {
             // Define a function to create a window based on menu item ID
@@ -222,7 +234,10 @@ fn main() {
                         "/development-certificate-installer",
                     );
                 }
-                "quit" => std::process::exit(0),
+                "quit" => {
+                    turn_off_proxy();
+                    event.window().app_handle().exit(0)
+                }
                 _ => {}
             }
         })
@@ -309,7 +324,6 @@ fn main() {
 
                     let body = String::from_utf8_lossy(response.body().as_ref()).to_string();
 
-
                     let result = self.app_handle.emit_all(
                         "traffic_event",
                         Payload {
@@ -327,7 +341,9 @@ fn main() {
                 }
             }
 
-            let listener = Arc::new(MyTrafficListener { app_handle });
+            let listener = Arc::new(MyTrafficListener {
+                app_handle: app_handle,
+            });
 
             tauri::async_runtime::spawn(async move {
                 proxy.run_proxy(listener).await;
@@ -375,7 +391,22 @@ fn main() {
             Ok(())
         })
         .plugin(tauri_plugin_context_menu::init())
-        .invoke_handler(tauri::generate_handler![greet, turn_on_proxy, turn_off_proxy])
-        .run(tauri::generate_context!())
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            turn_on_proxy,
+            turn_off_proxy,
+            install_certificate,
+        ])
+        .build(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    app.run(|app_handle, event| match event {
+        RunEvent::Exit => {
+            turn_off_proxy();
+        }
+        RunEvent::ExitRequested { api, .. } => {
+            turn_off_proxy();
+        }
+        _ => {}
+    });
 }

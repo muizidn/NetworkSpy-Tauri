@@ -128,7 +128,10 @@ export const LeftSidebar = () => {
   const [domain, setDomain] = useState(kDOMAIN);
   const [filteredNodes, setFilteredNodes] = useState<TreeNode[]>([]);
 
-  function flatMapNode(e: TreeNode): TreeNode[] {
+  function flatMapNode(e: TreeNode | null): TreeNode[] {
+    if (!e) {
+      return [];
+    }
     const selfWithoutChildren = { ...e, children: undefined } as TreeNode;
     if (e.children) {
       const flatmapped = e.children.flatMap((e) => flatMapNode(e));

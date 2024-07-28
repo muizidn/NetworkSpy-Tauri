@@ -70,7 +70,7 @@ const ScriptList: React.FC = () => {
         },
     ];
 
-    const [data, setData] = useState<ScriptItem[]>([
+    const [data, setTrafficList] = useState<ScriptItem[]>([
         {
             name: "Test Modify POst Query",
             method: "POST",

@@ -8,7 +8,7 @@ export class KeyValueRenderer implements Renderer<KeyValuePair> {
   constructor(type: KeyOrValue) {
     this.type = type;
   }
-  render(input: KeyValuePair) {
+  render({ input }: { input: KeyValuePair }): React.ReactNode {
     return (
       <td className="select-none">
         {this.type === 'key' && input.key}

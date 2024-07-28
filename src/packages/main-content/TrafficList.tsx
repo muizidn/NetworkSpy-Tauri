@@ -5,11 +5,11 @@ import {
 } from "../ui/TableView";
 import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { useTrafficListContext } from "./context/TrafficList";
-import { TrafficItemMap } from "./model/TrafficItemMap";
 import { invoke } from "@tauri-apps/api/tauri";
+import { TrafficItemMap } from "./model/TrafficItemMap";
 
 export const TrafficList: React.FC = () => {
-  const { data } = useTrafficListContext();
+  const { trafficList } = useTrafficListContext();
 
   const headers: TableViewHeader<TrafficItemMap>[] = [
     {
@@ -34,7 +34,7 @@ export const TrafficList: React.FC = () => {
   return (
     <TableView
       headers={headers}
-      data={data}
+      data={trafficList}
       contextMenuRenderer={new TrafficListContextMenuRenderer()}
     />
   );

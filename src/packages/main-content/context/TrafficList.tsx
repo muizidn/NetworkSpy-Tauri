@@ -1,9 +1,16 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { TrafficItemMap } from "../model/TrafficItemMap";
+import { Traffic } from "../../../models/Traffic";
 
 interface TrafficListContextState {
-  data: TrafficItemMap[];
-  setData: React.Dispatch<React.SetStateAction<TrafficItemMap[]>>;
+  trafficList: TrafficItemMap[];
+  setTrafficList: React.Dispatch<React.SetStateAction<TrafficItemMap[]>>;
+  trafficSet: { [key: string]: Traffic };
+  setTrafficSet: React.Dispatch<
+    React.SetStateAction<{ [key: string]: Traffic }>
+  >;
+  selections: string[];
+  setSelections: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const TrafficListContext = createContext<TrafficListContextState | undefined>(
@@ -27,10 +34,21 @@ interface TrafficListProviderProps {
 export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
   children,
 }) => {
-  const [data, setData] = useState<TrafficItemMap[]>([]);
+  const [trafficList, setTrafficList] = useState<TrafficItemMap[]>([]);
+  const [trafficSet, setTrafficSet] = useState<{ [key: string]: Traffic }>({});
+  const [selections, setSelections] = useState<string[]>([]);
 
   return (
-    <TrafficListContext.Provider value={{ data, setData }}>
+    <TrafficListContext.Provider
+      value={{
+        trafficList,
+        setTrafficList,
+        trafficSet,
+        setTrafficSet,
+        selections,
+        setSelections,
+      }}
+    >
       {children}
     </TrafficListContext.Provider>
   );

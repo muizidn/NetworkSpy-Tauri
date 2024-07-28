@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SplitPane, { Pane } from "split-pane-react";
+import SplitPane, { Pane, SashContent } from "split-pane-react";
 
 import { BottomPane } from "../../packages/bottom-pane/BottomPane";
 import { FilterBar } from "../../packages/filter-bar/FilterBar";
@@ -17,6 +17,7 @@ export const CenterPane: React.FC = () => {
       </div>
       <SplitPane
         split="horizontal"
+        sashRender={() => <SashContent type="vscode" />}
         sizes={sizesCenterPane}
         onChange={setSizesCenterPane}
       >

@@ -1,4 +1,4 @@
-import SplitPane, { Pane } from "split-pane-react";
+import SplitPane, { Pane, SashContent } from "split-pane-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Header } from "../../packages/header/Header";
@@ -17,6 +17,7 @@ import {
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
 import { Payload } from "../../models/Payload";
 import { invoke } from "@tauri-apps/api/tauri";
+import { Traffic } from "../../models/Traffic";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -29,10 +30,10 @@ const Content = () => {
       max: "80%",
     },
   };
-  const [sizes, setSizes] = useState(["15%", "70%", "15%"]);
+  const [sizes, setSizes] = useState<any[]>(["15%", "70%", "15%"]);
   const [isRun, setIsRun] = useState(true);
   const streamState = useRef(false);
-  const { setData } = useTrafficListContext();
+  const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
 
   const [tabs, setTabs] = useState([
@@ -64,21 +65,7 @@ const Content = () => {
   ]);
 
   useEffect(() => {
-    setData([
-      {
-        id: "0",
-        tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
-        url: "https://example.com",
-        client: "Google Map",
-        method: "GET",
-        status: "Completed",
-        code: "200",
-        time: "732 ms",
-        duration: "16 bytes",
-        request: "Request data",
-        response: "Response data",
-      },
-    ]);
+    setTrafficList([]);
   }, []);
 
   useEffect(() => {
@@ -87,38 +74,96 @@ const Content = () => {
     }
     streamState.current = true;
     listen("traffic_event", (event: any) => {
-      const payload = (event.payload as Payload);
-      setData((prevData) => [
-        ...prevData,
-        {
+      const payload = event.payload as Payload;
+      let traffic = {} as Traffic;
+      if (payload.is_request) {
+        traffic = {
           id: payload.id,
-          tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
-          url: payload.data.uri || '-',
-          client: "Google Map",
-          method: payload.data.method || '-',
-          status: "Completed",
-          code: "200",
-          time: "732 ms",
-          duration: "16 bytes",
-          request: "Request data",
-          response: "Response data",
-        },
-      ]);
+          uri: payload.data.uri!,
+          method: payload.data.method!,
+          request: {
+            version: payload.data.version!,
+            header: payload.data.headers,
+            body: payload.data.body || null,
+          },
+          response: null,
+        };
+      } else {
+        traffic = trafficSet[payload.id];
+        traffic = {
+          ...traffic,
+          id: payload.id,
+          response: {
+            version: payload.data.version!,
+            header: payload.data.headers,
+            body: payload.data.body || null,
+          },
+        };
+      }
+
+      setTrafficSet((prev) => ({
+        ...prev,
+        traffic,
+      }));
+      setTrafficList((prevData) => {
+        const existingTrafficIndex = prevData.findIndex(
+          (t) => t.id === traffic.id
+        );
+
+        if (existingTrafficIndex !== -1) {
+          const updatedTraffic = {
+            ...prevData[existingTrafficIndex],
+            tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
+            url: traffic.uri || "-",
+            client: "Google Map",
+            method: traffic.method,
+            status: "Completed",
+            code: "200",
+            time: "732 ms",
+            duration: "16 bytes",
+            request: "Request data",
+            response: traffic.response ? "Response Data" : "-",
+          };
+
+          return [
+            ...prevData.slice(0, existingTrafficIndex),
+            updatedTraffic,
+            ...prevData.slice(existingTrafficIndex + 1),
+          ];
+        } else {
+          const newTraffic = {
+            id: traffic.id,
+            tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
+            url: traffic.uri || "-",
+            client: "Google Map",
+            method: traffic.method,
+            status: "Completed",
+            code: "200",
+            time: "732 ms",
+            duration: "16 bytes",
+            request: "Request data",
+            response: traffic.response ? "Response Data" : "-",
+          };
+
+          return [...prevData, newTraffic];
+        }
+      });
     });
   }, []);
 
   useEffect(() => {}, [isDisplayPane]);
 
   useEffect(() => {
+    const port = 9090;
     if (isRun) {
-      invoke("turn_on_proxy")
+      invoke("turn_on_proxy", { port });
     } else {
-      invoke("turn_off_proxy")
+      invoke("turn_off_proxy");
     }
-  }, [isRun])
+  }, [isRun]);
 
   const clearData = () => {
-    setData([]);
+    setTrafficList([]);
   };
 
   const toggleLeftPane = () => {
@@ -145,7 +190,12 @@ const Content = () => {
           toggleRightPane={toggleRightPane}
         />
         <div className="flex flex-grow overflow-hidden w-full h-full border-t border-black">
-          <SplitPane split="vertical" sizes={sizes} onChange={setSizes}>
+          <SplitPane
+            split="vertical"
+            sashRender={() => <SashContent type="vscode" />}
+            sizes={sizes}
+            onChange={setSizes}
+          >
             <Pane
               minSize={paneSizeConfig.leftPane.min}
               maxSize={paneSizeConfig.leftPane.max}
