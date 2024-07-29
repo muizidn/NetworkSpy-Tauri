@@ -31,7 +31,7 @@ const Content = () => {
     },
   };
   const [sizes, setSizes] = useState<any[]>(["15%", "70%", "15%"]);
-  const [isRun, setIsRun] = useState(true);
+  const [isRun, setIsRun] = useState(false);
   const streamState = useRef(false);
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
