@@ -151,8 +151,6 @@ const Content = () => {
     });
   }, []);
 
-  useEffect(() => {}, [isDisplayPane]);
-
   useEffect(() => {
     const port = 9090;
     if (isRun) {
@@ -166,8 +164,16 @@ const Content = () => {
     setTrafficList([]);
   };
 
+  const getNewSizes = (params: any, index: number) => {
+    return sizes.map((size, idx) =>
+      idx === index ? (params ? "0%" : "15%") : size
+    );
+  };
+
   const toggleLeftPane = () => {
     setIsDisplayPane((prev) => ({ ...prev, left: !prev.left }));
+    const newSizes = getNewSizes(isDisplayPane.left, 0);
+    setSizes(newSizes);
   };
 
   const toggleBottomPane = () => {
@@ -176,11 +182,13 @@ const Content = () => {
 
   const toggleRightPane = () => {
     setIsDisplayPane((prev) => ({ ...prev, right: !prev.right }));
+    const newSizes = getNewSizes(isDisplayPane.right, 2);
+    setSizes(newSizes);
   };
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="select-none flex flex-col h-screen">
+      <div className='select-none flex flex-col h-screen'>
         <Header
           isRun={isRun}
           setIsRun={setIsRun}
@@ -189,39 +197,36 @@ const Content = () => {
           toggleBottomPane={toggleBottomPane}
           toggleRightPane={toggleRightPane}
         />
-        <div className="flex flex-grow overflow-hidden w-full h-full border-t border-black">
+        <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
           <SplitPane
-            split="vertical"
-            sashRender={() => <SashContent type="vscode" />}
+            split='vertical'
+            sashRender={() => <SashContent type='vscode' />}
             sizes={sizes}
-            onChange={setSizes}
-          >
+            onChange={setSizes}>
             <Pane
               minSize={paneSizeConfig.leftPane.min}
-              maxSize={paneSizeConfig.leftPane.max}
-            >
-              <div className="flex items-center justify-center h-full">
+              maxSize={paneSizeConfig.leftPane.max}>
+              <div className='flex items-center justify-center h-full'>
                 <LeftSidebar />
               </div>
             </Pane>
             <Pane>
-              <div className="flex items-center justify-center h-full relative">
+              <div className='flex items-center justify-center h-full relative'>
                 <NSTabs
                   tabs={tabs}
                   onClose={(id) =>
                     setTabs((prev) => [...prev.filter((e) => e.id !== id)])
                   }
                 />
-                <div className="absolute bottom-0 w-full bg-[#1e1e1e] z-10">
+                <div className='absolute bottom-0 w-full bg-[#1e1e1e] z-10'>
                   <BottomPaneOptions />
                 </div>
               </div>
             </Pane>
             <Pane
               minSize={paneSizeConfig.rightPane.min}
-              maxSize={paneSizeConfig.rightPane.max}
-            >
-              <div className="flex items-center justify-center h-full">
+              maxSize={paneSizeConfig.rightPane.max}>
+              <div className='flex items-center justify-center h-full'>
                 <RightSidebar />
               </div>
             </Pane>
