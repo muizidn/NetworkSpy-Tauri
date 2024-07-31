@@ -4,6 +4,7 @@ export interface Tab {
   id: string;
   title: string;
   content: ReactNode;
+  icon?: ReactNode;
 }
 
 interface TabPanelProps {
@@ -14,7 +15,9 @@ interface TabPanelProps {
 
 const TabPanel: React.FC<TabPanelProps> = ({ tag, current, children }) => {
   return (
-    <div className='absolute w-full h-full overflow-auto' hidden={current !== tag}>
+    <div
+      className='absolute w-full h-full overflow-auto'
+      hidden={current !== tag}>
       {children}
     </div>
   );
@@ -26,22 +29,32 @@ interface CertificateHelpProps {
   initialTab?: string;
 }
 
-export const CertificateHelp: React.FC<CertificateHelpProps> = ({ title, tabs, initialTab }) => {
+export const CertificateHelp: React.FC<CertificateHelpProps> = ({
+  title,
+  tabs,
+  initialTab,
+}) => {
   const [currentTab, setCurrentTab] = useState(initialTab || tabs[0].id);
 
   return (
     <div className='flex h-full bg-[#23262a] text-white w-full relative'>
-      <div className='w-1/5 flex flex-col overflow-y-auto no-scrollbar bg-[#23262a] z-10'>
+      <div className='w-1/5 flex flex-col overflow-y-auto no-scrollbar bg-[#23262a] z-10 p-4'>
+        <input
+          type='text'
+          className='input input-xs rounded bg-[#474b49] w-full mb-2 h-8'
+          placeholder='Search'
+        />
         {title && <h3 className='p-2 text-sm flex items-center'>{title}</h3>}
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            className={`px-2 py-1 text-xs text-nowrap ${
+            className={`h-8 mb-1 flex items-center px-2 py-2 text-xs text-nowrap text-left rounded ${
               currentTab === tab.id
-                ? "bg-white text-black"
-                : "bg-[#1e1e1e] mt-1"
+                ? "bg-blue-600 text-white"
+                : "bg-[#23262a] text-gray-200"
             }`}
             onClick={() => setCurrentTab(tab.id)}>
+            {tab.icon}
             {tab.title}
           </button>
         ))}
