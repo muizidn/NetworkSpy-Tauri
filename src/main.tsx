@@ -11,11 +11,11 @@ import "./styles/treeview.css";
 import "split-pane-react/esm/themes/default.css";
 import { SettingsProvider } from "./context/SettingsProvider";
 import ScriptList from "./routes/script-list";
-import MobileCertificateInstaller from './routes/certificate-installer/mobile'
-import ComputerCertificateInstaller from './routes/certificate-installer/computer'
-import VMCertificateInstaller from './routes/certificate-installer/vm'
-import DevelopmentCertificateInstaller from './routes/certificate-installer/development'
-
+import MobileCertificateInstaller from "./routes/certificate-installer/mobile";
+import ComputerCertificateInstaller from "./routes/certificate-installer/computer";
+import VMCertificateInstaller from "./routes/certificate-installer/vm";
+import DevelopmentCertificateInstaller from "./routes/certificate-installer/development";
+import ScriptEditor from "./routes/script-editor";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +34,10 @@ const router = createBrowserRouter([
       {
         path: "/script-list",
         element: <ScriptList />,
+      },
+      {
+        path: "/script-editor",
+        element: <ScriptEditor />,
       },
       {
         path: "/mobile-certificate-installer",
