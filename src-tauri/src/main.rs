@@ -156,6 +156,38 @@ fn install_certificate(cert_path: String) -> Result<String, String> {
     CERTIFICATE_INSTALLER.get().unwrap().install(cert_path)
 }
 
+#[tauri::command]
+fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle) {
+    tauri::WindowBuilder::new(
+        &app_handle,
+        context.clone(),
+        tauri::WindowUrl::App(format!("/{}", context).into())
+    )
+    .title(title)
+    .build()
+    .unwrap();
+}
+
+fn create_window(
+    window: tauri::Window,
+    id: &'static str,
+    title: &'static str,
+    url: &'static str,
+) {
+    tauri::async_runtime::spawn(async move {
+        let mut window_builder =
+            WindowBuilder::new(&window, id, tauri::WindowUrl::App(url.into()))
+                .title(title);
+
+        #[cfg(target_os = "linux")]
+        {
+            window_builder = window_builder.menu(Menu::default());
+        }
+
+        window_builder.build().unwrap();
+    });
+}
+
 fn main() {
     let key_pair = include_str!("ca/hudsucker.key");
     let ca_cert = include_str!("ca/hudsucker.cer");
@@ -171,26 +203,6 @@ fn main() {
     let app = tauri::Builder::default()
         .menu(create_menu())
         .on_menu_event(|event| {
-            // Define a function to create a window based on menu item ID
-            fn create_window(
-                window: tauri::Window,
-                id: &'static str,
-                title: &'static str,
-                url: &'static str,
-            ) {
-                tauri::async_runtime::spawn(async move {
-                    let mut window_builder =
-                        WindowBuilder::new(&window, id, tauri::WindowUrl::App(url.into()))
-                            .title(title);
-
-                    #[cfg(target_os = "linux")]
-                    {
-                        window_builder = window_builder.menu(Menu::default());
-                    }
-
-                    window_builder.build().unwrap();
-                });
-            }
 
             // Match on the menu item ID and call the function accordingly
             match event.menu_item_id() {
@@ -396,6 +408,7 @@ fn main() {
             turn_on_proxy,
             turn_off_proxy,
             install_certificate,
+            open_new_window,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");

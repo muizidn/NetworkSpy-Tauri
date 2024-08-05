@@ -6,6 +6,7 @@ import {
 } from "../../packages/ui/TableView";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { invoke } from "@tauri-apps/api/tauri";
 
 const checkboxStyles = "rounded border-gray-300";
 
@@ -129,7 +130,7 @@ const ScriptList: React.FC = () => {
               <Button onClick={() => {}}>question button</Button>
               {/* Example of more dropdown (not implemented here) */}
               <div className='relative inline-block text-left'>
-                <button className='px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors duration-300'>
+                <button className='px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors duration-300' onClick={() => invoke('open_new_window', { context:"script-editor", title:"Script Editor" })}>
                   more dropdown
                 </button>
                 {/* Dropdown content */}
