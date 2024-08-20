@@ -70,7 +70,7 @@ const HeaderCell = <T,>({
         ref={ref}
         className='flex items-center justify-between cursor-grab w-full'
         style={{ width: columnWidth, minWidth: header.minWidth }}>
-        <span>{header.title}</span>
+        <span className='text-nowrap'>{header.title}</span>
         {sortConfig.key === header.title.toLowerCase() && (
           <span className='cursor-pointer mr-2'>
             {sortConfig.order === "asc" ? "↓" : "↑"}
@@ -177,7 +177,7 @@ export const TableView = <T,>({
       selectedItems = selectedRows.rows.map((i) => data[i]);
     }
 
-    await contextMenuRenderer.render(selectedItems)
+    await contextMenuRenderer.render(selectedItems);
   }
 
   function _animateScroll() {
