@@ -1,9 +1,16 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useMemo,
+} from "react";
 import { TrafficItemMap } from "../model/TrafficItemMap";
 import { Traffic } from "../../../models/Traffic";
 
 interface TrafficListContextState {
   trafficList: TrafficItemMap[];
+  trafficListDisplay: TrafficItemMap[];
   setTrafficList: React.Dispatch<React.SetStateAction<TrafficItemMap[]>>;
   trafficSet: { [key: string]: Traffic };
   setTrafficSet: React.Dispatch<
@@ -11,6 +18,8 @@ interface TrafficListContextState {
   >;
   selections: string[];
   setSelections: React.Dispatch<React.SetStateAction<string[]>>;
+  filterByUrl: string;
+  setFilterByUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const TrafficListContext = createContext<TrafficListContextState | undefined>(
@@ -37,16 +46,36 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
   const [trafficList, setTrafficList] = useState<TrafficItemMap[]>([]);
   const [trafficSet, setTrafficSet] = useState<{ [key: string]: Traffic }>({});
   const [selections, setSelections] = useState<string[]>([]);
+  const [_filterByUrl, setFilterByUrl] = useState<string>("");
+
+  const filterByUrlTrafficList = useMemo(() => {
+    const filteredByUrl = trafficList.filter((t) => {
+      if (_filterByUrl === "") {
+        return true;
+      }
+      if (!t.url || t.url === "") {
+        return false;
+      }
+
+      const trafficUrl = new URL(t.url as string);
+      const trafficUrlJoined = `${trafficUrl.hostname}${trafficUrl.pathname}`
+      return trafficUrlJoined.includes(_filterByUrl);
+    });
+    return filteredByUrl;
+  }, [trafficList, _filterByUrl]);
 
   return (
     <TrafficListContext.Provider
       value={{
         trafficList,
+        trafficListDisplay: filterByUrlTrafficList,
         setTrafficList,
         trafficSet,
         setTrafficSet,
         selections,
         setSelections,
+        filterByUrl: _filterByUrl,
+        setFilterByUrl,
       }}
     >
       {children}

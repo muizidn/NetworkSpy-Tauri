@@ -70,7 +70,7 @@ const Content = () => {
     setTrafficList([])
 
     // just for testing purpose
-    const traffics = generateJson(5000)
+    const traffics = generateJson(50)
     setTrafficList(traffics as TrafficItemMap[]);
   }, []);
 

@@ -1,6 +1,9 @@
 import { TreeNode } from "./TreeView";
+import { v4 as uuidv4 } from 'uuid';
 
-export function groupUrlsInTree(name: string, urls: string[]): TreeNode {
+export const kTreeNodeIdPrefixSeparator = '---@@@---'
+
+export function groupUrlsInTree(idPrefix: string,urls: string[]): TreeNode[] {
   const root: Record<string, TreeNode> = {};
 
   urls.forEach((url) => {
@@ -8,25 +11,32 @@ export function groupUrlsInTree(name: string, urls: string[]): TreeNode {
     const domain = urlObj.hostname;
     const pathSegments = urlObj.pathname.split("/").filter(Boolean); // Split and remove empty segments
 
+    const idDomain = `${idPrefix}${kTreeNodeIdPrefixSeparator}${urlObj.hostname}`
+
     // Ensure the domain node exists
     if (!root[domain]) {
-      root[domain] = { name: domain, children: [] };
+      root[domain] = { id: idDomain, name: domain, children: [] };
     }
 
     let currentNode = root[domain];
 
     // Traverse or create path nodes under domain
-    pathSegments.forEach((segment) => {
+    pathSegments.forEach((segment, index) => {
+      // Build the full path for this node
+      const fullPath = `${idDomain}/${pathSegments.slice(0, index + 1).join("/")}`;
+      
       let pathNode = currentNode.children?.find(
-        (child) => child.name === segment
+        (child) => child.id === fullPath
       );
+
       if (!pathNode) {
-        pathNode = { name: segment, children: [] };
+        pathNode = { id: fullPath, name: segment, children: [] };
         currentNode.children?.push(pathNode);
       }
+
       currentNode = pathNode; // Move to the next level
     });
   });
 
-  return { name: name, children: Object.values(root) };
+  return Object.values(root);
 }

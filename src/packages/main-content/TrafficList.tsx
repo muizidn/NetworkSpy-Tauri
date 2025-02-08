@@ -9,7 +9,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { TrafficItemMap } from "./model/TrafficItemMap";
 
 export const TrafficList: React.FC = () => {
-  const { trafficList } = useTrafficListContext();
+  const { trafficListDisplay } = useTrafficListContext();
 
   const headers: TableViewHeader<TrafficItemMap>[] = [
     {
@@ -34,7 +34,7 @@ export const TrafficList: React.FC = () => {
   return (
     <TableView
       headers={headers}
-      data={trafficList}
+      data={trafficListDisplay}
       contextMenuRenderer={new TrafficListContextMenuRenderer()}
     />
   );

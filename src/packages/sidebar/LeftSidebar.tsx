@@ -1,180 +1,140 @@
 import { useEffect, useMemo, useState } from "react";
+import { BsPinAngleFill } from "react-icons/bs";
+import { VscListFlat } from "react-icons/vsc";
+import { GrStorage } from "react-icons/gr";
+import { LuAppWindow } from "react-icons/lu";
+import { GoGlobe } from "react-icons/go";
+
 import { filterNode, SidebarTreeView, TreeNode } from "./TreeView";
 import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
-import { groupUrlsInTree } from "./parseUrlToTreeNode";
+import {
+  groupUrlsInTree,
+  kTreeNodeIdPrefixSeparator,
+} from "./parseUrlToTreeNode";
 
-const kPINNED: TreeNode = {
-  name: "Pin",
-  children: [
-    {
-      name: "src",
-      children: [{ name: "index.js" }, { name: "styles.css" }],
-    },
-    {
-      name: "node_modules",
-      children: [
-        {
-          name: "treeview",
-          children: [{ name: "index.js" }],
-        },
-        { name: "react", children: [{ name: "index.js" }] },
-      ],
-    },
-    {
-      name: ".npmignore",
-    },
-    {
-      name: "package.json",
-    },
-    {
-      name: "webpack.config.js",
-    },
-  ],
-};
-
-const kSAVED: TreeNode = {
-  name: "Saved",
-  children: [
-    {
-      name: "src",
-      children: [{ name: "index.js" }, { name: "styles.css" }],
-    },
-    {
-      name: "node_modules",
-      children: [
-        {
-          name: "treeview",
-          children: [{ name: "index.js" }],
-        },
-        { name: "react", children: [{ name: "index.js" }] },
-      ],
-    },
-    {
-      name: ".npmignore",
-    },
-    {
-      name: "package.json",
-    },
-    {
-      name: "webpack.config.js",
-    },
-  ],
-};
-
-const kAPP: TreeNode = {
-  name: "App",
-  children: [
-    {
-      name: "src",
-      children: [{ name: "index.js" }, { name: "styles.css" }],
-    },
-    {
-      name: "node_modules",
-      children: [
-        {
-          name: "treeview",
-          children: [{ name: "index.js" }],
-        },
-        { name: "react", children: [{ name: "index.js" }] },
-      ],
-    },
-    {
-      name: ".npmignore",
-    },
-    {
-      name: "package.json",
-    },
-    {
-      name: "webpack.config.js",
-    },
-  ],
-};
-
-const kDOMAIN: TreeNode = {
-  name: "Domain",
-  children: [
-    {
-      name: "src",
-      children: [{ name: "index.js" }, { name: "styles.css" }],
-    },
-    {
-      name: "node_modules",
-      children: [
-        {
-          name: "treeview",
-          children: [{ name: "index.js" }],
-        },
-        { name: "react", children: [{ name: "index.js" }] },
-      ],
-    },
-    {
-      name: ".npmignore",
-    },
-    {
-      name: "package.json",
-    },
-    {
-      name: "webpack.config.js",
-    },
-  ],
-};
+type FilterDisplayMode = "tree" | "flat";
 
 export const LeftSidebar = () => {
-  const { trafficList } = useTrafficListContext();
+  const { trafficList, setFilterByUrl } = useTrafficListContext();
 
   const [query, setQuery] = useState("");
-  const [filteredNodes, setFilteredNodes] = useState<TreeNode[]>([]);
+  const [filterDisplayMode, setFilterDisplayMode] =
+    useState<FilterDisplayMode>("flat");
+  const [filteredNodes, setFilteredNodes] = useState<
+    {
+      name: string;
+      icon: React.ReactNode;
+      nodes: TreeNode[];
+    }[]
+  >([]);
+
+  const [filteredNodesCount, setFilteredNodesCount] = useState(0);
 
   const groupedTraffic = useMemo(() => {
-    const urls = trafficList.filter(t => t.url).map((t) => t.url as string);
+    const urls = trafficList.filter((t) => t.url).map((t) => t.url as string);
     return {
       app: urls,
       domain: urls,
       pinned: urls,
       saved: urls,
-    }
-  }, [trafficList])
+    };
+  }, [trafficList]);
 
   const app = useMemo(() => {
-    return groupUrlsInTree("App", groupedTraffic.app);
+    return {
+      name: "App",
+      icon: <LuAppWindow />,
+      nodes: groupUrlsInTree("app", groupedTraffic.app),
+    };
   }, [groupedTraffic]);
 
   const domain = useMemo(() => {
-    return groupUrlsInTree("Domain", groupedTraffic.domain);
+    return {
+      name: "Domain",
+      icon: <GoGlobe />,
+      nodes: groupUrlsInTree("domain", groupedTraffic.domain),
+    };
   }, [groupedTraffic]);
 
   const pinned = useMemo(() => {
-    return groupUrlsInTree("Pinned", groupedTraffic.pinned);
+    return {
+      name: "Pinned",
+      icon: <BsPinAngleFill />,
+      nodes: groupUrlsInTree("pinned", groupedTraffic.pinned),
+    };
   }, [groupedTraffic]);
 
   const saved = useMemo(() => {
-    return groupUrlsInTree("Saved", groupedTraffic.saved);
+    return {
+      name: "Saved",
+      icon: <GrStorage />,
+      nodes: groupUrlsInTree("saved", groupedTraffic.saved),
+    };
   }, [groupedTraffic]);
 
-  async function onClickNode(name: string) {}
+  async function onClickNode(id: string) {
+    const uuidAndUrl = id.split(kTreeNodeIdPrefixSeparator);
+    const url = uuidAndUrl[1];
+    setFilterByUrl(url);
+  }
 
-  function flatMapNode(e: TreeNode | null): TreeNode[] {
+  function flatMapNode(e: TreeNode | null, path: string = ""): TreeNode[] {
     if (!e) {
       return [];
     }
-    const selfWithoutChildren = { ...e, children: undefined } as TreeNode;
-    if (e.children) {
-      const flatmapped = e.children.flatMap((e) => flatMapNode(e));
-      return Array.from([selfWithoutChildren].concat(flatmapped));
+
+    const currentPath = path ? `${path}/${e.name}` : e.name;
+
+    const selfWithoutChildren = {
+      ...e,
+      name: currentPath,
+      children: undefined,
+    } as TreeNode;
+
+    if (e.children && e.children.length > 0) {
+      const flatmappedChildren = e.children.flatMap((child) =>
+        flatMapNode(child, currentPath)
+      );
+      return [selfWithoutChildren, ...flatmappedChildren];
     }
+
     return [selfWithoutChildren];
   }
 
   async function filterNodes(query: string) {
-    setQuery(query);
+    let nodeFound = 0;
+
     const trees = [pinned, saved, app, domain];
-    const filtered = trees
-      .map((e) => filterNode(query, e))
-      .filter((e) => e !== null);
-    const flatMapped = filtered.flatMap((e) => flatMapNode(e));
-    setFilteredNodes(flatMapped);
+    const filtered = trees.map((tree) => ({
+      ...tree,
+      nodes: tree.nodes
+        .map((e) => filterNode(query, e, () => (nodeFound += 1)))
+        .filter((e) => e !== null),
+    }));
+    setFilteredNodesCount(nodeFound);
+    switch (filterDisplayMode) {
+      case "tree":
+        setFilteredNodes(filtered);
+        break;
+      case "flat":
+        const flatMapped = filtered
+          .flatMap((e) => e.nodes)
+          .flatMap((e) => flatMapNode(e));
+        setFilteredNodes([
+          {
+            name: "Flattened",
+            icon: <VscListFlat />,
+            nodes: flatMapped,
+          },
+        ]);
+        break;
+    }
   }
+
+  useEffect(() => {
+    filterNodes(query);
+  }, [filterDisplayMode, query]);
 
   const favoriteTrees = [pinned, saved];
   const allTrees = [app, domain];
@@ -190,7 +150,7 @@ export const LeftSidebar = () => {
           className="input input-xs flex-grow rounded bg-[#474b49] w-full"
           placeholder="Search"
           value={query}
-          onChange={(e) => filterNodes(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
         />
       </div>
       <div
@@ -200,40 +160,60 @@ export const LeftSidebar = () => {
         )}
       >
         <div className={twMerge("flex flex-col space-y-2 items-start w-full")}>
-          <h2 className="font-bold text-lg text-white">Favorites</h2>
+          <h2 className="font-bold text-xl text-white">Favorites</h2>
           {favoriteTrees.map((e) => (
             <SidebarTreeView
               key={e.name}
-              node={e}
-              onClick={(name) => onClickNode(name)}
+              name={e.name}
+              icon={e.icon}
+              childrenNodes={e.nodes}
+              onClick={(id) => onClickNode(id)}
             />
           ))}
         </div>
         <div className={twMerge("flex flex-col space-y-2 items-start w-full")}>
-          <h2 className="font-bold text-lg text-white">All</h2>
+          <h2 className="font-bold text-xl text-white">All</h2>
           {allTrees.map((e) => (
             <SidebarTreeView
               key={e.name}
-              node={e}
-              onClick={(name) => onClickNode(name)}
+              icon={e.icon}
+              name={e.name}
+              childrenNodes={e.nodes}
+              onClick={(id) => onClickNode(id)}
             />
           ))}
         </div>
       </div>
       <div
         className={twMerge(
-          "flex flex-col space-y-2 items-start w-full max-h-full",
+          "flex flex-col space-y-2 items-start w-full max-h-full p-1",
           query === "" && "hidden"
         )}
       >
-        <h2 className="font-bold text-lg text-white">
-          Filter Result: ({filteredNodes.length}) result
-        </h2>
+        <div className="flex justify-between w-full items-center">
+          <h2 className="font-bold text-lg text-white">
+            Filter Result: ({filteredNodesCount}) result
+          </h2>
+          <select
+            value={filterDisplayMode}
+            className="text-nowrap h-fit p-2"
+            onChange={(e) =>
+              setFilterDisplayMode(e.target.value as FilterDisplayMode)
+            }
+          >
+            <option value="tree">Tree</option>
+            <option value="flat">Flat</option>
+          </select>
+        </div>
         <div className="overflow-scroll w-full">
-          <SidebarTreeView
-            node={{ name: "Filtered", children: filteredNodes }}
-            onClick={(name) => onClickNode(name)}
-          />
+          {filteredNodes.map((node) => (
+            <SidebarTreeView
+              name={node.name}
+              icon={node.icon}
+              childrenNodes={node.nodes}
+              onClick={(id) => onClickNode(id)}
+            />
+          ))}
         </div>
       </div>
     </div>

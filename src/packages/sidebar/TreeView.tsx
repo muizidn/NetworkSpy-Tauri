@@ -11,52 +11,68 @@ interface FolderIconProps {
 }
 
 export interface TreeNode {
+  id: string;
   name: string;
   children?: TreeNode[];
 }
 
-export function filterNode(query: string, node: TreeNode): TreeNode | null {
+export function filterNode(query: string, node: TreeNode, onFindNode: () => void): TreeNode | null {
+  // Filter the children recursively
   let filteredChildren: TreeNode[] | undefined;
 
   if (node.children) {
+    // Filter each child node and remove null results
     filteredChildren = node.children
-      .map((child) => filterNode(query, child))
+      .map((child) => filterNode(query, child, onFindNode))
       .filter((child) => child !== null) as TreeNode[];
   }
 
+  // If we have filtered children and their length > 0, return the node with the filtered children
   if (filteredChildren && filteredChildren.length > 0) {
     return { ...node, children: filteredChildren };
   }
 
+  // If node doesn't have children or if no matching children, check if the node itself matches the query
   if (node.name.includes(query)) {
-    return { ...node, children: filteredChildren };
+    onFindNode()
+    return { ...node, children: filteredChildren }; // Even if no children match, return the node if it matches
   }
 
-  return null;
+  return null; // Return null if neither the node nor its children match
 }
 
 interface SidebarTreeViewProps {
-  node: TreeNode;
-  onClick: (name: string) => void;
+  name: string;
+  icon?: React.ReactNode;
+  childrenNodes?: TreeNode[];
+  onClick: (id: string) => void;
 }
 
 export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
-  node,
+  name,
+  icon,
+  childrenNodes,
   onClick,
 }) => {
   const [isShown, setIsShown] = useState(true);
 
-  const data = flattenTree(node);
+  const data = flattenTree({
+    name: "----",
+    children: childrenNodes
+  })
   return (
     <div className="bg-[#23262a] w-full flex flex-col items-start">
       <button
         onClick={() => setIsShown(!isShown)}
-        className="flex space-x-2 hover:bg-gray-700 rounded-md w-full p-1 items-center"
+        className="flex justify-between hover:bg-gray-700 rounded-md w-full p-1 items-center"
       >
+        <div className="flex space-x-2 items-center">
+          {icon}
+          <label className="font-bold text-white cursor-pointer text-lg">
+            {name}
+          </label>
+        </div>
         <ArrowIcon isOpen={isShown} />
-        <label className="font-bold text-white cursor-pointer">
-          {node.name}
-        </label>
       </button>
       {isShown && (
         <div className="pl-2 directory w-full">
@@ -80,7 +96,7 @@ export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
                 ) : (
                   <FolderIcon filename={element.name} />
                 )}
-                <button className="pl-1" onClick={() => onClick(element.name)}>
+                <button className="pl-1" onClick={() => onClick(element.id.toString())}>
                   {element.name}
                 </button>
               </div>
