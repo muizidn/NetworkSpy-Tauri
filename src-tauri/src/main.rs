@@ -164,6 +164,9 @@ fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle)
         tauri::WindowUrl::App(format!("/{}", context).into())
     )
     .title(title)
+    .inner_size(1500.0, 700.0)
+    .max_inner_size(1500.0, 700.0)
+    .resizable(false)
     .build()
     .unwrap();
 }

@@ -18,6 +18,8 @@ import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
 import { Payload } from "../../models/Payload";
 import { invoke } from "@tauri-apps/api/tauri";
 import { Traffic } from "../../models/Traffic";
+import { generateJson } from "./trafficGenerator";
+import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -65,7 +67,11 @@ const Content = () => {
   ]);
 
   useEffect(() => {
-    setTrafficList([]);
+    setTrafficList([])
+
+    // just for testing purpose
+    const traffics = generateJson(1000)
+    setTrafficList(traffics as TrafficItemMap[]);
   }, []);
 
   useEffect(() => {
