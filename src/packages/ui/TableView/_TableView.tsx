@@ -61,7 +61,7 @@ const HeaderCell = <T,>({
 
   return (
     <th
-      className='px-2 py-2 relative bg-table-header'
+      className='px-2 py-2 relative bg-table-header border-b border-gray-700'
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
@@ -79,9 +79,8 @@ const HeaderCell = <T,>({
       </div>
       <div
         onMouseDown={(e) => startResize(index, e.clientX)}
-        className='absolute right-0 top-0 h-full cursor-col-resize pr-2 flex items-center justify-center bg-table-header'
+        className='absolute right-0 top-[13px] h-[15px] cursor-col-resize pr-[1px] flex items-center justify-center z-10 bg-gray-700 w-[1px]'
         style={{ transform: "translateX(50%)" }}>
-        <div className='hover:bg-blue-500 bg-green-600 rounded-sm w-1 hover:w-full h-[50%]'></div>
       </div>
     </th>
   );
@@ -332,7 +331,7 @@ export const TableView = <T,>({
             )}
             data-index={index}>
             {headers.map((header, i) => (
-              <td key={i} style={{ width: columnWidths[i] }}>
+              <td key={i} style={{ maxWidth: columnWidths[i] }}>
                 {header.renderer.render({
                   input: item,
                   width: columnWidths[i],
