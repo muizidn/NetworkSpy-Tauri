@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { filterNode, SidebarTreeView, TreeNode } from "./TreeView";
 import { twMerge } from "tailwind-merge";
+import { useTrafficListContext } from "../main-content/context/TrafficList";
+import { groupUrlsInTree } from "./parseUrlToTreeNode";
 
 const kPINNED: TreeNode = {
   name: "Pin",
@@ -119,14 +121,38 @@ const kDOMAIN: TreeNode = {
 };
 
 export const LeftSidebar = () => {
-  async function onClickNode(name: string) {}
+  const { trafficList } = useTrafficListContext();
 
   const [query, setQuery] = useState("");
-  const [pinned, setPinned] = useState(kPINNED);
-  const [saved, setSaved] = useState(kSAVED);
-  const [app, setApp] = useState(kAPP);
-  const [domain, setDomain] = useState(kDOMAIN);
   const [filteredNodes, setFilteredNodes] = useState<TreeNode[]>([]);
+
+  const groupedTraffic = useMemo(() => {
+    const urls = trafficList.filter(t => t.url).map((t) => t.url as string);
+    return {
+      app: urls,
+      domain: urls,
+      pinned: urls,
+      saved: urls,
+    }
+  }, [trafficList])
+
+  const app = useMemo(() => {
+    return groupUrlsInTree("App", groupedTraffic.app);
+  }, [groupedTraffic]);
+
+  const domain = useMemo(() => {
+    return groupUrlsInTree("Domain", groupedTraffic.domain);
+  }, [groupedTraffic]);
+
+  const pinned = useMemo(() => {
+    return groupUrlsInTree("Pinned", groupedTraffic.pinned);
+  }, [groupedTraffic]);
+
+  const saved = useMemo(() => {
+    return groupUrlsInTree("Saved", groupedTraffic.saved);
+  }, [groupedTraffic]);
+
+  async function onClickNode(name: string) {}
 
   function flatMapNode(e: TreeNode | null): TreeNode[] {
     if (!e) {
