@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/tauri";
 import Guide, { GuideStep } from "../Guide";
 
 export function LinuxInstaller() {
@@ -138,10 +139,17 @@ export function LinuxInstaller() {
   ];
 
   return (
-    <Guide
-      platform="Linux"
-      emoji="https://emoji.gg/assets/emoji/3855_linux.png"
-      steps={linuxSteps}
-    />
+    <div>
+      <button onClick={() => {
+        invoke("install_certificate", {certPath: "src/ca/hudsucker.cer"})
+      }}>
+        Install Linux
+      </button>
+      <Guide
+        platform="Linux"
+        emoji="https://emoji.gg/assets/emoji/3855_linux.png"
+        steps={linuxSteps}
+      />
+    </div>
   );
 }

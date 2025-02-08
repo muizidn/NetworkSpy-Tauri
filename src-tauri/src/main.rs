@@ -153,6 +153,7 @@ fn turn_off_proxy() {
 
 #[tauri::command]
 fn install_certificate(cert_path: String) -> Result<String, String> {
+    print!("INSTALL CERTIFICATE");
     CERTIFICATE_INSTALLER.get().unwrap().install(cert_path)
 }
 
