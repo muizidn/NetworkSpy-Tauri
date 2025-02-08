@@ -10,10 +10,10 @@ export class KeyValueRenderer implements Renderer<KeyValuePair> {
   }
   render({ input }: { input: KeyValuePair }): React.ReactNode {
     return (
-      <td className="select-none">
+      <div className="select-none">
         {this.type === 'key' && input.key}
         {this.type === 'value' && input.value}
-      </td>
+      </div>
     );
   }
 }

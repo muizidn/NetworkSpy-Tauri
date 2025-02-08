@@ -208,6 +208,7 @@ export const LeftSidebar = () => {
         <div className="overflow-scroll w-full">
           {filteredNodes.map((node) => (
             <SidebarTreeView
+              key={node.name}
               name={node.name}
               icon={node.icon}
               childrenNodes={node.nodes}

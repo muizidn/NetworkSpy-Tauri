@@ -24,7 +24,7 @@ export const useSettingsContext = () => useContext(SettingsContext);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
-  const [sizesCenterPane, setSizesCenterPane] = useState([300, 580]);
+  const [sizesCenterPane, setSizesCenterPane] = useState([0, 0]);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme);

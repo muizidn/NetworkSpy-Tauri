@@ -8,6 +8,11 @@ import React, {
 import { TrafficItemMap } from "../model/TrafficItemMap";
 import { Traffic } from "../../../models/Traffic";
 
+export type TrafficListSelection = {
+  firstSelected: TrafficItemMap | null;
+  others: TrafficItemMap[] | null;
+}
+
 interface TrafficListContextState {
   trafficList: TrafficItemMap[];
   trafficListDisplay: TrafficItemMap[];
@@ -16,8 +21,8 @@ interface TrafficListContextState {
   setTrafficSet: React.Dispatch<
     React.SetStateAction<{ [key: string]: Traffic }>
   >;
-  selections: string[];
-  setSelections: React.Dispatch<React.SetStateAction<string[]>>;
+  selections: TrafficListSelection;
+  setSelections: React.Dispatch<React.SetStateAction<TrafficListSelection>>;
   filterByUrl: string;
   setFilterByUrl: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -45,7 +50,7 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
 }) => {
   const [trafficList, setTrafficList] = useState<TrafficItemMap[]>([]);
   const [trafficSet, setTrafficSet] = useState<{ [key: string]: Traffic }>({});
-  const [selections, setSelections] = useState<string[]>([]);
+  const [selections, setSelections] = useState<TrafficListSelection>({ firstSelected: null, others: null });
   const [_filterByUrl, setFilterByUrl] = useState<string>("");
 
   const filterByUrlTrafficList = useMemo(() => {
@@ -58,7 +63,7 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
       }
 
       const trafficUrl = new URL(t.url as string);
-      const trafficUrlJoined = `${trafficUrl.hostname}${trafficUrl.pathname}`
+      const trafficUrlJoined = `${trafficUrl.hostname}${trafficUrl.pathname}`;
       return trafficUrlJoined.includes(_filterByUrl);
     });
     return filteredByUrl;

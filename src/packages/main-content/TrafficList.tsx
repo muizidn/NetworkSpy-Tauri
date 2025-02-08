@@ -9,7 +9,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { TrafficItemMap } from "./model/TrafficItemMap";
 
 export const TrafficList: React.FC = () => {
-  const { trafficListDisplay } = useTrafficListContext();
+  const { trafficListDisplay, setSelections } = useTrafficListContext();
 
   const headers: TableViewHeader<TrafficItemMap>[] = [
     {
@@ -36,6 +36,7 @@ export const TrafficList: React.FC = () => {
       headers={headers}
       data={trafficListDisplay}
       contextMenuRenderer={new TrafficListContextMenuRenderer()}
+      onSelectedRowChanged={(first, items) => setSelections({firstSelected: first, others: items})}
     />
   );
 };

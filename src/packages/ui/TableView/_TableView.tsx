@@ -16,6 +16,7 @@ export interface TableViewProps<T> {
   headers: TableViewHeader<T>[];
   data: T[];
   contextMenuRenderer?: TableViewContextMenuRenderer<T>;
+  onSelectedRowChanged?: (firstSelected: T | null, items: T[] | null) => void;
 }
 
 type SortOrder = "asc" | "desc";
@@ -61,27 +62,29 @@ const HeaderCell = <T,>({
 
   return (
     <th
-      className='px-2 py-2 relative bg-table-header border-b border-gray-700'
+      className="px-2 py-2 relative bg-table-header border-b border-gray-700"
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
-      }}>
+      }}
+    >
       <div
         ref={ref}
-        className='flex items-center justify-between cursor-grab w-full'
-        style={{ width: columnWidth, minWidth: header.minWidth }}>
-        <span className='text-nowrap'>{header.title}</span>
+        className="flex items-center justify-between cursor-grab w-full"
+        style={{ width: columnWidth, minWidth: header.minWidth }}
+      >
+        <span className="text-nowrap">{header.title}</span>
         {sortConfig.key === header.title.toLowerCase() && (
-          <span className='cursor-pointer mr-2'>
+          <span className="cursor-pointer mr-2">
             {sortConfig.order === "asc" ? "↓" : "↑"}
           </span>
         )}
       </div>
       <div
         onMouseDown={(e) => startResize(index, e.clientX)}
-        className='absolute right-0 top-[13px] h-[15px] cursor-col-resize pr-[1px] flex items-center justify-center z-10 bg-gray-700 w-[1px]'
-        style={{ transform: "translateX(50%)" }}>
-      </div>
+        className="absolute right-0 top-[13px] h-[15px] cursor-col-resize pr-[1px] flex items-center justify-center z-10 bg-gray-700 w-[1px]"
+        style={{ transform: "translateX(50%)" }}
+      ></div>
     </th>
   );
 };
@@ -90,6 +93,7 @@ export const TableView = <T,>({
   headers: initialHeaders,
   data,
   contextMenuRenderer,
+  onSelectedRowChanged,
 }: TableViewProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<{
     firstSelect?: number;
@@ -158,6 +162,17 @@ export const TableView = <T,>({
       setSelectedRows({ firstSelect: index, rows: [index] });
     }
   }
+
+  useEffect(() => {
+    if (!onSelectedRowChanged) {
+      return;
+    }
+    const firstSelect = selectedRows.firstSelect !== undefined
+      ? data[selectedRows.firstSelect]
+      : null;
+    const allItems = selectedRows.rows.map((i) => data[i]);
+    onSelectedRowChanged(firstSelect, allItems);
+  }, [selectedRows]);
 
   async function showContextMenu(e: MouseEvent) {
     if (!contextMenuRenderer) {
@@ -302,8 +317,8 @@ export const TableView = <T,>({
   }, [data, sortConfig]);
 
   return (
-    <table className='table-auto w-full block relative'>
-      <thead className='sticky top-0 bg-table-header'>
+    <table className="table-auto w-full block relative">
+      <thead className="sticky top-0 bg-table-header">
         <tr>
           {headers.map((header, index) => (
             <HeaderCell
@@ -319,7 +334,7 @@ export const TableView = <T,>({
           ))}
         </tr>
       </thead>
-      <tbody ref={tbodyRef} className='overflow-y-auto' onScroll={handleScroll}>
+      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
         {sortedData.map((item, index) => (
           <tr
             key={`item-${index}`}
@@ -329,7 +344,8 @@ export const TableView = <T,>({
               "hover:bg-[#181a1d]",
               selectedRows.rows.includes(index) && "bg-[#191b1e]"
             )}
-            data-index={index}>
+            data-index={index}
+          >
             {headers.map((header, i) => (
               <td key={i} style={{ maxWidth: columnWidths[i] }}>
                 {header.renderer.render({

@@ -7,45 +7,55 @@ import { MainContent } from "../../packages/main-content/MainContent";
 import { useSettingsContext } from "../../context/SettingsProvider";
 import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
 import { usePaneContext } from "../../context/PaneProvider";
+import { useTrafficListContext } from "../../packages/main-content/context/TrafficList";
 
 export const CenterPane: React.FC = () => {
   const { sizesCenterPane, setSizesCenterPane } = useSettingsContext();
   const { isDisplayPane } = usePaneContext();
+  const { selections } = useTrafficListContext();
 
   useEffect(() => {
     setSizesPane();
   }, [isDisplayPane]);
 
   const setSizesPane = () => {
-    const newSizes = sizesCenterPane.map((size, idx) =>
-      idx === 1 ? (isDisplayPane.bottom ? 580 : 0) : size
-    );
-    setSizesCenterPane(newSizes);
+    setSizesCenterPane([300, 580]);
   };
 
   return (
-    <div className='flex flex-col h-screen'>
-      <div>
+    <div className="flex flex-col h-full">
+      <div className="w-full">
         <FilterBar />
       </div>
       <SplitPane
-        split='horizontal'
-        sashRender={() => <SashContent type='vscode' />}
+        className="h-full"
+        split="horizontal"
+        sashRender={() => <SashContent type="vscode" />}
         sizes={sizesCenterPane}
-        onChange={setSizesCenterPane}>
-        <Pane minSize='0%' maxSize='85%'>
+        onChange={setSizesCenterPane}
+      >
+        <Pane minSize="0%" maxSize="85%">
           <div
             style={{ height: sizesCenterPane[0] }}
-            className='bg-[#23262a] overflow-auto'>
+            className="bg-[#23262a] overflow-auto"
+          >
             <MainContent />
           </div>
         </Pane>
         <Pane>
           <div style={{ height: sizesCenterPane[1] }}>
-            <BottomPane />
+            {selections.firstSelected ? <BottomPane /> : <NoSelection />}
           </div>
         </Pane>
       </SplitPane>
+    </div>
+  );
+};
+
+const NoSelection: React.FC<{}> = ({}) => {
+  return (
+    <div className="w-full h-full flex justify-center items-center">
+      No traffic selected. Please select one traffic to see detail
     </div>
   );
 };
