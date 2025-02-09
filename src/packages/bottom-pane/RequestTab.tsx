@@ -20,60 +20,53 @@ import {
 import DynamicRenderer from "./TabRenderer/DynamicRenderer";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api";
 
 type RequestPairData = {
   headers: { key: string; value: string }[];
   params: { key: string; value: string | string[] }[];
   body: string;
-  contentType: string;
+  content_type: string;
 };
 
 export const RequestTab = () => {
   const { selections } = useTrafficListContext();
-  const traffic = useMemo(() => selections.firstSelected, [selections]);
+  const trafficId = useMemo(
+    () => selections.firstSelected?.id as string,
+    [selections]
+  );
 
-  if (!traffic) {
+  const [data, setData] = useState<RequestPairData | null>(null);
+
+  async function loadRequestPairData(traffic: { id: string }) {
+    const requestPairData = await invoke<RequestPairData>(
+      "get_request_pair_data",
+      { trafficId: traffic.id as string }
+    );
+    setData(requestPairData);
+  }
+
+  useEffect(() => {
+    if (!trafficId) {
+      return;
+    }
+    loadRequestPairData({ id: trafficId as string });
+  }, [trafficId]);
+
+  if (!trafficId || !data) {
     return null;
   }
 
-  const data: RequestPairData = {
-    headers: [
-      { key: "Authorization", value: "Bearer token" },
-      { key: "X-Cloudflare", value: "Nonce, misharp" },
-      { key: "Content-Type", value: "application/json" }, // Change this to test other types
-    ],
-    params: [
-      { key: "authToken", value: "Bearer token" },
-      { key: "page", value: "1" },
-      { key: "perPage", value: "100" },
-      { key: "product_ids", value: ["id1", "id2"] },
-    ],
-    body: `{
-      "id": "4541600237192504000",
-      "tags": ["API TESTING", "NETWORK MONITORING"],
-      "url": "https://amazon.com:157/product/books?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJib29rcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.WjtjqnszjFL3Gb-F3TSvTKHl5VxbFf4jJ2yyK_SXxxg",
-      "client": "Video Streaming",
-      "method": "DELETE",
-      "status": "Failed",
-      "code": "200",
-      "time": "650 ms",
-      "duration": "91 bytes",
-      "request": "Request data",
-      "response": "-"
-    }`,
-    contentType: "application/x-www-form-urlencoded", // Change this to test other types
-  };
-
-  const isImage = data.contentType.includes("image");
-  const isHTML = data.contentType.includes("html");
-  const isJSON = data.contentType.includes("json");
-  const isXML = data.contentType.includes("xml");
-  const isJavaScript = data.contentType.includes("javascript");
-  const isProtobuf = data.contentType.includes("protobuf");
-  const isCML = data.contentType.includes("cml");
-  const isHLS = data.contentType.includes("application/x-mpegurl");
-  const isMultipart = data.contentType.includes("multipart/form-data");
-  const isFormURLEncoded = data.contentType.includes(
+  const isImage = data.content_type.includes("image");
+  const isHTML = data.content_type.includes("html");
+  const isJSON = data.content_type.includes("json");
+  const isXML = data.content_type.includes("xml");
+  const isJavaScript = data.content_type.includes("javascript");
+  const isProtobuf = data.content_type.includes("protobuf");
+  const isCML = data.content_type.includes("cml");
+  const isHLS = data.content_type.includes("application/x-mpegurl");
+  const isMultipart = data.content_type.includes("multipart/form-data");
+  const isFormURLEncoded = data.content_type.includes(
     "application/x-www-form-urlencoded"
   );
 
@@ -211,5 +204,5 @@ export const RequestTab = () => {
     },
   ];
 
-  return <NSTabs title="REQUEST" tabs={tabs} initialTab="body" />;
+  return <NSTabs title="REQUEST" tabs={tabs} initialTab="body"/>;
 };

@@ -3,6 +3,7 @@
 
 pub mod certificate_installer;
 pub mod proxy_toggle;
+pub mod traffic;
 
 use bytes::Bytes;
 use certificate_installer::CertificateInstaller;
@@ -18,6 +19,8 @@ use std::{env, thread};
 use tauri::{AppHandle, Manager};
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 use tauri::{RunEvent, WindowBuilder};
+use traffic::{request_pair::{get_request_pair_data}, response_pair::{get_response_pair_data}};
+
 
 #[derive(Clone, Serialize)]
 struct PayloadTraffic {
@@ -413,6 +416,8 @@ fn main() {
             turn_off_proxy,
             install_certificate,
             open_new_window,
+            get_request_pair_data,
+            get_response_pair_data,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
