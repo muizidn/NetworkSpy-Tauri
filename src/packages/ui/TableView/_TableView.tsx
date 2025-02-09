@@ -317,7 +317,7 @@ export const TableView = <T,>({
   }, [data, sortConfig]);
 
   return (
-    <table className="table-auto w-full block relative">
+    <table className="table-auto w-full block relative overflow-x-auto h-full">
       <thead className="sticky top-0 bg-table-header">
         <tr>
           {headers.map((header, index) => (
