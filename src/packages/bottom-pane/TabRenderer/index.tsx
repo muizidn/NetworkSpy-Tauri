@@ -8,6 +8,6 @@ export * from "./HTMLView";
 export * from "./HTMLWebView";
 export * from "./MessagePackView";
 export * from "./ProtobufView";
-export * from "./JavaScriptView";
+export * from "./CodeView";
 export * from "./CMLView";
 export * from "./M3U8View";

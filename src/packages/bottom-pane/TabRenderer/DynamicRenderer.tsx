@@ -9,7 +9,7 @@ import { HTMLView } from "./HTMLView";
 import { HTMLWebView } from "./HTMLWebView";
 import { MessagePackView } from "./MessagePackView";
 import { ProtobufView } from "./ProtobufView";
-import { JavaScriptView } from "./JavaScriptView";
+import { CodeView } from "./CodeView";
 import { CMLView } from "./CMLView";
 import { M3U8View } from "./M3U8View";
 
@@ -24,7 +24,7 @@ type DataViewType =
   | "HTMLWebView"
   | "MessagePackView"
   | "ProtobufView"
-  | "JavaScriptView"
+  | "CodeView"
   | "CMLView"
   | "M3U8View";
 
@@ -37,8 +37,6 @@ const DynamicRenderer: React.FC<{ data: string }> = ({ data }) => {
         return <TreeView data={data} />;
       case "HexView":
         return <HexView data={data} />;
-      case "FormURLEncodedView":
-        return <FormURLEncodedView data={data} />;
       case "MultipartFormDataView":
         return <MultipartFormDataView data={data} />;
       case "XMLView":
@@ -53,8 +51,8 @@ const DynamicRenderer: React.FC<{ data: string }> = ({ data }) => {
         return <MessagePackView data={data} />;
       case "ProtobufView":
         return <ProtobufView data={data} />;
-      case "JavaScriptView":
-        return <JavaScriptView data={data} />;
+      case "CodeView":
+        return <CodeView data={data} />;
       case "CMLView":
         return <CMLView data={data} />;
       case "M3U8View":
@@ -65,7 +63,7 @@ const DynamicRenderer: React.FC<{ data: string }> = ({ data }) => {
   };
 
   return (
-    <div className="flex flex-col space-y-2">
+    <div className="flex flex-col space-y-2 h-full">
       <div className="flex space-x-2 p-2">
         <label>Select View:</label>
         <select
@@ -84,12 +82,12 @@ const DynamicRenderer: React.FC<{ data: string }> = ({ data }) => {
           <option value="HTMLWebView">HTML Web View</option>
           <option value="MessagePackView">Message Pack View</option>
           <option value="ProtobufView">Protobuf View</option>
-          <option value="JavaScriptView">JavaScript View</option>
+          <option value="CodeView">JavaScript View</option>
           <option value="CMLView">CML View</option>
           <option value="M3U8View">M3U8 View</option>
         </select>
       </div>
-      <div className="flex-grow h-full overflow-auto">{renderView()}</div>
+      <div className="flex-grow h-full w-full overflow-auto">{renderView()}</div>
     </div>
   );
 };
