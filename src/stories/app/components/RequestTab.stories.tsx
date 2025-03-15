@@ -45,15 +45,7 @@ const meta: Meta<typeof RequestTab> = {
     (Story) => (
       <DndProvider backend={HTML5Backend}>
         <TrafficListContext.Provider value={mockContextValue}>
-          <div
-            style={{
-              padding: "16px",
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-            }}
-          >
-            <Story />
-          </div>
+          <Story />
         </TrafficListContext.Provider>
       </DndProvider>
     ),

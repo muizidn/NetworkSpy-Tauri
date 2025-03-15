@@ -5,7 +5,7 @@ import {
 } from "@src/packages/main-content/context/TrafficList";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { LeftSidebar } from "@src/packages/sidebar/LeftSidebar";
+import { SelectionViewer } from "@src/packages/main-content/SelectionViewer";
 
 const createMockFunction = () => {
   const fn: any = (...args: any[]) => fn.mock.calls.push(args);
@@ -28,9 +28,9 @@ const mockContextValue: TrafficListContextState = {
   setTrafficSet: createMockFunction(),
 };
 
-const meta: Meta<typeof LeftSidebar> = {
-  title: "App/Components/LeftSidebar",
-  component: LeftSidebar,
+const meta: Meta<typeof SelectionViewer> = {
+  title: "App/Components/SelectionViewer",
+  component: SelectionViewer,
   args: {
   },
   decorators: [
