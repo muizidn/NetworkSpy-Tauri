@@ -20,16 +20,17 @@ import {
 import DynamicRenderer from "./TabRenderer/DynamicRenderer";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api";
 
-type ResponsePairData = {
+export type ResponsePairData = {
   headers: { key: string; value: string }[];
   params: { key: string; value: string | string[] }[];
   body: string;
   content_type: string;
 };
 
-export const ResponseTab = () => {
+export const ResponseTab = (props: {
+  loadData: (traffic: { id: string }) => Promise<ResponsePairData>;
+}) => {
   const { selections } = useTrafficListContext();
   const trafficId = useMemo(
     () => selections.firstSelected?.id as string,
@@ -39,10 +40,7 @@ export const ResponseTab = () => {
   const [data, setData] = useState<ResponsePairData | null>(null);
 
   async function loadResponsePairData(traffic: { id: string }) {
-    const responsePairData = await invoke<ResponsePairData>(
-      "get_response_pair_data",
-      { trafficId: traffic.id as string }
-    );
+    const responsePairData = await props.loadData(traffic);
     setData(responsePairData);
   }
 
@@ -204,5 +202,5 @@ export const ResponseTab = () => {
     },
   ];
 
-  return <NSTabs title="RESPONSE" tabs={tabs} initialTab="body"/>;
+  return <NSTabs title="RESPONSE" tabs={tabs} initialTab="body" />;
 };

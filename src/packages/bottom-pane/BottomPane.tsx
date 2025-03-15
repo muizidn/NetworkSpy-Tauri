@@ -33,7 +33,13 @@ export const BottomPane = () => {
             </div>
           </Pane>
           <div className="h-full no-scrollbar flex items-center justify-center overflow-auto border-l border-black">
-            <ResponseTab />
+            <ResponseTab
+              loadData={(traffic) => {
+                return invoke<RequestPairData>("get_response_pair_data", {
+                  trafficId: traffic.id as string,
+                });
+              }}
+            />
           </div>
         </SplitPane>
       </div>
