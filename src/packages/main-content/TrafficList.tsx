@@ -5,11 +5,13 @@ import {
 } from "../ui/TableView";
 import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { useTrafficListContext } from "./context/TrafficList";
-import { invoke } from "@tauri-apps/api/tauri";
 import { TrafficItemMap } from "./model/TrafficItemMap";
+import { TauriInvokeFn, useTauri } from "../tauri-env";
 
 export const TrafficList: React.FC = () => {
   const { trafficListDisplay, setSelections } = useTrafficListContext();
+
+  const { invoke } = useTauri();
 
   const headers: TableViewHeader<TrafficItemMap>[] = [
     {
@@ -35,8 +37,10 @@ export const TrafficList: React.FC = () => {
     <TableView
       headers={headers}
       data={trafficListDisplay}
-      contextMenuRenderer={new TrafficListContextMenuRenderer()}
-      onSelectedRowChanged={(first, items) => setSelections({firstSelected: first, others: items})}
+      contextMenuRenderer={new TrafficListContextMenuRenderer(invoke)}
+      onSelectedRowChanged={(first, items) =>
+        setSelections({ firstSelected: first, others: items })
+      }
     />
   );
 };
@@ -44,6 +48,11 @@ export const TrafficList: React.FC = () => {
 class TrafficListContextMenuRenderer
   implements TableViewContextMenuRenderer<TrafficItemMap>
 {
+  invoke: TauriInvokeFn;
+  constructor(invoke: TauriInvokeFn) {
+    this.invoke = invoke;
+  }
+
   async render(items: TrafficItemMap[]): Promise<void> {
     const contextMenuData = {
       items: [
@@ -73,7 +82,7 @@ class TrafficListContextMenuRenderer
       ],
     };
 
-    await invoke(
+    await this.invoke(
       "plugin:context_menu|show_context_menu",
       // `as any` because otherwise mismatch type
       contextMenuData as any
