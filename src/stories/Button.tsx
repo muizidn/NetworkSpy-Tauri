@@ -1,6 +1,7 @@
 import React from 'react';
 
 import './button.css';
+import Hello from '@src/newui/components';
 
 export interface ButtonProps {
   /** Is this the principal call to action on the page? */
@@ -31,6 +32,7 @@ export const Button = ({
       style={{ backgroundColor }}
       {...props}
     >
+      <Hello/>
       {label}
     </button>
   );
