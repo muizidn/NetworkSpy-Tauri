@@ -68,40 +68,18 @@ fn greet(name: &str) -> String {
 
 
 fn create_menu() -> Menu {
-    // File submenu using the file module
     let file_submenu = file::create_file_submenu();
-
-    // Edit submenu using the edit module
     let edit_submenu = edit::create_edit_submenu();
-
-    // View submenu using the view module
     let view_submenu = view::create_view_submenu();
-
-    // Flow submenu using the flow module
     let flow_submenu = flow::create_flow_submenu();
-
-    // Tools submenu using the tools module
     let tools_submenu = tools::create_tools_submenu();
-
-    // Diff submenu using the diff module
     let diff_submenu = diff::create_diff_submenu();
-
-    // Scripting submenu using the scripting module
     let scripting_submenu = scripting::create_scripting_submenu();
-
-    // Certificate submenu using the certificate module
     let certificate_submenu = certificate::create_certificate_submenu();
-
-    // Setup submenu using the setup module
     let setup_submenu = setup::create_setup_submenu();
-
-    // Window submenu using the window module
     let window_submenu = window::create_window_submenu();
-
-    // Help submenu using the help module
     let help_submenu = help::create_help_submenu();
 
-    // Main menu
     let menu = Menu::new()
         .add_submenu(file_submenu)
         .add_submenu(edit_submenu)
@@ -152,20 +130,6 @@ fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle)
     .unwrap();
 }
 
-fn create_window(window: tauri::Window, id: &'static str, title: &'static str, url: &'static str) {
-    tauri::async_runtime::spawn(async move {
-        let mut window_builder =
-            WindowBuilder::new(&window, id, tauri::WindowUrl::App(url.into())).title(title);
-
-        #[cfg(target_os = "linux")]
-        {
-            window_builder = window_builder.menu(Menu::default());
-        }
-
-        window_builder.build().unwrap();
-    });
-}
-
 fn main() {
     let key_pair = include_str!("ca/hudsucker.key");
     let ca_cert = include_str!("ca/hudsucker.cer");
@@ -181,52 +145,11 @@ fn main() {
     let app = tauri::Builder::default()
         .menu(create_menu())
         .on_menu_event(|event| {
-            // Match on the menu item ID and call the function accordingly
             match event.menu_item_id() {
-                "script_list" => {
-                    let window = event.window().clone();
-                    create_window(window, "script_list", "Script List", "/script-list");
-                }
-                "install_cert_computer" => {
-                    let window = event.window().clone();
-                    create_window(
-                        window,
-                        "install_cert_computer",
-                        "Install Certificate in This Computer",
-                        "/computer-certificate-installer",
-                    );
-                }
-                "install_cert_mobile" => {
-                    let window = event.window().clone();
-                    create_window(
-                        window,
-                        "install_cert_mobile",
-                        "Install Certificate on Mobile",
-                        "/mobile-certificate-installer",
-                    );
-                }
-                "install_cert_vm" => {
-                    let window = event.window().clone();
-                    create_window(
-                        window,
-                        "install_cert_vm",
-                        "Install Certificate in Virtual Machine",
-                        "/vm-certificate-installer",
-                    );
-                }
-                "install_cert_dev" => {
-                    let window = event.window().clone();
-                    create_window(
-                        window,
-                        "install_cert_dev",
-                        "Install Certificate in Development",
-                        "/development-certificate-installer",
-                    );
-                }
-                "quit" => {
-                    turn_off_proxy();
-                    event.window().app_handle().exit(0)
-                }
+                "quit" | "close" => file::handle_file_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
+                "script_list" => scripting::handle_scripting_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
+                "install_cert_computer" | "install_cert_mobile" => certificate::handle_certificate_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
+                "tools_item" => tools::handle_tools_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
                 _ => {}
             }
         })
