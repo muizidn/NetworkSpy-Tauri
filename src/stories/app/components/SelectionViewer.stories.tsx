@@ -1,7 +1,5 @@
 import { Meta, StoryFn, StoryObj } from "@storybook/react";
-import {
-  TrafficListContext,
-} from "@src/packages/main-content/context/TrafficList";
+import { TrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { SelectionViewer } from "@src/packages/main-content/SelectionViewer";
@@ -15,13 +13,20 @@ const meta: Meta<typeof SelectionViewer> = {
     (Story) => (
       <DndProvider backend={HTML5Backend}>
         <TrafficListContext.Provider value={trafficListContextStateMock}>
-          <Story />
+          <div
+            style={{
+              height: `600px`,
+              width: `1000px`,
+            }}
+          >
+            <Story />
+          </div>
         </TrafficListContext.Provider>
       </DndProvider>
     ),
   ],
   parameters: {
-    layout: "padded",
+    layout: "centered",
   },
 };
 

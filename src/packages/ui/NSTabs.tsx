@@ -65,7 +65,7 @@ export const NSTabs: React.FC<NSTabsProps> = ({
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#23262a] text-white w-full relative">
+    <div id={`tabs-for-${title}`} className="flex flex-col h-full bg-[#23262a] text-white w-full relative">
       <div className="sticky top-0 flex overflow-x-auto no-scrollbar bg-[#23262a] z-10 h-8">
         {title && <h3 className="p-2 text-sm flex items-center">{title}</h3>}
         {memoizedTabs.map((tab) => (
