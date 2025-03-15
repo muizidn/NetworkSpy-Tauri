@@ -3,6 +3,7 @@
 
 pub mod certificate_installer;
 pub mod proxy_toggle;
+pub mod submenu;
 pub mod traffic;
 
 use bytes::Bytes;
@@ -19,7 +20,8 @@ use std::{env, thread};
 use tauri::{AppHandle, Manager};
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 use tauri::{RunEvent, WindowBuilder};
-use traffic::{request_pair::{get_request_pair_data}, response_pair::{get_response_pair_data}};
+use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
+use submenu::{diff, edit, file, flow, help, scripting, setup, tools, view, window, certificate};
 
 
 #[derive(Clone, Serialize)]
@@ -64,65 +66,40 @@ fn greet(name: &str) -> String {
 //     Ok(())
 // }
 
+
 fn create_menu() -> Menu {
-    // File submenu items
-    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-    let close = CustomMenuItem::new("close".to_string(), "Close");
-    let file_submenu = Submenu::new("File", Menu::new().add_item(quit).add_item(close));
+    // File submenu using the file module
+    let file_submenu = file::create_file_submenu();
 
-    // Edit submenu items
-    let edit_submenu = Submenu::new("Edit", Menu::new().add_native_item(MenuItem::Copy));
+    // Edit submenu using the edit module
+    let edit_submenu = edit::create_edit_submenu();
 
-    // View submenu (can be extended with more items if needed)
-    let view_submenu = Submenu::new("View", Menu::new());
+    // View submenu using the view module
+    let view_submenu = view::create_view_submenu();
 
-    // Flow submenu (can be extended with more items if needed)
-    let flow_submenu = Submenu::new("Flow", Menu::new());
+    // Flow submenu using the flow module
+    let flow_submenu = flow::create_flow_submenu();
 
-    // Tools submenu (can be extended with more items if needed)
-    let tools_submenu = Submenu::new("Tools", Menu::new());
+    // Tools submenu using the tools module
+    let tools_submenu = tools::create_tools_submenu();
 
-    // Diff submenu (can be extended with more items if needed)
-    let diff_submenu = Submenu::new("Diff", Menu::new());
+    // Diff submenu using the diff module
+    let diff_submenu = diff::create_diff_submenu();
 
-    // Scripting submenu items
-    let script_list = CustomMenuItem::new("script_list".to_string(), "Script List ...");
-    let scripting_submenu = Submenu::new("Scripting", Menu::new().add_item(script_list));
+    // Scripting submenu using the scripting module
+    let scripting_submenu = scripting::create_scripting_submenu();
 
-    // Certificate submenu items
-    let install_cert_computer = CustomMenuItem::new(
-        "install_cert_computer".to_string(),
-        "Install Certificate on This Computer...",
-    );
-    let install_cert_mobile = CustomMenuItem::new(
-        "install_cert_mobile".to_string(),
-        "Install Certificate on Mobile...",
-    );
-    let install_cert_vm = CustomMenuItem::new(
-        "install_cert_vm".to_string(),
-        "Install Certificate on VM...",
-    );
-    let install_cert_dev = CustomMenuItem::new(
-        "install_cert_dev".to_string(),
-        "Install Certificate on Development...",
-    );
-    let certificate_submenu = Submenu::new(
-        "Certificate",
-        Menu::new()
-            .add_item(install_cert_computer)
-            .add_item(install_cert_mobile)
-            .add_item(install_cert_vm)
-            .add_item(install_cert_dev),
-    );
+    // Certificate submenu using the certificate module
+    let certificate_submenu = certificate::create_certificate_submenu();
 
-    // Setup submenu (can be extended with more items if needed)
-    let setup_submenu = Submenu::new("Setup", Menu::new());
+    // Setup submenu using the setup module
+    let setup_submenu = setup::create_setup_submenu();
 
-    // Window submenu (can be extended with more items if needed)
-    let window_submenu = Submenu::new("Window", Menu::new());
+    // Window submenu using the window module
+    let window_submenu = window::create_window_submenu();
 
-    // Help submenu (can be extended with more items if needed)
-    let help_submenu = Submenu::new("Help", Menu::new());
+    // Help submenu using the help module
+    let help_submenu = help::create_help_submenu();
 
     // Main menu
     let menu = Menu::new()
@@ -165,7 +142,7 @@ fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle)
     tauri::WindowBuilder::new(
         &app_handle,
         context.clone(),
-        tauri::WindowUrl::App(format!("/{}", context).into())
+        tauri::WindowUrl::App(format!("/{}", context).into()),
     )
     .title(title)
     .inner_size(1500.0, 700.0)
@@ -175,16 +152,10 @@ fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle)
     .unwrap();
 }
 
-fn create_window(
-    window: tauri::Window,
-    id: &'static str,
-    title: &'static str,
-    url: &'static str,
-) {
+fn create_window(window: tauri::Window, id: &'static str, title: &'static str, url: &'static str) {
     tauri::async_runtime::spawn(async move {
         let mut window_builder =
-            WindowBuilder::new(&window, id, tauri::WindowUrl::App(url.into()))
-                .title(title);
+            WindowBuilder::new(&window, id, tauri::WindowUrl::App(url.into())).title(title);
 
         #[cfg(target_os = "linux")]
         {
@@ -199,7 +170,7 @@ fn main() {
     let key_pair = include_str!("ca/hudsucker.key");
     let ca_cert = include_str!("ca/hudsucker.cer");
 
-    let proxy_toggle = ProxyToggle { };
+    let proxy_toggle = ProxyToggle {};
     PROXY_TOGGLE
         .set(proxy_toggle)
         .expect("Failed to set proxy_toggle instance");
@@ -210,7 +181,6 @@ fn main() {
     let app = tauri::Builder::default()
         .menu(create_menu())
         .on_menu_event(|event| {
-
             // Match on the menu item ID and call the function accordingly
             match event.menu_item_id() {
                 "script_list" => {
