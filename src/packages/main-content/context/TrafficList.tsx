@@ -11,7 +11,7 @@ import { Traffic } from "../../../models/Traffic";
 export type TrafficListSelection = {
   firstSelected: TrafficItemMap | null;
   others: TrafficItemMap[] | null;
-}
+};
 
 export interface TrafficListContextState {
   trafficList: TrafficItemMap[];
@@ -27,9 +27,9 @@ export interface TrafficListContextState {
   setFilterByUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const TrafficListContext = createContext<TrafficListContextState | undefined>(
-  undefined
-);
+export const TrafficListContext = createContext<
+  TrafficListContextState | undefined
+>(undefined);
 
 export const useTrafficListContext = (): TrafficListContextState => {
   const context = useContext(TrafficListContext);
@@ -50,7 +50,10 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
 }) => {
   const [trafficList, setTrafficList] = useState<TrafficItemMap[]>([]);
   const [trafficSet, setTrafficSet] = useState<{ [key: string]: Traffic }>({});
-  const [selections, setSelections] = useState<TrafficListSelection>({ firstSelected: null, others: null });
+  const [selections, setSelections] = useState<TrafficListSelection>({
+    firstSelected: null,
+    others: null,
+  });
   const [_filterByUrl, setFilterByUrl] = useState<string>("");
 
   const filterByUrlTrafficList = useMemo(() => {

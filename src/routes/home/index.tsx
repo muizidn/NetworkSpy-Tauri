@@ -20,6 +20,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { Traffic } from "../../models/Traffic";
 import { generateJson } from "./trafficGenerator";
 import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
+import { TauriEnvProvider } from "@src/packages/tauri-env";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -245,11 +246,13 @@ const Content = () => {
 
 const App: React.FC = () => {
   return (
+    <TauriEnvProvider invokeFn={invoke}>
     <TrafficListProvider>
       <PaneProvider>
         <Content />
       </PaneProvider>
     </TrafficListProvider>
+    </TauriEnvProvider>
   );
 };
 
