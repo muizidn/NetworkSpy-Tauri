@@ -13,7 +13,7 @@ export type TrafficListSelection = {
   others: TrafficItemMap[] | null;
 }
 
-interface TrafficListContextState {
+export interface TrafficListContextState {
   trafficList: TrafficItemMap[];
   trafficListDisplay: TrafficItemMap[];
   setTrafficList: React.Dispatch<React.SetStateAction<TrafficItemMap[]>>;
@@ -27,7 +27,7 @@ interface TrafficListContextState {
   setFilterByUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const TrafficListContext = createContext<TrafficListContextState | undefined>(
+export const TrafficListContext = createContext<TrafficListContextState | undefined>(
   undefined
 );
 
