@@ -17,12 +17,11 @@ use std::collections::HashMap;
 use std::process::Command;
 use std::sync::{mpsc, Arc};
 use std::{env, thread};
+use submenu::{certificate, diff, edit, file, flow, help, scripting, setup, tools, view, window};
 use tauri::{AppHandle, Manager};
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 use tauri::{RunEvent, WindowBuilder};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
-use submenu::{diff, edit, file, flow, help, scripting, setup, tools, view, window, certificate};
-
 
 #[derive(Clone, Serialize)]
 struct PayloadTraffic {
@@ -65,7 +64,6 @@ fn greet(name: &str) -> String {
 
 //     Ok(())
 // }
-
 
 fn create_menu() -> Menu {
     let file_submenu = file::create_file_submenu();
@@ -145,13 +143,12 @@ fn main() {
     let app = tauri::Builder::default()
         .menu(create_menu())
         .on_menu_event(|event| {
-            match event.menu_item_id() {
-                "quit" | "close" => file::handle_file_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
-                "script_list" => scripting::handle_scripting_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
-                "install_cert_computer" | "install_cert_mobile" => certificate::handle_certificate_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
-                "tools_item" => tools::handle_tools_menu_event(event.menu_item_id(), &event, &event.window().app_handle()),
-                _ => {}
-            }
+            let event_id = event.menu_item_id();
+
+            file::handle_file_menu_event(event_id, &event, &event.window().app_handle());
+            scripting::handle_scripting_menu_event(event_id, &event, &event.window().app_handle());
+            certificate::handle_certificate_menu_event(event_id, &event, &event.window().app_handle());
+            tools::handle_tools_menu_event(event_id, &event, &event.window().app_handle());
         })
         .setup(|app| {
             // listen to the `start_stream` (emitted on any window)
