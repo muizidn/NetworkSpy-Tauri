@@ -12,7 +12,7 @@ pub fn handle_scripting_menu_event(event_id: &str, event: &tauri::WindowMenuEven
         "script_list" => {
             let window = event.window().clone();
             // Create new window when script_list is selected
-            create_window(window, "script_list", "Script List", "/script-list");
+            create_window(window, "script_list_window", "Script List", "/script-list");
         },
         _ => {}
     }
