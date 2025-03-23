@@ -4,7 +4,7 @@ use super::create_window::create_window;
 
 pub fn create_setup_submenu() -> Submenu {
     let automatic = CustomMenuItem::new("automatic".to_string(), "Automatic...");
-    let manual = CustomMenuItem::new("manual".to_string(), "Map Local...");
+    let manual = CustomMenuItem::new("manual".to_string(), "Manual...");
 
     let setup_menu = Menu::new().add_item(automatic).add_item(manual);
 
@@ -21,7 +21,7 @@ pub fn handle_setup_menu_event(event_id: &str, event: &WindowMenuEvent, app_hand
             create_window(
                 window.clone(),
                 "map_local_window",
-                "Map Local...",
+                "Manual...",
                 "/map-local",
             );
         }
