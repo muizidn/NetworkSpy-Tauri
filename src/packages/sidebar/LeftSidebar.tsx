@@ -115,6 +115,7 @@ export const LeftSidebar = () => {
     setFilteredNodesCount(nodeFound);
     switch (filterDisplayMode) {
       case "tree":
+        //@ts-ignore
         setFilteredNodes(filtered);
         break;
       case "flat":
