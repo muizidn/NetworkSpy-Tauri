@@ -1,24 +1,20 @@
-
-import { FilterBar } from '@src/packages/filter-bar/FilterBar';
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
+import React from 'react';
 
-
-const meta = {
-  title: 'App/Components/FilterBar',
-  component: FilterBar,
-  tags: ['autodocs'],
+const meta: Meta = {
+  title: 'Components/FilterBar',
   parameters: {
-    layout: 'padded',
+    layout: 'centered',
   },
-  args: {
-  },
-} satisfies Meta<typeof FilterBar>;
+};
 
 export default meta;
-type Story = StoryObj<typeof meta>;
+type Story = StoryObj;
 
-export const Default: Story = {
-  args: {
-  },
+export const NotImplemented: Story = {
+  render: () => (
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-center text-lg">Implement this!</p>
+    </div>
+  ),
 };

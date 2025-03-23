@@ -1,3 +1,7 @@
+@import './styles-platform/macos.css';
+@import './styles-platform/windows.css';
+@import './styles-platform/ubuntu.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

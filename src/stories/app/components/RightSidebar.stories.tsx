@@ -4,7 +4,7 @@ import { fn } from '@storybook/test';
 
 
 const meta = {
-  title: 'App/Components/RightSidebar',
+  title: 'Components/RightSidebar',
   component: RightSidebar,
   tags: ['autodocs'],
   parameters: {

@@ -7,7 +7,7 @@ import { trafficListContextStateMock } from "./mock/TrafficListContextStateMock"
 import response_pair_data_json from "./mock/response_pair_data.json";
 
 const meta: Meta<typeof ResponseTab> = {
-  title: "App/Components/ResponseTab",
+  title: "Components/ResponseTab",
   component: ResponseTab,
   args: {
     loadData: async (traffic) => {

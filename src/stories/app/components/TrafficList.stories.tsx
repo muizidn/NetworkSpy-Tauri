@@ -8,7 +8,7 @@ import { trafficListContextStateMock } from "./mock/TrafficListContextStateMock"
 import { mockInvoke } from "./mock/mockInvoke";
 
 const meta: Meta<typeof TrafficList> = {
-  title: "App/Components/TrafficList",
+  title: "Components/TrafficList",
   component: TrafficList,
   decorators: [
     (Story, context) => (

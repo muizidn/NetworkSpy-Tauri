@@ -6,7 +6,7 @@ import { LeftSidebar } from "@src/packages/sidebar/LeftSidebar";
 import { trafficListContextStateMock } from "./mock/TrafficListContextStateMock";
 
 const meta: Meta<typeof LeftSidebar> = {
-  title: "App/Components/LeftSidebar",
+  title: "Components/LeftSidebar",
   component: LeftSidebar,
   args: {},
   decorators: [

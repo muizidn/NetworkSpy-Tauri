@@ -1,6 +1,7 @@
 import { useState, ReactNode, useMemo, useCallback } from "react";
 import { Icon } from "./Icon";
 import { twMerge } from "tailwind-merge";
+import Tab from "@src/stories/app/atoms/Tab";
 
 export interface Tab {
   id: string;
@@ -65,31 +66,21 @@ export const NSTabs: React.FC<NSTabsProps> = ({
   );
 
   return (
-    <div id={`tabs-for-${title}`} className="flex flex-col h-full bg-[#23262a] text-white w-full relative">
+    <div
+      id={`tabs-for-${title}`}
+      className="flex flex-col h-full bg-[#23262a] text-white w-full relative"
+    >
       <div className="sticky top-0 flex overflow-x-auto no-scrollbar bg-[#23262a] z-10 h-8">
         {title && <h3 className="p-2 text-sm flex items-center">{title}</h3>}
         {memoizedTabs.map((tab) => (
-          <div
+          <Tab
             key={tab.id}
-            className={twMerge(
-              "flex group space-x-1 rounded-t border border-black px-1",
-              currentTab === tab.id
-                ? "bg-white text-black"
-                : "bg-[#1e1e1e] mt-1"
-            )}
-          >
-            <button
-              className="px-2 py-1 text-xs text-nowrap"
-              onClick={() => setCurrentTab(tab.id)}
-            >
-              {tab.title}
-            </button>
-            {onClose && (
-              <button onClick={() => handleTabClose(tab.id)}>
-                <Icon iconName="Close" />
-              </button>
-            )}
-          </div>
+            id={tab.id}
+            title={tab.title}
+            currentTab={currentTab}
+            setCurrentTab={setCurrentTab}
+            onClose={handleTabClose}
+          />
         ))}
       </div>
       <div className="relative w-full h-full">

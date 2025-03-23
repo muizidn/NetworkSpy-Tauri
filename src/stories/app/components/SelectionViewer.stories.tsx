@@ -6,7 +6,7 @@ import { SelectionViewer } from "@src/packages/main-content/SelectionViewer";
 import { trafficListContextStateMock } from "./mock/TrafficListContextStateMock";
 
 const meta: Meta<typeof SelectionViewer> = {
-  title: "App/Components/SelectionViewer",
+  title: "Components/SelectionViewer",
   component: SelectionViewer,
   args: {},
   decorators: [
