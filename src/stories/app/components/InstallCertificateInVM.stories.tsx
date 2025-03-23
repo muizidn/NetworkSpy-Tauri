@@ -1,20 +1,21 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import React from 'react';
+import type { Meta, StoryObj } from "@storybook/react";
+import CertificateInstallerVM from "@src/routes/certificate-installer/computer";
 
-const meta: Meta = {
-  title: 'Components/InstallCertificateInVM',
+const meta: Meta<typeof CertificateInstallerVM> = {
+  title: "Components/CertificateInstallerVM",
+  component: CertificateInstallerVM,
+  argTypes: {},
   parameters: {
-    layout: 'centered',
+    backgrounds: {
+      default: "dark",
+    },
   },
 };
 
 export default meta;
-type Story = StoryObj;
 
-export const NotImplemented: Story = {
-  render: () => (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-center text-lg">Implement this!</p>
-    </div>
-  ),
+type Story = StoryObj<typeof CertificateInstallerVM>;
+
+export const Default: Story = {
+  args: {},
 };

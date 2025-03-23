@@ -3,11 +3,11 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TauriEnvContext } from "@src/packages/tauri-env";
 import { mockInvoke } from "./mock/mockInvoke";
-import Breakpoint from "@src/routes/tools/Breakpoint";
+import Diffing from "@src/routes/tools/Diffing";
 
-const meta: Meta<typeof Breakpoint> = {
-  title: "Components/Breakpoint",
-  component: Breakpoint,
+const meta: Meta<typeof Diffing> = {
+  title: "Components/Diffing",
+  component: Diffing,
   decorators: [
     (Story, context) => (
       <DndProvider backend={HTML5Backend}>

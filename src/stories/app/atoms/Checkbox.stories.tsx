@@ -11,7 +11,7 @@ const meta: Meta<typeof Checkbox> = {
   },
   parameters: {
     backgrounds: {
-      default: "light",
+      default: "dark",
     },
   },
 };

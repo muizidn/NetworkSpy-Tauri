@@ -11,7 +11,7 @@ const meta: Meta<typeof Button> = {
   },
   parameters: {
     backgrounds: {
-      default: "light",
+      default: "dark",
     },
   },
 };

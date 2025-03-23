@@ -21,7 +21,7 @@ const preview: Preview = {
         { name: "Light", value: "#F7F9F2" },
         { name: "Maroon", value: "#400" },
       ],
-      default: "Light",
+      default: "dark",
     },
     controls: {
       matchers: {

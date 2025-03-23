@@ -1,20 +1,37 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import React from 'react';
+import { Meta, StoryObj } from "@storybook/react";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { TauriEnvContext } from "@src/packages/tauri-env";
+import { mockInvoke } from "./mock/mockInvoke";
+import Tag from "@src/routes/tools/Tag";
 
-const meta: Meta = {
-  title: 'Components/ToolsTag',
+const meta: Meta<typeof Tag> = {
+  title: "Components/Tag",
+  component: Tag,
+  decorators: [
+    (Story, context) => (
+      <DndProvider backend={HTML5Backend}>
+        <TauriEnvContext.Provider value={{ invoke: mockInvoke }}>
+          <div
+            style={{
+              height: `600px`,
+              width: `1000px`,
+            }}
+          >
+            <Story />
+          </div>
+        </TauriEnvContext.Provider>
+      </DndProvider>
+    ),
+  ],
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
 };
 
 export default meta;
-type Story = StoryObj;
+type Story = StoryObj<typeof meta>;
 
-export const NotImplemented: Story = {
-  render: () => (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-center text-lg">Implement this!</p>
-    </div>
-  ),
+export const Default: Story = {
+  args: {},
 };

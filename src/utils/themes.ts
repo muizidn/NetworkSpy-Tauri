@@ -1,5 +1,5 @@
 export default [
-  "light",
+  "dark",
   "dark",
   "cupcake",
   "bumblebee",

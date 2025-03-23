@@ -11,7 +11,7 @@ const meta: Meta<typeof Dropdown> = {
   },
   parameters: {
     backgrounds: {
-      default: "light",
+      default: "dark",
     },
   },
 };
