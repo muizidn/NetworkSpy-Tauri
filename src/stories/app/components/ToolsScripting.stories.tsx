@@ -3,11 +3,11 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TauriEnvContext } from "@src/packages/tauri-env";
 import { mockInvoke } from "./mock/mockInvoke";
-import Rewrite from "@src/routes/tools/Rewrite/Rewrite";
+import Scripting from "@src/routes/tools/Scripting/Scripting";
 
-const meta: Meta<typeof Rewrite> = {
-  title: "Components/ToolsRewrite",
-  component: Rewrite,
+const meta: Meta<typeof Scripting> = {
+  title: "Components/ToolsScripting",
+  component: Scripting,
   decorators: [
     (Story, context) => (
       <DndProvider backend={HTML5Backend}>

@@ -1,6 +1,6 @@
 import React from "react";
 
-const ScriptEditor = () => {
+export const ScriptEditor = () => {
   return (
     <div className='flex h-full bg-[#1d2022]'>
       <div className='w-[70%]'>
@@ -90,5 +90,3 @@ const ScriptEditor = () => {
     </div>
   );
 };
-
-export default ScriptEditor;

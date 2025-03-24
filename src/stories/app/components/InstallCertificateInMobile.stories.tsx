@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import CertificateInstallerMobile from "@src/routes/certificate-installer/computer";
+import CertificateInstallerMobile from "@src/routes/certificate-installer/mobile";
 
 const meta: Meta<typeof CertificateInstallerMobile> = {
   title: "Components/CertificateInstallerMobile",

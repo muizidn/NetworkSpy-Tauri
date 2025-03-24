@@ -3,10 +3,10 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TauriEnvContext } from "@src/packages/tauri-env";
 import { mockInvoke } from "./mock/mockInvoke";
-import Tag from "@src/routes/tools/Tag";
+import Tag from "@src/routes/tools/Tag/Tag";
 
 const meta: Meta<typeof Tag> = {
-  title: "Components/Tag",
+  title: "Components/ToolsTag",
   component: Tag,
   decorators: [
     (Story, context) => (

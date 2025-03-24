@@ -3,10 +3,10 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TauriEnvContext } from "@src/packages/tauri-env";
 import { mockInvoke } from "./mock/mockInvoke";
-import Diffing from "@src/routes/tools/Diffing";
+import Diffing from "@src/routes/tools/Diffing/Diffing";
 
 const meta: Meta<typeof Diffing> = {
-  title: "Components/Diffing",
+  title: "Components/ToolsDiffing",
   component: Diffing,
   decorators: [
     (Story, context) => (
