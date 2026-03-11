@@ -39,33 +39,48 @@ const Content = () => {
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
 
-  const [tabs, setTabs] = useState([
-    {
-      id: "1",
-      title: "Facebook API",
+  const [tabs, setTabs] = useState<any[]>(() => {
+    const saved = localStorage.getItem("ns_workspace_tabs");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.map((t: any) => ({
+          ...t,
+          content: <CenterPane />,
+        }));
+      } catch (e) {
+        console.error("Failed to parse saved tabs", e);
+      }
+    }
+    return [
+      { id: "1", title: "Rename By Double Click The Title", content: <CenterPane /> },
+    ];
+  });
+
+  useEffect(() => {
+    const toSave = tabs.map(({ id, title }) => ({ id, title }));
+    localStorage.setItem("ns_workspace_tabs", JSON.stringify(toSave));
+  }, [tabs]);
+
+  const handleAddTab = () => {
+    const newId = `tab-${Date.now()}`;
+    const newTab = {
+      id: newId,
+      title: `New Session ${tabs.length + 1}`,
       content: <CenterPane />,
-    },
-    {
-      id: "2",
-      title: "Local Webserver",
-      content: <CenterPane />,
-    },
-    {
-      id: "3",
-      title: "GraphQL API Instragram",
-      content: <CenterPane />,
-    },
-    {
-      id: "4",
-      title: "Machine Learning Prediction",
-      content: <CenterPane />,
-    },
-    {
-      id: "5",
-      title: "LLM API TomioAI",
-      content: <CenterPane />,
-    },
-  ]);
+    };
+    setTabs((prev) => [...prev, newTab]);
+  };
+
+  const handleCloseTab = (id: string) => {
+    setTabs((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleRenameTab = (id: string, newTitle: string) => {
+    setTabs((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, title: newTitle } : t))
+    );
+  };
 
   useEffect(() => {
     setTrafficList([])
@@ -221,9 +236,9 @@ const Content = () => {
               <div className='flex items-center justify-center h-full relative'>
                 <NSTabs
                   tabs={tabs}
-                  onClose={(id) =>
-                    setTabs((prev) => [...prev.filter((e) => e.id !== id)])
-                  }
+                  onAdd={handleAddTab}
+                  onClose={handleCloseTab}
+                  onRename={handleRenameTab}
                 />
               </div>
             </Pane>
