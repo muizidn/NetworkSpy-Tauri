@@ -15,7 +15,6 @@ export type TrafficListSelection = {
 
 export interface TrafficListContextState {
   trafficList: TrafficItemMap[];
-  trafficListDisplay: TrafficItemMap[];
   setTrafficList: React.Dispatch<React.SetStateAction<TrafficItemMap[]>>;
   trafficSet: { [key: string]: Traffic };
   setTrafficSet: React.Dispatch<
@@ -23,8 +22,6 @@ export interface TrafficListContextState {
   >;
   selections: TrafficListSelection;
   setSelections: React.Dispatch<React.SetStateAction<TrafficListSelection>>;
-  filterByUrl: string;
-  setFilterByUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export const TrafficListContext = createContext<
@@ -54,36 +51,16 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
     firstSelected: null,
     others: null,
   });
-  const [_filterByUrl, setFilterByUrl] = useState<string>("");
-
-  const filterByUrlTrafficList = useMemo(() => {
-    const filteredByUrl = trafficList.filter((t) => {
-      if (_filterByUrl === "") {
-        return true;
-      }
-      if (!t.url || t.url === "") {
-        return false;
-      }
-
-      const trafficUrl = new URL(t.url as string);
-      const trafficUrlJoined = `${trafficUrl.hostname}${trafficUrl.pathname}`;
-      return trafficUrlJoined.includes(_filterByUrl);
-    });
-    return filteredByUrl;
-  }, [trafficList, _filterByUrl]);
 
   return (
     <TrafficListContext.Provider
       value={{
         trafficList,
-        trafficListDisplay: filterByUrlTrafficList,
         setTrafficList,
         trafficSet,
         setTrafficSet,
         selections,
         setSelections,
-        filterByUrl: _filterByUrl,
-        setFilterByUrl,
       }}
     >
       {children}

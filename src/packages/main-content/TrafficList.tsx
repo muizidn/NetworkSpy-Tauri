@@ -5,11 +5,13 @@ import {
 } from "../ui/TableView";
 import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { useTrafficListContext } from "./context/TrafficList";
+import { useFilterContext } from "@src/context/FilterContext";
 import { TrafficItemMap } from "./model/TrafficItemMap";
 import { TauriInvokeFn, useTauri } from "../tauri-env";
 
 export const TrafficList: React.FC = () => {
-  const { trafficListDisplay, setSelections } = useTrafficListContext();
+  const { setSelections } = useTrafficListContext();
+  const { filteredTraffic } = useFilterContext();
 
   const { invoke } = useTauri();
 
@@ -36,7 +38,7 @@ export const TrafficList: React.FC = () => {
   return (
     <TableView
       headers={headers}
-      data={trafficListDisplay}
+      data={filteredTraffic}
       contextMenuRenderer={new TrafficListContextMenuRenderer(invoke)}
       onSelectedRowChanged={(first, items) =>
         setSelections({ firstSelected: first, others: items })

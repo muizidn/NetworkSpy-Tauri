@@ -16,7 +16,7 @@ import {
 type FilterDisplayMode = "tree" | "flat";
 
 export const LeftSidebar = () => {
-  const { trafficList, setFilterByUrl } = useTrafficListContext();
+  const { trafficList } = useTrafficListContext();
 
   const [query, setQuery] = useState("");
   const [filterDisplayMode, setFilterDisplayMode] =
@@ -32,7 +32,7 @@ export const LeftSidebar = () => {
   const [filteredNodesCount, setFilteredNodesCount] = useState(0);
 
   const groupedTraffic = useMemo(() => {
-    const urls = trafficList.filter((t) => t.url).map((t) => t.url as string);
+    const urls = trafficList.filter((t: any) => t.url).map((t: any) => t.url as string);
     return {
       app: urls,
       domain: urls,
@@ -76,7 +76,8 @@ export const LeftSidebar = () => {
   async function onClickNode(id: string) {
     const uuidAndUrl = id.split(kTreeNodeIdPrefixSeparator);
     const url = uuidAndUrl[1];
-    setFilterByUrl(url);
+    console.log("Selected URL from sidebar:", url);
+    // TODO: Implement a way to communicate with the active tab's FilterContext if needed
   }
 
   function flatMapNode(e: TreeNode | null, path: string = ""): TreeNode[] {
