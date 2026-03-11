@@ -58,7 +58,7 @@ export const CenterPane: React.FC = () => {
           </Pane>
           <Pane>
             <BottomPaneProvider>
-              <div style={{ height: sizesCenterPane[1] }} className="flex flex-col relative group/bottom-pane">
+              <div style={{ height: sizesCenterPane[1] }} className="flex flex-col relative group/bottom-pane border border-red-500">
                 <button
                   onClick={toggleMaximize}
                   className={twMerge(

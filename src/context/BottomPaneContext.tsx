@@ -4,7 +4,11 @@ import React, { createContext, useContext, useState } from "react";
  * Mode when nothing is selected.
  * Shows global traffic summary / analytics.
  */
-export type NoneMode = "summary";
+export type NoneMode = 
+    | "summary" 
+    | "health_timeline" 
+    | "status_distribution" 
+    | "method_distribution";
 
 /**
  * Modes when a single traffic is selected.

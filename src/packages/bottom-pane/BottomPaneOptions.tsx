@@ -42,6 +42,9 @@ export const BottomPaneOptions = () => {
   const optionsBySelection = {
     none: [
       { id: "summary", title: "Summary", onClick: () => setMode("summary") },
+      { id: "health_timeline", title: "Health History", onClick: () => setMode("health_timeline") },
+      { id: "status_distribution", title: "Status Map", onClick: () => setMode("status_distribution") },
+      { id: "method_distribution", title: "Method Usage", onClick: () => setMode("method_distribution") },
     ],
 
     single: [

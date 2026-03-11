@@ -4,6 +4,9 @@ import { SelectionViewer } from "../main-content/SelectionViewer";
 import { useBottomPaneContext } from "@src/context/BottomPaneContext";
 import { RequestResponseMode } from "./BottomPaneComponents/Single/RequestResponseMode";
 import { SummaryMode } from "./BottomPaneComponents/None/SummaryMode";
+import { HealthTimelineMode } from "./BottomPaneComponents/None/HealthTimelineMode";
+import { StatusDistributionMode } from "./BottomPaneComponents/None/StatusDistributionMode";
+import { MethodDistributionMode } from "./BottomPaneComponents/None/MethodDistributionMode";
 import { GraphQLMode } from "./BottomPaneComponents/Single/GraphQLMode";
 import { LLMPromptMode } from "./BottomPaneComponents/Single/LLMPromptMode";
 import { DiffMode } from "./BottomPaneComponents/Single/DiffMode";
@@ -51,6 +54,15 @@ const renderMode = (
   switch (mode) {
     case "summary":
       return <SummaryMode />;
+
+    case "health_timeline":
+      return <HealthTimelineMode />;
+
+    case "status_distribution":
+      return <StatusDistributionMode />;
+
+    case "method_distribution":
+      return <MethodDistributionMode />;
 
     case "request_response":
       return <RequestResponseMode sizes={sizes} setSizes={setSizes} />;
