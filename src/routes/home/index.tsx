@@ -83,11 +83,22 @@ const Content = () => {
   };
 
   useEffect(() => {
-    setTrafficList([])
+    if (window.__TAURI__) { return; }
+    setTrafficList([]);
+    let batch: TrafficItemMap[] = [];
 
-    // just for testing purpose
-    const traffics = generateJson(50)
-    setTrafficList(traffics as TrafficItemMap[]);
+    const interval = setInterval(() => {
+      if (batch.length === 0) {
+        batch = generateJson(50) as TrafficItemMap[];
+      }
+
+      const nextItem = batch.shift();
+      if (nextItem) {
+        setTrafficList((prev) => [...prev, nextItem]);
+      }
+    }, 300); // Insert every 300 milisecond
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
