@@ -36,13 +36,13 @@ export const MethodDistributionMode = () => {
   }
 
   return (
-    <div className="h-full bg-[#1e1e1e] text-zinc-300 p-6 flex flex-col">
-      <div className="mb-6 border-b border-zinc-800 pb-4">
+    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-6 flex flex-col overflow-auto">
+      <div className="mb-6 border-b border-zinc-800 pb-4 shrink-0">
         <h2 className="text-xl font-bold text-white mb-1">HTTP Methods Usage</h2>
         <p className="text-zinc-500 text-sm">Quantifying request methods to understand API interaction types.</p>
       </div>
 
-      <div className="flex-grow min-h-0">
+      <div className="h-[400px] shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ left: 40, right: 40, top: 20, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" horizontal={false} />

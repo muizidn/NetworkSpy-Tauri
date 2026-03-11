@@ -54,8 +54,8 @@ export const HealthTimelineMode = () => {
   }
 
   return (
-    <div className="h-full bg-[#1e1e1e] text-zinc-300 p-6 flex flex-col">
-      <div className="mb-6 flex justify-between items-end border-b border-zinc-800 pb-4">
+    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-6 flex flex-col overflow-auto">
+      <div className="mb-6 flex justify-between items-end border-b border-zinc-800 pb-4 shrink-0">
         <div>
           <h2 className="text-xl font-bold text-white mb-1">Health & Latency History</h2>
           <p className="text-zinc-500 text-sm">Visualizing system stability and performance trends over time.</p>
@@ -66,7 +66,7 @@ export const HealthTimelineMode = () => {
         </div>
       </div>
 
-      <div className="flex-grow min-h-0 bg-zinc-900/50 border border-zinc-800 rounded-xl p-4">
+      <div className="h-[400px] bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} />
