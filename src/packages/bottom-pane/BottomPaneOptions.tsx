@@ -1,8 +1,27 @@
+import { useEffect } from "react";
+import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { Button } from "../ui/Button";
 import { useBottomPaneContext } from "@src/context/BottomPaneContext";
 
 export const BottomPaneOptions = () => {
-  const { setMode, selectionType } = useBottomPaneContext();
+  const { setMode, selectionType, setSelectionType } = useBottomPaneContext();
+
+  const { selections } = useTrafficListContext();
+
+  useEffect(() => {
+    if (!selections.firstSelected) {
+      setSelectionType("none")
+    }
+
+    if (selections.firstSelected) {
+      setSelectionType("single")
+    }
+
+    if (selections.others && selections.others.length > 1) {
+      setSelectionType("multiple")
+    }
+
+  }, [selections])
 
   const optionsBySelection = {
     none: [
