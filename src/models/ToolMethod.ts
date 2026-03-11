@@ -1,1 +1,1 @@
-export type ToolMethod = "GET" | "POST" | "PUT" | "DELETE"
+export type ToolMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS" | "ALL"

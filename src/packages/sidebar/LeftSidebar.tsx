@@ -177,7 +177,7 @@ export const LeftSidebar = () => {
             ))}
           </div>
         </div>
-        
+
         <div className="flex flex-col space-y-3 items-start w-full pt-4 border-t border-black/30">
           <div className="flex items-center space-x-2 px-1 shrink-0">
             <FiLayers className="text-zinc-500" size={14} />
@@ -210,7 +210,7 @@ export const LeftSidebar = () => {
               </h2>
               <span className="text-blue-400 text-xs font-mono">{filteredNodesCount} matches</span>
             </div>
-            
+
             <div className="flex bg-black/40 p-0.5 rounded-lg border border-zinc-800">
               <button
                 onClick={() => setFilterDisplayMode("tree")}

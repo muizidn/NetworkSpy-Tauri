@@ -1,3 +1,3 @@
 export interface TrafficItemMap {
-    [key: string]: string | string[] | boolean;
+    [key: string]: string | string[] | boolean | number;
 }

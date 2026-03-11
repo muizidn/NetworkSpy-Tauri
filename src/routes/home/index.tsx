@@ -209,50 +209,48 @@ const Content = () => {
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className='select-none flex flex-col h-screen'>
-        <Header
-          isRun={isRun}
-          setIsRun={setIsRun}
-          clearData={clearData}
-          toggleLeftPane={toggleLeftPane}
-          toggleBottomPane={toggleBottomPane}
-          toggleRightPane={toggleRightPane}
-        />
-        <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
-          <SplitPane
-            split='vertical'
-            sashRender={() => <SashContent type='vscode' />}
-            sizes={sizes}
-            onChange={setSizes}>
-            <Pane
-              minSize={paneSizeConfig.leftPane.min}
-              maxSize={paneSizeConfig.leftPane.max}>
-              <div className='flex items-center justify-center h-full'>
-                <LeftSidebar />
-              </div>
-            </Pane>
-            <Pane>
-              <div className='flex items-center justify-center h-full relative'>
-                <NSTabs
-                  tabs={tabs}
-                  onAdd={handleAddTab}
-                  onClose={handleCloseTab}
-                  onRename={handleRenameTab}
-                />
-              </div>
-            </Pane>
-            <Pane
-              minSize={paneSizeConfig.rightPane.min}
-              maxSize={paneSizeConfig.rightPane.max}>
-              <div className='flex items-center justify-center h-full'>
-                <RightSidebar />
-              </div>
-            </Pane>
-          </SplitPane>
-        </div>
+    <div className='select-none flex flex-col h-screen'>
+      <Header
+        isRun={isRun}
+        setIsRun={setIsRun}
+        clearData={clearData}
+        toggleLeftPane={toggleLeftPane}
+        toggleBottomPane={toggleBottomPane}
+        toggleRightPane={toggleRightPane}
+      />
+      <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
+        <SplitPane
+          split='vertical'
+          sashRender={() => <SashContent type='vscode' />}
+          sizes={sizes}
+          onChange={setSizes}>
+          <Pane
+            minSize={paneSizeConfig.leftPane.min}
+            maxSize={paneSizeConfig.leftPane.max}>
+            <div className='flex items-center justify-center h-full'>
+              <LeftSidebar />
+            </div>
+          </Pane>
+          <Pane>
+            <div className='flex items-center justify-center h-full relative'>
+              <NSTabs
+                tabs={tabs}
+                onAdd={handleAddTab}
+                onClose={handleCloseTab}
+                onRename={handleRenameTab}
+              />
+            </div>
+          </Pane>
+          <Pane
+            minSize={paneSizeConfig.rightPane.min}
+            maxSize={paneSizeConfig.rightPane.max}>
+            <div className='flex items-center justify-center h-full'>
+              <RightSidebar />
+            </div>
+          </Pane>
+        </SplitPane>
       </div>
-    </DndProvider>
+    </div>
   );
 };
 

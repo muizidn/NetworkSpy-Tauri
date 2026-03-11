@@ -34,9 +34,9 @@ export function MacOSInstaller() {
             Follow the prompts to install the root certificate and ensure it is
             trusted by your system.
           </p>
-          <div className="bg-gray-800 p-4 rounded-md mt-2 flex items-center space-x-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span>Installed & Trusted!</span>
+          <div className="bg-zinc-900/50 p-4 rounded-md mt-2 flex items-center space-x-2 border border-zinc-800/50">
+            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+            <span className="text-sm font-bold text-green-500">Installed & Trusted!</span>
           </div>
         </div>
       ),
@@ -46,26 +46,27 @@ export function MacOSInstaller() {
       description: (
         <div>
           <p>
-            Open <span className="font-medium">System Preferences</span> &gt;{" "}
-            <span className="font-medium">Network</span>.
+            Open <span className="font-bold text-zinc-200">System Preferences</span> &gt;{" "}
+            <span className="font-bold text-zinc-200">Network</span>.
           </p>
-          <p className="mt-2">
+          <p className="mt-4">
             Select your active network connection (Wi-Fi or Ethernet) and click
-            <span className="font-medium"> Advanced</span>.
+            <span className="font-bold text-zinc-200"> Advanced</span>.
           </p>
-          <p className="mt-2">Go to the <span className="font-medium">Proxies</span> tab and configure the following:</p>
-          <div className="bg-gray-800 p-4 rounded-md mt-2">
-            <p>
-              <span className="font-medium">Web Proxy (HTTP):</span> 192.168.1.4 port 9090
-            </p>
-            <p>
-              <span className="font-medium">Secure Web Proxy (HTTPS):</span> 192.168.1.4 port 9090
-            </p>
+          <p className="mt-4 text-zinc-500">Go to the <span className="font-bold text-zinc-300">Proxies</span> tab and configure the following:</p>
+          <div className="bg-zinc-900/50 p-6 rounded-xl mt-3 border border-zinc-800/50 space-y-3">
+             <p className="flex justify-between items-center border-b border-zinc-800/50 pb-2">
+               <span className="text-zinc-500 text-xs">Web Proxy (HTTP):</span>
+               <span className="font-mono text-xs text-blue-400">192.168.1.4 : 9090</span>
+             </p>
+             <p className="flex justify-between items-center">
+               <span className="text-zinc-500 text-xs">Secure Web Proxy (HTTPS):</span>
+               <span className="font-mono text-xs text-blue-400">192.168.1.4 : 9090</span>
+             </p>
           </div>
-          <p className="mt-2">
-            Ensure <span className="font-medium">Use Passive FTP Mode (PASV)</span> is unchecked.
+          <p className="mt-4 text-[11px] text-zinc-500 italic leading-relaxed">
+            Ensure <span className="font-bold text-zinc-400">Use Passive FTP Mode (PASV)</span> is unchecked. Click <span className="font-bold text-zinc-400">OK</span> and then <span className="font-bold text-zinc-400">Apply</span> to save.
           </p>
-          <p className="mt-2">Click <span className="font-medium">OK</span> and then <span className="font-medium">Apply</span> to save the changes.</p>
         </div>
       ),
     },
@@ -77,17 +78,13 @@ export function MacOSInstaller() {
             Visit Website:{" "}
             <a
               href="http://cert.NetworkSpy.io"
-              className="text-blue-400 hover:underline"
+              className="text-blue-400 hover:text-blue-300 underline underline-offset-4 decoration-blue-500/30"
             >
               http://cert.NetworkSpy.io
             </a>
           </p>
-          <p className="mt-2">
+          <p className="mt-4 text-zinc-400">
             Let it install the 'NetworkSpy CA' certificate and follow the prompts.
-          </p>
-          <p className="mt-2">
-            If you could not download the certificate, please read the
-            "Troubleshooting Page".
           </p>
         </div>
       ),
@@ -96,25 +93,14 @@ export function MacOSInstaller() {
       title: "Trust NetworkSpy Certificate in Keychain Access",
       description: (
         <div>
-          <p>
-            Open <span className="font-medium">Keychain Access</span> from the
-            Applications &gt; Utilities folder.
+          <p className="leading-relaxed">
+            Open <span className="text-zinc-200 font-bold italic underline">Keychain Access</span> and locate the <span className="text-blue-400 font-bold">NetworkSpy CA</span> certificate.
           </p>
-          <p className="mt-2">
-            In the left sidebar, select <span className="font-medium">System</span> and then <span className="font-medium">Certificates</span>.
-          </p>
-          <p className="mt-2">
-            Find the NetworkSpy CA certificate, right-click on it, and select{" "}
-            <span className="font-medium">Get Info</span>.
-          </p>
-          <p className="mt-2">
-            Expand the <span className="font-medium">Trust</span> section and
-            set <span className="font-medium">When using this certificate</span> to{" "}
-            <span className="font-medium">Always Trust</span>.
-          </p>
-          <p className="mt-2">
-            Close the window, and enter your password to confirm the changes.
-          </p>
+          <div className="bg-blue-600/10 border border-blue-500/20 p-5 rounded-xl mt-4">
+              <p className="text-[12px] leading-relaxed text-zinc-300">
+                Right-click &gt; <span className="font-black text-white">Get Info</span>. Expand <span className="font-black text-white">Trust</span> and set <span className="text-green-400 font-black">"Always Trust"</span>.
+              </p>
+          </div>
         </div>
       ),
     },

@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { Renderer } from "./_Renderer";
 import { useDrag, useDrop } from "react-dnd";
 import { TableViewContextMenuRenderer } from "./_ContextMenu";
+import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 export interface TableViewHeader<T> {
   title: string;
@@ -17,6 +18,7 @@ export interface TableViewProps<T> {
   data: T[];
   contextMenuRenderer?: TableViewContextMenuRenderer<T>;
   onSelectedRowChanged?: (firstSelected: T | null, items: T[] | null) => void;
+  className?: string;
 }
 
 type SortOrder = "asc" | "desc";
@@ -60,9 +62,14 @@ const HeaderCell = <T,>({
 
   drag(drop(ref));
 
+  const isActive = sortConfig.key === header.title.toLowerCase();
+
   return (
     <th
-      className="px-2 py-2 relative bg-table-header border-b border-gray-700"
+      className={twMerge(
+          "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors",
+          isActive ? "text-blue-400 bg-[#161616]" : "text-zinc-500 hover:bg-zinc-800/40"
+      )}
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
@@ -70,20 +77,19 @@ const HeaderCell = <T,>({
     >
       <div
         ref={ref}
-        className="flex items-center justify-between cursor-grab w-full"
+        className="flex items-center justify-between cursor-grab w-full gap-2"
         style={{ width: columnWidth, minWidth: header.minWidth }}
       >
-        <span className="text-nowrap">{header.title}</span>
-        {sortConfig.key === header.title.toLowerCase() && (
-          <span className="cursor-pointer mr-2">
-            {sortConfig.order === "asc" ? "↓" : "↑"}
+        <span className="text-[10px] font-black uppercase tracking-widest truncate">{header.title}</span>
+        {isActive && (
+          <span className="shrink-0 p-0.5 bg-blue-500/10 rounded text-blue-500">
+            {sortConfig.order === "asc" ? <FiChevronDown size={12} /> : <FiChevronUp size={12} />}
           </span>
         )}
       </div>
       <div
-        onMouseDown={(e) => startResize(index, e.clientX)}
-        className="absolute right-0 top-[13px] h-[15px] cursor-col-resize pr-[1px] flex items-center justify-center z-10 bg-gray-700 w-[1px]"
-        style={{ transform: "translateX(50%)" }}
+        onMouseDown={(e) => { e.stopPropagation(); startResize(index, e.clientX); }}
+        className="absolute right-0 top-1/2 -translate-y-1/2 h-6 cursor-col-resize w-[1px] hover:w-[3px] bg-zinc-800 hover:bg-blue-500 transition-all z-20"
       ></div>
     </th>
   );
@@ -94,6 +100,7 @@ export const TableView = <T,>({
   data,
   contextMenuRenderer,
   onSelectedRowChanged,
+  className,
 }: TableViewProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<{
     firstSelect?: number;
@@ -113,12 +120,10 @@ export const TableView = <T,>({
   function getRowIndex(e: MouseEvent): string | null {
     let target = e.target as HTMLElement;
 
-    // Traverse up the DOM tree until a <tr> element is found
     while (target && target.tagName !== "TR") {
       target = target.parentElement as HTMLElement;
     }
 
-    // Check if the <tr> element was found and has the data-index attribute
     if (target && target.tagName === "TR") {
       const index = target.getAttribute("data-index");
       return index;
@@ -205,7 +210,7 @@ export const TableView = <T,>({
       const animateScroll = (startTime: number) => {
         const currentTime = Date.now();
         const elapsed = currentTime - startTime;
-        const duration = 500; // Animation duration in milliseconds
+        const duration = 500;
 
         if (elapsed < duration) {
           const easedTime = easeInOutQuad(
@@ -247,7 +252,6 @@ export const TableView = <T,>({
     }
   };
 
-  // Easing function for smooth scroll animation
   const easeInOutQuad = (
     t: number,
     b: number,
@@ -265,11 +269,13 @@ export const TableView = <T,>({
       const dx = e.clientX - startX;
       setColumnWidths((prev) => {
         const newWidths = [...prev];
-        newWidths[index] += dx;
+        newWidths[index] = Math.max(header.minWidth || 50, newWidths[index] + dx);
         return newWidths;
       });
       startX = e.clientX;
     };
+
+    const header = headers[index];
 
     const handleMouseUp = () => {
       window.removeEventListener("mousemove", handleMouseMove);
@@ -293,7 +299,12 @@ export const TableView = <T,>({
     const newHeaders = [...headers];
     const [draggedHeader] = newHeaders.splice(dragIndex, 1);
     newHeaders.splice(hoverIndex, 0, draggedHeader);
+    const newColumnWidths = [...columnWidths];
+    const [draggedWidth] = newColumnWidths.splice(dragIndex, 1);
+    newColumnWidths.splice(hoverIndex, 0, draggedWidth);
+    
     setHeaders(newHeaders);
+    setColumnWidths(newColumnWidths);
   };
 
   const sortedData = React.useMemo(() => {
@@ -317,46 +328,57 @@ export const TableView = <T,>({
   }, [data, sortConfig]);
 
   return (
-    <table className="table-auto w-full block relative overflow-x-auto h-full">
-      <thead className="sticky top-0 bg-table-header">
-        <tr>
-          {headers.map((header, index) => (
-            <HeaderCell
-              key={index}
-              header={header}
-              index={index}
-              moveHeader={moveHeader}
-              sortConfig={sortConfig}
-              handleSort={handleSort}
-              startResize={startResize}
-              columnWidth={columnWidths[index]}
-            />
-          ))}
-        </tr>
-      </thead>
-      <tbody ref={tbodyRef} className="overflow-y-auto" onScroll={handleScroll}>
-        {sortedData.map((item, index) => (
-          <tr
-            key={`item-${index}`}
-            onContextMenu={showContextMenu}
-            onClick={onClickRow}
-            className={twMerge(
-              "hover:bg-[#181a1d]",
-              selectedRows.rows.includes(index) && "bg-[#191b1e]"
-            )}
-            data-index={index}
-          >
-            {headers.map((header, i) => (
-              <td key={i} style={{ maxWidth: columnWidths[i] }}>
-                {header.renderer.render({
-                  input: item,
-                  width: columnWidths[i],
-                })}
-              </td>
+    <div className={twMerge("w-full h-full flex flex-col bg-[#050505]", className)}>
+        <table className="w-full border-separate border-spacing-0 flex flex-col h-full overflow-hidden">
+        <thead className="sticky top-0 z-30 shrink-0">
+            <tr className="flex w-full">
+            {headers.map((header, index) => (
+                <HeaderCell
+                key={`header-${index}`}
+                header={header}
+                index={index}
+                moveHeader={moveHeader}
+                sortConfig={sortConfig}
+                handleSort={handleSort}
+                startResize={startResize}
+                columnWidth={columnWidths[index]}
+                />
             ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+            </tr>
+        </thead>
+        <tbody ref={tbodyRef} className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth" onScroll={handleScroll}>
+            {sortedData.map((item, index) => {
+                const isSelected = selectedRows.rows.includes(index);
+                return (
+                    <tr
+                        key={`item-${index}`}
+                        onContextMenu={showContextMenu}
+                        onClick={onClickRow}
+                        className={twMerge(
+                        "flex w-full group transition-all duration-150 border-b border-zinc-900/50",
+                        isSelected ? "bg-blue-600/10" : "hover:bg-zinc-800/30"
+                        )}
+                        data-index={index}
+                    >
+                        {headers.map((header, i) => (
+                        <td key={i} className="px-4 py-2 text-zinc-400 text-[12px] truncate" style={{ width: columnWidths[i], minWidth: header.minWidth }}>
+                            {header.renderer.render({
+                            input: item,
+                            width: columnWidths[i],
+                            })}
+                        </td>
+                        ))}
+                    </tr>
+                );
+            })}
+            
+            {sortedData.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 bg-black/20 text-zinc-600 italic text-sm">
+                    No data available
+                </div>
+            )}
+        </tbody>
+        </table>
+    </div>
   );
 };

@@ -15,6 +15,14 @@ import MobileCertificateInstaller from "./routes/certificate-installer/mobile";
 import ComputerCertificateInstaller from "./routes/certificate-installer/computer";
 import VMCertificateInstaller from "./routes/certificate-installer/vm";
 import DevelopmentCertificateInstaller from "./routes/certificate-installer/development";
+
+import Breakpoint from "./routes/tools/Breakpoint";
+import Diffing from "./routes/tools/Diffing";
+import Logging from "./routes/tools/Logging";
+import Rewrite from "./routes/tools/Rewrite";
+import Scripting from "./routes/tools/Scripting";
+import Tag from "./routes/tools/Tag";
+
 // import ScriptEditor from "./routes/script-editor";
 
 const router = createBrowserRouter([
@@ -31,14 +39,30 @@ const router = createBrowserRouter([
         path: "/settings",
         element: <Settings />,
       },
-      // {
-      //   path: "/script-list",
-      //   element: <ScriptList />,
-      // },
-      // {
-      //   path: "/script-editor",
-      //   element: <ScriptEditor />,
-      // },
+      {
+        path: "/breakpoint",
+        element: <Breakpoint />,
+      },
+      {
+        path: "/diffing",
+        element: <Diffing />,
+      },
+      {
+        path: "/logging",
+        element: <Logging />,
+      },
+      {
+        path: "/rewrite",
+        element: <Rewrite />,
+      },
+      {
+        path: "/scripting",
+        element: <Scripting />,
+      },
+      {
+        path: "/tag",
+        element: <Tag />,
+      },
       {
         path: "/mobile-certificate-installer",
         element: <MobileCertificateInstaller />,
@@ -59,11 +83,16 @@ const router = createBrowserRouter([
   },
 ]);
 
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
       <SettingsProvider>
-        <RouterProvider router={router} />
+        <DndProvider backend={HTML5Backend}>
+            <RouterProvider router={router} />
+        </DndProvider>
       </SettingsProvider>
     </TauriProvider>
   </React.StrictMode>
