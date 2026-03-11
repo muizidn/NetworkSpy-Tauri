@@ -6,6 +6,8 @@ import { TableViewContextMenuRenderer } from "./_ContextMenu";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
+const kAUTOSCROLLENABLED = false
+
 export interface TableViewHeader<T> {
   title: string;
   renderer: Renderer<T>;
@@ -121,7 +123,7 @@ export const TableView = <T,>({
     rows: number[];
   }>({ rows: [] });
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(kAUTOSCROLLENABLED);
   const [columnWidths, setColumnWidths] = useState<number[]>(
     initialHeaders.map((e) => e.minWidth || 150)
   );
@@ -260,7 +262,7 @@ export const TableView = <T,>({
       tbody.scrollHeight - tbody.scrollTop <= tbody.clientHeight * 2;
 
     if (atBottom) {
-      setAutoScrollEnabled(true);
+      setAutoScrollEnabled(kAUTOSCROLLENABLED);
     } else if (!nearBottom) {
       setAutoScrollEnabled(false);
     }
