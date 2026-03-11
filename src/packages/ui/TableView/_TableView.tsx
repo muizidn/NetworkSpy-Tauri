@@ -4,6 +4,7 @@ import { Renderer } from "./_Renderer";
 import { useDrag, useDrop } from "react-dnd";
 import { TableViewContextMenuRenderer } from "./_ContextMenu";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 export interface TableViewHeader<T> {
   title: string;
@@ -332,6 +333,15 @@ export const TableView = <T,>({
     });
   }, [data, sortConfig]);
 
+  const rowVirtualizer = useVirtualizer({
+    count: sortedData.length,
+    getScrollElement: () => tbodyRef.current,
+    estimateSize: () => 50, // Estimated row height
+    overscan: 10,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
   return (
     <div className={twMerge("w-full h-full flex flex-col bg-[#050505] overflow-x-auto custom-scrollbar", className)}>
       <table className="min-w-full w-max border-separate border-spacing-0 flex flex-col h-full overflow-hidden">
@@ -352,44 +362,58 @@ export const TableView = <T,>({
             ))}
           </tr>
         </thead>
-        <tbody ref={tbodyRef} className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth" onScroll={handleScroll}>
-          {sortedData.map((item, index) => {
-            const isSelected = selectedRows.rows.includes(index);
-            return (
-              <tr
-                key={`item-${index}`}
-                onContextMenu={showContextMenu}
-                onClick={onClickRow}
-                className={twMerge(
-                  "flex w-full group transition-all duration-150 border-b border-zinc-900/50",
-                  isSelected ? "bg-blue-600/10" : "hover:bg-zinc-800/30"
-                )}
-                data-index={index}
-              >
-                {headers.map((header, i) => {
-                  const isLast = i === headers.length - 1;
-                  return (
-                    <td key={i} className={twMerge(
-                      "px-4 py-2 text-zinc-400 text-[12px] truncate",
-                      isLast ? "flex-grow" : "shrink-0"
-                    )} style={{
-                      width: isLast ? undefined : columnWidths[i],
-                      flexBasis: isLast ? columnWidths[i] : undefined,
-                      minWidth: header.minWidth
-                    }}>
-                      {header.renderer.render({
-                        input: item,
-                        width: columnWidths[i],
-                      })}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
+        <tbody ref={tbodyRef} className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth relative" onScroll={handleScroll}>
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {virtualItems.map((virtualRow) => {
+              const item = sortedData[virtualRow.index];
+              const isSelected = selectedRows.rows.includes(virtualRow.index);
+
+              return (
+                <tr
+                  key={virtualRow.key}
+                  onContextMenu={showContextMenu}
+                  onClick={onClickRow}
+                  className={twMerge(
+                    "flex w-full group transition-all duration-150 border-b border-zinc-900/50 absolute top-0 left-0",
+                    isSelected ? "bg-blue-600/10" : "hover:bg-zinc-800/30"
+                  )}
+                  style={{
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                  data-index={virtualRow.index}
+                >
+                  {headers.map((header, i) => {
+                    const isLast = i === headers.length - 1;
+                    return (
+                      <td key={i} className={twMerge(
+                        "px-4 py-2 text-zinc-400 text-[12px] truncate",
+                        isLast ? "flex-grow" : "shrink-0"
+                      )} style={{
+                        width: isLast ? undefined : columnWidths[i],
+                        flexBasis: isLast ? columnWidths[i] : undefined,
+                        minWidth: header.minWidth
+                      }}>
+                        {header.renderer.render({
+                          input: item,
+                          width: columnWidths[i],
+                        })}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </div>
 
           {sortedData.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 bg-black/20 text-zinc-600 italic text-sm">
+            <div className="flex flex-col items-center justify-center py-20 bg-black/20 text-zinc-600 italic text-sm absolute inset-0">
               No data available
             </div>
           )}

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
+    "@tanstack/react-virtual": "^3.13.21",
     "@tauri-apps/api": "^1.4.0",
     "@types/jest": "^29.5.14",
     "autoprefixer": "^10.4.14",
