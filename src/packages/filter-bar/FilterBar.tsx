@@ -17,10 +17,14 @@ export const FilterBar = () => {
 
   const [searchTerm, setSearchTerm] = React.useState("");
 
-  const filteredPredefined = React.useMemo(() => {
-    return predefinedFilters.filter(f =>
+  const { appPredefined, userPredefined } = React.useMemo(() => {
+    const filtered = predefinedFilters.filter(f =>
       f.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    return {
+      appPredefined: filtered.filter(f => f.isBuiltIn),
+      userPredefined: filtered.filter(f => !f.isBuiltIn)
+    };
   }, [predefinedFilters, searchTerm]);
 
   const addFilter = () => {
@@ -126,32 +130,58 @@ export const FilterBar = () => {
         </div>
         {/* Predefined Filters (Scrollable) */}
         <div className="flex-1 flex items-center px-1 gap-1 overflow-x-auto no-scrollbar scroll-smooth h-full">
-          {filteredPredefined.map((tab) => {
-            const isActive = activePredefinedIds.includes(tab.id);
-            return (
-              <div
-                key={tab.id}
-                onClick={() => togglePredefinedFilter(tab.id)}
-                className={twMerge(
-                  'group/predefined relative flex items-center justify-between h-6 px-3 rounded-md transition-all duration-200 border text-[10px] font-medium whitespace-nowrap cursor-pointer',
-                  isActive
-                    ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/20'
-                    : 'bg-zinc-900/50 border-zinc-800/50 text-zinc-400 hover:bg-blue-600 hover:text-white hover:border-blue-500'
-                )}>
-                <span>{tab.name}</span>
-                {!tab.isBuiltIn && (
+          {/* App Predefined Filters */}
+          <div className="flex items-center gap-1 shrink-0">
+            {appPredefined.map((tab) => {
+              const isActive = activePredefinedIds.includes(tab.id);
+              return (
+                <div
+                  key={tab.id}
+                  onClick={() => togglePredefinedFilter(tab.id)}
+                  className={twMerge(
+                    'group/predefined relative flex items-center justify-between h-6 px-3 rounded-md transition-all duration-200 border text-[10px] font-medium whitespace-nowrap cursor-pointer',
+                    isActive
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/20'
+                      : 'bg-zinc-900/50 border-zinc-800/50 text-zinc-400 hover:bg-blue-600 hover:text-white hover:border-blue-500'
+                  )}>
+                  <span>{tab.name}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Vertical Separator */}
+          {userPredefined.length > 0 && (
+            <div className="h-4 w-[1px] bg-zinc-800 mx-2 shrink-0" />
+          )}
+
+          {/* User Created Filters */}
+          <div className="flex items-center gap-1 shrink-0">
+            {userPredefined.map((tab) => {
+              const isActive = activePredefinedIds.includes(tab.id);
+              return (
+                <div
+                  key={tab.id}
+                  onClick={() => togglePredefinedFilter(tab.id)}
+                  className={twMerge(
+                    'group/predefined relative flex items-center justify-between h-6 px-3 rounded-md transition-all duration-200 border text-[10px] font-medium whitespace-nowrap cursor-pointer',
+                    isActive
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/20'
+                      : 'bg-zinc-900/50 border-zinc-800/50 text-zinc-400 hover:bg-zinc-600 hover:text-white hover:border-zinc-500'
+                  )}>
+                  <span>{tab.name}</span>
                   <button
                     onClick={(e) => { e.stopPropagation(); removePredefinedFilter(tab.id); }}
                     className="ml-2 hover:bg-black/20 rounded-full p-0.5 hidden group-hover/predefined:block transition-opacity"
                   >
                     <FiX size={10} />
                   </button>
-                )}
-              </div>
-            );
-          })}
+                </div>
+              );
+            })}
+          </div>
 
-          {filteredPredefined.length === 0 && searchTerm && (
+          {appPredefined.length === 0 && userPredefined.length === 0 && searchTerm && (
             <span className="text-[10px] text-zinc-600 italic px-2">No presets match...</span>
           )}
         </div>
