@@ -102,13 +102,15 @@ export const NSTabs: React.FC<NSTabsProps> = ({
           />
         ))}
         {onAdd && (
-          <button
-            onClick={onAdd}
-            className="sticky right-0 flex items-center justify-center px-3 bg-[#23262a] hover:bg-[#2a2d32] transition-colors border-l border-black text-zinc-400 hover:text-white z-20 shadow-[-4px_0_8px_rgba(0,0,0,0.3)]"
-            title="Open new tab"
-          >
-            <FiPlus size={14} />
-          </button>
+          <div className="w-full flex justify-end sticky right-0 z-20">
+            <button
+              onClick={onAdd}
+              className="flex items-center justify-center px-3 bg-[#23262a] hover:bg-[#2a2d32] transition-colors border-l border-black text-zinc-400 hover:text-white z-20 shadow-[-4px_0_8px_rgba(0,0,0,0.3)]"
+              title="Open new tab"
+            >
+              <FiPlus size={14} />
+            </button>
+          </div>
         )}
       </div>
       <div className="relative w-full h-full">
