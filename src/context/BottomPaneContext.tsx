@@ -15,7 +15,16 @@ export type SingleMode =
     | "llm_prompt"
     | "diff"
     | "replay"
-    | "websocket";
+    | "websocket"
+    | "headers"
+    | "json_tree"
+    | "curl"
+    | "code_snippet"
+    | "sensitive_data"
+    | "auth_analysis"
+    | "ai_debug"
+    | "ai_test"
+    | "jwt_decoder";
 
 /**
  * Modes when multiple traffics are selected.
@@ -24,7 +33,13 @@ export type MultipleMode =
     | "timeline"
     | "compare"
     | "batch_analyze"
-    | "ai_summary";
+    | "ai_summary"
+    | "performance"
+    | "waterfall"
+    | "endpoint_summary"
+    | "security_scan"
+    | "ai_investigate"
+    | "ai_security";
 
 /**
  * Unified bottom pane mode.

@@ -13,6 +13,21 @@ import { TimelineMode } from "./BottomPaneComponents/Multiple/TimelineMode";
 import { CompareMode } from "./BottomPaneComponents/Multiple/CompareMode";
 import { BatchAnalyzeMode } from "./BottomPaneComponents/Multiple/BatchAnalyzeMode";
 import { AISummaryMode } from "./BottomPaneComponents/Multiple/AISummaryMode";
+import { HeadersMode } from "./BottomPaneComponents/Single/HeadersMode";
+import { JSONTreeMode } from "./BottomPaneComponents/Single/JSONTreeMode";
+import { CurlMode } from "./BottomPaneComponents/Single/CurlMode";
+import { CodeSnippetMode } from "./BottomPaneComponents/Single/CodeSnippetMode";
+import { SensitiveDataMode } from "./BottomPaneComponents/Single/SensitiveDataMode";
+import { AuthAnalysisMode } from "./BottomPaneComponents/Single/AuthAnalysisMode";
+import { AIDebugMode } from "./BottomPaneComponents/Single/AIDebugMode";
+import { AITestMode } from "./BottomPaneComponents/Single/AITestMode";
+import { PerformanceMode } from "./BottomPaneComponents/Multiple/PerformanceMode";
+import { WaterfallMode } from "./BottomPaneComponents/Multiple/WaterfallMode";
+import { EndpointSummaryMode } from "./BottomPaneComponents/Multiple/EndpointSummaryMode";
+import { SecurityScanMode } from "./BottomPaneComponents/Multiple/SecurityScanMode";
+import { AIInvestigateMode } from "./BottomPaneComponents/Multiple/AIInvestigateMode";
+import { AISecurityMode } from "./BottomPaneComponents/Multiple/AISecurityMode";
+import { JWTDecoderMode } from "./BottomPaneComponents/Single/JWTDecoderMode";
 
 export const BottomPane = () => {
   const { mode } = useBottomPaneContext();
@@ -39,6 +54,30 @@ const renderMode = (
     case "request_response":
       return <RequestResponseMode sizes={sizes} setSizes={setSizes} />;
 
+    case "headers":
+      return <HeadersMode />;
+
+    case "json_tree":
+      return <JSONTreeMode />;
+
+    case "curl":
+      return <CurlMode />;
+
+    case "code_snippet":
+      return <CodeSnippetMode />;
+
+    case "sensitive_data":
+      return <SensitiveDataMode />;
+
+    case "auth_analysis":
+      return <AuthAnalysisMode />;
+
+    case "ai_debug":
+      return <AIDebugMode />;
+
+    case "ai_test":
+      return <AITestMode />;
+
     case "graphql":
       return <GraphQLMode />;
 
@@ -57,14 +96,35 @@ const renderMode = (
     case "timeline":
       return <TimelineMode />;
 
+    case "waterfall":
+      return <WaterfallMode />;
+
     case "compare":
       return <CompareMode />;
+
+    case "performance":
+      return <PerformanceMode />;
+
+    case "endpoint_summary":
+      return <EndpointSummaryMode />;
 
     case "batch_analyze":
       return <BatchAnalyzeMode />;
 
+    case "security_scan":
+      return <SecurityScanMode />;
+
     case "ai_summary":
       return <AISummaryMode />;
+
+    case "ai_investigate":
+      return <AIInvestigateMode />;
+
+    case "ai_security":
+      return <AISecurityMode />;
+
+    case "jwt_decoder":
+      return <JWTDecoderMode />;
 
     default:
       return null;
