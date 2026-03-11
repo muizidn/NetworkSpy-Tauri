@@ -1,13 +1,18 @@
-import SplitPane, { Pane, SashContent } from "split-pane-react";
 import { useState } from "react";
 
-import { RequestPairData, RequestTab } from "./RequestTab";
-import { ResponseTab } from "./ResponseTab";
 import { SelectionViewer } from "../main-content/SelectionViewer";
-import { useSettingsContext } from "../../context/SettingsProvider";
-import { invoke } from "@tauri-apps/api";
-import { TauriEnvironment } from "../tauri/TauriEnvironment";
 import { useBottomPaneContext } from "@src/context/BottomPaneContext";
+import { RequestResponseMode } from "./BottomPaneComponents/RequestResponseMode";
+import { SummaryMode } from "./BottomPaneComponents/SummaryMode";
+import { GraphQLMode } from "./BottomPaneComponents/GraphQLMode";
+import { LLMPromptMode } from "./BottomPaneComponents/LLMPromptMode";
+import { DiffMode } from "./BottomPaneComponents/DiffMode";
+import { ReplayMode } from "./BottomPaneComponents/ReplayMode";
+import { WebsocketMode } from "./BottomPaneComponents/WebsocketMode";
+import { TimelineMode } from "./BottomPaneComponents/TimelineMode";
+import { CompareMode } from "./BottomPaneComponents/CompareMode";
+import { BatchAnalyzeMode } from "./BottomPaneComponents/BatchAnalyzeMode";
+import { AISummaryMode } from "./BottomPaneComponents/AISummaryMode";
 
 export const BottomPane = () => {
   const { mode } = useBottomPaneContext();
@@ -64,95 +69,4 @@ const renderMode = (
     default:
       return null;
   }
-};
-
-const RequestResponseMode = ({
-  sizes,
-  setSizes,
-}: {
-  sizes: any[];
-  setSizes: (sizes: any[]) => void;
-}) => {
-  return (
-    <div className="h-full">
-      <SplitPane
-        split="vertical"
-        sashRender={() => <SashContent type="vscode" />}
-        sizes={sizes}
-        onChange={setSizes}
-      >
-        <Pane minSize="20%" maxSize="80%">
-          <div className="h-full no-scrollbar flex items-center justify-center overflow-auto">
-            <TauriEnvironment>
-              <RequestTab
-                loadData={(traffic) =>
-                  invoke<RequestPairData>("get_request_pair_data", {
-                    trafficId: traffic.id as string,
-                  })
-                }
-              />
-            </TauriEnvironment>
-          </div>
-        </Pane>
-
-        <div className="h-full no-scrollbar flex items-center justify-center overflow-auto border-l border-black">
-          <TauriEnvironment>
-            <ResponseTab
-              loadData={(traffic) =>
-                invoke<RequestPairData>("get_response_pair_data", {
-                  trafficId: traffic.id as string,
-                })
-              }
-            />
-          </TauriEnvironment>
-        </div>
-      </SplitPane>
-    </div>
-  );
-};
-
-const SummaryMode = () => {
-  return (
-    <div className="h-full border border-blue-500 flex items-center justify-center">
-      TRAFFIC SUMMARY / ANALYTICS
-    </div>
-  );
-};
-
-const GraphQLMode = () => {
-  return <div className="h-full border border-white">GRAPHQL VIEWER</div>;
-};
-
-const LLMPromptMode = () => {
-  return <div className="h-full border border-green-500">LLM PROMPT VIEWER</div>;
-};
-
-const DiffMode = () => {
-  return <div className="h-full border border-yellow-500">DIFF VIEWER</div>;
-};
-
-const ReplayMode = () => {
-  return <div className="h-full border border-purple-500">REPLAY VIEWER</div>;
-};
-
-const WebsocketMode = () => {
-  return <div className="h-full border border-cyan-500">WEBSOCKET VIEWER</div>;
-};
-
-const TimelineMode = () => {
-  return <div className="h-full border border-red-500">TIMELINE VIEWER</div>;
-};
-
-const CompareMode = () => {
-  return <div className="h-full border border-orange-500">COMPARE VIEWER</div>;
-};
-
-const BatchAnalyzeMode = () => {
-  return (
-    <div className="h-full border border-pink-500">BATCH ANALYZE VIEWER</div>
-  );
-};
-
-const AISummaryMode = () => {
-  return <div className="h-full border border-teal-500">AI SUMMARY VIEWER</div>;
 };
