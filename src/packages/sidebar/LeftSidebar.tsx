@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { BsPinAngleFill } from "react-icons/bs";
-import { VscListFlat } from "react-icons/vsc";
 import { GrStorage } from "react-icons/gr";
 import { LuAppWindow } from "react-icons/lu";
-import { GoGlobe } from "react-icons/go";
+import { GoGlobe, GoSearch } from "react-icons/go";
+import { VscListFlat, VscListTree } from "react-icons/vsc";
+import { FiStar, FiLayers } from "react-icons/fi";
 
 import { filterNode, SidebarTreeView, TreeNode } from "./TreeView";
 import { twMerge } from "tailwind-merge";
@@ -143,14 +144,12 @@ export const LeftSidebar = () => {
 
   return (
     <div className="bg-[#23262a] border-r border-black h-full w-full flex flex-col space-y-4">
-      <div className="flex items-end space-x-2 w-full px-2 h-8">
-        <button className="btn btn-xs bg-[#474b49] rounded text-white">
-          +
-        </button>
+      <div className="flex items-center space-x-2 w-full px-3 h-10 border-b border-black bg-black/20 shrink-0">
+        <GoSearch className="text-zinc-500 shrink-0" size={14} />
         <input
           type="text"
-          className="input input-xs flex-grow rounded bg-[#474b49] w-full"
-          placeholder="Search"
+          className="bg-transparent text-xs text-white focus:outline-none w-full placeholder:text-zinc-600"
+          placeholder="Search endpoints..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -161,29 +160,40 @@ export const LeftSidebar = () => {
           query !== "" && "hidden"
         )}
       >
-        <div className={twMerge("flex flex-col space-y-2 items-start w-full")}>
-          <h2 className="font-bold text-xl text-white">Favorites</h2>
-          {favoriteTrees.map((e) => (
-            <SidebarTreeView
-              key={e.name}
-              name={e.name}
-              icon={e.icon}
-              childrenNodes={e.nodes}
-              onClick={(id) => onClickNode(id)}
-            />
-          ))}
+        <div className="flex flex-col space-y-3 items-start w-full">
+          <div className="flex items-center space-x-2 px-1 shrink-0">
+            <FiStar className="text-amber-400" size={14} />
+            <h2 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Favorites</h2>
+          </div>
+          <div className="w-full space-y-1">
+            {favoriteTrees.map((e) => (
+              <SidebarTreeView
+                key={e.name}
+                name={e.name}
+                icon={e.icon}
+                childrenNodes={e.nodes}
+                onClick={(id) => onClickNode(id)}
+              />
+            ))}
+          </div>
         </div>
-        <div className={twMerge("flex flex-col space-y-2 items-start w-full")}>
-          <h2 className="font-bold text-xl text-white">All</h2>
-          {allTrees.map((e) => (
-            <SidebarTreeView
-              key={e.name}
-              icon={e.icon}
-              name={e.name}
-              childrenNodes={e.nodes}
-              onClick={(id) => onClickNode(id)}
-            />
-          ))}
+        
+        <div className="flex flex-col space-y-3 items-start w-full pt-4 border-t border-black/30">
+          <div className="flex items-center space-x-2 px-1 shrink-0">
+            <FiLayers className="text-zinc-500" size={14} />
+            <h2 className="font-bold text-xs uppercase tracking-widest text-zinc-400">All Nodes</h2>
+          </div>
+          <div className="w-full space-y-1">
+            {allTrees.map((e) => (
+              <SidebarTreeView
+                key={e.name}
+                icon={e.icon}
+                name={e.name}
+                childrenNodes={e.nodes}
+                onClick={(id) => onClickNode(id)}
+              />
+            ))}
+          </div>
         </div>
       </div>
       <div
@@ -192,20 +202,40 @@ export const LeftSidebar = () => {
           query === "" && "hidden"
         )}
       >
-        <div className="flex justify-between w-full items-center">
-          <h2 className="font-bold text-lg text-white">
-            Filter Result: ({filteredNodesCount}) result
-          </h2>
-          <select
-            value={filterDisplayMode}
-            className="text-nowrap h-fit p-2"
-            onChange={(e) =>
-              setFilterDisplayMode(e.target.value as FilterDisplayMode)
-            }
-          >
-            <option value="tree">Tree</option>
-            <option value="flat">Flat</option>
-          </select>
+        <div className="flex flex-col w-full p-2 border-b border-black bg-black/10 shrink-0">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-col">
+              <h2 className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
+                Search Results
+              </h2>
+              <span className="text-blue-400 text-xs font-mono">{filteredNodesCount} matches</span>
+            </div>
+            
+            <div className="flex bg-black/40 p-0.5 rounded-lg border border-zinc-800">
+              <button
+                onClick={() => setFilterDisplayMode("tree")}
+                className={twMerge(
+                  "p-1.5 rounded-md transition-all flex items-center space-x-1.5",
+                  filterDisplayMode === "tree" ? "bg-zinc-700 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                )}
+                title="Tree View"
+              >
+                <VscListTree size={14} />
+                <span className="text-[10px] font-bold uppercase px-1">Tree</span>
+              </button>
+              <button
+                onClick={() => setFilterDisplayMode("flat")}
+                className={twMerge(
+                  "p-1.5 rounded-md transition-all flex items-center space-x-1.5",
+                  filterDisplayMode === "flat" ? "bg-zinc-700 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                )}
+                title="Flat View"
+              >
+                <VscListFlat size={14} />
+                <span className="text-[10px] font-bold uppercase px-1">Flat</span>
+              </button>
+            </div>
+          </div>
         </div>
         <div className="overflow-scroll w-full">
           {filteredNodes.map((node) => (
