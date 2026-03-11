@@ -28,7 +28,11 @@ export type SingleMode =
     | "auth_analysis"
     | "ai_debug"
     | "ai_test"
-    | "jwt_decoder";
+    | "jwt_decoder"
+    | "llm_streaming"
+    | "sse_viewer"
+    | "llm_response"
+    | "llm_token_analyzer";
 
 /**
  * Modes when multiple traffics are selected.

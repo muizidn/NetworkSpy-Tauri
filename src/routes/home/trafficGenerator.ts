@@ -1,3 +1,5 @@
+import traffic_list_json from "../../stories/app/components/mock/traffic_list.json";
+
 function randomString(length: number): string {
     const chars =
       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -35,6 +37,10 @@ function randomString(length: number): string {
           "product/clothing?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.z39Z_k6kJdc7fIhRGr5ckqf1dxQX9X5lPCmr3_4lC1o8", 
           "product/books?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJib29rcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.WjtjqnszjFL3Gb-F3TSvTKHl5VxbFf4jJ2yyK_SXxxg", 
         ],
+        "api.openai.com": ["v1/chat/completions"],
+        "api.example.com": ["v1/events"],
+        "socket.example.com": ["v2"],
+        "api.github.com": ["graphql"],
         "example.com": [
           "cart/add?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.P6RAqUxxHFLbUwTh-aAvbLR73YVeae_-pUM1YFjoVe4", 
           "user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w", 
@@ -57,44 +63,66 @@ function randomString(length: number): string {
   }
   
   function generateEntry(): object {
-    // Select a random base URL (domain)
-    const baseUrls = ["google.com", "amazon.com", "example.com", "randomsite.com", "othersite.com"];
+    const baseUrls = ["google.com", "amazon.com", "example.com", "randomsite.com", "othersite.com", "api.openai.com", "api.example.com", "socket.example.com", "api.github.com"];
     const randomDomain = baseUrls[Math.floor(Math.random() * baseUrls.length)];
   
-    // Generate the full URL with path
     const path = randomPath(randomDomain);
-    const port = Math.floor(Math.random() * (443 - 80 + 1)) + 80; // Random port between 80 and 443
+    const port = randomDomain.includes('socket') ? 443 : Math.floor(Math.random() * (443 - 80 + 1)) + 80;
+  
+    let method = ["GET", "POST", "CONNECT", "DELETE", "PUT"][Math.floor(Math.random() * 5)];
+    let status = ["Completed", "Failed", "In Progress"][Math.floor(Math.random() * 3)];
+    let code = ["200", "404", "500", "301"][Math.floor(Math.random() * 4)];
+    let request = "Request data";
+    let response = ["-", "Response data", "Error message"][Math.floor(Math.random() * 3)];
+    let tags = randomTags();
+
+    if (randomDomain === "api.openai.com") {
+        method = "POST";
+        tags = ["AI", "OPENAI", Math.random() > 0.5 ? "STREAMING" : "PROMPT"];
+        request = JSON.stringify({
+            model: "gpt-4-turbo",
+            messages: [{ role: "system", content: "You are a helpful assistant." }, { role: "user", content: "Hello!" }],
+            stream: tags.includes("STREAMING")
+        }, null, 2);
+        response = tags.includes("STREAMING") 
+            ? "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}" 
+            : JSON.stringify({ choices: [{ message: { role: "assistant", content: "Hello! How can I help you?" } }] }, null, 2);
+    } else if (randomDomain === "api.example.com") {
+        method = "GET";
+        tags = ["SSE", "REALTIME"];
+        request = "Accept: text/event-stream";
+        response = "event: update\ndata: {\"status\": \"ok\"}";
+    } else if (randomDomain === "socket.example.com") {
+        method = "GET";
+        status = "Connected";
+        code = "101";
+        tags = ["WEBSOCKET"];
+        request = "Upgrade: websocket";
+        response = "Switching Protocols";
+    } else if (randomDomain === "api.github.com") {
+        method = "POST";
+        tags = ["GRAPHQL", "API"];
+        request = "query { viewer { login } }";
+        response = JSON.stringify({ data: { viewer: { login: "user" } } });
+    }
   
     return {
-      id: String(
-        Math.floor(Math.random() * 9000000000000000000) + 1000000000000000000
-      ),
-      tags: randomTags(),
-      url: `https://${randomDomain}:${port}/${path}`,
-      client: [
-        "Google Map",
-        "Weather App",
-        "Video Streaming",
-        "Social Media App",
-      ][Math.floor(Math.random() * 4)],
-      method: ["GET", "POST", "CONNECT", "DELETE", "PUT"][
-        Math.floor(Math.random() * 5)
-      ],
-      status: ["Completed", "Failed", "In Progress"][
-        Math.floor(Math.random() * 3)
-      ],
-      code: ["200", "404", "500", "301"][Math.floor(Math.random() * 4)],
+      id: String(Math.floor(Math.random() * 9000000000000000000) + 1000000000000000000),
+      tags,
+      url: `${randomDomain.includes('socket') ? 'wss' : 'https'}://${randomDomain}:${port}/${path}`,
+      client: ["Google Map", "Weather App", "Video Streaming", "Social Media App"][Math.floor(Math.random() * 4)],
+      method,
+      status,
+      code,
       time: `${Math.floor(Math.random() * 900) + 100} ms`,
       duration: `${Math.floor(Math.random() * 91) + 10} bytes`,
-      request: "Request data",
-      response: ["-", "Response data", "Error message"][
-        Math.floor(Math.random() * 3)
-      ],
+      request,
+      response,
     };
   }
   
   export function generateJson(n: number): object[] {
-    const entries: object[] = [];
+    const entries: object[] = [...traffic_list_json];
     for (let i = 0; i < n; i++) {
       entries.push(generateEntry());
     }

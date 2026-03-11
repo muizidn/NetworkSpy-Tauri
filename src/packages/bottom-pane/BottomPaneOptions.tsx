@@ -63,6 +63,10 @@ export const BottomPaneOptions = () => {
       { id: "replay", title: "Replay", onClick: () => setMode("replay") },
       { id: "websocket", title: "WebSocket", onClick: () => setMode("websocket") },
       { id: "jwt_decoder", title: "JWT Decoder", onClick: () => setMode("jwt_decoder") },
+      { id: "llm_streaming", title: "LLM Streaming", onClick: () => setMode("llm_streaming") },
+      { id: "sse_viewer", title: "SSE Viewer", onClick: () => setMode("sse_viewer") },
+      { id: "llm_response", title: "LLM Response", onClick: () => setMode("llm_response") },
+      { id: "llm_token_analyzer", title: "LLM Token Analyzer", onClick: () => setMode("llm_token_analyzer") },
     ],
 
     multiple: [

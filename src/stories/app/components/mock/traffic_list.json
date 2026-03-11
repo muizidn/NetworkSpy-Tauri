@@ -1,601 +1,889 @@
-[{
-    "id": "2011863217963629800",
-    "tags": ["USER LOGIN", "API TESTING", "LOGIN DOCKER"],
-    "url": "https://othersite.com:417/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
-    "client": "Weather App",
-    "method": "CONNECT",
-    "status": "In Progress",
-    "code": "301",
-    "time": "357 ms",
-    "duration": "32 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "4856545705263648000",
-    "tags": ["NETWORK MONITORING"],
-    "url": "https://othersite.com:356/api/status?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.qGvdH2k7XEXlbHpW4O_3VJe1sFhgZXNNSvbNi1IE5iQ",
-    "client": "Weather App",
-    "method": "GET",
-    "status": "In Progress",
-    "code": "500",
-    "time": "356 ms",
-    "duration": "59 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "2798848830922342400",
-    "tags": ["USER LOGIN", "API TESTING"],
-    "url": "https://google.com:165/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
-    "client": "Video Streaming",
-    "method": "POST",
-    "status": "In Progress",
-    "code": "404",
-    "time": "306 ms",
-    "duration": "21 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "8239119884650297000",
-    "tags": ["USER LOGIN"],
-    "url": "https://example.com:385/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
-    "client": "Google Map",
-    "method": "DELETE",
-    "status": "Completed",
-    "code": "404",
-    "time": "364 ms",
-    "duration": "32 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "2256935021569520000",
-    "tags": ["API TESTING"],
-    "url": "https://randomsite.com:441/user/profile?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.MT8zj-o2j9xzhvwXtG7lNnC4RVFhddpzFTvmhIueu38",
-    "client": "Google Map",
-    "method": "PUT",
-    "status": "Failed",
-    "code": "500",
-    "time": "536 ms",
-    "duration": "92 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "2062570616002524700",
-    "tags": ["AKAMAI Testing Robot", "LOGIN DOCKER", "USER LOGIN"],
-    "url": "https://amazon.com:294/product/clothing?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
-    "client": "Google Map",
-    "method": "DELETE",
-    "status": "Failed",
-    "code": "301",
-    "time": "964 ms",
-    "duration": "70 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "5881503230202295000",
-    "tags": ["API TESTING", "USER LOGIN"],
-    "url": "https://amazon.com:373/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
-    "client": "Google Map",
-    "method": "CONNECT",
-    "status": "Completed",
-    "code": "301",
-    "time": "786 ms",
-    "duration": "74 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "3328231593393218000",
-    "tags": ["USER LOGIN", "AKAMAI Testing Robot", "LOGIN DOCKER"],
-    "url": "https://example.com:393/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
-    "client": "Video Streaming",
-    "method": "POST",
-    "status": "Completed",
-    "code": "404",
-    "time": "191 ms",
-    "duration": "33 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "4334253530560703500",
-    "tags": ["LOGIN DOCKER"],
-    "url": "https://randomsite.com:397/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
-    "client": "Social Media App",
-    "method": "POST",
-    "status": "Failed",
-    "code": "500",
-    "time": "623 ms",
-    "duration": "90 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "5229326502247303000",
-    "tags": ["LOGIN DOCKER", "AKAMAI Testing Robot"],
-    "url": "https://example.com:142/user/settings?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
-    "client": "Weather App",
-    "method": "PUT",
-    "status": "Failed",
-    "code": "200",
-    "time": "298 ms",
-    "duration": "17 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "9328152760947732000",
-    "tags": ["USER LOGIN", "AKAMAI Testing Robot"],
-    "url": "https://amazon.com:404/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
-    "client": "Google Map",
-    "method": "PUT",
-    "status": "Failed",
-    "code": "404",
-    "time": "718 ms",
-    "duration": "44 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "2230617825712294700",
-    "tags": ["USER LOGIN", "LOGIN DOCKER", "AKAMAI Testing Robot"],
-    "url": "https://othersite.com:381/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
-    "client": "Social Media App",
-    "method": "POST",
-    "status": "In Progress",
-    "code": "200",
-    "time": "537 ms",
-    "duration": "31 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "6210713431513586000",
-    "tags": ["AKAMAI Testing Robot"],
-    "url": "https://randomsite.com:102/settings?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.q7t9kdq4G0hz0pn0-RNw2KTpDPfjb9JtMZB1vhRjdUM",
-    "client": "Weather App",
-    "method": "GET",
-    "status": "Completed",
-    "code": "200",
-    "time": "626 ms",
-    "duration": "20 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "8915696722735171000",
-    "tags": ["USER LOGIN"],
-    "url": "https://amazon.com:273/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
-    "client": "Google Map",
-    "method": "CONNECT",
-    "status": "Completed",
-    "code": "301",
-    "time": "874 ms",
-    "duration": "53 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "4540775715847707000",
-    "tags": ["USER LOGIN"],
-    "url": "https://othersite.com:82/api/status?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.qGvdH2k7XEXlbHpW4O_3VJe1sFhgZXNNSvbNi1IE5iQ",
-    "client": "Google Map",
-    "method": "DELETE",
-    "status": "Failed",
-    "code": "301",
-    "time": "628 ms",
-    "duration": "61 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "9116586975912664000",
-    "tags": ["API TESTING"],
-    "url": "https://example.com:274/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
-    "client": "Video Streaming",
-    "method": "GET",
-    "status": "Failed",
-    "code": "301",
-    "time": "407 ms",
-    "duration": "78 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "2910676825672565000",
-    "tags": ["USER LOGIN"],
-    "url": "https://amazon.com:417/product/electronics?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LOdCoWiL88HgUXX-xH-9c1efrdVVQ_NCqGZoeFfw3ek",
-    "client": "Video Streaming",
-    "method": "CONNECT",
-    "status": "In Progress",
-    "code": "200",
-    "time": "105 ms",
-    "duration": "80 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "4317284774517759500",
-    "tags": ["NETWORK MONITORING", "API TESTING"],
-    "url": "https://othersite.com:300/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
-    "client": "Video Streaming",
-    "method": "GET",
-    "status": "Failed",
-    "code": "404",
-    "time": "521 ms",
-    "duration": "76 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "3467221882619713500",
-    "tags": ["API TESTING", "USER LOGIN", "AKAMAI Testing Robot"],
-    "url": "https://randomsite.com:198/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
-    "client": "Social Media App",
-    "method": "DELETE",
-    "status": "Completed",
-    "code": "301",
-    "time": "794 ms",
-    "duration": "96 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "4381396838957263400",
-    "tags": ["USER LOGIN", "AKAMAI Testing Robot", "LOGIN DOCKER"],
-    "url": "https://google.com:152/search/images?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiY3JlYXRlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.FhQ7k2FG9Gz2bwBxqumfS4ty9WPLZG-lXMgn2fi6Zv4",
-    "client": "Google Map",
-    "method": "CONNECT",
-    "status": "Completed",
-    "code": "200",
-    "time": "397 ms",
-    "duration": "37 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "7114438817190807000",
-    "tags": ["NETWORK MONITORING", "USER LOGIN", "API TESTING"],
-    "url": "https://othersite.com:224/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
-    "client": "Weather App",
-    "method": "CONNECT",
-    "status": "Failed",
-    "code": "200",
-    "time": "476 ms",
-    "duration": "36 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "7160047492179993000",
-    "tags": ["LOGIN DOCKER", "USER LOGIN"],
-    "url": "https://randomsite.com:213/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
-    "client": "Video Streaming",
-    "method": "POST",
-    "status": "In Progress",
-    "code": "200",
-    "time": "797 ms",
-    "duration": "76 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "9526723398190346000",
-    "tags": ["USER LOGIN", "AKAMAI Testing Robot", "API TESTING"],
-    "url": "https://google.com:188/search/news?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyb2xlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.vM3AhCEpQQgm88JX4_z0mVpfnj9ykgqED5DoG3iDJz4",
-    "client": "Weather App",
-    "method": "PUT",
-    "status": "Failed",
-    "code": "200",
-    "time": "385 ms",
-    "duration": "31 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "3857188455709364700",
-    "tags": ["USER LOGIN", "LOGIN DOCKER"],
-    "url": "https://randomsite.com:171/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
-    "client": "Video Streaming",
-    "method": "POST",
-    "status": "Completed",
-    "code": "301",
-    "time": "684 ms",
-    "duration": "42 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "5722902097438240000",
-    "tags": ["USER LOGIN", "LOGIN DOCKER"],
-    "url": "https://google.com:194/search/images?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiY3JlYXRlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.FhQ7k2FG9Gz2bwBxqumfS4ty9WPLZG-lXMgn2fi6Zv4",
-    "client": "Social Media App",
-    "method": "DELETE",
-    "status": "In Progress",
-    "code": "200",
-    "time": "392 ms",
-    "duration": "97 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "2232250045194359600",
-    "tags": ["NETWORK MONITORING"],
-    "url": "https://amazon.com:140/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
-    "client": "Weather App",
-    "method": "POST",
-    "status": "In Progress",
-    "code": "301",
-    "time": "341 ms",
-    "duration": "58 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "7146692786311481000",
-    "tags": ["LOGIN DOCKER", "USER LOGIN"],
-    "url": "https://othersite.com:353/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
-    "client": "Social Media App",
-    "method": "PUT",
-    "status": "In Progress",
-    "code": "301",
-    "time": "252 ms",
-    "duration": "84 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "6062319806475226000",
-    "tags": ["USER LOGIN", "LOGIN DOCKER", "AKAMAI Testing Robot"],
-    "url": "https://randomsite.com:155/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
-    "client": "Social Media App",
-    "method": "DELETE",
-    "status": "Failed",
-    "code": "500",
-    "time": "483 ms",
-    "duration": "10 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "8865402219154561000",
-    "tags": ["USER LOGIN"],
-    "url": "https://amazon.com:301/product/electronics?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LOdCoWiL88HgUXX-xH-9c1efrdVVQ_NCqGZoeFfw3ek",
-    "client": "Google Map",
-    "method": "PUT",
-    "status": "Failed",
-    "code": "301",
-    "time": "531 ms",
-    "duration": "23 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "3068046931739221500",
-    "tags": ["AKAMAI Testing Robot", "API TESTING"],
-    "url": "https://randomsite.com:384/user/profile?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.MT8zj-o2j9xzhvwXtG7lNnC4RVFhddpzFTvmhIueu38",
-    "client": "Google Map",
-    "method": "POST",
-    "status": "Completed",
-    "code": "500",
-    "time": "153 ms",
-    "duration": "90 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "7219049812254449000",
-    "tags": ["NETWORK MONITORING", "API TESTING", "AKAMAI Testing Robot"],
-    "url": "https://randomsite.com:175/settings?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.q7t9kdq4G0hz0pn0-RNw2KTpDPfjb9JtMZB1vhRjdUM",
-    "client": "Google Map",
-    "method": "DELETE",
-    "status": "Completed",
-    "code": "200",
-    "time": "712 ms",
-    "duration": "87 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "4307769024494974500",
-    "tags": ["USER LOGIN"],
-    "url": "https://amazon.com:269/product/clothing?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
-    "client": "Video Streaming",
-    "method": "DELETE",
-    "status": "In Progress",
-    "code": "301",
-    "time": "400 ms",
-    "duration": "44 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "2080945420553187300",
-    "tags": ["USER LOGIN", "API TESTING"],
-    "url": "https://othersite.com:242/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
-    "client": "Google Map",
-    "method": "DELETE",
-    "status": "Completed",
-    "code": "404",
-    "time": "399 ms",
-    "duration": "45 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "9968569193683202000",
-    "tags": ["USER LOGIN", "LOGIN DOCKER", "API TESTING"],
-    "url": "https://amazon.com:395/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
-    "client": "Social Media App",
-    "method": "GET",
-    "status": "In Progress",
-    "code": "200",
-    "time": "702 ms",
-    "duration": "10 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "9693998190048764000",
-    "tags": ["USER LOGIN", "API TESTING"],
-    "url": "https://google.com:413/search/images?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJ3cml0ZSJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
-    "client": "Weather App",
-    "method": "POST",
-    "status": "Failed",
-    "code": "301",
-    "time": "372 ms",
-    "duration": "36 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "3571654425192210400",
-    "tags": ["NETWORK MONITORING"],
-    "url": "https://amazon.com:213/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
-    "client": "Weather App",
-    "method": "CONNECT",
-    "status": "In Progress",
-    "code": "500",
-    "time": "848 ms",
-    "duration": "69 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "8159620864673228000",
-    "tags": ["LOGIN DOCKER", "USER LOGIN"],
-    "url": "https://example.com:221/user/settings?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
-    "client": "Google Map",
-    "method": "DELETE",
-    "status": "Failed",
-    "code": "301",
-    "time": "312 ms",
-    "duration": "78 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "3217791088252197000",
-    "tags": ["USER LOGIN", "AKAMAI Testing Robot", "NETWORK MONITORING"],
-    "url": "https://randomsite.com:378/user/profile?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.MT8zj-o2j9xzhvwXtG7lNnC4RVFhddpzFTvmhIueu38",
-    "client": "Weather App",
-    "method": "POST",
-    "status": "Completed",
-    "code": "200",
-    "time": "188 ms",
-    "duration": "72 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "3396348177678813700",
-    "tags": ["USER LOGIN"],
-    "url": "https://amazon.com:275/product/clothing?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
-    "client": "Google Map",
-    "method": "GET",
-    "status": "Completed",
-    "code": "200",
-    "time": "319 ms",
-    "duration": "77 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "1459335815911855600",
-    "tags": ["USER LOGIN", "API TESTING", "AKAMAI Testing Robot"],
-    "url": "https://google.com:207/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
-    "client": "Social Media App",
-    "method": "POST",
-    "status": "In Progress",
-    "code": "301",
-    "time": "142 ms",
-    "duration": "15 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "6479280316596927000",
-    "tags": ["USER LOGIN", "API TESTING", "NETWORK MONITORING"],
-    "url": "https://google.com:421/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
-    "client": "Google Map",
-    "method": "PUT",
-    "status": "Failed",
-    "code": "301",
-    "time": "948 ms",
-    "duration": "95 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "3567106416311224300",
-    "tags": ["AKAMAI Testing Robot"],
-    "url": "https://amazon.com:366/product/clothing?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.z39Z_k6kJdc7fIhRGr5ckqf1dxQX9X5lPCmr3_4lC1o8",
-    "client": "Weather App",
-    "method": "GET",
-    "status": "Completed",
-    "code": "404",
-    "time": "880 ms",
-    "duration": "32 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "1602400228118557700",
-    "tags": ["NETWORK MONITORING", "LOGIN DOCKER"],
-    "url": "https://randomsite.com:237/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
-    "client": "Weather App",
-    "method": "POST",
-    "status": "In Progress",
-    "code": "404",
-    "time": "584 ms",
-    "duration": "77 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "4815016531400739000",
-    "tags": ["USER LOGIN", "LOGIN DOCKER"],
-    "url": "https://google.com:369/search/images?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJ3cml0ZSJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
-    "client": "Social Media App",
-    "method": "POST",
-    "status": "In Progress",
-    "code": "200",
-    "time": "498 ms",
-    "duration": "34 bytes",
-    "request": "Request data",
-    "response": "-"
-}, {
-    "id": "3585544858674323000",
-    "tags": ["LOGIN DOCKER"],
-    "url": "https://amazon.com:227/product/books?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJib29rcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.WjtjqnszjFL3Gb-F3TSvTKHl5VxbFf4jJ2yyK_SXxxg",
-    "client": "Video Streaming",
-    "method": "DELETE",
-    "status": "Completed",
-    "code": "301",
-    "time": "551 ms",
-    "duration": "36 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "6412908938684492000",
-    "tags": ["AKAMAI Testing Robot", "USER LOGIN", "NETWORK MONITORING"],
-    "url": "https://google.com:425/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
-    "client": "Social Media App",
-    "method": "POST",
-    "status": "Failed",
-    "code": "301",
-    "time": "852 ms",
-    "duration": "81 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "4834725454895622000",
-    "tags": ["NETWORK MONITORING", "USER LOGIN", "API TESTING"],
-    "url": "https://google.com:288/search/images?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiY3JlYXRlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.FhQ7k2FG9Gz2bwBxqumfS4ty9WPLZG-lXMgn2fi6Zv4",
-    "client": "Weather App",
-    "method": "DELETE",
-    "status": "In Progress",
-    "code": "500",
-    "time": "298 ms",
-    "duration": "37 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}, {
-    "id": "6508518386830306000",
-    "tags": ["USER LOGIN", "API TESTING", "LOGIN DOCKER"],
-    "url": "https://othersite.com:341/api/status?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.qGvdH2k7XEXlbHpW4O_3VJe1sFhgZXNNSvbNi1IE5iQ",
-    "client": "Google Map",
-    "method": "DELETE",
-    "status": "Completed",
-    "code": "200",
-    "time": "465 ms",
-    "duration": "91 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "9655087303217943000",
-    "tags": ["NETWORK MONITORING", "API TESTING", "AKAMAI Testing Robot"],
-    "url": "https://example.com:149/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
-    "client": "Google Map",
-    "method": "PUT",
-    "status": "In Progress",
-    "code": "500",
-    "time": "929 ms",
-    "duration": "57 bytes",
-    "request": "Request data",
-    "response": "Error message"
-}, {
-    "id": "1101341617711799900",
-    "tags": ["API TESTING", "AKAMAI Testing Robot"],
-    "url": "https://randomsite.com:389/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
-    "client": "Video Streaming",
-    "method": "GET",
-    "status": "Completed",
-    "code": "301",
-    "time": "804 ms",
-    "duration": "67 bytes",
-    "request": "Request data",
-    "response": "Response data"
-}]
+[
+    {
+        "id": "llm-prompt-001",
+        "tags": [
+            "AI",
+            "OPENAI",
+            "PROMPT"
+        ],
+        "url": "https://api.openai.com/v1/chat/completions",
+        "client": "NetworkSpy-Client",
+        "method": "POST",
+        "status": "Completed",
+        "code": "200",
+        "time": "1.2s",
+        "duration": "1.2 KB",
+        "request": "{\n  \"model\": \"gpt-4-turbo\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a weather expert.\"},\n    {\"role\": \"user\", \"content\": \"What's the weather like in Tokyo?\"}\n  ],\n  \"temperature\": 0.7\n}",
+        "response": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-4-turbo\",\n  \"choices\": [{\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"The weather in Tokyo is currently clear and sunny with a temperature of 22°C.\"\n    },\n    \"finish_reason\": \"stop\",\n    \"index\": 0\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 25,\n    \"completion_tokens\": 18,\n    \"total_tokens\": 43\n  }\n}"
+    },
+    {
+        "id": "llm-stream-002",
+        "tags": [
+            "AI",
+            "STREAMING",
+            "LLM"
+        ],
+        "url": "https://api.openai.com/v1/chat/completions",
+        "client": "NetworkSpy-Client",
+        "method": "POST",
+        "status": "Completed",
+        "code": "200",
+        "time": "4.5s",
+        "duration": "5.4 KB",
+        "request": "{\n  \"model\": \"gpt-4\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"Write a poem about networking.\"}],\n  \"stream\": true\n}",
+        "response": "data: {\"id\":\"chatcmpl-456\",\"object\":\"chat.completion.chunk\",\"created\":1677652289,\"model\":\"gpt-4\",\"choices\":[{\"delta\":{\"content\":\"Packets\"},\"index\":0,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-456\",\"object\":\"chat.completion.chunk\",\"created\":1677652289,\"model\":\"gpt-4\",\"choices\":[{\"delta\":{\"content\":\" fly\"},\"index\":0,\"finish_reason\":null}]}\n\ndata: [DONE]"
+    },
+    {
+        "id": "sse-003",
+        "tags": [
+            "SSE",
+            "REALTIME",
+            "EVENTS"
+        ],
+        "url": "https://api.example.com/v1/events",
+        "client": "Dashboard-App",
+        "method": "GET",
+        "status": "Active",
+        "code": "200",
+        "time": "∞",
+        "duration": "12 KB",
+        "request": "Accept: text/event-stream",
+        "response": "event: price_update\ndata: {\"symbol\": \"BTC\", \"price\": \"64201.20\"}\n\nevent: ticker\ndata: {\"symbol\": \"ETH\", \"price\": \"3450.11\"}\n\n:heartbeat"
+    },
+    {
+        "id": "ws-004",
+        "tags": [
+            "WEBSOCKET",
+            "TCP",
+            "BIDI"
+        ],
+        "url": "wss://socket.example.com/v2",
+        "client": "Trading-Bot",
+        "method": "GET",
+        "status": "Connected",
+        "code": "101",
+        "time": "2h",
+        "duration": "1.2 MB",
+        "request": "Upgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+        "response": "Handshake successful. Switched to Binary Protocol."
+    },
+    {
+        "id": "gql-005",
+        "tags": [
+            "GRAPHQL",
+            "API",
+            "QUERY"
+        ],
+        "url": "https://api.github.com/graphql",
+        "client": "GitHub-Client",
+        "method": "POST",
+        "status": "Completed",
+        "code": "200",
+        "time": "412 ms",
+        "duration": "2.4 KB",
+        "request": "query {\n  viewer {\n    login\n    repositories(last: 5) {\n      nodes {\n        name\n      }\n    }\n  }\n}",
+        "response": "{\n  \"data\": {\n    \"viewer\": {\n      \"login\": \"octocat\",\n      \"repositories\": {\n        \"nodes\": [\n          {\"name\": \"hello-world\"},\n          {\"name\": \"git-consortium\"}\n        ]\n      }\n    }\n  }\n}"
+    },
+    {
+        "id": "2011863217963629800",
+        "tags": [
+            "USER LOGIN",
+            "API TESTING",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://othersite.com:417/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
+        "client": "Weather App",
+        "method": "CONNECT",
+        "status": "In Progress",
+        "code": "301",
+        "time": "357 ms",
+        "duration": "32 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "4856545705263648000",
+        "tags": [
+            "NETWORK MONITORING"
+        ],
+        "url": "https://othersite.com:356/api/status?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.qGvdH2k7XEXlbHpW4O_3VJe1sFhgZXNNSvbNi1IE5iQ",
+        "client": "Weather App",
+        "method": "GET",
+        "status": "In Progress",
+        "code": "500",
+        "time": "356 ms",
+        "duration": "59 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "2798848830922342400",
+        "tags": [
+            "USER LOGIN",
+            "API TESTING"
+        ],
+        "url": "https://google.com:165/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
+        "client": "Video Streaming",
+        "method": "POST",
+        "status": "In Progress",
+        "code": "404",
+        "time": "306 ms",
+        "duration": "21 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "8239119884650297000",
+        "tags": [
+            "USER LOGIN"
+        ],
+        "url": "https://example.com:385/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
+        "client": "Google Map",
+        "method": "DELETE",
+        "status": "Completed",
+        "code": "404",
+        "time": "364 ms",
+        "duration": "32 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "2256935021569520000",
+        "tags": [
+            "API TESTING"
+        ],
+        "url": "https://randomsite.com:441/user/profile?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.MT8zj-o2j9xzhvwXtG7lNnC4RVFhddpzFTvmhIueu38",
+        "client": "Google Map",
+        "method": "PUT",
+        "status": "Failed",
+        "code": "500",
+        "time": "536 ms",
+        "duration": "92 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "2062570616002524700",
+        "tags": [
+            "AKAMAI Testing Robot",
+            "LOGIN DOCKER",
+            "USER LOGIN"
+        ],
+        "url": "https://amazon.com:294/product/clothing?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
+        "client": "Google Map",
+        "method": "DELETE",
+        "status": "Failed",
+        "code": "301",
+        "time": "964 ms",
+        "duration": "70 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "5881503230202295000",
+        "tags": [
+            "API TESTING",
+            "USER LOGIN"
+        ],
+        "url": "https://amazon.com:373/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
+        "client": "Google Map",
+        "method": "CONNECT",
+        "status": "Completed",
+        "code": "301",
+        "time": "786 ms",
+        "duration": "74 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "3328231593393218000",
+        "tags": [
+            "USER LOGIN",
+            "AKAMAI Testing Robot",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://example.com:393/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
+        "client": "Video Streaming",
+        "method": "POST",
+        "status": "Completed",
+        "code": "404",
+        "time": "191 ms",
+        "duration": "33 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "4334253530560703500",
+        "tags": [
+            "LOGIN DOCKER"
+        ],
+        "url": "https://randomsite.com:397/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
+        "client": "Social Media App",
+        "method": "POST",
+        "status": "Failed",
+        "code": "500",
+        "time": "623 ms",
+        "duration": "90 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "5229326502247303000",
+        "tags": [
+            "LOGIN DOCKER",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://example.com:142/user/settings?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
+        "client": "Weather App",
+        "method": "PUT",
+        "status": "Failed",
+        "code": "200",
+        "time": "298 ms",
+        "duration": "17 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "9328152760947732000",
+        "tags": [
+            "USER LOGIN",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://amazon.com:404/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
+        "client": "Google Map",
+        "method": "PUT",
+        "status": "Failed",
+        "code": "404",
+        "time": "718 ms",
+        "duration": "44 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "2230617825712294700",
+        "tags": [
+            "USER LOGIN",
+            "LOGIN DOCKER",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://othersite.com:381/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
+        "client": "Social Media App",
+        "method": "POST",
+        "status": "In Progress",
+        "code": "200",
+        "time": "537 ms",
+        "duration": "31 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "6210713431513586000",
+        "tags": [
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://randomsite.com:102/settings?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.q7t9kdq4G0hz0pn0-RNw2KTpDPfjb9JtMZB1vhRjdUM",
+        "client": "Weather App",
+        "method": "GET",
+        "status": "Completed",
+        "code": "200",
+        "time": "626 ms",
+        "duration": "20 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "8915696722735171000",
+        "tags": [
+            "USER LOGIN"
+        ],
+        "url": "https://amazon.com:273/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
+        "client": "Google Map",
+        "method": "CONNECT",
+        "status": "Completed",
+        "code": "301",
+        "time": "874 ms",
+        "duration": "53 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "4540775715847707000",
+        "tags": [
+            "USER LOGIN"
+        ],
+        "url": "https://othersite.com:82/api/status?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.qGvdH2k7XEXlbHpW4O_3VJe1sFhgZXNNSvbNi1IE5iQ",
+        "client": "Google Map",
+        "method": "DELETE",
+        "status": "Failed",
+        "code": "301",
+        "time": "628 ms",
+        "duration": "61 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "9116586975912664000",
+        "tags": [
+            "API TESTING"
+        ],
+        "url": "https://example.com:274/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
+        "client": "Video Streaming",
+        "method": "GET",
+        "status": "Failed",
+        "code": "301",
+        "time": "407 ms",
+        "duration": "78 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "2910676825672565000",
+        "tags": [
+            "USER LOGIN"
+        ],
+        "url": "https://amazon.com:417/product/electronics?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LOdCoWiL88HgUXX-xH-9c1efrdVVQ_NCqGZoeFfw3ek",
+        "client": "Video Streaming",
+        "method": "CONNECT",
+        "status": "In Progress",
+        "code": "200",
+        "time": "105 ms",
+        "duration": "80 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "4317284774517759500",
+        "tags": [
+            "NETWORK MONITORING",
+            "API TESTING"
+        ],
+        "url": "https://othersite.com:300/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
+        "client": "Video Streaming",
+        "method": "GET",
+        "status": "Failed",
+        "code": "404",
+        "time": "521 ms",
+        "duration": "76 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "3467221882619713500",
+        "tags": [
+            "API TESTING",
+            "USER LOGIN",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://randomsite.com:198/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
+        "client": "Social Media App",
+        "method": "DELETE",
+        "status": "Completed",
+        "code": "301",
+        "time": "794 ms",
+        "duration": "96 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "4381396838957263400",
+        "tags": [
+            "USER LOGIN",
+            "AKAMAI Testing Robot",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://google.com:152/search/images?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiY3JlYXRlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.FhQ7k2FG9Gz2bwBxqumfS4ty9WPLZG-lXMgn2fi6Zv4",
+        "client": "Google Map",
+        "method": "CONNECT",
+        "status": "Completed",
+        "code": "200",
+        "time": "397 ms",
+        "duration": "37 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "7114438817190807000",
+        "tags": [
+            "NETWORK MONITORING",
+            "USER LOGIN",
+            "API TESTING"
+        ],
+        "url": "https://othersite.com:224/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
+        "client": "Weather App",
+        "method": "CONNECT",
+        "status": "Failed",
+        "code": "200",
+        "time": "476 ms",
+        "duration": "36 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "7160047492179993000",
+        "tags": [
+            "LOGIN DOCKER",
+            "USER LOGIN"
+        ],
+        "url": "https://randomsite.com:213/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
+        "client": "Video Streaming",
+        "method": "POST",
+        "status": "In Progress",
+        "code": "200",
+        "time": "797 ms",
+        "duration": "76 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "9526723398190346000",
+        "tags": [
+            "USER LOGIN",
+            "AKAMAI Testing Robot",
+            "API TESTING"
+        ],
+        "url": "https://google.com:188/search/news?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyb2xlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.vM3AhCEpQQgm88JX4_z0mVpfnj9ykgqED5DoG3iDJz4",
+        "client": "Weather App",
+        "method": "PUT",
+        "status": "Failed",
+        "code": "200",
+        "time": "385 ms",
+        "duration": "31 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "3857188455709364700",
+        "tags": [
+            "USER LOGIN",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://randomsite.com:171/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
+        "client": "Video Streaming",
+        "method": "POST",
+        "status": "Completed",
+        "code": "301",
+        "time": "684 ms",
+        "duration": "42 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "5722902097438240000",
+        "tags": [
+            "USER LOGIN",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://google.com:194/search/images?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiY3JlYXRlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.FhQ7k2FG9Gz2bwBxqumfS4ty9WPLZG-lXMgn2fi6Zv4",
+        "client": "Social Media App",
+        "method": "DELETE",
+        "status": "In Progress",
+        "code": "200",
+        "time": "392 ms",
+        "duration": "97 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "2232250045194359600",
+        "tags": [
+            "NETWORK MONITORING"
+        ],
+        "url": "https://amazon.com:140/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
+        "client": "Weather App",
+        "method": "POST",
+        "status": "In Progress",
+        "code": "301",
+        "time": "341 ms",
+        "duration": "58 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "7146692786311481000",
+        "tags": [
+            "LOGIN DOCKER",
+            "USER LOGIN"
+        ],
+        "url": "https://othersite.com:353/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
+        "client": "Social Media App",
+        "method": "PUT",
+        "status": "In Progress",
+        "code": "301",
+        "time": "252 ms",
+        "duration": "84 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "6062319806475226000",
+        "tags": [
+            "USER LOGIN",
+            "LOGIN DOCKER",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://randomsite.com:155/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
+        "client": "Social Media App",
+        "method": "DELETE",
+        "status": "Failed",
+        "code": "500",
+        "time": "483 ms",
+        "duration": "10 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "8865402219154561000",
+        "tags": [
+            "USER LOGIN"
+        ],
+        "url": "https://amazon.com:301/product/electronics?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LOdCoWiL88HgUXX-xH-9c1efrdVVQ_NCqGZoeFfw3ek",
+        "client": "Google Map",
+        "method": "PUT",
+        "status": "Failed",
+        "code": "301",
+        "time": "531 ms",
+        "duration": "23 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "3068046931739221500",
+        "tags": [
+            "AKAMAI Testing Robot",
+            "API TESTING"
+        ],
+        "url": "https://randomsite.com:384/user/profile?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.MT8zj-o2j9xzhvwXtG7lNnC4RVFhddpzFTvmhIueu38",
+        "client": "Google Map",
+        "method": "POST",
+        "status": "Completed",
+        "code": "500",
+        "time": "153 ms",
+        "duration": "90 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "7219049812254449000",
+        "tags": [
+            "NETWORK MONITORING",
+            "API TESTING",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://randomsite.com:175/settings?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.q7t9kdq4G0hz0pn0-RNw2KTpDPfjb9JtMZB1vhRjdUM",
+        "client": "Google Map",
+        "method": "DELETE",
+        "status": "Completed",
+        "code": "200",
+        "time": "712 ms",
+        "duration": "87 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "4307769024494974500",
+        "tags": [
+            "USER LOGIN"
+        ],
+        "url": "https://amazon.com:269/product/clothing?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
+        "client": "Video Streaming",
+        "method": "DELETE",
+        "status": "In Progress",
+        "code": "301",
+        "time": "400 ms",
+        "duration": "44 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "2080945420553187300",
+        "tags": [
+            "USER LOGIN",
+            "API TESTING"
+        ],
+        "url": "https://othersite.com:242/api/data?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.LGBtiYUlNr6_U9QIKNmgnXYAOGhVZlQ0dxSYREh6Ucc",
+        "client": "Google Map",
+        "method": "DELETE",
+        "status": "Completed",
+        "code": "404",
+        "time": "399 ms",
+        "duration": "45 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "9968569193683202000",
+        "tags": [
+            "USER LOGIN",
+            "LOGIN DOCKER",
+            "API TESTING"
+        ],
+        "url": "https://amazon.com:395/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
+        "client": "Social Media App",
+        "method": "GET",
+        "status": "In Progress",
+        "code": "200",
+        "time": "702 ms",
+        "duration": "10 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "9693998190048764000",
+        "tags": [
+            "USER LOGIN",
+            "API TESTING"
+        ],
+        "url": "https://google.com:413/search/images?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJ3cml0ZSJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
+        "client": "Weather App",
+        "method": "POST",
+        "status": "Failed",
+        "code": "301",
+        "time": "372 ms",
+        "duration": "36 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "3571654425192210400",
+        "tags": [
+            "NETWORK MONITORING"
+        ],
+        "url": "https://amazon.com:213/product/electronics?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJlbGVjdHJvbmljcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.LG8kNiVogwlfdb8US8F3HFGIleuTTeLD0uvPpfFT4XE",
+        "client": "Weather App",
+        "method": "CONNECT",
+        "status": "In Progress",
+        "code": "500",
+        "time": "848 ms",
+        "duration": "69 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "8159620864673228000",
+        "tags": [
+            "LOGIN DOCKER",
+            "USER LOGIN"
+        ],
+        "url": "https://example.com:221/user/settings?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
+        "client": "Google Map",
+        "method": "DELETE",
+        "status": "Failed",
+        "code": "301",
+        "time": "312 ms",
+        "duration": "78 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "3217791088252197000",
+        "tags": [
+            "USER LOGIN",
+            "AKAMAI Testing Robot",
+            "NETWORK MONITORING"
+        ],
+        "url": "https://randomsite.com:378/user/profile?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.MT8zj-o2j9xzhvwXtG7lNnC4RVFhddpzFTvmhIueu38",
+        "client": "Weather App",
+        "method": "POST",
+        "status": "Completed",
+        "code": "200",
+        "time": "188 ms",
+        "duration": "72 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "3396348177678813700",
+        "tags": [
+            "USER LOGIN"
+        ],
+        "url": "https://amazon.com:275/product/clothing?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
+        "client": "Google Map",
+        "method": "GET",
+        "status": "Completed",
+        "code": "200",
+        "time": "319 ms",
+        "duration": "77 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "1459335815911855600",
+        "tags": [
+            "USER LOGIN",
+            "API TESTING",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://google.com:207/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
+        "client": "Social Media App",
+        "method": "POST",
+        "status": "In Progress",
+        "code": "301",
+        "time": "142 ms",
+        "duration": "15 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "6479280316596927000",
+        "tags": [
+            "USER LOGIN",
+            "API TESTING",
+            "NETWORK MONITORING"
+        ],
+        "url": "https://google.com:421/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
+        "client": "Google Map",
+        "method": "PUT",
+        "status": "Failed",
+        "code": "301",
+        "time": "948 ms",
+        "duration": "95 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "3567106416311224300",
+        "tags": [
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://amazon.com:366/product/clothing?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.z39Z_k6kJdc7fIhRGr5ckqf1dxQX9X5lPCmr3_4lC1o8",
+        "client": "Weather App",
+        "method": "GET",
+        "status": "Completed",
+        "code": "404",
+        "time": "880 ms",
+        "duration": "32 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "1602400228118557700",
+        "tags": [
+            "NETWORK MONITORING",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://randomsite.com:237/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
+        "client": "Weather App",
+        "method": "POST",
+        "status": "In Progress",
+        "code": "404",
+        "time": "584 ms",
+        "duration": "77 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "4815016531400739000",
+        "tags": [
+            "USER LOGIN",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://google.com:369/search/images?page=2&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJ3cml0ZSJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.YlMjfFQj1a9NO78mLHeXb_JYun-Lwz5qZ_jRix48k6g",
+        "client": "Social Media App",
+        "method": "POST",
+        "status": "In Progress",
+        "code": "200",
+        "time": "498 ms",
+        "duration": "34 bytes",
+        "request": "Request data",
+        "response": "-"
+    },
+    {
+        "id": "3585544858674323000",
+        "tags": [
+            "LOGIN DOCKER"
+        ],
+        "url": "https://amazon.com:227/product/books?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJib29rcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.WjtjqnszjFL3Gb-F3TSvTKHl5VxbFf4jJ2yyK_SXxxg",
+        "client": "Video Streaming",
+        "method": "DELETE",
+        "status": "Completed",
+        "code": "301",
+        "time": "551 ms",
+        "duration": "36 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "6412908938684492000",
+        "tags": [
+            "AKAMAI Testing Robot",
+            "USER LOGIN",
+            "NETWORK MONITORING"
+        ],
+        "url": "https://google.com:425/search/maps?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYXAgbGVnYWwiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.Hg3Edt8bdwFxQMP2yxByEDe7hs_9HO_S_9zXxQ_Ts6I",
+        "client": "Social Media App",
+        "method": "POST",
+        "status": "Failed",
+        "code": "301",
+        "time": "852 ms",
+        "duration": "81 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "4834725454895622000",
+        "tags": [
+            "NETWORK MONITORING",
+            "USER LOGIN",
+            "API TESTING"
+        ],
+        "url": "https://google.com:288/search/images?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJyZWFkIiwiY3JlYXRlIl0sImlhdCI6MTYyMzM2ODg4MSwiZXhwIjoxNjIzMzcwNjgxfQ.FhQ7k2FG9Gz2bwBxqumfS4ty9WPLZG-lXMgn2fi6Zv4",
+        "client": "Weather App",
+        "method": "DELETE",
+        "status": "In Progress",
+        "code": "500",
+        "time": "298 ms",
+        "duration": "37 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    },
+    {
+        "id": "6508518386830306000",
+        "tags": [
+            "USER LOGIN",
+            "API TESTING",
+            "LOGIN DOCKER"
+        ],
+        "url": "https://othersite.com:341/api/status?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJhcGkiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.qGvdH2k7XEXlbHpW4O_3VJe1sFhgZXNNSvbNi1IE5iQ",
+        "client": "Google Map",
+        "method": "DELETE",
+        "status": "Completed",
+        "code": "200",
+        "time": "465 ms",
+        "duration": "91 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "9655087303217943000",
+        "tags": [
+            "NETWORK MONITORING",
+            "API TESTING",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://example.com:149/user/profile?authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJzdGF0dXNlYmlsZXMiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.D5CtfhxFptbfRJjbZtADYr2BrZ5FJe2Q_TQbQXrtp2w",
+        "client": "Google Map",
+        "method": "PUT",
+        "status": "In Progress",
+        "code": "500",
+        "time": "929 ms",
+        "duration": "57 bytes",
+        "request": "Request data",
+        "response": "Error message"
+    },
+    {
+        "id": "1101341617711799900",
+        "tags": [
+            "API TESTING",
+            "AKAMAI Testing Robot"
+        ],
+        "url": "https://randomsite.com:389/settings?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJjdXJhdGUiXSwiaWF0IjoxNjIzMzY4ODgxLCJleHB4IjoxNjIzMzcwNjgxfQ.vKPvmppsvvJjxOyt7LOAlET3Bo5yqEwseP53PDrfl58",
+        "client": "Video Streaming",
+        "method": "GET",
+        "status": "Completed",
+        "code": "301",
+        "time": "804 ms",
+        "duration": "67 bytes",
+        "request": "Request data",
+        "response": "Response data"
+    }
+]

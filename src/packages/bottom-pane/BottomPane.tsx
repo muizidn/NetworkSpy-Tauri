@@ -31,6 +31,10 @@ import { SecurityScanMode } from "./BottomPaneComponents/Multiple/SecurityScanMo
 import { AIInvestigateMode } from "./BottomPaneComponents/Multiple/AIInvestigateMode";
 import { AISecurityMode } from "./BottomPaneComponents/Multiple/AISecurityMode";
 import { JWTDecoderMode } from "./BottomPaneComponents/Single/JWTDecoderMode";
+import { LLMStreamingMode } from "./BottomPaneComponents/Single/LLMStreamingMode";
+import { SSEViewerMode } from "./BottomPaneComponents/Single/SSEViewerMode";
+import { LLMResponseMode } from "./BottomPaneComponents/Single/LLMResponseMode";
+import { LLMTokenAnalyzerMode } from "./BottomPaneComponents/Single/LLMTokenAnalyzerMode";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 
 export const BottomPane = () => {
@@ -138,6 +142,18 @@ const renderMode = (
 
     case "jwt_decoder":
       return <JWTDecoderMode />;
+
+    case "llm_streaming":
+      return <LLMStreamingMode />;
+
+    case "sse_viewer":
+      return <SSEViewerMode />;
+
+    case "llm_response":
+      return <LLMResponseMode />;
+
+    case "llm_token_analyzer":
+      return <LLMTokenAnalyzerMode />;
 
     default:
       return null;
