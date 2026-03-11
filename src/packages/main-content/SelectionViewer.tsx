@@ -10,15 +10,15 @@ const UrlColorizer = ({ url }: { url: string }) => {
     const params = Array.from(urlObj.searchParams.entries());
 
     return (
-      <div className="flex flex-wrap items-center gap-x-0.5 font-mono text-[13px] leading-relaxed break-all select-text">
+      <div className="font-mono text-[13px] leading-relaxed break-all select-text whitespace-pre-wrap">
         <span className="text-zinc-500 font-bold">{urlObj.protocol}//</span>
         <button 
           onClick={() => window.open(url, '_blank')}
-          className="text-blue-400 font-bold hover:underline hover:text-blue-300 transition-colors flex items-center gap-1 group"
+          className="inline-flex items-center gap-1 text-blue-400 font-bold hover:underline hover:text-blue-300 transition-colors group"
           title="Open in Browser"
         >
           {urlObj.hostname}
-          {urlObj.port && <span className="text-zinc-500">: {urlObj.port}</span>}
+          {urlObj.port && <span className="text-zinc-500">:{urlObj.port}</span>}
           <FiExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
         <span className="text-zinc-300">{urlObj.pathname}</span>
@@ -26,7 +26,7 @@ const UrlColorizer = ({ url }: { url: string }) => {
           <>
             <span className="text-zinc-500">?</span>
             {params.map(([key, value], i) => (
-              <span key={i} className="flex items-center">
+              <span key={i} className="inline">
                 <span className="text-orange-400">{key}</span>
                 <span className="text-zinc-500">=</span>
                 <span className="text-green-400">{value}</span>
