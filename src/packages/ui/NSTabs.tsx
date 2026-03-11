@@ -1,7 +1,8 @@
-import { useState, ReactNode, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, ReactNode, useMemo, useCallback, useEffect, useRef, Suspense } from "react";
 import { Icon } from "./Icon";
 import { twMerge } from "tailwind-merge";
 import Tab from "@src/stories/app/atoms/Tab";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 export interface Tab {
   id: string;
@@ -18,7 +19,15 @@ interface TabPanelProps {
 const TabPanel: React.FC<TabPanelProps> = ({ tag, current, children }) => {
   return (
     <div className="absolute w-full h-full" hidden={current !== tag}>
-      {children}
+      <ErrorBoundary>
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-full text-zinc-600 italic text-xs animate-pulse bg-[#1a1c1e]">
+            Loading...
+          </div>
+        }>
+          {children}
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 };

@@ -20,8 +20,8 @@ export const AuthAnalysisMode = () => {
 
     const authDetails = useMemo(() => {
         if (!data) return null;
-        const authHeader = data.headers.find(h => h.key.toLowerCase() === 'authorization');
-        const cookieHeader = data.headers.find(h => h.key.toLowerCase() === 'cookie');
+        const authHeader = data.headers.find(h => h.key?.toLowerCase() === 'authorization');
+        const cookieHeader = data.headers.find(h => h.key?.toLowerCase() === 'cookie');
 
         const details: any = { type: 'None' };
 

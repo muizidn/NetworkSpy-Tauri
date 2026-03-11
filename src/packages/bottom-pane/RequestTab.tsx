@@ -55,16 +55,17 @@ export const RequestTab = (props: {
     return null;
   }
 
-  const isImage = data.content_type.includes("image");
-  const isHTML = data.content_type.includes("html");
-  const isJSON = data.content_type.includes("json");
-  const isXML = data.content_type.includes("xml");
-  const isJavaScript = data.content_type.includes("javascript");
-  const isProtobuf = data.content_type.includes("protobuf");
-  const isCML = data.content_type.includes("cml");
-  const isHLS = data.content_type.includes("application/x-mpegurl");
-  const isMultipart = data.content_type.includes("multipart/form-data");
-  const isFormURLEncoded = data.content_type.includes(
+  const contentType = data.content_type || "";
+  const isImage = contentType.includes("image");
+  const isHTML = contentType.includes("html");
+  const isJSON = contentType.includes("json");
+  const isXML = contentType.includes("xml");
+  const isJavaScript = contentType.includes("javascript");
+  const isProtobuf = contentType.includes("protobuf");
+  const isCML = contentType.includes("cml");
+  const isHLS = contentType.includes("application/x-mpegurl");
+  const isMultipart = contentType.includes("multipart/form-data");
+  const isFormURLEncoded = contentType.includes(
     "application/x-www-form-urlencoded"
   );
 

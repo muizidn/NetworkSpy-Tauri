@@ -30,7 +30,7 @@ export const JWTDecoderMode = () => {
             if (!data) return;
             // Check Headers
             data.headers.forEach(h => {
-                const matches = h.value.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
+                const matches = h.value?.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
                 if (matches) {
                     matches.forEach(m => {
                         if (m.split('.').length >= 2) {

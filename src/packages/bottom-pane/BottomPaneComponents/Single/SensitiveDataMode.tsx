@@ -28,7 +28,7 @@ export const SensitiveDataMode = () => {
                 if (body.match(/\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/)) found.push({ type: 'Credit Card', value: 'Payment data' });
 
                 res.headers.forEach(h => {
-                    if (h.key.toLowerCase().match(/authorization|cookie|session/)) {
+                    if (h.key?.toLowerCase().match(/authorization|cookie|session/)) {
                         found.push({ type: 'Auth Header', value: h.key, location: 'Headers' });
                     }
                 });

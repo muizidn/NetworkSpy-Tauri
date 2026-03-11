@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
 import { SelectionViewer } from "../main-content/SelectionViewer";
 import { useBottomPaneContext } from "@src/context/BottomPaneContext";
+import { ErrorBoundary } from "../ui/ErrorBoundary";
 import { RequestResponseMode } from "./BottomPaneComponents/Single/RequestResponseMode";
 import { SummaryMode } from "./BottomPaneComponents/None/SummaryMode";
 import { HealthTimelineMode } from "./BottomPaneComponents/None/HealthTimelineMode";
@@ -45,7 +46,15 @@ export const BottomPane = () => {
   return (
     <div className="flex flex-col w-full relative h-full">
       {selections.firstSelected && <SelectionViewer />}
-      {renderMode(mode, sizes, setSizes)}
+      <ErrorBoundary>
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-full text-zinc-600 italic text-xs animate-pulse">
+            Loading viewer...
+          </div>
+        }>
+          {renderMode(mode, sizes, setSizes)}
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 };
