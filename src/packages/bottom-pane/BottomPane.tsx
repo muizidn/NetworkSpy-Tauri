@@ -2,17 +2,17 @@ import { useState } from "react";
 
 import { SelectionViewer } from "../main-content/SelectionViewer";
 import { useBottomPaneContext } from "@src/context/BottomPaneContext";
-import { RequestResponseMode } from "./BottomPaneComponents/RequestResponseMode";
-import { SummaryMode } from "./BottomPaneComponents/SummaryMode";
-import { GraphQLMode } from "./BottomPaneComponents/GraphQLMode";
-import { LLMPromptMode } from "./BottomPaneComponents/LLMPromptMode";
-import { DiffMode } from "./BottomPaneComponents/DiffMode";
-import { ReplayMode } from "./BottomPaneComponents/ReplayMode";
-import { WebsocketMode } from "./BottomPaneComponents/WebsocketMode";
-import { TimelineMode } from "./BottomPaneComponents/TimelineMode";
-import { CompareMode } from "./BottomPaneComponents/CompareMode";
-import { BatchAnalyzeMode } from "./BottomPaneComponents/BatchAnalyzeMode";
-import { AISummaryMode } from "./BottomPaneComponents/AISummaryMode";
+import { RequestResponseMode } from "./BottomPaneComponents/Single/RequestResponseMode";
+import { SummaryMode } from "./BottomPaneComponents/None/SummaryMode";
+import { GraphQLMode } from "./BottomPaneComponents/Single/GraphQLMode";
+import { LLMPromptMode } from "./BottomPaneComponents/Single/LLMPromptMode";
+import { DiffMode } from "./BottomPaneComponents/Single/DiffMode";
+import { ReplayMode } from "./BottomPaneComponents/Single/ReplayMode";
+import { WebsocketMode } from "./BottomPaneComponents/Single/WebsocketMode";
+import { TimelineMode } from "./BottomPaneComponents/Multiple/TimelineMode";
+import { CompareMode } from "./BottomPaneComponents/Multiple/CompareMode";
+import { BatchAnalyzeMode } from "./BottomPaneComponents/Multiple/BatchAnalyzeMode";
+import { AISummaryMode } from "./BottomPaneComponents/Multiple/AISummaryMode";
 
 export const BottomPane = () => {
   const { mode } = useBottomPaneContext();
