@@ -9,18 +9,15 @@ import { CenterPane } from "./CenterPane";
 import { BottomPaneOptions } from "../../packages/bottom-pane/BottomPaneOptions";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { listen } from "@tauri-apps/api/event";
 import {
   TrafficListProvider,
   useTrafficListContext,
 } from "../../packages/main-content/context/TrafficList";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
-import { Payload } from "../../models/Payload";
 import { invoke } from "@tauri-apps/api/tauri";
 import { Traffic } from "../../models/Traffic";
-import { generateJson } from "./trafficGenerator";
 import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
-import { TauriEnvProvider } from "@src/packages/app-env";
+import { TauriEnvProvider, useAppProvider } from "@src/packages/app-env";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -35,9 +32,9 @@ const Content = () => {
   };
   const [sizes, setSizes] = useState<any[]>(["15%", "70%", "15%"]);
   const [isRun, setIsRun] = useState(false);
-  const streamState = useRef(false);
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
+  const { provider } = useAppProvider();
 
   const [tabs, setTabs] = useState<any[]>(() => {
     const saved = localStorage.getItem("ns_workspace_tabs");
@@ -81,106 +78,53 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (window.__TAURI__) { return; }
-    setTrafficList([]);
-    let batch: TrafficItemMap[] = [];
-
-    const interval = setInterval(() => {
-      if (batch.length === 0) {
-        batch = generateJson(50) as TrafficItemMap[];
-      }
-
-      const nextItem = batch.shift();
-      if (nextItem) {
-        setTrafficList((prev) => [...prev, nextItem]);
-      }
-    }, 300); // Insert every 300 milisecond
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (streamState.current) {
-      return;
-    }
-    streamState.current = true;
-    listen("traffic_event", (event: any) => {
-      const payload = event.payload as Payload;
-      let traffic = {} as Traffic;
-      if (payload.is_request) {
-        traffic = {
-          id: payload.id,
-          uri: payload.data.uri!,
-          method: payload.data.method!,
-          request: {
-            version: payload.data.version!,
-            header: payload.data.headers,
-            body: payload.data.body || null,
-          },
-          response: null,
-        };
-      } else {
-        traffic = trafficSet[payload.id];
-        traffic = {
-          ...traffic,
-          id: payload.id,
-          response: {
-            version: payload.data.version!,
-            header: payload.data.headers,
-            body: payload.data.body || null,
-          },
-        };
-      }
-
+    let unlisten: (() => void) | undefined;
+    
+    provider.listenTraffic((traffic) => {
       setTrafficSet((prev) => ({
         ...prev,
-        traffic,
+        [traffic.id]: traffic,
       }));
+
       setTrafficList((prevData) => {
         const existingTrafficIndex = prevData.findIndex(
           (t) => t.id === traffic.id
         );
 
+        const listItem: TrafficItemMap = {
+          id: traffic.id,
+          tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
+          url: traffic.uri || "-",
+          client: "Google Map",
+          method: traffic.method,
+          status: "Completed",
+          code: "200",
+          time: "732 ms",
+          duration: "16 bytes",
+          request: "Request data",
+          response: traffic.response ? "Response Data" : "-",
+        };
+
         if (existingTrafficIndex !== -1) {
           const updatedTraffic = {
             ...prevData[existingTrafficIndex],
-            tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
-            url: traffic.uri || "-",
-            client: "Google Map",
-            method: traffic.method,
-            status: "Completed",
-            code: "200",
-            time: "732 ms",
-            duration: "16 bytes",
-            request: "Request data",
-            response: traffic.response ? "Response Data" : "-",
+            ...listItem,
           };
-
           return [
             ...prevData.slice(0, existingTrafficIndex),
             updatedTraffic,
             ...prevData.slice(existingTrafficIndex + 1),
           ];
         } else {
-          const newTraffic = {
-            id: traffic.id,
-            tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
-            url: traffic.uri || "-",
-            client: "Google Map",
-            method: traffic.method,
-            status: "Completed",
-            code: "200",
-            time: "732 ms",
-            duration: "16 bytes",
-            request: "Request data",
-            response: traffic.response ? "Response Data" : "-",
-          };
-
-          return [...prevData, newTraffic];
+          return [...prevData, listItem];
         }
       });
-    });
-  }, []);
+    }).then(fn => { unlisten = fn; });
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [provider]);
 
   useEffect(() => {
     const port = 9090;

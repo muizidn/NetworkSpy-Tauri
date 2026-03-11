@@ -1,7 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { invoke } from "@tauri-apps/api";
+import { useMemo, useState } from "react";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
-import { RequestPairData } from "../../RequestTab";
 
 export const AITestMode = () => {
     const { selections } = useTrafficListContext();
@@ -52,7 +50,7 @@ describe('API Contract Validation', () => {
                     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 flex flex-col items-center text-center">
                         <div className="text-zinc-300 font-bold mb-3">Convert this request into a re-usable unit test</div>
                         <p className="text-xs text-zinc-600 mb-8 max-w-sm italic">AI will generate boilerplate code and common assertions based on the observed response structure.</p>
-                        <button 
+                        <button
                             onClick={handleGenerate}
                             disabled={generating}
                             className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-10 rounded-full transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3"
@@ -64,11 +62,11 @@ describe('API Contract Validation', () => {
                 ) : (
                     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-2 animate-in slide-in-from-bottom-4 duration-300 overflow-hidden">
                         <div className="flex justify-between items-center px-4 py-3 bg-zinc-800/40 border-b border-zinc-800">
-                             <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Postman / Vitest Script</span>
-                             <div className="flex gap-4">
+                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Postman / Vitest Script</span>
+                            <div className="flex gap-4">
                                 <button onClick={() => navigator.clipboard.writeText(tests)} className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold">Copy</button>
                                 <button onClick={() => setTests(null)} className="text-[10px] text-zinc-600 hover:text-white uppercase font-bold">New</button>
-                             </div>
+                            </div>
                         </div>
                         <div className="p-4 overflow-auto max-h-[400px]">
                             <pre className="text-xs text-zinc-400 font-mono leading-relaxed">
