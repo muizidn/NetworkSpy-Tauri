@@ -1,16 +1,17 @@
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
+import { useFilterContext } from "@src/context/FilterContext";
 import { useMemo } from "react";
 
 export const SummaryMode = () => {
-  const { trafficListDisplay } = useTrafficListContext();
+  const { filteredTraffic } = useFilterContext();
 
   const stats = useMemo(() => {
-    const total = trafficListDisplay.length;
+    const total = filteredTraffic.length;
     const methods: Record<string, number> = {};
     const statuses: Record<string, number> = {};
     const contentTypes: Record<string, number> = {};
 
-    trafficListDisplay.forEach((item) => {
+    filteredTraffic.forEach((item) => {
       const method = (item.method as string) || "UNKNOWN";
       methods[method] = (methods[method] || 0) + 1;
 
@@ -23,7 +24,7 @@ export const SummaryMode = () => {
     });
 
     return { total, methods, statuses, contentTypes };
-  }, [trafficListDisplay]);
+  }, [filteredTraffic]);
 
   return (
     <div className="h-full bg-[#1e1e1e] text-white p-6 overflow-auto">
