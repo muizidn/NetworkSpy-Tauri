@@ -31,6 +31,7 @@ const HeaderCell = <T,>({
   handleSort,
   startResize,
   columnWidth,
+  isLast,
 }: {
   header: TableViewHeader<T>;
   index: number;
@@ -39,6 +40,7 @@ const HeaderCell = <T,>({
   handleSort: (index: number) => void;
   startResize: (index: number, startX: number) => void;
   columnWidth: number;
+  isLast: boolean;
 }) => {
   const ref = useRef<HTMLTableHeaderCellElement>(null);
 
@@ -66,19 +68,22 @@ const HeaderCell = <T,>({
 
   return (
     <th
+      ref={ref}
       className={twMerge(
           "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors",
+          isLast ? "flex-grow" : "shrink-0",
           isActive ? "text-blue-400 bg-[#161616]" : "text-zinc-500 hover:bg-zinc-800/40"
       )}
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
+        width: isLast ? undefined : columnWidth,
+        flexBasis: isLast ? columnWidth : undefined,
+        minWidth: header.minWidth
       }}
     >
       <div
-        ref={ref}
-        className="flex items-center justify-between cursor-grab w-full gap-2"
-        style={{ width: columnWidth, minWidth: header.minWidth }}
+        className="flex items-center justify-between cursor-grab w-full gap-2 overflow-hidden"
       >
         <span className="text-[10px] font-black uppercase tracking-widest truncate">{header.title}</span>
         {isActive && (
@@ -328,8 +333,8 @@ export const TableView = <T,>({
   }, [data, sortConfig]);
 
   return (
-    <div className={twMerge("w-full h-full flex flex-col bg-[#050505]", className)}>
-        <table className="w-full border-separate border-spacing-0 flex flex-col h-full overflow-hidden">
+    <div className={twMerge("w-full h-full flex flex-col bg-[#050505] overflow-x-auto custom-scrollbar", className)}>
+        <table className="min-w-full w-max border-separate border-spacing-0 flex flex-col h-full overflow-hidden">
         <thead className="sticky top-0 z-30 shrink-0">
             <tr className="flex w-full">
             {headers.map((header, index) => (
@@ -342,6 +347,7 @@ export const TableView = <T,>({
                 handleSort={handleSort}
                 startResize={startResize}
                 columnWidth={columnWidths[index]}
+                isLast={index === headers.length - 1}
                 />
             ))}
             </tr>
@@ -360,14 +366,24 @@ export const TableView = <T,>({
                         )}
                         data-index={index}
                     >
-                        {headers.map((header, i) => (
-                        <td key={i} className="px-4 py-2 text-zinc-400 text-[12px] truncate" style={{ width: columnWidths[i], minWidth: header.minWidth }}>
-                            {header.renderer.render({
-                            input: item,
-                            width: columnWidths[i],
-                            })}
-                        </td>
-                        ))}
+                        {headers.map((header, i) => {
+                          const isLast = i === headers.length - 1;
+                          return (
+                            <td key={i} className={twMerge(
+                              "px-4 py-2 text-zinc-400 text-[12px] truncate",
+                              isLast ? "flex-grow" : "shrink-0"
+                            )} style={{ 
+                                width: isLast ? undefined : columnWidths[i], 
+                                flexBasis: isLast ? columnWidths[i] : undefined,
+                                minWidth: header.minWidth 
+                            }}>
+                                {header.renderer.render({
+                                input: item,
+                                width: columnWidths[i],
+                                })}
+                            </td>
+                          );
+                        })}
                     </tr>
                 );
             })}
