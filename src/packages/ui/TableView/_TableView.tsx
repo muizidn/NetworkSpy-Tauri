@@ -3,10 +3,8 @@ import { twMerge } from "tailwind-merge";
 import { Renderer } from "./_Renderer";
 import { useDrag, useDrop } from "react-dnd";
 import { TableViewContextMenuRenderer } from "./_ContextMenu";
-import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiChevronDown, FiChevronUp, FiPlay, FiPause, FiMousePointer, FiArrowDown } from "react-icons/fi";
 import { useVirtualizer } from "@tanstack/react-virtual";
-
-const kAUTOSCROLLENABLED = false
 
 export interface TableViewHeader<T> {
   title: string;
@@ -122,8 +120,14 @@ export const TableView = <T,>({
     firstSelect?: number;
     rows: number[];
   }>({ rows: [] });
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(kAUTOSCROLLENABLED);
+
+
   const [columnWidths, setColumnWidths] = useState<number[]>(
     initialHeaders.map((e) => e.minWidth || 150)
   );
@@ -193,7 +197,7 @@ export const TableView = <T,>({
       : null;
     const allItems = selectedRows.rows.map((i) => data[i]);
     onSelectedRowChanged(firstSelect, allItems);
-  }, [selectedRows]);
+  }, [selectedRows, data, onSelectedRowChanged]);
 
   async function showContextMenu(e: MouseEvent) {
     if (!contextMenuRenderer) {
@@ -223,6 +227,9 @@ export const TableView = <T,>({
       const maxScrollTop = scrollHeight - clientHeight;
       const currentScrollTop = tbody.scrollTop;
 
+      if (maxScrollTop <= 0) return; // No need to scroll if content fits
+
+      setIsScrolling(true);
       const animateScroll = (startTime: number) => {
         const currentTime = Date.now();
         const elapsed = currentTime - startTime;
@@ -239,6 +246,7 @@ export const TableView = <T,>({
           requestAnimationFrame(() => animateScroll(startTime));
         } else {
           tbody.scrollTop = maxScrollTop;
+          setIsScrolling(false);
         }
       };
 
@@ -247,25 +255,45 @@ export const TableView = <T,>({
   }
 
   useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    setScrollProgress(0);
+
+    if (!autoScrollEnabled) {
+      return;
+    }
+
+    const interval = 3000;
+    const step = 100;
+
+    // Smooth progress bar update
+    progressIntervalRef.current = setInterval(() => {
+      setScrollProgress(prev => {
+        if (prev >= 100) return 0; // Reset if it reaches 100% before the next scroll
+        return prev + (step / interval) * 100;
+      });
+    }, step);
+
+    timerRef.current = setInterval(() => {
+      _animateScroll();
+      setScrollProgress(0); // Reset progress after scroll
+    }, interval);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    };
+  }, [autoScrollEnabled]);
+
+  useEffect(() => {
+    // Initial scroll to bottom when data loads or autoscroll is enabled
     if (autoScrollEnabled && tbodyRef.current) {
       _animateScroll();
     }
-  }, [data, autoScrollEnabled]);
+  }, [autoScrollEnabled]); // Removed data dependency so it only triggers when toggled on
 
   const handleScroll = () => {
     if (!tbodyRef.current) return;
-
-    const tbody = tbodyRef.current;
-    const atBottom =
-      tbody.scrollTop + tbody.clientHeight === tbody.scrollHeight;
-    const nearBottom =
-      tbody.scrollHeight - tbody.scrollTop <= tbody.clientHeight * 2;
-
-    if (atBottom) {
-      setAutoScrollEnabled(kAUTOSCROLLENABLED);
-    } else if (!nearBottom) {
-      setAutoScrollEnabled(false);
-    }
   };
 
   const easeInOutQuad = (
@@ -341,7 +369,7 @@ export const TableView = <T,>({
       }
       return 0;
     });
-  }, [data, sortConfig]);
+  }, [data, sortConfig, headers]); // Added headers to dependency array for comparer
 
   const rowVirtualizer = useVirtualizer({
     count: sortedData.length,
@@ -429,6 +457,53 @@ export const TableView = <T,>({
           )}
         </tbody>
       </table>
+
+      {/* Autoscroll Control Button */}
+      <div className="absolute bottom-6 right-8 z-40">
+        <button
+          onClick={() => setAutoScrollEnabled(!autoScrollEnabled)}
+          className={twMerge(
+            "relative group flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 shadow-xl",
+            autoScrollEnabled
+              ? "bg-blue-600 border-blue-400 text-white hover:bg-blue-500 scale-105"
+              : "bg-[#18181b] border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500"
+          )}
+        >
+          {/* Progress Circle (background) */}
+          <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none opacity-20">
+            <div
+              className="h-full bg-white transition-all duration-100 ease-linear"
+              style={{ width: `${autoScrollEnabled ? scrollProgress : 0}%` }}
+            />
+          </div>
+
+          <div className="relative flex items-center gap-2">
+            {isScrolling ? (
+              <>
+                <FiArrowDown size={14} className="animate-bounce" />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Scrolling</span>
+              </>
+            ) : autoScrollEnabled ? (
+              <>
+                <div className="relative flex items-center justify-center">
+                  <FiPause size={14} className="animate-pulse" />
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider">Tracing...</span>
+              </>
+            ) : (
+              <>
+                <FiPlay size={14} />
+                <span className="text-[11px] font-bold uppercase tracking-wider">Paused</span>
+              </>
+            )}
+          </div>
+
+          {/* Tooltip */}
+          <div className="absolute bottom-full mb-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded text-[10px] text-zinc-400 whitespace-nowrap pointer-events-none shadow-2xl">
+            {autoScrollEnabled ? "Disable periodic scroll" : "Enable 3s periodic scroll"}
+          </div>
+        </button>
+      </div>
 
       {/* Resize Dialog */}
       {resizingIndex !== null && (
