@@ -1,0 +1,87 @@
+import React, { createContext, useContext, useState } from "react";
+
+/**
+ * Mode when nothing is selected.
+ * Shows global traffic summary / analytics.
+ */
+export type NoneMode = "summary";
+
+/**
+ * Modes when a single traffic is selected.
+ */
+export type SingleMode =
+    | "request_response"
+    | "graphql"
+    | "llm_prompt"
+    | "diff"
+    | "replay"
+    | "websocket";
+
+/**
+ * Modes when multiple traffics are selected.
+ */
+export type MultipleMode =
+    | "timeline"
+    | "compare"
+    | "batch_analyze"
+    | "ai_summary";
+
+/**
+ * Unified bottom pane mode.
+ */
+export type BottomPaneMode =
+    | NoneMode
+    | SingleMode
+    | MultipleMode;
+
+export type BottomPaneSelectionType =
+    | "none"
+    | "single"
+    | "multiple";
+
+interface BottomPaneContextType {
+    mode: BottomPaneMode;
+    setMode: React.Dispatch<React.SetStateAction<BottomPaneMode>>;
+
+    selectionType: BottomPaneSelectionType;
+    setSelectionType: React.Dispatch<
+        React.SetStateAction<BottomPaneSelectionType>
+    >;
+}
+
+const BottomPaneContext = createContext<BottomPaneContextType | undefined>(
+    undefined
+);
+
+export const useBottomPaneContext = () => {
+    const context = useContext(BottomPaneContext);
+
+    if (!context) {
+        throw new Error(
+            "useBottomPaneContext must be used within BottomPaneProvider"
+        );
+    }
+
+    return context;
+};
+
+export const BottomPaneProvider: React.FC<{ children: React.ReactNode }> = ({
+    children,
+}) => {
+    const [mode, setMode] = useState<BottomPaneMode>("summary");
+    const [selectionType, setSelectionType] =
+        useState<BottomPaneSelectionType>("none");
+
+    return (
+        <BottomPaneContext.Provider
+            value={{
+                mode,
+                setMode,
+                selectionType,
+                setSelectionType,
+            }}
+        >
+            {children}
+        </BottomPaneContext.Provider>
+    );
+};

@@ -225,9 +225,6 @@ const Content = () => {
                     setTabs((prev) => [...prev.filter((e) => e.id !== id)])
                   }
                 />
-                <div className='absolute bottom-0 w-full bg-[#1e1e1e] z-10'>
-                  <BottomPaneOptions />
-                </div>
               </div>
             </Pane>
             <Pane
@@ -247,11 +244,11 @@ const Content = () => {
 const App: React.FC = () => {
   return (
     <TauriEnvProvider invokeFn={invoke}>
-    <TrafficListProvider>
-      <PaneProvider>
-        <Content />
-      </PaneProvider>
-    </TrafficListProvider>
+      <TrafficListProvider>
+        <PaneProvider>
+          <Content />
+        </PaneProvider>
+      </TrafficListProvider>
     </TauriEnvProvider>
   );
 };

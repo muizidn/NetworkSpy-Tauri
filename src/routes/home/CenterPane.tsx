@@ -8,6 +8,8 @@ import { useSettingsContext } from "../../context/SettingsProvider";
 import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
 import { usePaneContext } from "../../context/PaneProvider";
 import { useTrafficListContext } from "../../packages/main-content/context/TrafficList";
+import { BottomPaneProvider } from "@src/context/BottomPaneContext";
+import { BottomPaneOptions } from "@src/packages/bottom-pane/BottomPaneOptions";
 
 export const CenterPane: React.FC = () => {
   const { sizesCenterPane, setSizesCenterPane } = useSettingsContext();
@@ -43,16 +45,21 @@ export const CenterPane: React.FC = () => {
           </div>
         </Pane>
         <Pane>
-          <div style={{ height: sizesCenterPane[1] }}>
-            {selections.firstSelected ? <BottomPane /> : <NoSelection />}
-          </div>
+          <BottomPaneProvider>
+            <div style={{ height: sizesCenterPane[1] }} className="flex flex-col">
+              <div className='block w-full bg-[#1e1e1e] z-10'>
+                <BottomPaneOptions />
+              </div>
+              <BottomPane />
+            </div>
+          </BottomPaneProvider>
         </Pane>
       </SplitPane>
     </div>
   );
 };
 
-const NoSelection: React.FC<{}> = ({}) => {
+const NoSelection: React.FC<{}> = ({ }) => {
   return (
     <div className="w-full h-full flex justify-center items-center">
       No traffic selected. Please select one traffic to see detail
