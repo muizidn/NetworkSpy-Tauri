@@ -1,38 +1,58 @@
-import React, { useMemo } from "react";
-import { FiMessageSquare, FiCpu, FiBarChart2, FiDollarSign, FiCode, FiLayers, FiCheckCircle } from "react-icons/fi";
+import React, { useMemo, useState, useEffect } from "react";
+import { FiMessageSquare, FiCpu, FiBarChart2, FiDollarSign, FiCode, FiLayers, FiCheckCircle, FiInfo } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
+import { useAppProvider } from "@src/packages/app-env";
+import { RequestPairData } from "../../RequestTab";
 
 export const LLMResponseMode = () => {
+  const { provider } = useAppProvider();
   const { selections } = useTrafficListContext();
   const selected = selections.firstSelected;
+  const [data, setData] = useState<RequestPairData | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  if (!selected) return null;
-
-  // Mock OpenAI-style response extraction
-  const mockResponse = {
-    id: "chatcmpl-8Sj92k1Lx91O",
-    model: "gpt-4-turbo-preview",
-    created: Date.now(),
-    choices: [
-      {
-        message: {
-          role: "assistant",
-          content: "To implement better LLM observability, you should focus on tracking not just token counts but also latency distributions (P50, P99) and semantic cache hit rates. This allows you to differentiate between genuine network lag and inference-time variability.\n\n### Key Metrics:\n- Prompt Tokens: 452\n- Completion Tokens: 128\n- Latency: 1.2s"
-        },
-        finish_reason: "stop"
-      }
-    ],
-    usage: {
-      prompt_tokens: 452,
-      completion_tokens: 128,
-      total_tokens: 580
+  useEffect(() => {
+    if (!selected) {
+      setData(null); // Clear data when no selection
+      return;
     }
-  };
+    setLoading(true);
+    provider.getResponsePairData(String(selected.id))
+      .then(res => setData(res))
+      .catch(error => {
+        console.error("Failed to fetch response pair data:", error);
+        setData(null); // Clear data on error
+      })
+      .finally(() => setLoading(false));
+  }, [selected, provider]);
 
-  const content = mockResponse.choices[0].message.content;
-  const model = mockResponse.model;
-  const usage = mockResponse.usage;
+  const responseInfo = useMemo(() => {
+    if (!data?.body) return null;
+    try {
+      const parsed = JSON.parse(data.body);
+      const content = parsed.choices?.[0]?.message?.content || parsed.choices?.[0]?.text || parsed.content || "";
+      const model = parsed.model || "unknown-model";
+      const usage = parsed.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      const finishReason = parsed.choices?.[0]?.finish_reason || "unknown";
+
+      return { content, model, usage, finishReason, raw: parsed };
+    } catch (e) {
+      return { 
+        content: data.body, 
+        model: "raw-data", 
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+        finishReason: "n/a",
+        raw: null 
+      };
+    }
+  }, [data]);
+
+  if (!selected) return <Placeholder text="Select a response to view LLM details" />;
+  if (loading) return <Placeholder text="Fetching AI response data..." />;
+  if (!responseInfo) return <Placeholder text="No valid LLM response body found" icon={<FiInfo size={32} />} />;
+
+  const { content, model, usage, finishReason } = responseInfo;
 
   return (
     <div className="flex flex-col h-full bg-[#15181a] text-zinc-300 overflow-hidden select-none">
@@ -52,7 +72,7 @@ export const LLMResponseMode = () => {
               <span className="text-[10px] text-zinc-700">•</span>
               <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
                  <FiCheckCircle size={10} />
-                 COMPLETED
+                 {finishReason.toUpperCase()}
               </span>
             </div>
           </div>
@@ -80,15 +100,17 @@ export const LLMResponseMode = () => {
               </h3>
               
               <div className="space-y-2">
-                <UsageRow label="Prompt" value={usage.prompt_tokens} max={600} color="bg-blue-500" />
-                <UsageRow label="Completion" value={usage.completion_tokens} max={600} color="bg-indigo-500" />
+                <UsageRow label="Prompt" value={usage.prompt_tokens} max={Math.max(usage.total_tokens, 100)} color="bg-blue-500" />
+                <UsageRow label="Completion" value={usage.completion_tokens} max={Math.max(usage.total_tokens, 100)} color="bg-indigo-500" />
               </div>
 
               <div className="mt-4 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-between">
                  <div className="flex items-center gap-2 text-emerald-500/80 uppercase font-bold text-[10px]">
                     <FiDollarSign size={12} /> Estimated Cost
                  </div>
-                 <span className="text-xs font-mono text-emerald-400 font-bold">$0.0054</span>
+                 <span className="text-xs font-mono text-emerald-400 font-bold">
+                    ${((usage.prompt_tokens * 0.01 + usage.completion_tokens * 0.03) / 1000).toFixed(6)}
+                 </span>
               </div>
             </div>
 
@@ -99,9 +121,8 @@ export const LLMResponseMode = () => {
               </h3>
               <div className="space-y-1">
                  <MetaItem label="Model ID" value={model} />
-                 <MetaItem label="Object Type" value="chat.completion" />
-                 <MetaItem label="Fingerprint" value="fp_447062904" />
-                 <MetaItem label="System Prob" value="0.992" />
+                 <MetaItem label="Finish Reason" value={finishReason} />
+                 <MetaItem label="Token/s" value={(usage.total_tokens / 1.5).toFixed(1)} />
               </div>
             </div>
 
@@ -119,7 +140,7 @@ export const LLMResponseMode = () => {
         <div className="w-[70%] bg-[#111314] flex flex-col">
           <div className="px-6 py-3 bg-zinc-900/30 border-b border-zinc-800 text-[10px] uppercase font-bold text-zinc-500 tracking-[0.2em] flex items-center justify-between">
             <span>Result Content</span>
-            <span className="font-normal normal-case text-zinc-700 italic">assistant message • stop reason: normal</span>
+            <span className="font-normal normal-case text-zinc-700 italic">assistant message • stop reason: {finishReason}</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
@@ -163,6 +184,15 @@ const UsageRow = ({ label, value, max, color }: { label: string, value: number, 
 const MetaItem = ({ label, value }: { label: string, value: string }) => (
   <div className="flex justify-between items-center py-1.5 border-b border-zinc-800/30">
     <span className="text-[10px] text-zinc-600">{label}</span>
-    <span className="text-[10px] font-mono text-zinc-300">{value}</span>
+    <span className="text-[10px] font-mono text-zinc-300 truncate ml-4" title={value}>{value}</span>
   </div>
+);
+
+const Placeholder = ({ text, icon }: { text: string, icon?: React.ReactNode }) => (
+    <div className="h-full flex items-center justify-center text-zinc-500 bg-[#15181a] p-10 text-center">
+      <div className="flex flex-col items-center gap-4">
+        {icon || <div className="text-4xl text-blue-900 font-bold opacity-30">LLM Response</div>}
+        <div className="text-sm max-w-md mx-auto">{text}</div>
+      </div>
+    </div>
 );

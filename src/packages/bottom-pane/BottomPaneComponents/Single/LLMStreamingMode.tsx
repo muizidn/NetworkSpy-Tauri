@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FiZap, FiSettings, FiActivity, FiTerminal, FiDatabase, FiLayers } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
+import { useAppProvider } from "@src/packages/app-env";
 
 interface SSEChunk {
   id: string;
@@ -12,14 +13,15 @@ interface SSEChunk {
 }
 
 export const LLMStreamingMode = () => {
+  const { provider } = useAppProvider();
   const { selections } = useTrafficListContext();
   const selected = selections.firstSelected;
   const [chunks, setChunks] = useState<SSEChunk[]>([]);
   const [accumulatedText, setAccumulatedText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const startTimeRef = useRef<number>(0);
 
-  // Mock data simulation - this simulates real SSE behavior
   useEffect(() => {
     if (!selected) return;
 
@@ -27,76 +29,52 @@ export const LLMStreamingMode = () => {
     setChunks([]);
     setAccumulatedText("");
     setIsStreaming(true);
+    startTimeRef.current = Date.now();
 
-    const mockContent = [
-      '{"content": "I "}',
-      '{"content": "can "}',
-      '{"content": "help "}',
-      '{"content": "you "}',
-      '{"content": "with "}',
-      '{"content": "that! "}',
-      '{"content": "\\n\\n"}',
-      '{"content": "Server-Sent "}',
-      '{"content": "Events "}',
-      '{"content": "(SSE) "}',
-      '{"content": "allow "}',
-      '{"content": "servers "}',
-      '{"content": "to "}',
-      '{"content": "push "}',
-      '{"content": "real-time "}',
-      '{"content": "data "}',
-      '{"content": "updates "}',
-      '{"content": "to "}',
-      '{"content": "web "}',
-      '{"content": "pages. "}',
-      '[DONE]'
-    ];
-
-    let currentIdx = 0;
-    const startTime = Date.now();
-
-    const interval = setInterval(() => {
-      if (currentIdx >= mockContent.length) {
-        setIsStreaming(false);
-        clearInterval(interval);
-        return;
-      }
-
-      const rawData = mockContent[currentIdx];
+    const cleanup = provider.listenSSE(String(selected.id), (rawData) => {
       let content = "";
+      let eventType = "message";
       
-      try {
-        if (rawData === '[DONE]') {
-          content = "";
-        } else {
-          content = JSON.parse(rawData).content;
+      const cleanData = rawData.replace(/^data:\s*/, '').trim();
+
+      if (cleanData === '[DONE]') {
+        eventType = "control";
+        setIsStreaming(false);
+      } else {
+        try {
+          const parsed = JSON.parse(cleanData);
+          content = parsed.choices?.[0]?.delta?.content || parsed.content || "";
+        } catch (e) {
+          content = cleanData;
         }
-      } catch (e) {
-        content = rawData;
       }
 
       const newChunk: SSEChunk = {
         id: Math.random().toString(36).substr(2, 9),
-        event: rawData === '[DONE]' ? 'control' : 'message',
+        event: eventType,
         data: rawData,
         timestamp: new Date().toLocaleTimeString(),
-        elapsedMs: Date.now() - startTime
+        elapsedMs: Date.now() - startTimeRef.current
       };
 
       setChunks(prev => [...prev, newChunk]);
-      setAccumulatedText(prev => prev + content);
-      currentIdx++;
+      if (content) {
+        setAccumulatedText(prev => prev + content);
+      }
 
       // Auto-scroll logic
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, 150);
+    });
 
-    return () => clearInterval(interval);
-  }, [selected]);
+    return () => {
+        cleanup();
+        setIsStreaming(false);
+    };
+  }, [selected, provider]);
 
-  if (!selected) return null;
+  if (!selected) return <div className="h-full flex items-center justify-center text-zinc-500 italic">Select a stream to inspect</div>;
 
   return (
     <div className="flex flex-col h-full bg-[#15181a] text-zinc-300 font-sans overflow-hidden">
@@ -212,12 +190,15 @@ export const LLMStreamingMode = () => {
           <div className="p-4 bg-black/20 border-t border-zinc-800">
               <div className="flex justify-between items-center text-[10px] text-zinc-500 font-mono">
                   <div className="flex gap-4">
-                      <span>TOKENS: {accumulatedText.split(' ').filter(x => x.length > 0).length}</span>
+                      <span>TOKENS: {accumulatedText.split(/\s+/).filter(x => x.length > 0).length}</span>
                       <span>CHAR: {accumulatedText.length}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                      <span>HEALTHY STREAM</span>
+                      <div className={twMerge(
+                          "w-2 h-2 rounded-full",
+                          isStreaming ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                      )} />
+                      <span>{isStreaming ? "LIVE STREAM" : "COMPLETED"}</span>
                   </div>
               </div>
           </div>

@@ -9,6 +9,8 @@ export interface IAppProvider {
   getRequestPairData(trafficId: string): Promise<RequestPairData>;
   getResponsePairData(trafficId: string): Promise<RequestPairData>;
   listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void>;
+  listenSSE(trafficId: string, callback: (chunk: string) => void): () => void;
+  listenWebsocket(trafficId: string, callback: (message: any) => void): () => void;
 }
 
 export class TauriAppProvider implements IAppProvider {
@@ -63,6 +65,24 @@ export class TauriAppProvider implements IAppProvider {
       callback(traffic);
     });
   }
+
+  listenSSE(trafficId: string, callback: (chunk: string) => void): () => void {
+    const unlisten = listen<any>(`sse_${trafficId}`, (event) => {
+        callback(event.payload);
+    });
+    return () => {
+        unlisten.then(u => u());
+    };
+  }
+
+  listenWebsocket(trafficId: string, callback: (message: any) => void): () => void {
+    const unlisten = listen<any>(`ws_${trafficId}`, (event) => {
+        callback(event.payload);
+    });
+    return () => {
+        unlisten.then(u => u());
+    };
+  }
 }
 
 export class MockAppProvider implements IAppProvider {
@@ -71,7 +91,7 @@ export class MockAppProvider implements IAppProvider {
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {
     console.log(`[Mock] getRequestPairData: ${trafficId}`);
     const traffic = this.trafficSet[trafficId];
-
+    
     if (traffic) {
       const urlObj = new URL(traffic.uri);
       const paramKeys = Array.from(new Set(urlObj.searchParams.keys()));
@@ -134,6 +154,58 @@ export class MockAppProvider implements IAppProvider {
     } as unknown as RequestPairData;
   }
 
+  listenSSE(trafficId: string, callback: (chunk: string) => void): () => void {
+    const traffic = this.trafficSet[trafficId];
+    if (!traffic || !traffic.uri.includes('openai')) {
+        // Fallback demo for non-mocked SSE
+        const demoChunks = [
+            'data: {"choices":[{"delta":{"content":"Hello! "}}]}',
+            'data: {"choices":[{"delta":{"content":"I "}}]}',
+            'data: {"choices":[{"delta":{"content":"am "}}]}',
+            'data: {"choices":[{"delta":{"content":"a "}}]}',
+            'data: {"choices":[{"delta":{"content":"mock "}}]}',
+            'data: {"choices":[{"delta":{"content":"SSE "}}]}',
+            'data: {"choices":[{"delta":{"content":"stream."}}]}',
+            'data: [DONE]'
+        ];
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i >= demoChunks.length) {
+                clearInterval(interval);
+                return;
+            }
+            callback(demoChunks[i++]);
+        }, 100);
+        return () => clearInterval(interval);
+    }
+
+    // For OpenAI mocked data, we can "re-stream" its response if it was marked as streaming
+    const responseBody = traffic.response?.body || "";
+    const isStreaming = responseBody.includes('data:');
+    
+    if (isStreaming) {
+        const chunks = responseBody.split('\n').filter(l => l.trim().length > 0);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i >= chunks.length) {
+                clearInterval(interval);
+                return;
+            }
+            callback(chunks[i++]);
+        }, 80);
+        return () => clearInterval(interval);
+    }
+
+    return () => {};
+  }
+
+  listenWebsocket(trafficId: string, callback: (message: any) => void): () => void {
+    const interval = setInterval(() => {
+        callback({ type: 'message', data: `Ping from mock WS ${trafficId}: ${Date.now()}` });
+    }, 2000);
+    return () => clearInterval(interval);
+  }
+
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {
     let batch: any[] = [];
     const interval = setInterval(() => {
@@ -149,14 +221,14 @@ export class MockAppProvider implements IAppProvider {
           request: {
             version: "HTTP/1.1",
             header: {
-              "content-type": item.url?.includes("graphql") ? "application/json" : "text/plain"
+                "content-type": (item.url?.includes("graphql") || item.url?.includes("openai")) ? "application/json" : "text/plain"
             },
             body: item.request as string || null,
           },
           response: {
             version: "HTTP/1.1",
             header: {
-              "content-type": "application/json"
+                "content-type": item.url?.includes("event-stream") ? "text/event-stream" : "application/json"
             },
             body: item.response as string || null,
           },

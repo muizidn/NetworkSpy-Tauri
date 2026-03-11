@@ -3,8 +3,7 @@ import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 import { twMerge } from "tailwind-merge";
-
-import { FiTerminal, FiBox, FiCpu, FiUser } from "react-icons/fi";
+import { FiTerminal, FiBox, FiCpu, FiUser, FiInfo } from "react-icons/fi";
 
 interface LLMData {
   messages?: {
@@ -27,17 +26,21 @@ interface LLMData {
 export const LLMPromptMode = () => {
   const { provider } = useAppProvider();
   const { selections } = useTrafficListContext();
-  const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
+  const selected = selections.firstSelected;
   const [data, setData] = useState<RequestPairData | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!trafficId) return;
+    if (!selected) {
+      setData(null);
+      return;
+    }
     setLoading(true);
-    provider.getRequestPairData(trafficId)
+    provider.getRequestPairData(String(selected.id))
       .then((res) => setData(res))
+      .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [trafficId, provider]);
+  }, [selected, provider]);
 
   const llmData = useMemo<LLMData | null>(() => {
     if (!data?.body) return null;
@@ -51,47 +54,32 @@ export const LLMPromptMode = () => {
           stream: parsed.stream,
         };
       }
-      // Anthropic style
+      
       if (parsed.prompt) {
         return {
           prompt: parsed.prompt,
           model: parsed.model || "unknown"
         };
       }
-    } catch (e) { }
+      
+      if (typeof parsed === 'string' || parsed.text) {
+          return {
+              prompt: parsed.text || parsed,
+              model: "generic-input"
+          };
+      }
+    } catch (e) {
+        return {
+            prompt: data.body,
+            model: "raw-text"
+        };
+    }
     return null;
   }, [data]);
 
-  const mockLLMData: LLMData = {
-    messages: [
-      { role: "system", content: "You are a helpful assistant with access to local tools." },
-      { role: "user", content: "What is the weather in Jakarta right now?" },
-      {
-        role: "assistant",
-        content: null,
-        tool_calls: [{
-          id: "call_9kL1",
-          type: "function",
-          function: { name: "get_weather", arguments: '{"location": "Jakarta"}' }
-        }]
-      },
-      {
-        role: "tool",
-        tool_call_id: "call_9kL1",
-        name: "get_weather",
-        content: '{"temperature": 32, "condition": "Sunny", "humidity": 70}'
-      },
-      { role: "assistant", content: "The current weather in Jakarta is sunny with a temperature of 32°C and 70% humidity." }
-    ],
-    model: "gpt-4-turbo",
-    temperature: 0.7,
-    stream: true
-  };
-
-  const activeData = (llmData || mockLLMData) as LLMData;
-
-  if (!trafficId && !activeData) return <Placeholder text="Select a request to view LLM details" />;
-  if (loading) return <Placeholder text="Loading data..." />;
+  if (!selected) return <Placeholder text="Select a request to view LLM details" />;
+  if (loading) return <Placeholder text="Analyzing prompt data..." />;
+  if (!llmData) return <Placeholder text="No valid LLM prompt pattern detected" icon={<FiInfo size={32} />} />;
 
   return (
     <div className="h-full bg-[#0d0d0d] flex flex-col font-sans overflow-hidden">
@@ -99,28 +87,28 @@ export const LLMPromptMode = () => {
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-900/20">AI</div>
           <div>
-            <div className="text-sm font-bold text-zinc-200">{activeData.model}</div>
+            <div className="text-sm font-bold text-zinc-200">{llmData.model}</div>
             <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">LLM PROMPT CONFIG</div>
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {activeData.temperature !== undefined && (
-            <div className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400 font-mono tracking-tighter">TEMP: {activeData.temperature}</div>
+          {llmData.temperature !== undefined && (
+            <div className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400 font-mono tracking-tighter">TEMP: {llmData.temperature}</div>
           )}
-          {activeData.stream && (
+          {llmData.stream && (
             <div className="text-[10px] bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-900/50 font-bold tracking-widest">STREAMING</div>
           )}
         </div>
       </div>
 
       <div className="flex-grow overflow-auto p-6 space-y-6 custom-scrollbar bg-black/20">
-        {activeData.prompt ? (
+        {llmData.prompt ? (
           <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl">
             <div className="text-[10px] font-bold text-zinc-500 mb-3 uppercase tracking-widest">Prompt</div>
-            <div className="text-zinc-300 whitespace-pre-wrap text-sm leading-relaxed font-serif">{activeData.prompt}</div>
+            <div className="text-zinc-300 whitespace-pre-wrap text-sm leading-relaxed font-serif">{llmData.prompt}</div>
           </div>
         ) : (
-          activeData.messages?.map((msg, i) => (
+          llmData.messages?.map((msg, i) => (
             <div key={i} className={twMerge(
               "flex flex-col gap-2 w-full max-w-[90%]",
               msg.role === 'user' ? 'ml-auto items-end' : 'mr-auto items-start'
@@ -175,10 +163,10 @@ export const LLMPromptMode = () => {
   );
 };
 
-const Placeholder = ({ text }: { text: string }) => (
+const Placeholder = ({ text, icon = null }: { text: string, icon?: any }) => (
   <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0d0d] p-10 text-center">
-    <div>
-      <div className="text-4xl mb-4 text-green-900 font-bold opacity-30">LLM Prompt</div>
+    <div className="flex flex-col items-center gap-4">
+      {icon || <div className="text-4xl text-green-900 font-bold opacity-30">LLM Prompt</div>}
       <div className="text-sm max-w-md mx-auto">{text}</div>
     </div>
   </div>

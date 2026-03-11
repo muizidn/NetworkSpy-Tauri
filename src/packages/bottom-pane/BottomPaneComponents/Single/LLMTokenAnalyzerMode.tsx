@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { getEncoding } from "js-tiktoken";
-import { FiHash, FiPieChart, FiInfo, FiCopy, FiZap, FiDatabase } from "react-icons/fi";
+import { FiHash, FiPieChart, FiInfo, FiCopy, FiZap, FiDatabase, FiLayers, FiArrowRight, FiArrowLeft, FiActivity } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
+import { useAppProvider } from "@src/packages/app-env";
+import { RequestPairData } from "../../RequestTab";
 
 // Colors for token visualization
 const TOKEN_COLORS = [
@@ -16,58 +18,133 @@ const TOKEN_COLORS = [
 ];
 
 export const LLMTokenAnalyzerMode = () => {
+  const { provider } = useAppProvider();
   const { selections } = useTrafficListContext();
   const selected = selections.firstSelected;
+  
+  const [inputData, setInputData] = useState<RequestPairData | null>(null);
+  const [outputData, setOutputData] = useState<RequestPairData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"input" | "output">("output");
   const [encodingName, setEncodingName] = useState<"cl100k_base" | "p50k_base" | "r50k_base">("cl100k_base");
   
-  // Real or Mock content
-  const contentToAnalyze = useMemo(() => {
-    return "NetworkSpy-Tauri is a powerful tool for inspecting network traffic, specifically optimized for LLM developers using Server-Sent Events (SSE) and complex tool-calling agents. It allows you to visualize tokens, analyze latency, and debug prompts with a premium developer experience.";
-  }, []);
+  useEffect(() => {
+    if (!selected) {
+      setInputData(null);
+      setOutputData(null);
+      return;
+    }
+    setLoading(true);
+    
+    Promise.all([
+        provider.getRequestPairData(String(selected.id)).catch(() => null),
+        provider.getResponsePairData(String(selected.id)).catch(() => null)
+    ]).then(([req, res]) => {
+        setInputData(req);
+        setOutputData(res);
+        // Default to whichever has content, prefer output if available
+        if (res?.body) setViewMode("output");
+        else if (req?.body) setViewMode("input");
+    }).finally(() => setLoading(false));
+  }, [selected, provider]);
+
+  const extractText = (data: RequestPairData | null) => {
+    if (!data?.body) return "";
+    try {
+        const parsed = JSON.parse(data.body);
+        // Response patterns
+        if (parsed.choices?.[0]?.message?.content) return parsed.choices[0].message.content;
+        if (parsed.choices?.[0]?.text) return parsed.choices[0].text;
+        // Request patterns
+        if (parsed.messages && Array.isArray(parsed.messages)) {
+            return parsed.messages.map((m: any) => `${m.role}: ${m.content}`).join("\n\n");
+        }
+        if (parsed.prompt) return parsed.prompt;
+    } catch(e) {}
+    return data.body;
+  };
+
+  const inputText = useMemo(() => extractText(inputData), [inputData]);
+  const outputText = useMemo(() => extractText(outputData), [outputData]);
 
   const enc = useMemo(() => getEncoding(encodingName), [encodingName]);
   
-  const tokenAnalysis = useMemo(() => {
-    const tokens = enc.encode(contentToAnalyze);
+  const analyze = (text: string) => {
+    if (!text) return { tokens: [], decodedTokens: [], count: 0, charCount: 0 };
+    const tokens = enc.encode(text);
     const decodedTokens = tokens.map(t => enc.decode([t]));
-    
     return {
       tokens,
       decodedTokens,
       count: tokens.length,
-      charCount: contentToAnalyze.length,
+      charCount: text.length,
     };
-  }, [contentToAnalyze, enc]);
+  };
+
+  const inputAnalysis = useMemo(() => analyze(inputText), [inputText, enc]);
+  const outputAnalysis = useMemo(() => analyze(outputText), [outputText, enc]);
+
+  const activeAnalysis = viewMode === "input" ? inputAnalysis : outputAnalysis;
+
+  if (!selected) return <Placeholder text="Select a traffic item to analyze tokens" />;
+  if (loading) return <Placeholder text="Analyzing full transaction..." icon={<FiLayers className="animate-spin" size={32} />} />;
+  if (!inputText && !outputText) return <Placeholder text="No inspectable text found in either request or response" icon={<FiInfo size={32} />} />;
 
   return (
     <div className="flex flex-col h-full bg-[#0d0d0d] text-zinc-300 overflow-hidden select-none font-sans">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-600/10 rounded-lg border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
-            <FiHash className="text-indigo-500" size={18} />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Token Analyzer</h2>
-            <div className="flex items-center gap-2 font-mono">
-               <span className="text-[10px] text-zinc-500 uppercase">Encoding:</span>
-               <select 
-                 value={encodingName}
-                 onChange={(e) => setEncodingName(e.target.value as any)}
-                 className="bg-zinc-800 text-[10px] text-zinc-300 border-none rounded px-2 py-0.5 outline-none cursor-pointer hover:bg-zinc-700 transition-colors"
-               >
-                 <option value="cl100k_base">cl100k_base (GPT-4 / 3.5)</option>
-                 <option value="p50k_base">p50k_base (Codex)</option>
-                 <option value="r50k_base">r50k_base (GPT-2)</option>
-               </select>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-600/10 rounded-lg border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+                <FiHash className="text-indigo-500" size={18} />
             </div>
+            <div>
+                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Token Intelligence</h2>
+                <div className="flex items-center gap-2 font-mono">
+                <span className="text-[10px] text-zinc-500 uppercase">Encoding:</span>
+                <select 
+                    value={encodingName}
+                    onChange={(e) => setEncodingName(e.target.value as any)}
+                    className="bg-zinc-800 text-[10px] text-zinc-300 border-none rounded px-2 py-0.5 outline-none cursor-pointer hover:bg-zinc-700 transition-colors"
+                >
+                    <option value="cl100k_base">cl100k_base (GPT-4 / 3.5)</option>
+                    <option value="p50k_base">p50k_base (Codex)</option>
+                    <option value="r50k_base">r50k_base (GPT-2)</option>
+                </select>
+                </div>
+            </div>
+          </div>
+
+          {/* Input/Output Selector */}
+          <div className="flex bg-black/40 rounded-lg p-1 border border-zinc-800">
+            <button 
+                onClick={() => setViewMode("input")}
+                className={twMerge(
+                    "px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-2",
+                    viewMode === "input" ? "bg-indigo-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                )}
+            >
+                <FiArrowRight size={12} className={viewMode === "input" ? "text-white" : "text-zinc-700"} />
+                Input ({inputAnalysis.count})
+            </button>
+            <button 
+                onClick={() => setViewMode("output")}
+                className={twMerge(
+                    "px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-2",
+                    viewMode === "output" ? "bg-indigo-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                )}
+            >
+                <FiArrowLeft size={12} className={viewMode === "output" ? "text-white" : "text-zinc-700"} />
+                Output ({outputAnalysis.count})
+            </button>
           </div>
         </div>
 
         <div className="flex items-center gap-6">
-           <StatBox label="Tokens" value={tokenAnalysis.count} icon={<FiZap size={10} />} color="text-indigo-400" />
-           <StatBox label="Characters" value={tokenAnalysis.charCount} icon={<FiInfo size={10} />} color="text-zinc-500" />
-           <StatBox label="T/C Ratio" value={(tokenAnalysis.count / tokenAnalysis.charCount).toFixed(2)} icon={<FiPieChart size={10} />} color="text-emerald-400" />
+           <StatBox label="Total Transaction" value={inputAnalysis.count + outputAnalysis.count} icon={<FiActivity size={10} />} color="text-amber-400" />
+           <StatBox label="Active Tokens" value={activeAnalysis.count} icon={<FiZap size={10} />} color="text-indigo-400" />
+           <StatBox label="Active T/C" value={activeAnalysis.charCount > 0 ? (activeAnalysis.count / activeAnalysis.charCount).toFixed(2) : "0.00"} icon={<FiPieChart size={10} />} color="text-emerald-400" />
         </div>
       </div>
 
@@ -75,27 +152,38 @@ export const LLMTokenAnalyzerMode = () => {
         {/* Left: Token Visualizer */}
         <div className="w-2/3 flex flex-col border-r border-zinc-900 bg-black/10">
            <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800 bg-zinc-900/40">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Visual Breakdown</span>
-              <button className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-600 hover:text-white transition-colors">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                Visual Breakdown - {viewMode.toUpperCase()}
+              </span>
+              <button 
+                onClick={() => navigator.clipboard.writeText(activeAnalysis.tokens.join(", "))}
+                className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-600 hover:text-white transition-colors"
+              >
                  <FiCopy size={12} /> Copy IDs
               </button>
            </div>
            
            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-indigo-500/5 via-transparent to-transparent">
-              <div className="flex flex-wrap gap-y-2 leading-relaxed">
-                 {tokenAnalysis.decodedTokens.map((token, i) => (
-                   <span 
-                     key={i}
-                     className={twMerge(
-                       "px-1 py-0.5 rounded-sm border ring-1 ring-inset ring-transparent hover:ring-white/20 transition-all cursor-default text-sm",
-                       TOKEN_COLORS[i % TOKEN_COLORS.length]
-                     )}
-                     title={`Token ID: ${tokenAnalysis.tokens[i]}`}
-                   >
-                     {token === " " ? " \u00B7 " : token}
-                   </span>
-                 ))}
-              </div>
+              {activeAnalysis.count > 0 ? (
+                <div className="flex flex-wrap gap-y-2 leading-relaxed">
+                    {activeAnalysis.decodedTokens.map((token, i) => (
+                    <span 
+                        key={i}
+                        className={twMerge(
+                        "px-1 py-0.5 rounded-sm border ring-1 ring-inset ring-transparent hover:ring-white/20 transition-all cursor-default text-sm",
+                        TOKEN_COLORS[i % TOKEN_COLORS.length]
+                        )}
+                        title={`Token ID: ${activeAnalysis.tokens[i]}`}
+                    >
+                        {token === " " ? " \u00B7 " : token === "\n" ? " \u21B5 " : token}
+                    </span>
+                    ))}
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center text-zinc-700 italic text-sm">
+                    No content to visualize for this {viewMode}
+                </div>
+              )}
            </div>
         </div>
 
@@ -112,23 +200,34 @@ export const LLMTokenAnalyzerMode = () => {
                     <div className="p-1.5 bg-indigo-500/20 rounded">
                        <FiDatabase className="text-indigo-400" size={14} />
                     </div>
-                    <span className="text-xs font-bold text-white uppercase tracking-tighter">Cost Projection</span>
+                    <span className="text-xs font-bold text-white uppercase tracking-tighter">Full Transaction Cost</span>
                  </div>
                  <div className="space-y-3">
-                    <CostItem label="GPT-4o (Input)" rate="$5.00 / 1M" tokens={tokenAnalysis.count} cost={0.000005 * tokenAnalysis.count} />
-                    <CostItem label="GPT-4o (Output)" rate="$15.00 / 1M" tokens={tokenAnalysis.count} cost={0.000015 * tokenAnalysis.count} />
-                    <CostItem label="GPT-3.5 Turbo" rate="$0.50 / 1M" tokens={tokenAnalysis.count} cost={0.0000005 * tokenAnalysis.count} />
+                    <CostItem 
+                        label="GPT-4o (Combined)" 
+                        rate="In: $5 / Out: $15" 
+                        input={inputAnalysis.count} 
+                        output={outputAnalysis.count} 
+                        cost={(0.000005 * inputAnalysis.count) + (0.000015 * outputAnalysis.count)} 
+                    />
+                    <CostItem 
+                        label="GPT-3.5 Turbo" 
+                        rate="In: $0.5 / Out: $1.5" 
+                        input={inputAnalysis.count} 
+                        output={outputAnalysis.count} 
+                        cost={(0.0000005 * inputAnalysis.count) + (0.0000015 * outputAnalysis.count)} 
+                    />
                  </div>
               </div>
 
               {/* Character Details */}
               <div className="space-y-4">
-                 <h3 className="text-[10px] uppercase font-bold text-zinc-600 tracking-widest">Byte Distribution</h3>
+                 <h3 className="text-[10px] uppercase font-bold text-zinc-600 tracking-widest">{viewMode} Byte Distribution</h3>
                  <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden flex">
-                    <div className="h-full bg-indigo-500 w-[60%]" title="Alpha" />
-                    <div className="h-full bg-emerald-500 w-[20%]" title="Numbers" />
-                    <div className="h-full bg-amber-500 w-[15%]" title="Symbols" />
-                    <div className="h-full bg-rose-500 w-[5%]" title="Whitespace" />
+                    <div className="h-full bg-indigo-500 w-[60%]" />
+                    <div className="h-full bg-emerald-500 w-[20%]" />
+                    <div className="h-full bg-amber-500 w-[15%]" />
+                    <div className="h-full bg-rose-500 w-[5%]" />
                  </div>
                  <div className="grid grid-cols-2 gap-2 text-[10px] font-mono text-zinc-500">
                     <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-indigo-500" /> Alpha</div>
@@ -157,12 +256,25 @@ const StatBox = ({ label, value, icon, color }: { label: string, value: any, ico
   </div>
 );
 
-const CostItem = ({ label, rate, tokens, cost }: { label: string, rate: string, tokens: number, cost: number }) => (
-  <div className="flex justify-between items-center group">
+const CostItem = ({ label, rate, input, output, cost }: { label: string, rate: string, input: number, output: number, cost: number }) => (
+  <div className="flex justify-between items-start group border-b border-white/5 pb-2">
      <div className="flex flex-col">
         <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white transition-colors">{label}</span>
-        <span className="text-[8px] text-zinc-600 uppercase">{rate}</span>
+        <span className="text-[8px] text-zinc-600 uppercase mb-1">{rate}</span>
+        <div className="flex gap-2 text-[8px] font-mono text-zinc-500">
+            <span>IN: {input}</span>
+            <span>OUT: {output}</span>
+        </div>
      </div>
      <span className="text-[10px] font-mono text-emerald-400 font-bold">${cost.toFixed(6)}</span>
   </div>
+);
+
+const Placeholder = ({ text, icon = null }: { text: string, icon?: React.ReactNode }) => (
+    <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0d0d] p-10 text-center">
+      <div className="flex flex-col items-center gap-4">
+        {icon || <div className="text-4xl text-indigo-900 font-bold opacity-30">Token Intelligence</div>}
+        <div className="text-sm max-w-md mx-auto">{text}</div>
+      </div>
+    </div>
 );
