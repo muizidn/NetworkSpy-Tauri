@@ -1,5 +1,5 @@
 import React from "react";
-import { useFilterContext, Filter, FilterType, FilterOperator } from "@src/context/FilterContext";
+import { useFilterContext, Filter, FilterType, FilterOperator, FilterTypes, FilterOperators } from "@src/context/FilterContext";
 import { v4 as uuidv4 } from "uuid";
 import { twMerge } from "tailwind-merge";
 import { FiSearch, FiX } from "react-icons/fi";
@@ -31,8 +31,8 @@ export const FilterBar = () => {
     const newFilter: Filter = {
       id: uuidv4(),
       enabled: true,
-      type: "URL",
-      operator: "Contains",
+      type: FilterTypes.URL,
+      operator: FilterOperators.Contains,
       value: "",
     };
     setFilters([...filters, newFilter]);
@@ -59,14 +59,8 @@ export const FilterBar = () => {
     }
   };
 
-  const filterTypes: FilterType[] = ["URL", "Method", "Status", "Header", "Content-Type"];
-  const filterOperators: FilterOperator[] = [
-    "Contains",
-    "Starts with",
-    "Ends with",
-    "Equals",
-    "Matches Regex",
-  ];
+  const filterTypes: FilterType[] = Object.values(FilterTypes);
+  const filterOperators: FilterOperator[] = Object.values(FilterOperators);
 
   return (
     <div className='bg-[#202020] text-white flex flex-col w-full'>

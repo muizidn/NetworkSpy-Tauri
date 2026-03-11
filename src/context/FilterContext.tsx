@@ -2,8 +2,24 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from "
 import { TrafficItemMap } from "@src/packages/main-content/model/TrafficItemMap";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 
-export type FilterType = "URL" | "Method" | "Status" | "Header" | "Content-Type";
-export type FilterOperator = "Contains" | "Starts with" | "Ends with" | "Equals" | "Matches Regex";
+export const FilterTypes = {
+  URL: "URL",
+  Method: "Method",
+  Status: "Status",
+  Header: "Header",
+  ContentType: "Content-Type"
+} as const;
+
+export const FilterOperators = {
+  Contains: "Contains",
+  StartsWith: "Starts with",
+  EndsWith: "Ends with",
+  Equals: "Equals",
+  MatchesRegex: "Matches Regex"
+} as const;
+
+export type FilterType = typeof FilterTypes[keyof typeof FilterTypes];
+export type FilterOperator = typeof FilterOperators[keyof typeof FilterOperators];
 
 export interface Filter {
   id: string;
@@ -43,10 +59,10 @@ export const useFilterContext = () => {
 
 const BUILT_IN_FILTERS: PredefinedFilter[] = [
   { id: "all", name: "All", filters: [], isBuiltIn: true },
-  { id: "http", name: "HTTP", filters: [{ id: "built-in-http", enabled: true, type: "URL", operator: "Starts with", value: "http:" }], isBuiltIn: true },
-  { id: "https", name: "HTTPS", filters: [{ id: "built-in-https", enabled: true, type: "URL", operator: "Starts with", value: "https:" }], isBuiltIn: true },
-  { id: "json", name: "JSON", filters: [{ id: "built-in-json", enabled: true, type: "Content-Type", operator: "Contains", value: "json" }], isBuiltIn: true },
-  { id: "images", name: "Images", filters: [{ id: "built-in-images", enabled: true, type: "Content-Type", operator: "Matches Regex", value: "(image|png|jpg|jpeg|gif)" }], isBuiltIn: true },
+  { id: "http", name: "HTTP", filters: [{ id: "built-in-http", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "http:" }], isBuiltIn: true },
+  { id: "https", name: "HTTPS", filters: [{ id: "built-in-https", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "https:" }], isBuiltIn: true },
+  { id: "json", name: "JSON", filters: [{ id: "built-in-json", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.Contains, value: "json" }], isBuiltIn: true },
+  { id: "images", name: "Images", filters: [{ id: "built-in-images", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.MatchesRegex, value: "(image|png|jpg|jpeg|gif)" }], isBuiltIn: true },
 ];
 
 export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -123,15 +139,15 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const target = targetValue.toLowerCase();
 
     switch (filter.operator) {
-      case "Contains":
+      case FilterOperators.Contains:
         return target.includes(val);
-      case "Starts with":
+      case FilterOperators.StartsWith:
         return target.startsWith(val);
-      case "Ends with":
+      case FilterOperators.EndsWith:
         return target.endsWith(val);
-      case "Equals":
+      case FilterOperators.Equals:
         return target === val;
-      case "Matches Regex":
+      case FilterOperators.MatchesRegex:
         try {
           return new RegExp(filter.value, "i").test(targetValue);
         } catch {
