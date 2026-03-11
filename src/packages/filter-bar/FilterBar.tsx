@@ -1,9 +1,27 @@
 import React from "react";
 import { useFilterContext, Filter, FilterType, FilterOperator } from "@src/context/FilterContext";
 import { v4 as uuidv4 } from "uuid";
+import { twMerge } from "tailwind-merge";
+import { FiSearch } from "react-icons/fi";
 
 export const FilterBar = () => {
-  const { filters, setFilters } = useFilterContext();
+  const { 
+    filters, 
+    setFilters, 
+    predefinedFilters, 
+    activePredefinedIds, 
+    togglePredefinedFilter, 
+    saveCurrentFilters,
+    removePredefinedFilter
+  } = useFilterContext();
+
+  const [searchTerm, setSearchTerm] = React.useState("");
+
+  const filteredPredefined = React.useMemo(() => {
+    return predefinedFilters.filter(f => 
+      f.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [predefinedFilters, searchTerm]);
 
   const addFilter = () => {
     const newFilter: Filter = {
@@ -26,7 +44,18 @@ export const FilterBar = () => {
     );
   };
 
-  const filterTypes: FilterType[] = ["URL", "Method", "Status", "Header"];
+  const [showSaveInput, setShowSaveInput] = React.useState(false);
+  const [saveName, setSaveName] = React.useState("");
+
+  const handleSaveCurrent = () => {
+    if (saveName.trim()) {
+      saveCurrentFilters(saveName.trim());
+      setSaveName("");
+      setShowSaveInput(false);
+    }
+  };
+
+  const filterTypes: FilterType[] = ["URL", "Method", "Status", "Header", "Content-Type"];
   const filterOperators: FilterOperator[] = [
     "Contains",
     "Starts with",
@@ -37,54 +66,125 @@ export const FilterBar = () => {
 
   return (
     <div className='bg-[#202020] text-white flex flex-col w-full'>
-      <div className='flex items-center space-x-1 border-y border-black py-1 px-2 overflow-auto no-scrollbar'>
-        <button
-          onClick={addFilter}
-          className='btn btn-xs bg-[#353737] rounded text-white hover:bg-[#454747]'>
-          + Create New
-        </button>
-        <div className='flex space-x-1 border-l border-zinc-800 ml-2 pl-2'>
-          {[
-            "All",
-            "HTTP",
-            "HTTPS",
-            "JSON",
-            "Images",
-          ].map((tab, index) => (
-            <button
-              key={index}
-              className='btn btn-xs bg-zinc-900 border border-zinc-800 rounded text-zinc-400 hover:text-white capitalize px-3'>
-              {tab}
-            </button>
-          ))}
+      <div className='flex items-center border-y border-black h-9 relative'>
+        {/* Search Input for Presets */}
+        <div className="flex items-center px-3 border-r border-zinc-800 h-full group">
+          <FiSearch className="text-zinc-500 group-focus-within:text-blue-500 transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder="Search filters..."
+            className="bg-transparent border-none outline-none text-[11px] text-zinc-300 ml-2 w-20 focus:w-32 transition-all duration-300"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-      </div>
 
-      {filters.length === 0 ? (
-        null
-      ) : (
-        <div className="flex flex-col w-full">
+        <div className="flex items-center px-2 space-x-1 border-r border-zinc-800 h-full">
+          <button 
+            onClick={addFilter}
+            className='btn btn-xs bg-[#353737] rounded text-white hover:bg-[#454747] h-6 min-h-0 text-[10px]'>
+            + New
+          </button>
+          
+          {filters.length > 0 && !showSaveInput && (
+            <button 
+              onClick={() => setShowSaveInput(true)}
+              className='btn btn-xs bg-blue-600/20 border border-blue-500/30 rounded text-blue-400 hover:bg-blue-600/30 px-2 h-6 min-h-0 text-[10px]'
+              title="Save current manual filters as a preset"
+            >
+              Save
+            </button>
+          )}
+
+          {showSaveInput && (
+            <div className="flex items-center space-x-1 animate-in fade-in slide-in-from-left-2 duration-300">
+              <input
+                autoFocus
+                className="input input-xs bg-[#2a2d2c] border border-blue-500/50 rounded text-[10px] w-32 h-6 focus:outline-none"
+                placeholder="Name preset..."
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveCurrent();
+                  if (e.key === 'Escape') setShowSaveInput(false);
+                }}
+              />
+              <button 
+                onClick={handleSaveCurrent}
+                className="btn btn-xs bg-blue-600 border-blue-500 text-white hover:bg-blue-500 h-6 min-h-0 px-2 text-[10px]"
+              >
+                ✓
+              </button>
+              <button 
+                onClick={() => setShowSaveInput(false)}
+                className="btn btn-xs bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white h-6 min-h-0 text-[10px]"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Predefined Filters (Scrollable) */}
+        <div className="flex-1 flex items-center px-2 gap-1 overflow-x-auto no-scrollbar scroll-smooth h-full">
+          {filteredPredefined.map((tab) => {
+            const isActive = activePredefinedIds.includes(tab.id);
+            return (
+              <div key={tab.id} className="relative group/predefined shrink-0">
+                <button
+                  onClick={() => togglePredefinedFilter(tab.id)}
+                  className={twMerge(
+                    'btn btn-xs rounded-md capitalize px-3 transition-all duration-200 border h-6 min-h-0 text-[10px] font-medium whitespace-nowrap',
+                    isActive 
+                      ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-900/20' 
+                      : 'bg-zinc-900/50 border-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-800 h-6'
+                  )}>
+                  {tab.name}
+                </button>
+                {!tab.isBuiltIn && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); removePredefinedFilter(tab.id); }}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] w-3 h-3 rounded-full hidden group-hover/predefined:flex items-center justify-center hover:bg-red-400 shadow-lg"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {filteredPredefined.length === 0 && searchTerm && (
+            <span className="text-[10px] text-zinc-600 italic px-2">No presets match...</span>
+          )}
+        </div>
+
+        {/* Right Gradient Fade */}
+        <div className="w-8 h-full bg-gradient-to-l from-[#202020] to-transparent pointer-events-none absolute right-0" />
+      </div>
+      
+      {filters.length === 0 ? null : (
+        <div className="flex flex-col w-full bg-black/20">
           {filters.map((filter) => (
             <div key={filter.id} className='flex space-x-2 w-full p-2 border-b border-black items-center group/filter-row hover:bg-white/5 transition-colors'>
               <div className='flex items-center justify-center'>
-                <input
-                  type='checkbox'
-                  className="checkbox checkbox-xs"
+                <input 
+                  type='checkbox' 
+                  className="checkbox checkbox-xs border-zinc-600"
                   checked={filter.enabled}
                   onChange={(e) => updateFilter(filter.id, { enabled: e.target.checked })}
                 />
               </div>
-
-              <select
-                className='select select-xs bg-zinc-900 border border-zinc-800 rounded text-[11px] focus:outline-none focus:border-blue-500'
+              
+              <select 
+                className='select select-xs bg-zinc-900 border border-zinc-800 rounded text-[11px] focus:outline-none focus:border-blue-500 h-6 min-h-0'
                 value={filter.type}
                 onChange={(e) => updateFilter(filter.id, { type: e.target.value as FilterType })}
               >
                 {filterTypes.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
 
-              <select
-                className='select select-xs bg-zinc-900 border border-zinc-800 rounded text-[11px] focus:outline-none focus:border-blue-500'
+              <select 
+                className='select select-xs bg-zinc-900 border border-zinc-800 rounded text-[11px] focus:outline-none focus:border-blue-500 h-6 min-h-0'
                 value={filter.operator}
                 onChange={(e) => updateFilter(filter.id, { operator: e.target.value as FilterOperator })}
               >
@@ -100,14 +200,14 @@ export const FilterBar = () => {
               />
 
               <div className="flex items-center gap-1">
-                <button
+                <button 
                   onClick={() => removeFilter(filter.id)}
                   className='btn btn-xs btn-ghost text-zinc-500 hover:text-red-400 p-0 h-6 w-6 min-h-0'
                   title="Remove Filter"
                 >
                   ✕
                 </button>
-                <button
+                <button 
                   onClick={addFilter}
                   className='btn btn-xs btn-ghost text-zinc-500 hover:text-blue-400 p-0 h-6 w-6 min-h-0'
                   title="Add Another Filter"
