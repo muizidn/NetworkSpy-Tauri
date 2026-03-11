@@ -66,28 +66,70 @@ export class TauriAppProvider implements IAppProvider {
 }
 
 export class MockAppProvider implements IAppProvider {
+  private trafficSet: Record<string, Traffic> = {};
+
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {
     console.log(`[Mock] getRequestPairData: ${trafficId}`);
+    const traffic = this.trafficSet[trafficId];
+
+    if (traffic) {
+      const urlObj = new URL(traffic.uri);
+      const paramKeys = Array.from(new Set(urlObj.searchParams.keys()));
+      const params = paramKeys.map(key => {
+        const values = urlObj.searchParams.getAll(key);
+        return { key, value: values.length > 1 ? values : values[0] };
+      });
+
+      return {
+        id: trafficId,
+        headers: Object.entries(traffic.request.header || {}).map(([key, value]) => ({ key, value })),
+        params,
+        body: traffic.request.body || "",
+        content_type: traffic.request.header?.['content-type'] || traffic.request.header?.['Content-Type'] || "",
+        raw: `${traffic.method} ${traffic.uri} ${traffic.request.version}\n\n${traffic.request.body || ""}`
+      } as unknown as RequestPairData;
+    }
+
     return {
       id: trafficId,
       headers: [
-        ["Content-Type", "application/json"],
-        ["X-Source", "MockAppProvider"]
+        { key: "Content-Type", value: "application/json" },
+        { key: "X-Source", value: "MockAppProvider" }
       ],
-      body: JSON.stringify({ message: "Mock Request Data", trafficId }, null, 2),
+      body: JSON.stringify({ message: "Mock Request Data (Not Found)", trafficId }, null, 2),
       raw: "GET /mock-request HTTP/1.1\n\n"
     } as unknown as RequestPairData;
   }
 
   async getResponsePairData(trafficId: string): Promise<RequestPairData> {
     console.log(`[Mock] getResponsePairData: ${trafficId}`);
+    const traffic = this.trafficSet[trafficId];
+
+    if (traffic && traffic.response) {
+      const urlObj = new URL(traffic.uri);
+      const paramKeys = Array.from(new Set(urlObj.searchParams.keys()));
+      const params = paramKeys.map(key => {
+        const values = urlObj.searchParams.getAll(key);
+        return { key, value: values.length > 1 ? values : values[0] };
+      });
+
+      return {
+        id: trafficId,
+        headers: Object.entries(traffic.response.header || {}).map(([key, value]) => ({ key, value })),
+        params,
+        body: traffic.response.body || "",
+        content_type: traffic.response.header?.['content-type'] || traffic.response.header?.['Content-Type'] || "",
+        raw: `${traffic.response.version} 200 OK\n\n${traffic.response.body || ""}`
+      } as unknown as RequestPairData;
+    }
+
     return {
       id: trafficId,
       headers: [
-        ["Content-Type", "application/json"],
-        ["X-Source", "MockAppProvider"]
+        { key: "Content-Type", value: "application/json" },
+        { key: "X-Source", value: "MockAppProvider" }
       ],
-      body: JSON.stringify({ message: "Mock Response Data", trafficId }, null, 2),
+      body: JSON.stringify({ message: "Mock Response Data (Not Found)", trafficId }, null, 2),
       raw: "HTTP/1.1 200 OK\n\n"
     } as unknown as RequestPairData;
   }
@@ -106,15 +148,20 @@ export class MockAppProvider implements IAppProvider {
           method: item.method as string,
           request: {
             version: "HTTP/1.1",
-            header: {},
+            header: {
+              "content-type": item.url?.includes("graphql") ? "application/json" : "text/plain"
+            },
             body: item.request as string || null,
           },
           response: {
             version: "HTTP/1.1",
-            header: {},
+            header: {
+              "content-type": "application/json"
+            },
             body: item.response as string || null,
           },
         };
+        this.trafficSet[traffic.id] = traffic;
         callback(traffic);
       }
     }, 300);

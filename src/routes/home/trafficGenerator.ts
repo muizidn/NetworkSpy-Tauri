@@ -101,9 +101,98 @@ function randomString(length: number): string {
         response = "Switching Protocols";
     } else if (randomDomain === "api.github.com") {
         method = "POST";
-        tags = ["GRAPHQL", "API"];
-        request = "query { viewer { login } }";
-        response = JSON.stringify({ data: { viewer: { login: "user" } } });
+        tags = ["GRAPHQL", "API", "REAL-WORLD"];
+        
+        const gqlScenarios = [
+          {
+            operationName: "GetRepoDetails",
+            query: `query GetRepoDetails($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    id
+    name
+    description
+    stargazerCount
+    forkCount
+    languages(first: 5) {
+      nodes {
+        name
+        color
+      }
+    }
+    owner {
+      login
+      avatarUrl
+    }
+  }
+}`,
+            variables: { owner: "facebook", name: "react" },
+            response: { data: { repository: { id: "MDEwOlJlcG9zaXRvcnkxMDI3MDI1MA==", name: "react", stargazerCount: 215000 } } }
+          },
+          {
+            operationName: "CreateIssue",
+            query: `mutation CreateIssue($input: CreateIssueInput!) {
+  createIssue(input: $input) {
+    issue {
+      id
+      number
+      title
+      url
+    }
+  }
+}`,
+            variables: { input: { repositoryId: "R_1234", title: "Bug: App Crashing", body: "Steps to reproduce..." } },
+            response: { data: { createIssue: { issue: { id: "I_9988", number: 42, title: "Bug: App Crashing" } } } }
+          },
+          {
+            operationName: "SearchUsers",
+            query: `query SearchUsers($query: String!) {
+  search(query: $query, type: USER, first: 10) {
+    userCount
+    edges {
+      node {
+        ... on User {
+          login
+          name
+          bio
+          company
+        }
+      }
+    }
+  }
+}`,
+            variables: { query: "location:san-francisco" },
+            response: { data: { search: { userCount: 1540, edges: [] } } }
+          },
+          {
+            operationName: "UserFragmentDemo",
+            query: `query UserFragmentDemo($login: String!) {
+  user(login: $login) {
+    ...UserFields
+  }
+}
+
+fragment UserFields on User {
+  id
+  login
+  name
+  bio
+  avatarUrl
+  company
+  email
+}`,
+            variables: { login: "octocat" },
+            response: { data: { user: { id: "MDQ6VXNlcjU4MzIzMw==", login: "octocat", name: "The Octocat" } } }
+          }
+        ];
+
+        const scene = gqlScenarios[Math.floor(Math.random() * gqlScenarios.length)];
+        request = JSON.stringify({
+          query: scene.query,
+          variables: scene.variables,
+          operationName: scene.operationName
+        }, null, 2);
+        response = JSON.stringify(scene.response, null, 2);
+        tags.push(scene.operationName.toUpperCase());
     }
   
     return {
