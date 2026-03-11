@@ -1,22 +1,23 @@
 import { useEffect, useState, useMemo } from "react";
-import { invoke } from "@tauri-apps/api";
+import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 
 export const AIDebugMode = () => {
+    const { provider } = useAppProvider();
     const { selections } = useTrafficListContext();
     const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
     const [data, setData] = useState<RequestPairData | null>(null);
     const [debugInfo, setDebugInfo] = useState<string | null>(null);
     const [analyzing, setAnalyzing] = useState(false);
-  
+
     useEffect(() => {
-      if (!trafficId) return;
-      setData(null);
-      setDebugInfo(null);
-      invoke<RequestPairData>("get_request_pair_data", { trafficId })
-        .then((res) => setData(res));
-    }, [trafficId]);
+        if (!trafficId) return;
+        setData(null);
+        setDebugInfo(null);
+        provider.getRequestPairData(trafficId)
+            .then((res) => setData(res));
+    }, [trafficId, provider]);
 
     const handleDebug = () => {
         setAnalyzing(true);
@@ -61,7 +62,7 @@ AI Insights:
                     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 flex flex-col items-center text-center">
                         <div className="text-zinc-300 font-bold mb-3">Explain why this request happened the way it did</div>
                         <p className="text-xs text-zinc-600 mb-8 max-w-sm italic">AI will inspect the request journey, headers, and body to identify logic flaws or performance quirks.</p>
-                        <button 
+                        <button
                             onClick={handleDebug}
                             disabled={analyzing}
                             className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-10 rounded-full transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3"

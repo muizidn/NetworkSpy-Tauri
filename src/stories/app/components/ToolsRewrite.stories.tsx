@@ -1,8 +1,8 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { TauriEnvContext } from "@src/packages/tauri-env";
-import { mockInvoke } from "./mock/mockInvoke";
+import { TauriEnvContext } from "@src/packages/app-env";
+import { MockAppProvider } from "@src/packages/app-env/AppProvider";
 import Rewrite from "@src/routes/tools/Rewrite/Rewrite";
 
 const meta: Meta<typeof Rewrite> = {
@@ -11,7 +11,7 @@ const meta: Meta<typeof Rewrite> = {
   decorators: [
     (Story, context) => (
       <DndProvider backend={HTML5Backend}>
-        <TauriEnvContext.Provider value={{ invoke: mockInvoke }}>
+        <TauriEnvContext.Provider value={{ provider: new MockAppProvider() }}>
           <div
             style={{
               height: `600px`,

@@ -7,13 +7,13 @@ import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { useTrafficListContext } from "./context/TrafficList";
 import { useFilterContext } from "@src/context/FilterContext";
 import { TrafficItemMap } from "./model/TrafficItemMap";
-import { TauriInvokeFn, useTauri } from "../tauri-env";
+import { invoke } from "@tauri-apps/api/tauri";
+
+type TauriInvokeFn = (cmd: string, args?: any) => Promise<any>;
 
 export const TrafficList: React.FC = () => {
   const { setSelections } = useTrafficListContext();
   const { filteredTraffic } = useFilterContext();
-
-  const { invoke } = useTauri();
 
   const headers: TableViewHeader<TrafficItemMap>[] = [
     {

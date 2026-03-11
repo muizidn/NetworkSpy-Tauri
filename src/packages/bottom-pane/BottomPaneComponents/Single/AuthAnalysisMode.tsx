@@ -1,29 +1,30 @@
 import { useEffect, useState, useMemo } from "react";
-import { invoke } from "@tauri-apps/api";
+import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 
 export const AuthAnalysisMode = () => {
+    const { provider } = useAppProvider();
     const { selections } = useTrafficListContext();
     const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
     const [data, setData] = useState<RequestPairData | null>(null);
     const [loading, setLoading] = useState(false);
-  
+
     useEffect(() => {
-      if (!trafficId) return;
-      setLoading(true);
-      invoke<RequestPairData>("get_request_pair_data", { trafficId })
-        .then((res) => setData(res))
-        .finally(() => setLoading(false));
-    }, [trafficId]);
+        if (!trafficId) return;
+        setLoading(true);
+        provider.getRequestPairData(trafficId)
+            .then((res) => setData(res))
+            .finally(() => setLoading(false));
+    }, [trafficId, provider]);
 
     const authDetails = useMemo(() => {
         if (!data) return null;
         const authHeader = data.headers.find(h => h.key.toLowerCase() === 'authorization');
         const cookieHeader = data.headers.find(h => h.key.toLowerCase() === 'cookie');
-        
+
         const details: any = { type: 'None' };
-        
+
         if (authHeader) {
             const val = authHeader.value;
             if (val.startsWith('Bearer ')) {
@@ -35,10 +36,10 @@ export const AuthAnalysisMode = () => {
                     if (parts.length === 3) {
                         details.jwt = JSON.parse(atob(parts[1]));
                     }
-                } catch (e) {}
+                } catch (e) { }
             } else if (val.startsWith('Basic ')) {
                 details.type = 'Basic Auth';
-                try { details.decoded = atob(val.split(' ')[1]); } catch(e) {}
+                try { details.decoded = atob(val.split(' ')[1]); } catch (e) { }
             } else {
                 details.type = 'Other Header';
                 details.value = val;

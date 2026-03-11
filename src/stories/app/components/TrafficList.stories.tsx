@@ -3,9 +3,9 @@ import { TrafficListContext } from "@src/packages/main-content/context/TrafficLi
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TrafficList } from "@src/packages/main-content/TrafficList";
-import { TauriEnvContext } from "@src/packages/tauri-env";
+import { TauriEnvContext } from "@src/packages/app-env";
 import { trafficListContextStateMock } from "./mock/TrafficListContextStateMock";
-import { mockInvoke } from "./mock/mockInvoke";
+import { MockAppProvider } from "@src/packages/app-env/AppProvider";
 
 const meta: Meta<typeof TrafficList> = {
   title: "Components/TrafficList",
@@ -13,7 +13,7 @@ const meta: Meta<typeof TrafficList> = {
   decorators: [
     (Story, context) => (
       <DndProvider backend={HTML5Backend}>
-        <TauriEnvContext.Provider value={{ invoke: mockInvoke }}>
+        <TauriEnvContext.Provider value={{ provider: new MockAppProvider() }}>
           <TrafficListContext.Provider value={trafficListContextStateMock}>
             <div
               style={{
@@ -38,6 +38,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    
+
   },
 };

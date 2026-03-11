@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
-import { invoke } from "@tauri-apps/api";
+import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 import { TableView } from "../../../ui/TableView";
 import { KeyValueRenderer } from "../../KeyValueRenderer";
 
 export const HeadersMode = () => {
+  const { provider } = useAppProvider();
   const { selections } = useTrafficListContext();
   const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
   const [data, setData] = useState<RequestPairData | null>(null);
@@ -14,10 +15,10 @@ export const HeadersMode = () => {
   useEffect(() => {
     if (!trafficId) return;
     setLoading(true);
-    invoke<RequestPairData>("get_request_pair_data", { trafficId })
+    provider.getRequestPairData(trafficId)
       .then((res) => setData(res))
       .finally(() => setLoading(false));
-  }, [trafficId]);
+  }, [trafficId, provider]);
 
   if (!trafficId) return <Placeholder text="Select a request to view headers" />;
   if (loading) return <Placeholder text="Loading headers..." />;

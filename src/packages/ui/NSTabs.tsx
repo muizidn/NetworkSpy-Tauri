@@ -29,6 +29,7 @@ interface NSTabsProps {
   onClose?: (id: string) => void;
   onAdd?: () => void;
   onRename?: (id: string, newTitle: string) => void;
+  onReorder?: (dragIndex: number, hoverIndex: number) => void;
   initialTab?: string;
 }
 
@@ -41,6 +42,7 @@ export const NSTabs: React.FC<NSTabsProps> = ({
   onClose,
   onAdd,
   onRename,
+  onReorder,
 }) => {
   const [currentTab, setCurrentTab] = useState(initialTab || tabs[0]?.id || "");
   const prevTabsLength = useRef(tabs.length);
@@ -90,15 +92,17 @@ export const NSTabs: React.FC<NSTabsProps> = ({
     >
       <div className="flex overflow-x-auto no-scrollbar bg-[#23262a] z-10 h-9 border-b border-black shrink-0 relative">
         {title && <h3 className="px-3 text-xs flex items-center shrink-0 uppercase tracking-wider text-zinc-500 font-bold">{title}</h3>}
-        {memoizedTabs.map((tab) => (
+        {memoizedTabs.map((tab, index) => (
           <Tab
             key={tab.id}
             id={tab.id}
+            index={index}
             title={tab.title}
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
             onClose={handleTabClose}
             onRename={onRename}
+            moveTab={(dragIndex, hoverIndex) => onReorder?.(dragIndex, hoverIndex)}
           />
         ))}
         {onAdd && (

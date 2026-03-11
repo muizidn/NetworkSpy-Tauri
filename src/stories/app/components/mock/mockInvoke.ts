@@ -1,5 +1,3 @@
-import { TauriInvokeFn } from "@src/packages/tauri-env";
-
-export const mockInvoke: TauriInvokeFn = (cmd, args) => {
-    return Promise.reject();
-  };
+export const mockInvoke = (cmd: string, args?: any) => {
+  return Promise.reject();
+};

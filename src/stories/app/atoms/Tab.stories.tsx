@@ -34,6 +34,10 @@ export const Default: Story = {
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
             onClose={args.onClose}
+            index={0}
+            moveTab={function (dragIndex: number, hoverIndex: number): void {
+              throw new Error('Function not implemented.');
+            }}
           />
         ))}
       </div>

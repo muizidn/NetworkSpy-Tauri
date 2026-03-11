@@ -1,41 +1,42 @@
 import { useEffect, useState, useMemo } from "react";
-import { invoke } from "@tauri-apps/api";
+import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 
 export const SensitiveDataMode = () => {
+    const { provider } = useAppProvider();
     const { selections } = useTrafficListContext();
     const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
     const [data, setData] = useState<RequestPairData | null>(null);
     const [leaks, setLeaks] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-  
-    useEffect(() => {
-      if (!trafficId) return;
-      setLoading(true);
-      invoke<RequestPairData>("get_request_pair_data", { trafficId })
-        .then((res) => {
-            setData(res);
-            // Simulate detector
-            const found = [];
-            const body = res.body || "";
-            
-            // Basic regex patterns
-            if (body.match(/eyJh/)) found.push({ type: 'JWT Token', value: 'Found in body' });
-            if (body.match(/api_key|apikey|x-api-key/i)) found.push({ type: 'API Key', value: 'Key name detected' });
-            if (body.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)) found.push({ type: 'Email Address', value: 'PII Leakage' });
-            if (body.match(/\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/)) found.push({ type: 'Credit Card', value: 'Payment data' });
-            
-            res.headers.forEach(h => {
-                if (h.key.toLowerCase().match(/authorization|cookie|session/)) {
-                    found.push({ type: 'Auth Header', value: h.key, location: 'Headers' });
-                }
-            });
 
-            setLeaks(found);
-        })
-        .finally(() => setLoading(false));
-    }, [trafficId]);
+    useEffect(() => {
+        if (!trafficId) return;
+        setLoading(true);
+        provider.getRequestPairData(trafficId)
+            .then((res) => {
+                setData(res);
+                // Simulate detector
+                const found = [];
+                const body = res.body || "";
+
+                // Basic regex patterns
+                if (body.match(/eyJh/)) found.push({ type: 'JWT Token', value: 'Found in body' });
+                if (body.match(/api_key|apikey|x-api-key/i)) found.push({ type: 'API Key', value: 'Key name detected' });
+                if (body.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)) found.push({ type: 'Email Address', value: 'PII Leakage' });
+                if (body.match(/\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/)) found.push({ type: 'Credit Card', value: 'Payment data' });
+
+                res.headers.forEach(h => {
+                    if (h.key.toLowerCase().match(/authorization|cookie|session/)) {
+                        found.push({ type: 'Auth Header', value: h.key, location: 'Headers' });
+                    }
+                });
+
+                setLeaks(found);
+            })
+            .finally(() => setLoading(false));
+    }, [trafficId, provider]);
 
     if (!trafficId) return <Placeholder text="Select a request to scan for leaks" />;
     if (loading) return <Placeholder text="Analyzing payload..." />;

@@ -20,7 +20,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { Traffic } from "../../models/Traffic";
 import { generateJson } from "./trafficGenerator";
 import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
-import { TauriEnvProvider } from "@src/packages/tauri-env";
+import { TauriEnvProvider } from "@src/packages/app-env";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -52,9 +52,7 @@ const Content = () => {
         console.error("Failed to parse saved tabs", e);
       }
     }
-    return [
-      { id: "1", title: "Rename By Double Click The Title", content: <CenterPane /> },
-    ];
+    return [];
   });
 
   useEffect(() => {
@@ -267,7 +265,7 @@ const Content = () => {
 
 const App: React.FC = () => {
   return (
-    <TauriEnvProvider invokeFn={invoke}>
+    <TauriEnvProvider>
       <TrafficListProvider>
         <PaneProvider>
           <Content />

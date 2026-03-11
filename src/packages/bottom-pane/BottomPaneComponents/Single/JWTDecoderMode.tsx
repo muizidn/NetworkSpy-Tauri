@@ -1,26 +1,27 @@
 import { useEffect, useState, useMemo } from "react";
-import { invoke } from "@tauri-apps/api";
+import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 
 export const JWTDecoderMode = () => {
+    const { provider } = useAppProvider();
     const { selections } = useTrafficListContext();
     const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
     const [requestData, setRequestData] = useState<RequestPairData | null>(null);
     const [responseData, setResponseData] = useState<RequestPairData | null>(null);
     const [loading, setLoading] = useState(false);
-  
+
     useEffect(() => {
-      if (!trafficId) return;
-      setLoading(true);
-      Promise.all([
-        invoke<RequestPairData>("get_request_pair_data", { trafficId }),
-        invoke<RequestPairData>("get_response_pair_data", { trafficId })
-      ]).then(([req, res]) => {
-        setRequestData(req);
-        setResponseData(res);
-      }).finally(() => setLoading(false));
-    }, [trafficId]);
+        if (!trafficId) return;
+        setLoading(true);
+        Promise.all([
+            provider.getRequestPairData(trafficId),
+            provider.getResponsePairData(trafficId)
+        ]).then(([req, res]) => {
+            setRequestData(req);
+            setResponseData(res);
+        }).finally(() => setLoading(false));
+    }, [trafficId, provider]);
 
     const detectedTokens = useMemo(() => {
         const tokens: { source: string, token: string }[] = [];
@@ -65,12 +66,12 @@ export const JWTDecoderMode = () => {
         if (!currentToken) return null;
         try {
             const parts = currentToken.split('.');
-            
+
             const base64UrlDecode = (str: string) => {
                 const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
                 const pad = base64.length % 4;
                 const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
-                const jsonPayload = decodeURIComponent(atob(padded).split('').map(function(c) {
+                const jsonPayload = decodeURIComponent(atob(padded).split('').map(function (c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));
                 return JSON.parse(jsonPayload);
@@ -98,15 +99,15 @@ export const JWTDecoderMode = () => {
                 <div className="flex gap-2">
                     {detectedTokens.length > 1 && (
                         <div className="flex bg-zinc-900 rounded-lg p-1 border border-zinc-800">
-                             {detectedTokens.map((_, i) => (
-                                <button 
+                            {detectedTokens.map((_, i) => (
+                                <button
                                     key={i}
                                     onClick={() => setSelectedTokenIndex(i)}
                                     className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${selectedTokenIndex === i ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                                 >
                                     Token {i + 1}
                                 </button>
-                             ))}
+                            ))}
                         </div>
                     )}
                 </div>
@@ -140,8 +141,8 @@ export const JWTDecoderMode = () => {
                                 {/* Header */}
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 px-1">
-                                         <div className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.5)]"></div>
-                                         <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Header</h3>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500 shadow-[0_0_8px_rgba(236,72,153,0.5)]"></div>
+                                        <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Header</h3>
                                     </div>
                                     <div className="bg-[#111] rounded-2xl border border-zinc-800 overflow-hidden shadow-xl">
                                         <div className="p-4 overflow-auto">
@@ -155,8 +156,8 @@ export const JWTDecoderMode = () => {
                                 {/* Payload */}
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 px-1">
-                                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
-                                         <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Payload</h3>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
+                                        <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Payload</h3>
                                     </div>
                                     <div className="bg-[#111] rounded-2xl border border-zinc-800 overflow-hidden shadow-xl">
                                         <div className="p-4 overflow-auto">
