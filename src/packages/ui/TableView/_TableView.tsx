@@ -70,9 +70,9 @@ const HeaderCell = <T,>({
     <th
       ref={ref}
       className={twMerge(
-          "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors",
-          isLast ? "flex-grow" : "shrink-0",
-          isActive ? "text-blue-400 bg-[#161616]" : "text-zinc-500 hover:bg-zinc-800/40"
+        "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors",
+        isLast ? "flex-grow" : "shrink-0",
+        isActive ? "text-blue-400 bg-[#161616]" : "text-zinc-500 hover:bg-zinc-800/40"
       )}
       onClick={() => handleSort(index)}
       style={{
@@ -307,7 +307,7 @@ export const TableView = <T,>({
     const newColumnWidths = [...columnWidths];
     const [draggedWidth] = newColumnWidths.splice(dragIndex, 1);
     newColumnWidths.splice(hoverIndex, 0, draggedWidth);
-    
+
     setHeaders(newHeaders);
     setColumnWidths(newColumnWidths);
   };
@@ -334,11 +334,11 @@ export const TableView = <T,>({
 
   return (
     <div className={twMerge("w-full h-full flex flex-col bg-[#050505] overflow-x-auto custom-scrollbar", className)}>
-        <table className="min-w-full w-max border-separate border-spacing-0 flex flex-col h-full overflow-hidden">
+      <table className="min-w-full w-max border-separate border-spacing-0 flex flex-col h-full overflow-hidden">
         <thead className="sticky top-0 z-30 shrink-0">
-            <tr className="flex w-full">
+          <tr className="flex w-full">
             {headers.map((header, index) => (
-                <HeaderCell
+              <HeaderCell
                 key={`header-${index}`}
                 header={header}
                 index={index}
@@ -348,53 +348,53 @@ export const TableView = <T,>({
                 startResize={startResize}
                 columnWidth={columnWidths[index]}
                 isLast={index === headers.length - 1}
-                />
+              />
             ))}
-            </tr>
+          </tr>
         </thead>
         <tbody ref={tbodyRef} className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth" onScroll={handleScroll}>
-            {sortedData.map((item, index) => {
-                const isSelected = selectedRows.rows.includes(index);
-                return (
-                    <tr
-                        key={`item-${index}`}
-                        onContextMenu={showContextMenu}
-                        onClick={onClickRow}
-                        className={twMerge(
-                        "flex w-full group transition-all duration-150 border-b border-zinc-900/50",
-                        isSelected ? "bg-blue-600/10" : "hover:bg-zinc-800/30"
-                        )}
-                        data-index={index}
-                    >
-                        {headers.map((header, i) => {
-                          const isLast = i === headers.length - 1;
-                          return (
-                            <td key={i} className={twMerge(
-                              "px-4 py-2 text-zinc-400 text-[12px] truncate",
-                              isLast ? "flex-grow" : "shrink-0"
-                            )} style={{ 
-                                width: isLast ? undefined : columnWidths[i], 
-                                flexBasis: isLast ? columnWidths[i] : undefined,
-                                minWidth: header.minWidth 
-                            }}>
-                                {header.renderer.render({
-                                input: item,
-                                width: columnWidths[i],
-                                })}
-                            </td>
-                          );
-                        })}
-                    </tr>
-                );
-            })}
-            
-            {sortedData.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 bg-black/20 text-zinc-600 italic text-sm">
-                    No data available
-                </div>
-            )}
+          {sortedData.map((item, index) => {
+            const isSelected = selectedRows.rows.includes(index);
+            return (
+              <tr
+                key={`item-${index}`}
+                onContextMenu={showContextMenu}
+                onClick={onClickRow}
+                className={twMerge(
+                  "flex w-full group transition-all duration-150 border-b border-zinc-900/50",
+                  isSelected ? "bg-blue-600/10" : "hover:bg-zinc-800/30"
+                )}
+                data-index={index}
+              >
+                {headers.map((header, i) => {
+                  const isLast = i === headers.length - 1;
+                  return (
+                    <td key={i} className={twMerge(
+                      "px-4 py-2 text-zinc-400 text-[12px] truncate",
+                      isLast ? "flex-grow" : "shrink-0"
+                    )} style={{
+                      width: isLast ? undefined : columnWidths[i],
+                      flexBasis: isLast ? columnWidths[i] : undefined,
+                      minWidth: header.minWidth
+                    }}>
+                      {header.renderer.render({
+                        input: item,
+                        width: columnWidths[i],
+                      })}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+
+          {sortedData.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 bg-black/20 text-zinc-600 italic text-sm">
+              No data available
+            </div>
+          )}
         </tbody>
-        </table>
+      </table>
     </div>
   );
 };

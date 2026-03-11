@@ -48,8 +48,7 @@ export const TrafficList: React.FC = () => {
 };
 
 class TrafficListContextMenuRenderer
-  implements TableViewContextMenuRenderer<TrafficItemMap>
-{
+  implements TableViewContextMenuRenderer<TrafficItemMap> {
   invoke: TauriInvokeFn;
   constructor(invoke: TauriInvokeFn) {
     this.invoke = invoke;
