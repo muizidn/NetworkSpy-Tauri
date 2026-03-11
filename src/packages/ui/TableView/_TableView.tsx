@@ -30,7 +30,7 @@ const HeaderCell = <T,>({
   moveHeader,
   sortConfig,
   handleSort,
-  startResize,
+  onResizeClick,
   columnWidth,
   isLast,
 }: {
@@ -39,7 +39,7 @@ const HeaderCell = <T,>({
   moveHeader: (dragIndex: number, hoverIndex: number) => void;
   sortConfig: { key: keyof T | null; order: SortOrder | null };
   handleSort: (index: number) => void;
-  startResize: (index: number, startX: number) => void;
+  onResizeClick: (index: number) => void;
   columnWidth: number;
   isLast: boolean;
 }) => {
@@ -71,7 +71,7 @@ const HeaderCell = <T,>({
     <th
       ref={ref}
       className={twMerge(
-        "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors",
+        "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors group/header",
         isLast ? "flex-grow" : "shrink-0",
         isActive ? "text-blue-400 bg-[#161616]" : "text-zinc-500 hover:bg-zinc-800/40"
       )}
@@ -93,10 +93,18 @@ const HeaderCell = <T,>({
           </span>
         )}
       </div>
-      <div
-        onMouseDown={(e) => { e.stopPropagation(); startResize(index, e.clientX); }}
-        className="absolute right-0 top-1/2 -translate-y-1/2 h-6 cursor-col-resize w-[1px] hover:w-[3px] bg-zinc-800 hover:bg-blue-500 transition-all z-20"
-      ></div>
+      {!isLast && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onResizeClick(index);
+          }}
+          className="absolute right-0 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-blue-600 border border-blue-400 text-white flex items-center justify-center opacity-0 group-hover/header:opacity-100 hover:scale-110 transition-all z-40 transform translate-x-1/2 cursor-pointer shadow-lg shadow-blue-900/40"
+          title="Resize Column"
+        >
+          <span className="text-[10px] font-bold">↔</span>
+        </button>
+      )}
     </th>
   );
 };
@@ -270,26 +278,26 @@ export const TableView = <T,>({
     return (-c / 2) * (t * (t - 2) - 1) + b;
   };
 
-  const startResize = (index: number, startX: number) => {
-    const handleMouseMove = (e: any) => {
-      const dx = e.clientX - startX;
-      setColumnWidths((prev) => {
-        const newWidths = [...prev];
-        newWidths[index] = Math.max(header.minWidth || 50, newWidths[index] + dx);
-        return newWidths;
-      });
-      startX = e.clientX;
-    };
+  const [resizingIndex, setResizingIndex] = useState<number | null>(null);
+  const [resizeValue, setResizeValue] = useState<string>("");
 
-    const header = headers[index];
+  const openResizeDialog = (index: number) => {
+    setResizingIndex(index);
+    setResizeValue(columnWidths[index].toString());
+  };
 
-    const handleMouseUp = () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+  const applyResize = () => {
+    if (resizingIndex !== null) {
+      const newWidth = parseInt(resizeValue);
+      if (!isNaN(newWidth)) {
+        setColumnWidths((prev) => {
+          const next = [...prev];
+          next[resizingIndex] = Math.max(headers[resizingIndex].minWidth || 50, newWidth);
+          return next;
+        });
+      }
+      setResizingIndex(null);
+    }
   };
 
   const handleSort = (index: number) => {
@@ -355,7 +363,7 @@ export const TableView = <T,>({
                 moveHeader={moveHeader}
                 sortConfig={sortConfig}
                 handleSort={handleSort}
-                startResize={startResize}
+                onResizeClick={openResizeDialog}
                 columnWidth={columnWidths[index]}
                 isLast={index === headers.length - 1}
               />
@@ -419,6 +427,43 @@ export const TableView = <T,>({
           )}
         </tbody>
       </table>
+
+      {/* Resize Dialog */}
+      {resizingIndex !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#18181b] border border-zinc-800 rounded-lg p-4 w-72 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-[12px] font-bold text-zinc-400 mb-3 uppercase tracking-wider">Set Column Width</h3>
+            <div className="flex flex-col gap-1.5 mb-4">
+              <label className="text-[10px] text-zinc-500 font-medium ml-1">Width (pixels)</label>
+              <input
+                autoFocus
+                type="number"
+                className="input input-sm bg-[#111111] border-zinc-800 text-white rounded focus:border-blue-500 focus:outline-none w-full"
+                value={resizeValue}
+                onChange={(e) => setResizeValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyResize();
+                  if (e.key === "Escape") setResizingIndex(null);
+                }}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setResizingIndex(null)}
+                className="btn btn-sm btn-ghost text-zinc-500 hover:text-white text-[11px]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={applyResize}
+                className="btn btn-sm bg-blue-600 border-none text-white hover:bg-blue-500 min-w-[80px] text-[11px]"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
