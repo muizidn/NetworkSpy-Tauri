@@ -1,7 +1,7 @@
 import { useTrafficListContext } from "./context/TrafficList";
 
 export const SelectionViewer = () => {
-  const {selections} = useTrafficListContext();
+  const { selections } = useTrafficListContext();
   const tags = selections.firstSelected?.tags as string[] || [];
   const url = selections.firstSelected?.url as string || '';
 

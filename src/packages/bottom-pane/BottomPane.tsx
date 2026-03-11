@@ -28,15 +28,16 @@ import { SecurityScanMode } from "./BottomPaneComponents/Multiple/SecurityScanMo
 import { AIInvestigateMode } from "./BottomPaneComponents/Multiple/AIInvestigateMode";
 import { AISecurityMode } from "./BottomPaneComponents/Multiple/AISecurityMode";
 import { JWTDecoderMode } from "./BottomPaneComponents/Single/JWTDecoderMode";
+import { useTrafficListContext } from "../main-content/context/TrafficList";
 
 export const BottomPane = () => {
   const { mode } = useBottomPaneContext();
   const [sizes, setSizes] = useState<any[]>(["50%", "50%"]);
+  const { selections } = useTrafficListContext();
 
   return (
     <div className="flex flex-col w-full relative h-full">
-      <SelectionViewer />
-
+      {selections.firstSelected && <SelectionViewer />}
       {renderMode(mode, sizes, setSizes)}
     </div>
   );
