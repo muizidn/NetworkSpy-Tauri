@@ -20,6 +20,7 @@ export interface TableViewProps<T> {
   contextMenuRenderer?: TableViewContextMenuRenderer<T>;
   onSelectedRowChanged?: (firstSelected: T | null, items: T[] | null) => void;
   className?: string;
+  isAllowAutoScroll?: boolean;
 }
 
 type SortOrder = "asc" | "desc";
@@ -116,6 +117,7 @@ export const TableView = <T,>({
   contextMenuRenderer,
   onSelectedRowChanged,
   className,
+  isAllowAutoScroll,
 }: TableViewProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<{
     firstSelect?: number;
@@ -142,6 +144,33 @@ export const TableView = <T,>({
     order: SortOrder | null;
   }>({ key: null, order: null });
 
+  const sortedData = React.useMemo(() => {
+    if (sortConfig.key === null) {
+      return data;
+    }
+    const key = sortConfig.key as keyof T;
+    const defaultComparer = (a: any, b: any) => (a < b ? -1 : 1);
+    const comparer =
+      headers.find((e) => (e.title.toLowerCase() as keyof T) === key)
+        ?.compareValue || defaultComparer;
+
+    return [...data].sort((a, b) => {
+      if (sortConfig.order === "asc") {
+        return comparer(a[key], b[key]);
+      } else if (sortConfig.order === "desc") {
+        return comparer(b[key], a[key]);
+      }
+      return 0;
+    });
+  }, [data, sortConfig, headers]);
+
+  const rowVirtualizer = useVirtualizer({
+    count: sortedData.length,
+    getScrollElement: () => tbodyRef.current,
+    estimateSize: () => 50, // Estimated row height
+    overscan: 10,
+  });
+
   function getRowIndex(e: MouseEvent): string | null {
     let target = e.target as HTMLElement;
 
@@ -149,7 +178,7 @@ export const TableView = <T,>({
       target = target.parentElement as HTMLElement;
     }
 
-    if (target && target.tagName === "TR") {
+    if (target && target.getAttribute('role') === "row") {
       const index = target.getAttribute("data-index");
       return index;
     }
@@ -168,25 +197,29 @@ export const TableView = <T,>({
     if (e.shiftKey) {
       if (selectedRows.firstSelect !== undefined) {
         const firstSelected = selectedRows.firstSelect;
-        if (firstSelected < index) {
-          const newSelectedRows = Array.from(
-            { length: index - firstSelected + 1 },
-            (_, i) => firstSelected + i
-          );
-          setSelectedRows({
-            firstSelect: firstSelected,
-            rows: newSelectedRows,
-          });
-        } else {
-          const newSelectedRows = Array.from(
-            { length: firstSelected - index + 1 },
-            (_, i) => index + i
-          );
-          setSelectedRows({
-            firstSelect: firstSelected,
-            rows: newSelectedRows,
-          });
-        }
+        const start = Math.min(firstSelected, index);
+        const end = Math.max(firstSelected, index);
+        const newSelectedRows = Array.from(
+          { length: end - start + 1 },
+          (_, i) => start + i
+        );
+        setSelectedRows({
+          firstSelect: firstSelected,
+          rows: newSelectedRows,
+        });
+      }
+    } else if (e.ctrlKey || e.metaKey) {
+      const isSelected = selectedRows.rows.includes(index);
+      if (isSelected) {
+        setSelectedRows((prev) => ({
+          ...prev,
+          rows: prev.rows.filter((r) => r !== index),
+        }));
+      } else {
+        setSelectedRows((prev) => ({
+          firstSelect: index,
+          rows: [...prev.rows, index],
+        }));
       }
     } else {
       setSelectedRows({ firstSelect: index, rows: [index] });
@@ -198,11 +231,11 @@ export const TableView = <T,>({
       return;
     }
     const firstSelect = selectedRows.firstSelect !== undefined
-      ? data[selectedRows.firstSelect]
+      ? sortedData[selectedRows.firstSelect]
       : null;
-    const allItems = selectedRows.rows.map((i) => data[i]);
+    const allItems = selectedRows.rows.map((i) => sortedData[i]);
     onSelectedRowChanged(firstSelect, allItems);
-  }, [selectedRows, data, onSelectedRowChanged]);
+  }, [selectedRows, sortedData, onSelectedRowChanged]);
 
   async function showContextMenu(e: MouseEvent) {
     if (!contextMenuRenderer) {
@@ -216,9 +249,9 @@ export const TableView = <T,>({
 
     e.preventDefault();
 
-    let selectedItems = [data[Number(indexString)]];
+    let selectedItems = [sortedData[Number(indexString)]];
     if (selectedRows.rows.length > 1) {
-      selectedItems = selectedRows.rows.map((i) => data[i]);
+      selectedItems = selectedRows.rows.map((i) => sortedData[i]);
     }
 
     await contextMenuRenderer.render(selectedItems);
@@ -397,33 +430,6 @@ export const TableView = <T,>({
     setColumnWidths(newColumnWidths);
   };
 
-  const sortedData = React.useMemo(() => {
-    if (sortConfig.key === null) {
-      return data;
-    }
-    const key = sortConfig.key as keyof T;
-    const defaultComparer = (a: any, b: any) => (a < b ? -1 : 1);
-    const comparer =
-      headers.find((e) => (e.title.toLowerCase() as keyof T) === key)
-        ?.compareValue || defaultComparer;
-
-    return [...data].sort((a, b) => {
-      if (sortConfig.order === "asc") {
-        return comparer(a[key], b[key]);
-      } else if (sortConfig.order === "desc") {
-        return comparer(b[key], a[key]);
-      }
-      return 0;
-    });
-  }, [data, sortConfig, headers]); // Added headers to dependency array for comparer
-
-  const rowVirtualizer = useVirtualizer({
-    count: sortedData.length,
-    getScrollElement: () => tbodyRef.current,
-    estimateSize: () => 50, // Estimated row height
-    overscan: 10,
-  });
-
   const virtualItems = rowVirtualizer.getVirtualItems();
 
   return (
@@ -446,10 +452,10 @@ export const TableView = <T,>({
             ))}
           </div>
         </div>
-        <div 
-          ref={tbodyRef} 
+        <div
+          ref={tbodyRef}
           role="rowgroup"
-          className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth relative" 
+          className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth relative"
           onScroll={handleScroll}
         >
           <div
@@ -482,13 +488,13 @@ export const TableView = <T,>({
                   {headers.map((header, i) => {
                     const isLast = i === headers.length - 1;
                     return (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         role="gridcell"
                         className={twMerge(
                           "px-4 py-2 text-zinc-400 text-[12px] truncate",
                           isLast ? "flex-grow" : "shrink-0"
-                        )} 
+                        )}
                         style={{
                           width: isLast ? undefined : columnWidths[i],
                           flexBasis: isLast ? columnWidths[i] : undefined,
@@ -515,60 +521,62 @@ export const TableView = <T,>({
         </div>
       </div>
       {/* Autoscroll Control Button */}
-      <div 
-        className="absolute z-40 touch-none"
-        style={{ bottom: `${buttonPos.bottom}px`, right: `${buttonPos.right}px` }}
-      >
-        <button
-          onMouseDown={handleButtonMouseDown}
-          onClick={handleButtonClick}
-          className={twMerge(
-            "relative group flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 shadow-xl cursor-default",
-            autoScrollEnabled 
-              ? "bg-blue-600 border-blue-400 text-white" 
-              : "bg-[#18181b] border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500",
-            isDraggingButton.current ? "scale-105 cursor-grabbing" : "hover:scale-105"
-          )}
+      {isAllowAutoScroll && (
+        <div
+          className="absolute z-40 touch-none"
+          style={{ bottom: `${buttonPos.bottom}px`, right: `${buttonPos.right}px` }}
         >
-          {/* Progress Circle (background) */}
-          <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none opacity-20">
-            <div 
-              className="h-full bg-white transition-all duration-100 ease-linear"
-              style={{ width: `${autoScrollEnabled ? scrollProgress : 0}%` }}
-            />
-          </div>
-
-          <div className="relative flex items-center gap-2">
-            <div className="flex items-center gap-1.5 border-r border-white/10 pr-2 mr-0.5 opacity-40 hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity">
-              <FiMousePointer size={10} />
+          <button
+            onMouseDown={handleButtonMouseDown}
+            onClick={handleButtonClick}
+            className={twMerge(
+              "relative group flex items-center gap-2 px-4 py-2.5 rounded-full border transition-all duration-300 shadow-xl cursor-default",
+              autoScrollEnabled
+                ? "bg-blue-600 border-blue-400 text-white"
+                : "bg-[#18181b] border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500",
+              isDraggingButton.current ? "scale-105 cursor-grabbing" : "hover:scale-105"
+            )}
+          >
+            {/* Progress Circle (background) */}
+            <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none opacity-20">
+              <div
+                className="h-full bg-white transition-all duration-100 ease-linear"
+                style={{ width: `${autoScrollEnabled ? scrollProgress : 0}%` }}
+              />
             </div>
 
-            {isScrolling ? (
-              <>
-                <FiArrowDown size={14} className="animate-bounce" />
-                <span className="text-[11px] font-bold uppercase tracking-wider">Scrolling</span>
-              </>
-            ) : autoScrollEnabled ? (
-              <>
-                <div className="relative flex items-center justify-center">
-                  <FiPause size={14} className="animate-pulse" />
-                </div>
-                <span className="text-[11px] font-bold uppercase tracking-wider">Tracing...</span>
-              </>
-            ) : (
-              <>
-                <FiPlay size={14} />
-                <span className="text-[11px] font-bold uppercase tracking-wider">Paused</span>
-              </>
-            )}
-          </div>
-          
-          {/* Tooltip */}
-          <div className="absolute bottom-full mb-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded text-[10px] text-zinc-400 whitespace-nowrap pointer-events-none shadow-2xl">
-            {autoScrollEnabled ? "Disable periodic scroll (Drag to move)" : "Enable 3s periodic scroll (Drag to move)"}
-          </div>
-        </button>
-      </div>
+            <div className="relative flex items-center gap-2">
+              <div className="flex items-center gap-1.5 border-r border-white/10 pr-2 mr-0.5 opacity-40 hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity">
+                <FiMousePointer size={10} />
+              </div>
+
+              {isScrolling ? (
+                <>
+                  <FiArrowDown size={14} className="animate-bounce" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">Scrolling</span>
+                </>
+              ) : autoScrollEnabled ? (
+                <>
+                  <div className="relative flex items-center justify-center">
+                    <FiPause size={14} className="animate-pulse" />
+                  </div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider">Tracing...</span>
+                </>
+              ) : (
+                <>
+                  <FiPlay size={14} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider">Paused</span>
+                </>
+              )}
+            </div>
+
+            {/* Tooltip */}
+            <div className="absolute bottom-full mb-3 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded text-[10px] text-zinc-400 whitespace-nowrap pointer-events-none shadow-2xl">
+              {autoScrollEnabled ? "Disable periodic scroll (Drag to move)" : "Enable 3s periodic scroll (Drag to move)"}
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Resize Dialog */}
       {resizingIndex !== null && (
