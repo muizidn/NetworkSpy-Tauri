@@ -20,7 +20,6 @@ import { TimelineMode } from "./BottomPaneComponents/Multiple/TimelineMode";
 import { CompareMode } from "./BottomPaneComponents/Multiple/CompareMode";
 import { BatchAnalyzeMode } from "./BottomPaneComponents/Multiple/BatchAnalyzeMode";
 import { AISummaryMode } from "./BottomPaneComponents/Multiple/AISummaryMode";
-import { HeadersMode } from "./BottomPaneComponents/Single/HeadersMode";
 import { HeaderExplainerMode } from "./BottomPaneComponents/Single/HeaderExplainerMode";
 import { JSONTreeMode } from "./BottomPaneComponents/Single/JSONTreeMode";
 import { CurlMode } from "./BottomPaneComponents/Single/CurlMode";
@@ -48,6 +47,7 @@ import { AudioViewerMode } from "./BottomPaneComponents/Single/AudioViewerMode";
 import { VideoViewerMode } from "./BottomPaneComponents/Single/VideoViewerMode";
 import { SourceViewerMode } from "./BottomPaneComponents/Single/SourceViewerMode";
 import { JSONTransformerMode } from "./BottomPaneComponents/Single/JSONTransformerMode";
+import { JSONSchemaMode } from "./BottomPaneComponents/Single/JSONSchemaMode";
 import { SOAPViewerMode } from "./BottomPaneComponents/Single/Protocols/SOAPViewerMode";
 import { ProtobufViewerMode } from "./BottomPaneComponents/Single/Protocols/ProtobufViewerMode";
 import { GRPCViewerMode } from "./BottomPaneComponents/Single/Protocols/GRPCViewerMode";
@@ -221,6 +221,9 @@ const renderMode = (
 
     case "json_transformer":
       return <JSONTransformerMode />;
+
+    case "json_schema":
+      return <JSONSchemaMode />;
 
     case "soap_viewer":
       return <SOAPViewerMode />;

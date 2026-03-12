@@ -47,6 +47,7 @@ export type SingleMode =
     | "rabbitmq_viewer"
     | "kafka_viewer"
     | "json_transformer"
+    | "json_schema"
     | "security_owasp"
     | "security_mobsf"
     | "security_static";

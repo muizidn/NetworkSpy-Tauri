@@ -192,14 +192,28 @@ export const JWTDecoderMode = () => {
                                 </div>
                                 <div className="bg-zinc-900/30 border border-zinc-800/50 p-4 rounded-2xl">
                                     <div className="text-[9px] font-bold text-zinc-500 uppercase mb-1">Issued At</div>
-                                    <div className="text-sm font-black text-white">
-                                        {decoded?.payload?.iat ? new Date(decoded.payload.iat * 1000).toLocaleString() : 'N/A'}
+                                    <div className="space-y-1">
+                                        <div className="text-xs font-black text-white">
+                                            {decoded?.payload?.iat ? new Date(decoded.payload.iat * 1000).toUTCString() : 'N/A'}
+                                            <span className="ml-2 text-[8px] text-blue-500/50 font-bold uppercase tracking-tighter">UTC</span>
+                                        </div>
+                                        <div className="text-[10px] text-zinc-400 font-mono">
+                                            {decoded?.payload?.iat ? new Date(decoded.payload.iat * 1000).toLocaleString() : 'N/A'}
+                                            <span className="ml-2 text-[8px] text-zinc-600 font-bold uppercase tracking-tighter">Local</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="bg-zinc-900/30 border border-zinc-800/50 p-4 rounded-2xl">
                                     <div className="text-[9px] font-bold text-zinc-500 uppercase mb-1">Expires</div>
-                                    <div className="text-sm font-black text-white">
-                                        {decoded?.payload?.exp ? new Date(decoded.payload.exp * 1000).toLocaleString() : 'N/A'}
+                                    <div className="space-y-1">
+                                        <div className="text-xs font-black text-white">
+                                            {decoded?.payload?.exp ? new Date(decoded.payload.exp * 1000).toUTCString() : 'N/A'}
+                                            <span className="ml-2 text-[8px] text-blue-500/50 font-bold uppercase tracking-tighter">UTC</span>
+                                        </div>
+                                        <div className="text-[10px] text-zinc-400 font-mono">
+                                            {decoded?.payload?.exp ? new Date(decoded.payload.exp * 1000).toLocaleString() : 'N/A'}
+                                            <span className="ml-2 text-[8px] text-zinc-600 font-bold uppercase tracking-tighter">Local</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

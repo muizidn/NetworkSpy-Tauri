@@ -38,6 +38,7 @@ function randomPath(domain: string): string {
       "product/books?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJib29rcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.WjtjqnszjFL3Gb-F3TSvTKHl5VxbFf4jJ2yyK_SXxxg",
     ],
     "api.openai.com": ["v1/chat/completions"],
+    "api.authanalysis.com": ["api/auth/login", "api/auth/refresh", "api/user/profile"],
     "api.example.com": ["v1/events"],
     "socket.example.com": ["v2"],
     "api.github.com": ["graphql"],
@@ -102,6 +103,30 @@ function generateEntry(): object {
     request = "Accept: text/event-stream";
     response = "event: update\ndata: {\"status\": \"ok\"}";
     responseHeaders["Content-Type"] = "text/event-stream";
+  } else if (randomDomain === "api.authanalysis.com") {
+    code = "200";
+    tags = ["AUTH", "IDENTITY", "SECURITY"];
+    if (path.includes("login")) {
+      method = "POST";
+      request = JSON.stringify({ username: "admin", password: "password123" });
+      response = JSON.stringify({ 
+        access_token: generateJWT({ user: "admin", scope: "read write" }),
+        expires_in: 3600 
+      });
+    } else if (path.includes("refresh")) {
+      method = "POST";
+      const oldRefreshToken = generateJWT({ user: "admin", type: "refresh" });
+      request = JSON.stringify({ refresh_token: oldRefreshToken });
+      response = JSON.stringify({ 
+        access_token: generateJWT({ user: "admin", scope: "read write" }),
+        refresh_token: generateJWT({ user: "admin", type: "refresh" }),
+        expires_in: 3600
+      });
+    } else {
+      method = "GET";
+      response = JSON.stringify({ id: "user_123", name: "Admin User", role: "superuser" });
+      responseHeaders["Authorization"] = `Bearer ${generateJWT({ user: "admin" })}`;
+    }
   } else if (randomDomain === "socket.example.com") {
     method = "GET";
     status = "Connected";
