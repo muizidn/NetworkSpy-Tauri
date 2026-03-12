@@ -1,6 +1,6 @@
 import Guide, { GuideStep } from "../Guide";
 
-export function iOSSimulatorInstaller() {
+export function IOSSimulatorInstaller() {
   // Example usage for Android
   const androidSteps: GuideStep[] = [
     {

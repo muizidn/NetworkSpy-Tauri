@@ -36,22 +36,13 @@ pub fn handle_certificate_menu_event(
     _app_handle: &AppHandle,
 ) {
     match event_id {
-        "install_cert_computer" => {
+        "install_cert_computer" | "install_cert_mobile" | "install_cert_vm" | "install_cert_dev" => {
             let window = event.window().clone();
             create_window(
                 window,
-                "install_cert_computer",
-                "Install Certificate on This Computer",
-                "/computer-certificate-installer",
-            );
-        }
-        "install_cert_mobile" => {
-            let window = event.window().clone();
-            create_window(
-                window,
-                "install_cert_mobile",
-                "Install Certificate on Mobile",
-                "/mobile-certificate-installer",
+                "certificate_installer",
+                "Certificate Installer",
+                "/certificate-installer",
             );
         }
         _ => {}

@@ -1,6 +1,6 @@
 import Guide, { GuideStep } from "../Guide";
 
-export function iOSDeviceInstaller() {
+export function IOSDeviceInstaller() {
   // Example usage for Android
   const androidSteps: GuideStep[] = [
     {

@@ -11,10 +11,7 @@ import "./styles/treeview.css";
 import "split-pane-react/esm/themes/default.css";
 import { SettingsProvider } from "./context/SettingsProvider";
 // import ScriptList from "./routes/script-list";
-import MobileCertificateInstaller from "./routes/certificate-installer/mobile";
-import ComputerCertificateInstaller from "./routes/certificate-installer/computer";
-import VMCertificateInstaller from "./routes/certificate-installer/vm";
-import DevelopmentCertificateInstaller from "./routes/certificate-installer/development";
+import CertificateInstaller from "./routes/certificate-installer";
 
 import Breakpoint from "./routes/tools/Breakpoint";
 import Diffing from "./routes/tools/Diffing";
@@ -64,20 +61,8 @@ const router = createBrowserRouter([
         element: <Tag />,
       },
       {
-        path: "/mobile-certificate-installer",
-        element: <MobileCertificateInstaller />,
-      },
-      {
-        path: "/computer-certificate-installer",
-        element: <ComputerCertificateInstaller />,
-      },
-      {
-        path: "/vm-certificate-installer",
-        element: <VMCertificateInstaller />,
-      },
-      {
-        path: "/development-certificate-installer",
-        element: <DevelopmentCertificateInstaller />,
+        path: "/certificate-installer",
+        element: <CertificateInstaller />,
       },
     ],
   },
