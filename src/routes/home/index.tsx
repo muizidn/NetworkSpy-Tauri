@@ -31,10 +31,9 @@ const Content = () => {
     },
   };
   const [sizes, setSizes] = useState<any[]>(["15%", "70%", "15%"]);
-  const [isRun, setIsRun] = useState(false);
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
-  const { provider } = useAppProvider();
+  const { provider, isRun, setIsRun, clearData } = useAppProvider();
 
   const [tabs, setTabs] = useState<any[]>(() => {
     const saved = localStorage.getItem("ns_workspace_tabs");
@@ -78,8 +77,10 @@ const Content = () => {
   };
 
   useEffect(() => {
+    if (!isRun) return;
+
     let unlisten: (() => void) | undefined;
-    
+
     provider.listenTraffic((traffic) => {
       setTrafficSet((prev) => ({
         ...prev,
@@ -125,20 +126,7 @@ const Content = () => {
     return () => {
       if (unlisten) unlisten();
     };
-  }, [provider]);
-
-  useEffect(() => {
-    const port = 9090;
-    if (isRun) {
-      invoke("turn_on_proxy", { port });
-    } else {
-      invoke("turn_off_proxy");
-    }
-  }, [isRun]);
-
-  const clearData = () => {
-    setTrafficList([]);
-  };
+  }, [provider, isRun]);
 
   const getNewSizes = (params: any, index: number) => {
     return sizes.map((size, idx) =>
@@ -147,9 +135,9 @@ const Content = () => {
   };
 
   const toggleLeftPane = () => {
-    setIsDisplayPane((prev) => ({ ...prev, left: !prev.left }));
-    const newSizes = getNewSizes(isDisplayPane.left, 0);
-    setSizes(newSizes);
+    const isVisible = isDisplayPane.left;
+    setIsDisplayPane((prev) => ({ ...prev, left: !isVisible }));
+    setSizes((prev) => [!isVisible ? "0%" : "15%", prev[1], prev[2]]);
   };
 
   const toggleBottomPane = () => {
@@ -157,20 +145,20 @@ const Content = () => {
   };
 
   const toggleRightPane = () => {
-    setIsDisplayPane((prev) => ({ ...prev, right: !prev.right }));
-    const newSizes = getNewSizes(isDisplayPane.right, 2);
-    setSizes(newSizes);
+    const isVisible = isDisplayPane.right;
+    setIsDisplayPane((prev) => ({ ...prev, right: !isVisible }));
+    setSizes((prev) => [prev[0], prev[1], !isVisible ? "0%" : "15%"]);
   };
 
   return (
     <div className='select-none flex flex-col h-screen'>
       <Header
-        isRun={isRun}
-        setIsRun={setIsRun}
-        clearData={clearData}
         toggleLeftPane={toggleLeftPane}
         toggleBottomPane={toggleBottomPane}
         toggleRightPane={toggleRightPane}
+        leftActive={isDisplayPane.left}
+        bottomActive={isDisplayPane.bottom}
+        rightActive={isDisplayPane.right}
       />
       <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
         <SplitPane
@@ -179,7 +167,7 @@ const Content = () => {
           sizes={sizes}
           onChange={setSizes}>
           <Pane
-            minSize={paneSizeConfig.leftPane.min}
+            minSize={isDisplayPane.left ? paneSizeConfig.leftPane.min : 0}
             maxSize={paneSizeConfig.leftPane.max}>
             <div className='flex items-center justify-center h-full'>
               <LeftSidebar />
@@ -196,7 +184,7 @@ const Content = () => {
             </div>
           </Pane>
           <Pane
-            minSize={paneSizeConfig.rightPane.min}
+            minSize={isDisplayPane.right ? paneSizeConfig.rightPane.min : 0}
             maxSize={paneSizeConfig.rightPane.max}>
             <div className='flex items-center justify-center h-full'>
               <RightSidebar />
@@ -210,13 +198,13 @@ const Content = () => {
 
 const App: React.FC = () => {
   return (
-    <TauriEnvProvider>
-      <TrafficListProvider>
+    <TrafficListProvider>
+      <TauriEnvProvider>
         <PaneProvider>
           <Content />
         </PaneProvider>
-      </TrafficListProvider>
-    </TauriEnvProvider>
+      </TauriEnvProvider>
+    </TrafficListProvider>
   );
 };
 

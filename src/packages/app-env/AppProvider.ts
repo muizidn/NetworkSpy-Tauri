@@ -11,10 +11,19 @@ export interface IAppProvider {
   listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void>;
   listenSSE(trafficId: string, callback: (chunk: string) => void): () => void;
   listenWebsocket(trafficId: string, callback: (message: any) => void): () => void;
+  setListenStatus(isRun: boolean): void;
 }
 
 export class TauriAppProvider implements IAppProvider {
   private trafficSet: Record<string, Traffic> = {};
+
+  setListenStatus(isRun: boolean): void {
+    if (isRun) {
+      tauriInvoke("turn_on_proxy", { port: 9090 });
+    } else {
+      tauriInvoke("turn_off_proxy");
+    }
+  }
 
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {
     return tauriInvoke<RequestPairData>("get_request_pair_data", { trafficId });
@@ -68,30 +77,36 @@ export class TauriAppProvider implements IAppProvider {
 
   listenSSE(trafficId: string, callback: (chunk: string) => void): () => void {
     const unlisten = listen<any>(`sse_${trafficId}`, (event) => {
-        callback(event.payload);
+      callback(event.payload);
     });
     return () => {
-        unlisten.then(u => u());
+      unlisten.then(u => u());
     };
   }
 
   listenWebsocket(trafficId: string, callback: (message: any) => void): () => void {
     const unlisten = listen<any>(`ws_${trafficId}`, (event) => {
-        callback(event.payload);
+      callback(event.payload);
     });
     return () => {
-        unlisten.then(u => u());
+      unlisten.then(u => u());
     };
   }
 }
 
 export class MockAppProvider implements IAppProvider {
   private trafficSet: Record<string, Traffic> = {};
+  private isListening: boolean = false;
+
+  setListenStatus(isRun: boolean): void {
+    this.isListening = isRun;
+    console.log(`[MockAppProvider] Traffic Generation: ${isRun ? 'RESUMED' : 'PAUSED'}`);
+  }
 
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {
     console.log(`[Mock] getRequestPairData: ${trafficId}`);
     const traffic = this.trafficSet[trafficId];
-    
+
     if (traffic) {
       const urlObj = new URL(traffic.uri);
       const paramKeys = Array.from(new Set(urlObj.searchParams.keys()));
@@ -157,51 +172,51 @@ export class MockAppProvider implements IAppProvider {
   listenSSE(trafficId: string, callback: (chunk: string) => void): () => void {
     const traffic = this.trafficSet[trafficId];
     if (!traffic || !traffic.uri.includes('openai')) {
-        // Fallback demo for non-mocked SSE
-        const demoChunks = [
-            'data: {"choices":[{"delta":{"content":"Hello! "}}]}',
-            'data: {"choices":[{"delta":{"content":"I "}}]}',
-            'data: {"choices":[{"delta":{"content":"am "}}]}',
-            'data: {"choices":[{"delta":{"content":"a "}}]}',
-            'data: {"choices":[{"delta":{"content":"mock "}}]}',
-            'data: {"choices":[{"delta":{"content":"SSE "}}]}',
-            'data: {"choices":[{"delta":{"content":"stream."}}]}',
-            'data: [DONE]'
-        ];
-        let i = 0;
-        const interval = setInterval(() => {
-            if (i >= demoChunks.length) {
-                clearInterval(interval);
-                return;
-            }
-            callback(demoChunks[i++]);
-        }, 100);
-        return () => clearInterval(interval);
+      // Fallback demo for non-mocked SSE
+      const demoChunks = [
+        'data: {"choices":[{"delta":{"content":"Hello! "}}]}',
+        'data: {"choices":[{"delta":{"content":"I "}}]}',
+        'data: {"choices":[{"delta":{"content":"am "}}]}',
+        'data: {"choices":[{"delta":{"content":"a "}}]}',
+        'data: {"choices":[{"delta":{"content":"mock "}}]}',
+        'data: {"choices":[{"delta":{"content":"SSE "}}]}',
+        'data: {"choices":[{"delta":{"content":"stream."}}]}',
+        'data: [DONE]'
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i >= demoChunks.length) {
+          clearInterval(interval);
+          return;
+        }
+        callback(demoChunks[i++]);
+      }, 100);
+      return () => clearInterval(interval);
     }
 
     // For OpenAI mocked data, we can "re-stream" its response if it was marked as streaming
     const responseBody = traffic.response?.body || "";
     const isStreaming = responseBody.includes('data:');
-    
+
     if (isStreaming) {
-        const chunks = responseBody.split('\n').filter(l => l.trim().length > 0);
-        let i = 0;
-        const interval = setInterval(() => {
-            if (i >= chunks.length) {
-                clearInterval(interval);
-                return;
-            }
-            callback(chunks[i++]);
-        }, 80);
-        return () => clearInterval(interval);
+      const chunks = responseBody.split('\n').filter(l => l.trim().length > 0);
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i >= chunks.length) {
+          clearInterval(interval);
+          return;
+        }
+        callback(chunks[i++]);
+      }, 80);
+      return () => clearInterval(interval);
     }
 
-    return () => {};
+    return () => { };
   }
 
   listenWebsocket(trafficId: string, callback: (message: any) => void): () => void {
     const interval = setInterval(() => {
-        callback({ type: 'message', data: `Ping from mock WS ${trafficId}: ${Date.now()}` });
+      callback({ type: 'message', data: `Ping from mock WS ${trafficId}: ${Date.now()}` });
     }, 2000);
     return () => clearInterval(interval);
   }
@@ -209,6 +224,8 @@ export class MockAppProvider implements IAppProvider {
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {
     let batch: any[] = [];
     const interval = setInterval(() => {
+      if (!this.isListening) return; // PROACTIVE PAUSE
+
       if (batch.length === 0) {
         batch = generateJson(50);
       }
@@ -221,16 +238,16 @@ export class MockAppProvider implements IAppProvider {
           request: {
             version: "HTTP/1.1",
             header: {
-                "content-type": "text/plain",
-                ...Object.fromEntries(Object.entries(item.headers || {}).map(([k, v]) => [k.toLowerCase(), v]))
+              "content-type": "text/plain",
+              ...Object.fromEntries(Object.entries(item.headers || {}).map(([k, v]) => [k.toLowerCase(), v]))
             },
             body: item.request as string || null,
           },
           response: {
             version: "HTTP/1.1",
             header: {
-                "content-type": "application/json",
-                ...Object.fromEntries(Object.entries(item.responseHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]))
+              "content-type": "application/json",
+              ...Object.fromEntries(Object.entries(item.responseHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]))
             },
             body: item.response as string || null,
           },

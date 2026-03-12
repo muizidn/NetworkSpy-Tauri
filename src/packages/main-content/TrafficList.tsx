@@ -9,12 +9,14 @@ import { useTrafficListContext } from "./context/TrafficList";
 import { useFilterContext } from "@src/context/FilterContext";
 import { TrafficItemMap } from "./model/TrafficItemMap";
 import { invoke } from "@tauri-apps/api/tauri";
+import { useAppProvider } from "../app-env";
 
 type TauriInvokeFn = (cmd: string, args?: any) => Promise<any>;
 
 export const TrafficList: React.FC = () => {
   const { setSelections } = useTrafficListContext();
   const { filteredTraffic } = useFilterContext();
+  const { isRun } = useAppProvider();
 
   const headers: TableViewHeader<TrafficItemMap>[] = useMemo(() => [
     {
@@ -48,7 +50,7 @@ export const TrafficList: React.FC = () => {
       data={filteredTraffic}
       contextMenuRenderer={contextMenuRenderer}
       onSelectedRowChanged={handleSelectedRowChanged}
-      isAllowAutoScroll={true}
+      isAllowAutoScroll={isRun}
     />
   );
 };

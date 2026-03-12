@@ -1,8 +1,12 @@
-import React, { createContext, useContext, ReactNode, useMemo } from "react";
+import React, { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from "react";
 import { IAppProvider, TauriAppProvider, MockAppProvider } from "./AppProvider";
+import { useTrafficListContext } from "../main-content/context/TrafficList";
 
 export interface IAppProviderContext {
   provider: IAppProvider;
+  isRun: boolean;
+  setIsRun: (isRun: boolean) => void;
+  clearData: () => void;
 }
 
 export const TauriEnvContext = createContext<IAppProviderContext | undefined>(
@@ -20,7 +24,12 @@ export const useAppProvider = (): IAppProviderContext => {
   const context = useContext(TauriEnvContext);
   if (!context) {
     const defaultProvider = getAppProvider();
-    return { provider: defaultProvider };
+    return {
+      provider: defaultProvider,
+      isRun: false,
+      setIsRun: () => { },
+      clearData: () => { }
+    };
   }
   return context;
 };
@@ -35,9 +44,26 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
   provider,
 }) => {
   const activeProvider = useMemo(() => provider || getAppProvider(), [provider]);
-  
+  const [isRun, setIsRun] = useState(false);
+  const { setTrafficList, setTrafficSet, setSelections } = useTrafficListContext();
+
+  useEffect(() => {
+    activeProvider.setListenStatus(isRun);
+  }, [activeProvider, isRun]);
+
+  const clearData = useCallback(() => {
+    setTrafficList([]);
+    setTrafficSet({});
+    setSelections({ firstSelected: null, others: null });
+  }, [setTrafficList, setTrafficSet, setSelections]);
+
   return (
-    <TauriEnvContext.Provider value={{ provider: activeProvider }}>
+    <TauriEnvContext.Provider value={{
+      provider: activeProvider,
+      isRun,
+      setIsRun,
+      clearData
+    }}>
       {children}
     </TauriEnvContext.Provider>
   );

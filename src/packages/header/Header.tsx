@@ -1,24 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { Icon } from "../ui/Icon";
 import { twMerge } from "tailwind-merge";
+import { useAppProvider } from "../app-env";
 
 interface HeaderProps {
-  isRun: boolean;
-  setIsRun: (prev: boolean) => void;
-  clearData: () => void;
   toggleLeftPane: () => void;
   toggleBottomPane: () => void;
   toggleRightPane: () => void;
+  leftActive?: boolean;
+  bottomActive?: boolean;
+  rightActive?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  isRun,
-  setIsRun,
-  clearData,
   toggleLeftPane,
   toggleBottomPane,
   toggleRightPane
 }) => {
+
+  const { isRun, setIsRun, clearData } = useAppProvider();
 
   const ControlButton = ({
     icon,
@@ -73,7 +73,6 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="h-4 w-px bg-zinc-800/50" />
 
         <div className="flex items-center gap-1.5">
-
           <ControlButton
             id="menu"
             icon="Menu"
@@ -91,7 +90,6 @@ export const Header: React.FC<HeaderProps> = ({
             variant={isRun ? "success" : "default"}
             onClick={() => setIsRun(!isRun)}
           />
-
           <ControlButton
             id="clear"
             icon="Trash"
