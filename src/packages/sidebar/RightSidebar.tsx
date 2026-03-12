@@ -29,6 +29,22 @@ const RightSidebarContent = () => {
     { id: "Raw", icon: FiCode, label: "Raw" },
   ];
 
+  // Logic extracted to hooks, must be before early returns
+  const hsts = useMemo<string | undefined>(() => {
+    const headers = fullTraffic?.response?.header || {};
+    return Object.entries(headers).find(([k]) => k.toLowerCase() === 'strict-transport-security')?.[1];
+  }, [fullTraffic]);
+
+  const server = useMemo<string>(() => {
+    const headers = fullTraffic?.response?.header || {};
+    return Object.entries(headers).find(([k]) => k.toLowerCase() === 'server')?.[1] || "Unknown";
+  }, [fullTraffic]);
+
+  const contentType = useMemo<string>(() => {
+    const headers = fullTraffic?.response?.header || {};
+    return (Object.entries(headers).find(([k]) => k.toLowerCase() === 'content-type')?.[1] as string) || "---";
+  }, [fullTraffic]);
+
   const StatRow = ({ label, value, percentage, colorClass = "bg-blue-500" }: { label: string, value: string, percentage?: number, colorClass?: string }) => (
     <div className="flex flex-col space-y-1.5 mb-4 px-1">
       <div className="flex justify-between items-end">
@@ -74,21 +90,7 @@ const RightSidebarContent = () => {
 
   const isHttps = url.startsWith('https') || url.startsWith('wss');
   
-  // Real Info extraction
-  const hsts = useMemo<string | undefined>(() => {
-    const headers = fullTraffic?.response?.header || {};
-    return Object.entries(headers).find(([k]) => k.toLowerCase() === 'strict-transport-security')?.[1];
-  }, [fullTraffic]);
-
-  const server = useMemo<string>(() => {
-    const headers = fullTraffic?.response?.header || {};
-    return Object.entries(headers).find(([k]) => k.toLowerCase() === 'server')?.[1] || "Unknown";
-  }, [fullTraffic]);
-
-  const contentType = useMemo<string>(() => {
-    const headers = fullTraffic?.response?.header || {};
-    return (Object.entries(headers).find(([k]) => k.toLowerCase() === 'content-type')?.[1] as string) || "---";
-  }, [fullTraffic]);
+  // Real Info extraction moved up
 
   return (
     <div className='w-full h-full bg-[#1e1e1e] flex flex-col border-l border-black overflow-hidden select-none'>
