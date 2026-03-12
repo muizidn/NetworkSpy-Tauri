@@ -103,6 +103,7 @@ const Content = () => {
           duration: "16 bytes",
           request: "Request data",
           response: traffic.response ? "Response Data" : "-",
+          performance: (traffic as any).performance,
         };
 
         if (existingTrafficIndex !== -1) {

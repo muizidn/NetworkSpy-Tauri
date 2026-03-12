@@ -25,8 +25,8 @@ export const AuthAnalysisMode = () => {
 
         const details: any = { type: 'None' };
 
-        if (authHeader) {
-            const val = authHeader.value;
+        if (authHeader && authHeader.value) {
+            const val = String(authHeader.value);
             if (val.startsWith('Bearer ')) {
                 details.type = 'Bearer Token';
                 details.token = val.split(' ')[1];
@@ -44,9 +44,9 @@ export const AuthAnalysisMode = () => {
                 details.type = 'Other Header';
                 details.value = val;
             }
-        } else if (cookieHeader) {
+        } else if (cookieHeader && cookieHeader.value) {
             details.type = 'Cookie Based';
-            details.cookies = cookieHeader.value.split(';').map(c => c.trim());
+            details.cookies = String(cookieHeader.value).split(';').map(c => c.trim());
         }
 
         return details;

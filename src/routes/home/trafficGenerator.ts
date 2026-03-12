@@ -77,7 +77,7 @@ function generateJWT(payload = {}): string {
 }
 
 function generateEntry(): object {
-  const domains = ["google.com", "api.github.com", "api.openai.com", "auth.myserver.com", "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com"];
+  const domains = ["google.com", "api.github.com", "api.openai.com", "api.authanalysis.com", "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com", "perf.myserver.com"];
   const randomDomain = domains[Math.floor(Math.random() * domains.length)];
 
   let path = randomPath(randomDomain);
@@ -223,26 +223,33 @@ fragment UserFields on User {
     }, null, 2);
     response = JSON.stringify(scene.response, null, 2);
     tags.push(scene.operationName.toUpperCase());
-  } else if (randomDomain === "auth.myserver.com") {
-      const isLogin = Math.random() > 0.5;
-      if (isLogin) {
+  } else if (randomDomain === "api.authanalysis.com") {
+      const scenario = Math.floor(Math.random() * 3);
+      tags = ["AUTH", "IDENTITY", "SECURITY"];
+      if (scenario === 0) {
+          method = "GET";
+          path = "api/v1/secure-data";
+          const jwt = generateJWT({ scope: "read:all", user: "analyst" });
+          request = `Authorization: Bearer ${jwt}`;
+          response = JSON.stringify({ data: "Sensitive information", access: "GRANTED" });
+      } else if (scenario === 1) {
           method = "POST";
-          path = "v1/login";
-          tags = ["AUTH", "IDENTITY", "LOGIN"];
-          request = JSON.stringify({ username: "admin", password: "password123" });
-          response = JSON.stringify({ 
-              access_token: generateJWT({ role: "admin", scope: "read:write" }),
-              expires_in: 3600,
-              token_type: "Bearer"
-          }, null, 2);
+          path = "api/v1/legacy-login";
+          const basic = btoa("admin:password123");
+          request = `Authorization: Basic ${basic}`;
+          response = JSON.stringify({ status: "success", profile: { name: "Admin" } });
       } else {
           method = "GET";
-          path = "v1/user/info";
-          tags = ["AUTH", "PROFILE"];
-          const jwt = generateJWT({ role: "user", permissions: ["read"] });
-          request = `Authorization: Bearer ${jwt}`; // Mock visualization
-          response = JSON.stringify({ id: "user_123", name: "Mock User", email: "user@example.com" }, null, 2);
+          path = "api/v1/sessioninfo";
+          request = "Cookie: session_id=spy_778899; analytics_opt_out=true";
+          response = JSON.stringify({ active_session: true, user_id: 101 });
       }
+  } else if (randomDomain === "perf.myserver.com") {
+      method = "GET";
+      path = "api/v1/metrics";
+      tags = ["PERFORMANCE", "METRICS"];
+      request = "{}";
+      response = JSON.stringify({ status: "healthy", latency: "high" });
   }
 
   return {
@@ -258,10 +265,20 @@ fragment UserFields on User {
     request,
     response,
     headers: {
-        "Authorization": randomDomain === "auth.myserver.com" && method === "GET" 
-            ? `Bearer ${generateJWT({ scope: "api:access" })}` 
+        "Authorization": randomDomain === "api.authanalysis.com" && request.includes('Authorization') 
+            ? request.split(': ')[1] 
             : undefined,
-        "X-JWT-Header": generateJWT({ type: "debug" })
+        "Cookie": randomDomain === "api.authanalysis.com" && request.startsWith('Cookie')
+            ? request.split(': ')[1]
+            : undefined,
+        "X-Debug-JWT": generateJWT({ mode: "debug_stream" })
+    },
+    performance: {
+        dns: Math.floor(Math.random() * 50) + 5,
+        tcp: Math.floor(Math.random() * 100) + 10,
+        tls: Math.floor(Math.random() * 150) + 20,
+        ttfb: Math.floor(Math.random() * 500) + 50,
+        download: Math.floor(Math.random() * 200) + 10
     }
   };
 }
