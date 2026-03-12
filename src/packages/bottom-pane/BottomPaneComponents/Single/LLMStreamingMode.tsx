@@ -8,6 +8,7 @@ interface SSEChunk {
   id: string;
   event: string;
   data: string;
+  content: string;
   timestamp: string;
   elapsedMs: number;
 }
@@ -19,6 +20,7 @@ export const LLMStreamingMode = () => {
   const [chunks, setChunks] = useState<SSEChunk[]>([]);
   const [accumulatedText, setAccumulatedText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(0);
 
@@ -53,6 +55,7 @@ export const LLMStreamingMode = () => {
         id: Math.random().toString(36).substr(2, 9),
         event: eventType,
         data: rawData,
+        content: content,
         timestamp: new Date().toLocaleTimeString(),
         elapsedMs: Date.now() - startTimeRef.current
       };
@@ -125,11 +128,15 @@ export const LLMStreamingMode = () => {
             {chunks.map((chunk, i) => (
               <div 
                 key={chunk.id} 
+                onMouseEnter={() => setHoveredChunkId(chunk.id)}
+                onMouseLeave={() => setHoveredChunkId(null)}
                 className={twMerge(
                   "group p-3 rounded-lg border flex flex-col gap-1 transition-all animate-in slide-in-from-left-2 duration-200",
                   chunk.event === 'control' 
                     ? "bg-amber-950/20 border-amber-900/30" 
-                    : "bg-[#1e1e1e] border-zinc-800/50 hover:border-zinc-700"
+                    : hoveredChunkId === chunk.id 
+                      ? "bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/10 scale-[1.02]"
+                      : "bg-[#1e1e1e] border-zinc-800/50 hover:border-zinc-700"
                 )}
               >
                 <div className="flex justify-between items-center">
@@ -172,8 +179,20 @@ export const LLMStreamingMode = () => {
 
           <div className="flex-1 overflow-y-auto p-8 custom-scrollbar relative">
             <div className="max-w-prose mx-auto">
-              <div className="text-sm leading-relaxed text-zinc-200 whitespace-pre-wrap font-sans">
-                {accumulatedText}
+              <div className="text-sm leading-relaxed text-zinc-200 whitespace-pre-wrap font-sans transition-all">
+                {chunks.map(chunk => (
+                   <span 
+                    key={chunk.id} 
+                    onMouseEnter={() => setHoveredChunkId(chunk.id)}
+                    onMouseLeave={() => setHoveredChunkId(null)}
+                    className={twMerge(
+                      "transition-all duration-150 rounded-sm px-0.5 -mx-0.5",
+                      hoveredChunkId === chunk.id ? "bg-blue-600 text-white shadow-sm ring-1 ring-blue-400" : "hover:bg-zinc-800"
+                    )}
+                   >
+                     {chunk.content}
+                   </span>
+                ))}
                 {isStreaming && (
                   <span className="inline-block w-2 h-4 bg-blue-500 ml-1 animate-pulse rounded-sm align-middle" />
                 )}
