@@ -85,15 +85,18 @@ const router = createBrowserRouter([
 
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { TagProvider } from "./context/TagContext";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
-      <SettingsProvider>
-        <DndProvider backend={HTML5Backend}>
+      <TagProvider>
+        <SettingsProvider>
+          <DndProvider backend={HTML5Backend}>
             <RouterProvider router={router} />
-        </DndProvider>
-      </SettingsProvider>
+          </DndProvider>
+        </SettingsProvider>
+      </TagProvider>
     </TauriProvider>
   </React.StrictMode>
 );

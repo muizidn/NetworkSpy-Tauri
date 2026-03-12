@@ -1,23 +1,21 @@
+import { useEffect, useState } from "react";
 import SplitPane, { Pane, SashContent } from "split-pane-react";
-import { useEffect, useRef, useState } from "react";
 
+import { TauriEnvProvider, useAppProvider } from "@src/packages/app-env";
+import { TagProvider, useTagContext, TagModel } from "@src/context/TagContext";
+import { isTrafficMatch } from "@src/utils/tagMatcher";
+import { Traffic } from "../../models/Traffic";
+import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
 import { Header } from "../../packages/header/Header";
-import { LeftSidebar } from "../../packages/sidebar/LeftSidebar";
-import { RightSidebar } from "../../packages/sidebar/RightSidebar";
-import { NSTabs } from "../../packages/ui/NSTabs";
-import { CenterPane } from "./CenterPane";
-import { BottomPaneOptions } from "../../packages/bottom-pane/BottomPaneOptions";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import {
   TrafficListProvider,
   useTrafficListContext,
 } from "../../packages/main-content/context/TrafficList";
-import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
-import { invoke } from "@tauri-apps/api/tauri";
-import { Traffic } from "../../models/Traffic";
 import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
-import { TauriEnvProvider, useAppProvider } from "@src/packages/app-env";
+import { LeftSidebar } from "../../packages/sidebar/LeftSidebar";
+import { RightSidebar } from "../../packages/sidebar/RightSidebar";
+import { NSTabs } from "../../packages/ui/NSTabs";
+import { CenterPane } from "./CenterPane";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -34,6 +32,7 @@ const Content = () => {
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
   const { provider, isRun, setIsRun, clearData } = useAppProvider();
+  const { tags } = useTagContext();
 
   const [tabs, setTabs] = useState<any[]>(() => {
     const saved = localStorage.getItem("ns_workspace_tabs");
@@ -92,25 +91,52 @@ const Content = () => {
           (t) => t.id === traffic.id
         );
 
+        // Tier 1: Synchronous Tagging (Max 10 active tags)
+        const syncTags = tags
+          .filter((t: TagModel) => t.enabled && t.isSync && isTrafficMatch({ uri: traffic.uri, method: traffic.method }, t))
+          .map((t: TagModel) => t.tag);
+
         const listItem: TrafficItemMap = {
           id: traffic.id,
-          tags: ["LOGIN DOCKER", "AKAMAI Testing Robot"],
+          tags: syncTags.length > 0 ? syncTags : ["UNTAGGED"],
           url: traffic.uri || "-",
-          client: "Google Map",
+          client: "Local",
           method: traffic.method,
           status: "Completed",
           code: "200",
-          time: "732 ms",
-          duration: "16 bytes",
-          request: "Request data",
-          response: traffic.response ? "Response Data" : "-",
+          time: "0 ms",
+          duration: "0 bytes",
+          request: "-",
+          response: traffic.response ? "Data" : "-",
           performance: (traffic as any).performance,
         };
+
+        // Tier 2: Asynchronous Tagging (Deferred matching)
+        const asyncTagRules = tags.filter((t: TagModel) => t.enabled && !t.isSync);
+        if (asyncTagRules.length > 0) {
+          setTimeout(() => {
+            const asyncTags = asyncTagRules
+              .filter((t: TagModel) => isTrafficMatch({ uri: traffic.uri, method: traffic.method }, t))
+              .map((t: TagModel) => t.tag);
+
+            if (asyncTags.length > 0) {
+              setTrafficList(current => current.map(item => {
+                if (item.id === traffic.id) {
+                  const existingTags = (item.tags as string[]) || [];
+                  const mergedTags = Array.from(new Set([...existingTags.filter(t => t !== "UNTAGGED"), ...asyncTags]));
+                  return { ...item, tags: mergedTags };
+                }
+                return item;
+              }));
+            }
+          }, 0);
+        }
 
         if (existingTrafficIndex !== -1) {
           const updatedTraffic = {
             ...prevData[existingTrafficIndex],
             ...listItem,
+            tags: syncTags.length > 0 ? syncTags : prevData[existingTrafficIndex].tags,
           };
           return [
             ...prevData.slice(0, existingTrafficIndex),
