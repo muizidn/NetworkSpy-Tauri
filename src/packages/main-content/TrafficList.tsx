@@ -1,3 +1,4 @@
+import React, { useCallback, useMemo } from "react";
 import {
   TableView,
   TableViewContextMenuRenderer,
@@ -15,13 +16,13 @@ export const TrafficList: React.FC = () => {
   const { setSelections } = useTrafficListContext();
   const { filteredTraffic } = useFilterContext();
 
-  const headers: TableViewHeader<TrafficItemMap>[] = [
+  const headers: TableViewHeader<TrafficItemMap>[] = useMemo(() => [
     {
       title: "ID",
       renderer: new TextRenderer("id"),
       minWidth: 100,
       sortable: true,
-      compareValue: (a, b) => (Number(a) < Number(b) ? -1 : 1),
+      compareValue: (a: any, b: any) => (Number(a) < Number(b) ? -1 : 1),
     },
     { title: "Tags", renderer: new TagsRenderer("tags"), minWidth: 100 },
     { title: "URL", renderer: new TextRenderer("url"), minWidth: 400 },
@@ -33,16 +34,20 @@ export const TrafficList: React.FC = () => {
     { title: "Duration", renderer: new TextRenderer("duration") },
     { title: "Request", renderer: new TextRenderer("request") },
     { title: "Response", renderer: new TextRenderer("response") },
-  ];
+  ], []);
+
+  const contextMenuRenderer = useMemo(() => new TrafficListContextMenuRenderer(invoke), []);
+
+  const handleSelectedRowChanged = useCallback((first: TrafficItemMap | null, items: TrafficItemMap[] | null) => {
+    setSelections({ firstSelected: first, others: items });
+  }, [setSelections]);
 
   return (
     <TableView
       headers={headers}
       data={filteredTraffic}
-      contextMenuRenderer={new TrafficListContextMenuRenderer(invoke)}
-      onSelectedRowChanged={(first, items) =>
-        setSelections({ firstSelected: first, others: items })
-      }
+      contextMenuRenderer={contextMenuRenderer}
+      onSelectedRowChanged={handleSelectedRowChanged}
     />
   );
 };

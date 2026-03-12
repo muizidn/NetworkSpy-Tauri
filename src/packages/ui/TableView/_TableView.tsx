@@ -68,8 +68,9 @@ const HeaderCell = <T,>({
   const isActive = sortConfig.key === header.title.toLowerCase();
 
   return (
-    <th
+    <div
       ref={ref}
+      role="columnheader"
       className={twMerge(
         "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors group/header",
         isLast ? "flex-grow" : "shrink-0",
@@ -105,7 +106,7 @@ const HeaderCell = <T,>({
           <span className="text-[10px] font-bold">↔</span>
         </button>
       )}
-    </th>
+    </div>
   );
 };
 
@@ -144,7 +145,7 @@ export const TableView = <T,>({
   function getRowIndex(e: MouseEvent): string | null {
     let target = e.target as HTMLElement;
 
-    while (target && target.tagName !== "TR") {
+    while (target && target.getAttribute('role') !== "row") {
       target = target.parentElement as HTMLElement;
     }
 
@@ -427,9 +428,9 @@ export const TableView = <T,>({
 
   return (
     <div className={twMerge("w-full h-full flex flex-col bg-[#050505] overflow-x-auto custom-scrollbar", className)}>
-      <table className="min-w-full w-max border-separate border-spacing-0 flex flex-col h-full overflow-hidden">
-        <thead className="sticky top-0 z-30 shrink-0">
-          <tr className="flex w-full">
+      <div role="grid" className="min-w-full w-max flex flex-col h-full overflow-hidden">
+        <div role="rowgroup" className="sticky top-0 z-30 shrink-0">
+          <div role="row" className="flex w-full">
             {headers.map((header, index) => (
               <HeaderCell
                 key={`header-${index}`}
@@ -443,9 +444,14 @@ export const TableView = <T,>({
                 isLast={index === headers.length - 1}
               />
             ))}
-          </tr>
-        </thead>
-        <tbody ref={tbodyRef} className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth relative" onScroll={handleScroll}>
+          </div>
+        </div>
+        <div 
+          ref={tbodyRef} 
+          role="rowgroup"
+          className="overflow-y-auto overflow-x-hidden flex-grow scroll-smooth relative" 
+          onScroll={handleScroll}
+        >
           <div
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
@@ -458,8 +464,9 @@ export const TableView = <T,>({
               const isSelected = selectedRows.rows.includes(virtualRow.index);
 
               return (
-                <tr
+                <div
                   key={virtualRow.key}
+                  role="row"
                   onContextMenu={showContextMenu}
                   onClick={onClickRow}
                   className={twMerge(
@@ -475,22 +482,27 @@ export const TableView = <T,>({
                   {headers.map((header, i) => {
                     const isLast = i === headers.length - 1;
                     return (
-                      <td key={i} className={twMerge(
-                        "px-4 py-2 text-zinc-400 text-[12px] truncate",
-                        isLast ? "flex-grow" : "shrink-0"
-                      )} style={{
-                        width: isLast ? undefined : columnWidths[i],
-                        flexBasis: isLast ? columnWidths[i] : undefined,
-                        minWidth: header.minWidth
-                      }}>
+                      <div 
+                        key={i} 
+                        role="gridcell"
+                        className={twMerge(
+                          "px-4 py-2 text-zinc-400 text-[12px] truncate",
+                          isLast ? "flex-grow" : "shrink-0"
+                        )} 
+                        style={{
+                          width: isLast ? undefined : columnWidths[i],
+                          flexBasis: isLast ? columnWidths[i] : undefined,
+                          minWidth: header.minWidth
+                        }}
+                      >
                         {header.renderer.render({
                           input: item,
                           width: columnWidths[i],
                         })}
-                      </td>
+                      </div>
                     );
                   })}
-                </tr>
+                </div>
               );
             })}
           </div>
@@ -500,8 +512,8 @@ export const TableView = <T,>({
               No data available
             </div>
           )}
-        </tbody>
-      </table>
+        </div>
+      </div>
       {/* Autoscroll Control Button */}
       <div 
         className="absolute z-40 touch-none"
