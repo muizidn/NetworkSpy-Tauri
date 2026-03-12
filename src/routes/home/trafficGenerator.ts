@@ -123,6 +123,7 @@ function generateEntry(): object {
   } else if (randomDomain === "api.openai.com") {
         method = "POST";
         tags = ["LLM", "AI", "OPENAI", "STREAM"];
+        path = "llm_streaming/v1/chat/completions";
         const streamChunks = [
             'data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4","choices":[{"index":0,"delta":{"role":"assistant","content":"Sure! "},"finish_reason":null}]}',
             'data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"I "},"finish_reason":null}]}',
@@ -229,6 +230,7 @@ fragment UserFields on User {
       operationName: scene.operationName
     }, null, 2);
     response = JSON.stringify(scene.response, null, 2);
+    path = "graphql_viewer/query";
     tags.push(scene.operationName.toUpperCase());
     // Ensure request headers include json
     // Note: in generateEntry, these will be merged into headers
@@ -237,65 +239,90 @@ fragment UserFields on User {
       tags = ["AUTH", "IDENTITY", "SECURITY"];
       if (scenario === 0) {
           method = "GET";
-          path = "api/v1/secure-data";
+          path = "auth_analysis_viewer/api/v1/secure-data";
           const jwt = generateJWT({ scope: "read:all", user: "analyst" });
           request = `Authorization: Bearer ${jwt}`;
           response = JSON.stringify({ data: "Sensitive information", access: "GRANTED" });
       } else if (scenario === 1) {
           method = "POST";
-          path = "api/v1/legacy-login";
+          path = "auth_analysis_viewer/api/v1/legacy-login";
           const basic = btoa("admin:password123");
           request = `Authorization: Basic ${basic}`;
           response = JSON.stringify({ status: "success", profile: { name: "Admin" } });
       } else {
           method = "GET";
-          path = "api/v1/sessioninfo";
+          path = "auth_analysis_viewer/api/v1/sessioninfo";
           request = "Cookie: session_id=spy_778899; analytics_opt_out=true";
           response = JSON.stringify({ active_session: true, user_id: 101 });
       }
   } else if (randomDomain === "perf.myserver.com") {
       method = "GET";
-      path = "api/v1/metrics";
+      path = "performance_viewer/api/v1/metrics";
       tags = ["PERFORMANCE", "METRICS"];
       request = "{}";
       response = JSON.stringify({ status: "healthy", latency: "high" });
   } else if (randomDomain === "media.cdn.com") {
-      const type = Math.floor(Math.random() * 7);
+      const type = Math.floor(Math.random() * 12);
       if (type === 0) {
-          path = "assets/hero-bg.png";
+          path = "image_viewer/assets/hero-bg.png";
           tags = ["IMAGE", "STATIC"];
           response = "MOCK_IMAGE_DATA_BASE64_PLACEHOLDER";
           responseHeaders["Content-Type"] = "image/png";
       } else if (type === 1) {
-          path = "stream/podcast-ep1.mp3";
+          path = "audio_viewer/stream/podcast-ep1.mp3";
           tags = ["AUDIO", "MEDIA"];
           response = "MOCK_AUDIO_DATA_BLOB";
           responseHeaders["Content-Type"] = "audio/mpeg";
       } else if (type === 2) {
-          path = "video/live/index.m3u8";
+          path = "video_viewer/video/live/index.m3u8";
           tags = ["VIDEO", "HLS", "STREAM"];
           response = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:10.0,\nchunk0.ts\n#EXTINF:10.0,\nchunk1.ts";
           responseHeaders["Content-Type"] = "application/x-mpegURL";
       } else if (type === 3) {
-          path = "web/landing.html";
+          path = "html_viewer/web/landing.html";
           tags = ["HTML", "BROWSER"];
           response = "<!DOCTYPE html><html><body style='background:#111;color:#eee'><h1>Mock Page</h1><p>This is a rendered HTML preview.</p></body></html>";
           responseHeaders["Content-Type"] = "text/html";
       } else if (type === 4) {
-          path = "scripts/main.min.js";
+          path = "js_viewer/scripts/main.min.js";
           tags = ["JS", "ASSET"];
           response = "window.onload = function() { console.log('NetworkSpy Ready'); alert('Script Loaded'); };";
           responseHeaders["Content-Type"] = "application/javascript";
       } else if (type === 5) {
-          path = "styles/theme.css";
+          path = "css_viewer/styles/theme.css";
           tags = ["CSS", "ASSET"];
           response = "body{background:#111;color:#fff;font-family:'Inter',sans-serif}.card{border:1px solid #333;border-radius:12px}.btn{padding:8px 16px;background:blue;color:white}";
           responseHeaders["Content-Type"] = "text/css";
       } else if (type === 6) {
-          path = "src/utils.ts";
+          path = "ts_viewer/src/utils.ts";
           tags = ["TS", "ASSET"];
           response = "export const formatBytes = (bytes: number): string => {\n  if (bytes === 0) return '0 Bytes';\n  const k = 1024;\n  return (bytes / Math.pow(k, 2)).toFixed(2) + ' MB';\n};";
           responseHeaders["Content-Type"] = "text/typescript";
+      } else if (type === 7) {
+          path = "grpc_viewer/v1/UserSyncService/GetUserInfo";
+          tags = ["GRPC", "PROTOBUF"];
+          response = "BINARY_PROTOBUF_DATA_BASE64";
+          responseHeaders["Content-Type"] = "application/grpc";
+      } else if (type === 8) {
+          path = "rabbitmq_viewer/exchange/orders/publish";
+          tags = ["RABBITMQ", "AMQP"];
+          response = JSON.stringify({ order_id: "ORD-556", status: "PENDING", items: ["iMac", "Magic Mouse"] });
+          responseHeaders["Content-Type"] = "application/json";
+      } else if (type === 9) {
+          path = "kafka_viewer/topic/user-events/produce";
+          tags = ["KAFKA", "MESSAGE"];
+          response = JSON.stringify({ event: "USER_LOGIN", user_id: 887, ip: "127.0.0.1" });
+          responseHeaders["Content-Type"] = "application/json";
+      } else if (type === 10) {
+          path = "soap_viewer/Service.asmx";
+          tags = ["SOAP", "XML"];
+          response = '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><GetPriceResponse><Price>29.99</Price></GetPriceResponse></soap:Body></soap:Envelope>';
+          responseHeaders["Content-Type"] = "text/xml";
+      } else if (type === 11) {
+          path = "protobuf_viewer/binary/payload.pb";
+          tags = ["PROTOBUF", "BINARY"];
+          response = "MOCK_BINARY_PROTOBUF_STREAM";
+          responseHeaders["Content-Type"] = "application/x-protobuf";
       }
   } else if (randomDomain === "docs.system.com") {
       path = "schemas/config.xml";

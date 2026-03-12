@@ -41,7 +41,13 @@ export type SingleMode =
     | "video_viewer"
     | "js_viewer"
     | "css_viewer"
-    | "ts_viewer";
+    | "ts_viewer"
+    | "soap_viewer"
+    | "protobuf_viewer"
+    | "grpc_viewer"
+    | "rabbitmq_viewer"
+    | "kafka_viewer"
+    | "json_transformer";
 
 /**
  * Modes when multiple traffics are selected.

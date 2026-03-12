@@ -3,7 +3,7 @@ import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { ResponsePairData } from "../../ResponseTab";
 import { XMLView } from "../../TabRenderer/XMLView";
-import { FiCopy, FiCheck, FiWind } from "react-icons/fi";
+import { FiCopy, FiCheck, FiWind, FiLayers } from "react-icons/fi";
 
 const beautifyXML = (xml: string) => {
     if (!xml) return "";
@@ -19,7 +19,7 @@ const beautifyXML = (xml: string) => {
             indent += tab;
         }
     });
-    return formatted.substring(1, formatted.length-3);
+    return formatted.substring(1, formatted.length-3).trim();
 };
 
 export const XMLViewerMode = () => {
@@ -50,18 +50,28 @@ export const XMLViewerMode = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    if (!trafficId) return <Placeholder text="Select a request to view XML" />;
-    if (loading) return <Placeholder text="Formatting XML..." />;
+    if (!trafficId) return <Placeholder text="Select request for XML structure" />;
+    if (loading) return <Placeholder text="Beautifying XML..." />;
 
     const isXML = data?.content_type?.toLowerCase().includes('xml') || data?.body?.trim().startsWith('<');
 
     return (
         <div className="bg-[#0a0a0a] flex flex-col min-h-full h-full font-sans">
-            {/* Premium Toolbar */}
-            <div className="flex items-center justify-between px-6 py-3 bg-[#111] border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">XML Inspector</span>
+            <div className="flex items-center justify-between px-6 py-4 bg-[#111] border-b border-orange-500/10 shadow-2xl relative z-10">
+                <div className="flex items-center gap-4">
+                    <div className="relative group">
+                         <div className="absolute inset-0 bg-orange-500/10 blur-xl rounded-full scale-0 group-hover:scale-110 transition-transform"></div>
+                         <div className="w-10 h-10 rounded-xl bg-orange-600/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shadow-2xl relative z-10">
+                            <FiLayers size={20} />
+                        </div>
+                    </div>
+                    <div>
+                        <h2 className="text-sm font-black text-white tracking-tight uppercase italic">XML / SOAP Inspector</h2>
+                        <div className="flex items-center gap-2 mt-0.5">
+                             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Type: </span>
+                             <span className="text-[9px] font-mono text-orange-400/80 font-bold uppercase tracking-wider">{data?.content_type || 'application/xml'}</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -74,7 +84,7 @@ export const XMLViewerMode = () => {
                         }`}
                     >
                         <FiWind size={12} />
-                        {isFormatted ? 'Beauty Mode: ON' : 'Make it Beautiful'}
+                        {isFormatted ? 'BEAUTIFY: ACTIVE' : 'MAKE IT PRETTY'}
                     </button>
 
                     <button 
@@ -82,18 +92,20 @@ export const XMLViewerMode = () => {
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/50 border border-white/5 text-[10px] font-bold text-zinc-400 hover:text-white transition-all duration-300"
                     >
                         {copied ? <FiCheck className="text-emerald-500" size={12} /> : <FiCopy size={12} />}
-                        {copied ? 'Copy' : 'Copy'}
+                        {copied ? 'COPIED' : 'COPY'}
                     </button>
                 </div>
             </div>
 
-            <div className="flex-grow p-4">
+            <div className="flex-grow p-4 relative h-full">
                 {isXML ? (
-                    <XMLView data={displayXML} />
+                    <div className="h-full bg-[#050505] rounded-2xl border border-white/[0.03] overflow-hidden shadow-3xl">
+                        <XMLView data={displayXML} />
+                    </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 bg-zinc-900/10 rounded-2xl border border-zinc-800/50 m-4 italic">
-                         <div className="text-xs mb-1 font-bold uppercase tracking-widest opacity-30">Type Mismatch</div>
-                         <div className="text-[10px]">Not a standard XML document ({data?.content_type || 'Unknown Type'})</div>
+                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 bg-orange-500/5 rounded-2xl border border-orange-500/10 m-4 italic">
+                         <div className="text-xs mb-1 font-bold uppercase tracking-widest text-orange-500/40">XML Mismatch</div>
+                         <div className="text-[10px] text-zinc-600">This payload does not appear to be valid XML</div>
                     </div>
                 )}
             </div>
@@ -104,8 +116,12 @@ export const XMLViewerMode = () => {
 const Placeholder = ({ text }: { text: string }) => (
     <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a] font-sans">
         <div className="text-center">
-            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase">XML</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Structure Engine Standby</div>
+            <div className="w-20 h-20 bg-orange-600/5 rounded-3xl border border-orange-500/10 flex items-center justify-center text-orange-500 mx-auto mb-6 shadow-2xl relative">
+                <div className="absolute inset-0 bg-orange-500/5 blur-2xl rounded-full"></div>
+                <FiLayers size={40} className="relative z-10" />
+            </div>
+            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase text-orange-500">STRUCTURE</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">XML DOM Standby</div>
             <div className="text-xs italic">{text}</div>
         </div>
     </div>

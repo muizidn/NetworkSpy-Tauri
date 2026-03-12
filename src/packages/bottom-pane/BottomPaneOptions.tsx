@@ -76,6 +76,13 @@ export const BottomPaneOptions = () => {
       { id: "js_viewer", title: "JavaScript Viewer", onClick: () => setMode("js_viewer") },
       { id: "css_viewer", title: "CSS Viewer", onClick: () => setMode("css_viewer") },
       { id: "ts_viewer", title: "TypeScript Viewer", onClick: () => setMode("ts_viewer") },
+      { divider: true },
+      { id: "json_transformer", title: "JSON Transformer", onClick: () => setMode("json_transformer") },
+      { id: "soap_viewer", title: "SOAP Inspector", onClick: () => setMode("soap_viewer") },
+      { id: "protobuf_viewer", title: "Protobuf Decoder", onClick: () => setMode("protobuf_viewer") },
+      { id: "grpc_viewer", title: "gRPC Observer", onClick: () => setMode("grpc_viewer") },
+      { id: "rabbitmq_viewer", title: "RabbitMQ/AMQP", onClick: () => setMode("rabbitmq_viewer") },
+      { id: "kafka_viewer", title: "Kafka/Message", onClick: () => setMode("kafka_viewer") },
     ],
 
     multiple: [
@@ -92,14 +99,25 @@ export const BottomPaneOptions = () => {
     ],
   };
 
-  const allOptions = optionsBySelection[selectionType] || [];
+  interface ViewerOption {
+    id?: string;
+    title?: string;
+    onClick?: () => void;
+    divider?: boolean;
+  }
+
+  const allOptions: ViewerOption[] = optionsBySelection[selectionType] || [];
 
   const filteredAndSortedOptions = useMemo(() => {
     return allOptions
-      .filter(opt => opt.title.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter(opt => {
+        if (opt.divider) return !searchTerm; // Hide dividers when searching
+        return opt.title?.toLowerCase().includes(searchTerm.toLowerCase());
+      })
       .sort((a, b) => {
-        const aPinned = pinnedModes.includes(a.id);
-        const bPinned = pinnedModes.includes(b.id);
+        if (a.divider || b.divider) return 0;
+        const aPinned = pinnedModes.includes(a.id!);
+        const bPinned = pinnedModes.includes(b.id!);
         if (aPinned && !bPinned) return -1;
         if (!aPinned && bPinned) return 1;
         return 0;
@@ -122,8 +140,12 @@ export const BottomPaneOptions = () => {
 
       {/* Options List */}
       <div className="flex-1 flex items-center px-1 gap-1 overflow-x-auto no-scrollbar scroll-smooth h-full">
-        {filteredAndSortedOptions.map((opt) => {
-          const isPinned = pinnedModes.includes(opt.id);
+        {filteredAndSortedOptions.map((opt, idx) => {
+          if (opt.divider) {
+            return <div key={`divider-${idx}`} className="h-4 w-px bg-white/10 mx-1 shrink-0" />;
+          }
+
+          const isPinned = pinnedModes.includes(opt.id!);
           const isActive = currentMode === opt.id;
 
           return (
@@ -131,7 +153,7 @@ export const BottomPaneOptions = () => {
               key={opt.id}
               onClick={opt.onClick}
               className={twMerge(
-                "group relative flex items-center h-6 px-3 rounded-md transition-all duration-200 whitespace-nowrap text-[11px] font-medium",
+                "group relative flex items-center h-6 px-3 rounded-md transition-all duration-200 whitespace-nowrap text-[11px] font-medium shrink-0",
                 isActive
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
                   : "bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800/50"
@@ -139,7 +161,7 @@ export const BottomPaneOptions = () => {
             >
               {opt.title}
               <BsPinAngleFill
-                onClick={(e: React.MouseEvent) => togglePin(opt.id, e)}
+                onClick={(e: React.MouseEvent) => togglePin(opt.id!, e)}
                 className={twMerge(
                   "ml-2 cursor-pointer hidden group-hover:block transition-all duration-200",
                   isPinned ? "text-blue-300 scale-110" : "text-zinc-600 hover:text-zinc-100"

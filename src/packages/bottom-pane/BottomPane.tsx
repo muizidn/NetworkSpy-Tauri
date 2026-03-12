@@ -43,6 +43,12 @@ import { XMLViewerMode } from "./BottomPaneComponents/Single/XMLViewerMode";
 import { AudioViewerMode } from "./BottomPaneComponents/Single/AudioViewerMode";
 import { VideoViewerMode } from "./BottomPaneComponents/Single/VideoViewerMode";
 import { SourceViewerMode } from "./BottomPaneComponents/Single/SourceViewerMode";
+import { JSONTransformerMode } from "./BottomPaneComponents/Single/JSONTransformerMode";
+import { SOAPViewerMode } from "./BottomPaneComponents/Single/Protocols/SOAPViewerMode";
+import { ProtobufViewerMode } from "./BottomPaneComponents/Single/Protocols/ProtobufViewerMode";
+import { GRPCViewerMode } from "./BottomPaneComponents/Single/Protocols/GRPCViewerMode";
+import { RabbitMQViewerMode } from "./BottomPaneComponents/Single/Protocols/RabbitMQViewerMode";
+import { KafkaViewerMode } from "./BottomPaneComponents/Single/Protocols/KafkaViewerMode";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 
 export const BottomPane = () => {
@@ -199,6 +205,24 @@ const renderMode = (
 
     case "ts_viewer":
       return <SourceViewerMode language="typescript" title="TypeScript" />;
+
+    case "json_transformer":
+      return <JSONTransformerMode />;
+
+    case "soap_viewer":
+      return <SOAPViewerMode />;
+
+    case "protobuf_viewer":
+      return <ProtobufViewerMode />;
+
+    case "grpc_viewer":
+      return <GRPCViewerMode />;
+
+    case "rabbitmq_viewer":
+      return <RabbitMQViewerMode />;
+
+    case "kafka_viewer":
+      return <KafkaViewerMode />;
 
     default:
       return null;
