@@ -1,6 +1,25 @@
 import { useTrafficListContext } from "./context/TrafficList";
 import { twMerge } from "tailwind-merge";
 import { FiExternalLink, FiGlobe, FiClock, FiBox } from "react-icons/fi";
+import { useTagContext } from "@src/context/TagContext";
+
+const CustomTag = ({ tagName }: { tagName: string }) => {
+  const { tags } = useTagContext();
+  const tagModel = tags.find(t => t.tag === tagName);
+
+  return (
+    <div
+      className='px-2 py-0.5 rounded-full border border-current text-[10px] font-bold leading-none transition-colors cursor-default opacity-90'
+      style={{
+        color: tagModel?.color || '#60a5fa',
+        backgroundColor: tagModel?.bgColor || '#3b82f61a',
+        borderColor: `${tagModel?.color || '#60a5fa'}33`
+      }}
+    >
+      {tagName}
+    </div>
+  );
+};
 
 const UrlColorizer = ({ url }: { url: string }) => {
   if (!url) return null;
@@ -117,12 +136,7 @@ export const SelectionViewer = () => {
 
         {/* Custom Tags */}
         {tags.map((e, i) => (
-          <div
-            key={`tag-${i}`}
-            className='px-2 py-0.5 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-[10px] font-medium leading-none hover:bg-blue-500/10 transition-colors cursor-default'
-          >
-            {e}
-          </div>
+          <CustomTag key={i} tagName={e} />
         ))}
       </div>
     </div>

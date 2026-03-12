@@ -4,7 +4,8 @@
         "tags": [
             "AI",
             "OPENAI",
-            "PROMPT"
+            "PROMPT",
+            "TOOL-CALL"
         ],
         "url": "https://api.openai.com/v1/chat/completions",
         "client": "NetworkSpy-Client",
@@ -13,15 +14,16 @@
         "code": "200",
         "time": "1.2s",
         "duration": "1.2 KB",
-        "request": "{\n  \"model\": \"gpt-4-turbo\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a weather expert.\"},\n    {\"role\": \"user\", \"content\": \"What's the weather like in Tokyo?\"}\n  ],\n  \"temperature\": 0.7\n}",
-        "response": "{\n  \"id\": \"chatcmpl-123\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-4-turbo\",\n  \"choices\": [{\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"The weather in Tokyo is currently clear and sunny with a temperature of 22°C.\"\n    },\n    \"finish_reason\": \"stop\",\n    \"index\": 0\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 25,\n    \"completion_tokens\": 18,\n    \"total_tokens\": 43\n  }\n}"
+        "request": "{\n  \"model\": \"gpt-4-turbo\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a security analyst.\"},\n    {\"role\": \"user\", \"content\": \"Check if this JWT is safe: eyJhbGciOiJIUzI1NiJ9...\"},\n    {\"role\": \"assistant\", \"content\": \"I'll verify the signature and decode the payload.\", \"tool_calls\": [{\"id\": \"t1\", \"type\": \"function\", \"function\": {\"name\": \"decode_jwt\", \"arguments\": \"{\\\"token\\\": \\\"eyJhbGciOiJIUzI1NiJ9...\\\"}\"}}]}\n  ],\n  \"temperature\": 0.2\n}",
+        "response": "{\n  \"id\": \"chatcmpl-auth-99\",\n  \"object\": \"chat.completion\",\n  \"created\": 1677652288,\n  \"model\": \"gpt-4-turbo\",\n  \"choices\": [{\n    \"message\": {\n      \"role\": \"assistant\",\n      \"content\": \"The JWT uses a weak HS256 algorithm and the payload reveals administrative privileges (role: admin). However, the signature is valid for the provided secret.\"\n    },\n    \"finish_reason\": \"stop\",\n    \"index\": 0\n  }],\n  \"usage\": {\n    \"prompt_tokens\": 154,\n    \"completion_tokens\": 32,\n    \"total_tokens\": 186\n  }\n}"
     },
     {
         "id": "llm-stream-002",
         "tags": [
             "AI",
             "STREAMING",
-            "LLM"
+            "LLM",
+            "TOOL-CALL"
         ],
         "url": "https://api.openai.com/v1/chat/completions",
         "client": "NetworkSpy-Client",
@@ -30,8 +32,8 @@
         "code": "200",
         "time": "4.5s",
         "duration": "5.4 KB",
-        "request": "{\n  \"model\": \"gpt-4\",\n  \"messages\": [{\"role\": \"user\", \"content\": \"Write a poem about networking.\"}],\n  \"stream\": true\n}",
-        "response": "data: {\"id\":\"chatcmpl-456\",\"object\":\"chat.completion.chunk\",\"created\":1677652289,\"model\":\"gpt-4\",\"choices\":[{\"delta\":{\"content\":\"Packets\"},\"index\":0,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-456\",\"object\":\"chat.completion.chunk\",\"created\":1677652289,\"model\":\"gpt-4\",\"choices\":[{\"delta\":{\"content\":\" fly\"},\"index\":0,\"finish_reason\":null}]}\n\ndata: [DONE]"
+        "request": "{\n  \"model\": \"gpt-4\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a coding assistant.\"},\n    {\"role\": \"user\", \"content\": \"Investigate the crash in production.\"},\n    {\"role\": \"assistant\", \"content\": \"Checking logs...\", \"tool_calls\": [{\"id\": \"c1\", \"type\": \"function\", \"function\": {\"name\": \"get_logs\", \"arguments\": \"{}\"}}]}\n  ],\n  \"stream\": true\n}",
+        "response": "data: {\"choices\":[{\"delta\":{\"content\":\"Chunk 1: Initializing investigation... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 2: Analyzing traces... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 3: Found timeout... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 4: Checking config... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 5: Memory usage high... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 6: Garbage collection lag... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 7: Heap size exceeded... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 8: Suggesting optimization... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 9: Use -Xmx4g... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 10: Monitoring health... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 11: Latency improving... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 12: Errors decreasing... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 13: System stable... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 14: Finalizing report... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 15: Done... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 16: Additional info... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 17: Still streaming... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 18: Almost there... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 19: Last bit... \"}}]}\ndata: {\"choices\":[{\"delta\":{\"content\":\"Chunk 20: Finished!\"}}]}\ndata: [DONE]"
     },
     {
         "id": "sse-003",

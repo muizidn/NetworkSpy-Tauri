@@ -63,23 +63,23 @@ function randomPath(domain: string): string {
 }
 
 function generateJWT(payload = {}): string {
-    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, "");
-    const basePayload = {
-        sub: "1234567890",
-        name: "Mock User",
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600,
-        ...payload
-    };
-    const encodedPayload = btoa(JSON.stringify(basePayload)).replace(/=/g, "");
-    const signature = "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"; // Static mock signature
-    return `${header}.${encodedPayload}.${signature}`;
+  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, "");
+  const basePayload = {
+    sub: "1234567890",
+    name: "Mock User",
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    ...payload
+  };
+  const encodedPayload = btoa(JSON.stringify(basePayload)).replace(/=/g, "");
+  const signature = "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"; // Static mock signature
+  return `${header}.${encodedPayload}.${signature}`;
 }
 
 function generateEntry(): object {
   const domains = [
-    "google.com", "api.github.com", "api.openai.com", "api.authanalysis.com", 
-    "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com", 
+    "google.com", "api.github.com", "api.openai.com", "api.authanalysis.com",
+    "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com",
     "perf.myserver.com", "media.cdn.com", "docs.system.com", "data.raw.com"
   ];
   const randomDomain = domains[Math.floor(Math.random() * domains.length)];
@@ -95,19 +95,7 @@ function generateEntry(): object {
   let tags = randomTags();
   let responseHeaders: Record<string, string> = {};
 
-  if (randomDomain === "api.openai.com") {
-    method = "POST";
-    tags = ["AI", "OPENAI", Math.random() > 0.5 ? "STREAMING" : "PROMPT"];
-    request = JSON.stringify({
-      model: "gpt-4-turbo",
-      messages: [{ role: "system", content: "You are a helpful assistant." }, { role: "user", content: "Hello!" }],
-      stream: tags.includes("STREAMING")
-    }, null, 2);
-    response = tags.includes("STREAMING")
-      ? "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}"
-      : JSON.stringify({ choices: [{ message: { role: "assistant", content: "Hello! How can I help you?" } }] }, null, 2);
-    responseHeaders["Content-Type"] = "application/json";
-  } else if (randomDomain === "api.example.com") {
+  if (randomDomain === "api.example.com") {
     method = "GET";
     tags = ["SSE", "REALTIME"];
     request = "Accept: text/event-stream";
@@ -121,23 +109,59 @@ function generateEntry(): object {
     request = "Upgrade: websocket";
     response = "Switching Protocols";
   } else if (randomDomain === "api.openai.com") {
-        method = "POST";
-        tags = ["LLM", "AI", "OPENAI", "STREAM"];
-        path = "llm_streaming/v1/chat/completions";
-        const streamChunks = [
-            'data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4","choices":[{"index":0,"delta":{"role":"assistant","content":"Sure! "},"finish_reason":null}]}',
-            'data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"I "},"finish_reason":null}]}',
-            'data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"can "},"finish_reason":null}]}',
-            'data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4","choices":[{"index":0,"delta":{"content":"help."},"finish_reason":null}]}',
-            'data: [DONE]'
-        ];
-        request = JSON.stringify({
-            model: "gpt-4",
-            messages: [{ role: "user", content: "Can you help me?" }],
-            stream: true
-        }, null, 2);
-        response = streamChunks.join('\n');
-    } else if (randomDomain === "api.github.com") {
+    method = "POST";
+    tags = ["LLM", "AI", "OPENAI", "STREAM", "TOOL-CALL"];
+    path = "v1/chat/completions";
+    
+    // Create a long turn prompt with tool calls
+    const messages = [
+      { role: "system", content: "You are an expert coding assistant with access to various development tools." },
+      { role: "user", content: "I'm seeing a cryptic error in my production logs. Can you investigate?" },
+      { 
+        role: "assistant", 
+        content: "I'll start by reading the recent system logs to identify the error signature.",
+        tool_calls: [{ 
+          id: "call_99b1", 
+          type: "function", 
+          function: { name: "read_backend_logs", arguments: '{"lines": 50, "tail": true}' } 
+        }]
+      },
+      { 
+        role: "tool", 
+        tool_call_id: "call_99b1", 
+        content: "ERROR 2024-05-20 14:22:01 - Internal Server Error: ConnectionTimeout at src/db/Pool.ts:154\nDEBUG - Recycled 5 idle connections" 
+      },
+      {
+        role: "assistant",
+        content: "The error seems to be a connection timeout in the database pool. Let me check the configuration file for the database.",
+        tool_calls: [{
+          id: "call_a2c3",
+          type: "function",
+          function: { name: "search_codebase", arguments: '{"query": "DB_CONFIG", "extension": "ts"}' }
+        }]
+      },
+      {
+        role: "tool",
+        tool_call_id: "call_a2c3",
+        content: "Found match in src/config/database.ts:32\n32: const DB_CONFIG = { maxConnections: 5, timeout: 1000 };"
+      },
+      { role: "user", content: "Ah, the timeout is only 1 second. That's definitely too low for our high-latency backup region. Can you suggest a fix?" }
+    ];
+
+    const streamChunks = [];
+    for (let i = 1; i <= 20; i++) {
+      streamChunks.push(`data: {"id":"chatcmpl-complex-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-4-turbo","choices":[{"index":0,"delta":{"content":"[RECONSTRUCTION CHUNK ${i}] Based on the logs and your high-latency region context, I recommend increasing the 'timeout' to at least 5000ms and 'maxConnections' to 20 to handle burst traffic. "},"finish_reason":null}]}`);
+    }
+    streamChunks.push('data: [DONE]');
+
+    request = JSON.stringify({
+      model: "gpt-4-turbo",
+      messages,
+      stream: true,
+      temperature: 0.7
+    }, null, 2);
+    response = streamChunks.join('\n');
+  } else if (randomDomain === "api.github.com") {
     method = "POST";
     tags = ["GRAPHQL", "API", "REAL-WORLD"];
 
@@ -235,110 +259,110 @@ fragment UserFields on User {
     // Ensure request headers include json
     // Note: in generateEntry, these will be merged into headers
   } else if (randomDomain === "api.authanalysis.com") {
-      const scenario = Math.floor(Math.random() * 3);
-      tags = ["AUTH", "IDENTITY", "SECURITY"];
-      if (scenario === 0) {
-          method = "GET";
-          path = "auth_analysis_viewer/api/v1/secure-data";
-          const jwt = generateJWT({ scope: "read:all", user: "analyst" });
-          request = `Authorization: Bearer ${jwt}`;
-          response = JSON.stringify({ data: "Sensitive information", access: "GRANTED" });
-      } else if (scenario === 1) {
-          method = "POST";
-          path = "auth_analysis_viewer/api/v1/legacy-login";
-          const basic = btoa("admin:password123");
-          request = `Authorization: Basic ${basic}`;
-          response = JSON.stringify({ status: "success", profile: { name: "Admin" } });
-      } else {
-          method = "GET";
-          path = "auth_analysis_viewer/api/v1/sessioninfo";
-          request = "Cookie: session_id=spy_778899; analytics_opt_out=true";
-          response = JSON.stringify({ active_session: true, user_id: 101 });
-      }
-  } else if (randomDomain === "perf.myserver.com") {
+    const scenario = Math.floor(Math.random() * 3);
+    tags = ["AUTH", "IDENTITY", "SECURITY"];
+    if (scenario === 0) {
       method = "GET";
-      path = "performance_viewer/api/v1/metrics";
-      tags = ["PERFORMANCE", "METRICS"];
-      request = "{}";
-      response = JSON.stringify({ status: "healthy", latency: "high" });
+      path = "auth_analysis_viewer/api/v1/secure-data";
+      const jwt = generateJWT({ scope: "read:all", user: "analyst" });
+      request = `Authorization: Bearer ${jwt}`;
+      response = JSON.stringify({ data: "Sensitive information", access: "GRANTED" });
+    } else if (scenario === 1) {
+      method = "POST";
+      path = "auth_analysis_viewer/api/v1/legacy-login";
+      const basic = btoa("admin:password123");
+      request = `Authorization: Basic ${basic}`;
+      response = JSON.stringify({ status: "success", profile: { name: "Admin" } });
+    } else {
+      method = "GET";
+      path = "auth_analysis_viewer/api/v1/sessioninfo";
+      request = "Cookie: session_id=spy_778899; analytics_opt_out=true";
+      response = JSON.stringify({ active_session: true, user_id: 101 });
+    }
+  } else if (randomDomain === "perf.myserver.com") {
+    method = "GET";
+    path = "performance_viewer/api/v1/metrics";
+    tags = ["PERFORMANCE", "METRICS"];
+    request = "{}";
+    response = JSON.stringify({ status: "healthy", latency: "high" });
   } else if (randomDomain === "media.cdn.com") {
-      const type = Math.floor(Math.random() * 12);
-      if (type === 0) {
-          path = "image_viewer/assets/hero-bg.png";
-          tags = ["IMAGE", "STATIC"];
-          response = "MOCK_IMAGE_DATA_BASE64_PLACEHOLDER";
-          responseHeaders["Content-Type"] = "image/png";
-      } else if (type === 1) {
-          path = "audio_viewer/stream/podcast-ep1.mp3";
-          tags = ["AUDIO", "MEDIA"];
-          response = "MOCK_AUDIO_DATA_BLOB";
-          responseHeaders["Content-Type"] = "audio/mpeg";
-      } else if (type === 2) {
-          path = "video_viewer/video/live/index.m3u8";
-          tags = ["VIDEO", "HLS", "STREAM"];
-          response = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:10.0,\nchunk0.ts\n#EXTINF:10.0,\nchunk1.ts";
-          responseHeaders["Content-Type"] = "application/x-mpegURL";
-      } else if (type === 3) {
-          path = "html_viewer/web/landing.html";
-          tags = ["HTML", "BROWSER"];
-          response = "<!DOCTYPE html><html><body style='background:#111;color:#eee'><h1>Mock Page</h1><p>This is a rendered HTML preview.</p></body></html>";
-          responseHeaders["Content-Type"] = "text/html";
-      } else if (type === 4) {
-          path = "js_viewer/scripts/main.min.js";
-          tags = ["JS", "ASSET"];
-          response = "window.onload = function() { console.log('NetworkSpy Ready'); alert('Script Loaded'); };";
-          responseHeaders["Content-Type"] = "application/javascript";
-      } else if (type === 5) {
-          path = "css_viewer/styles/theme.css";
-          tags = ["CSS", "ASSET"];
-          response = "body{background:#111;color:#fff;font-family:'Inter',sans-serif}.card{border:1px solid #333;border-radius:12px}.btn{padding:8px 16px;background:blue;color:white}";
-          responseHeaders["Content-Type"] = "text/css";
-      } else if (type === 6) {
-          path = "ts_viewer/src/utils.ts";
-          tags = ["TS", "ASSET"];
-          response = "export const formatBytes = (bytes: number): string => {\n  if (bytes === 0) return '0 Bytes';\n  const k = 1024;\n  return (bytes / Math.pow(k, 2)).toFixed(2) + ' MB';\n};";
-          responseHeaders["Content-Type"] = "text/typescript";
-      } else if (type === 7) {
-          path = "grpc_viewer/v1/UserSyncService/GetUserInfo";
-          tags = ["GRPC", "PROTOBUF"];
-          response = "BINARY_PROTOBUF_DATA_BASE64";
-          responseHeaders["Content-Type"] = "application/grpc";
-      } else if (type === 8) {
-          path = "rabbitmq_viewer/exchange/orders/publish";
-          tags = ["RABBITMQ", "AMQP"];
-          response = JSON.stringify({ order_id: "ORD-556", status: "PENDING", items: ["iMac", "Magic Mouse"] });
-          responseHeaders["Content-Type"] = "application/json";
-      } else if (type === 9) {
-          path = "kafka_viewer/topic/user-events/produce";
-          tags = ["KAFKA", "MESSAGE"];
-          response = JSON.stringify({ event: "USER_LOGIN", user_id: 887, ip: "127.0.0.1" });
-          responseHeaders["Content-Type"] = "application/json";
-      } else if (type === 10) {
-          path = "soap_viewer/Service.asmx";
-          tags = ["SOAP", "XML"];
-          response = '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><GetPriceResponse><Price>29.99</Price></GetPriceResponse></soap:Body></soap:Envelope>';
-          responseHeaders["Content-Type"] = "text/xml";
-      } else if (type === 11) {
-          path = "protobuf_viewer/binary/payload.pb";
-          tags = ["PROTOBUF", "BINARY"];
-          response = "MOCK_BINARY_PROTOBUF_STREAM";
-          responseHeaders["Content-Type"] = "application/x-protobuf";
-      }
+    const type = Math.floor(Math.random() * 12);
+    if (type === 0) {
+      path = "image_viewer/assets/hero-bg.png";
+      tags = ["IMAGE", "STATIC"];
+      response = "MOCK_IMAGE_DATA_BASE64_PLACEHOLDER";
+      responseHeaders["Content-Type"] = "image/png";
+    } else if (type === 1) {
+      path = "audio_viewer/stream/podcast-ep1.mp3";
+      tags = ["AUDIO", "MEDIA"];
+      response = "MOCK_AUDIO_DATA_BLOB";
+      responseHeaders["Content-Type"] = "audio/mpeg";
+    } else if (type === 2) {
+      path = "video_viewer/video/live/index.m3u8";
+      tags = ["VIDEO", "HLS", "STREAM"];
+      response = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:10.0,\nchunk0.ts\n#EXTINF:10.0,\nchunk1.ts";
+      responseHeaders["Content-Type"] = "application/x-mpegURL";
+    } else if (type === 3) {
+      path = "html_viewer/web/landing.html";
+      tags = ["HTML", "BROWSER"];
+      response = "<!DOCTYPE html><html><body style='background:#111;color:#eee'><h1>Mock Page</h1><p>This is a rendered HTML preview.</p></body></html>";
+      responseHeaders["Content-Type"] = "text/html";
+    } else if (type === 4) {
+      path = "js_viewer/scripts/main.min.js";
+      tags = ["JS", "ASSET"];
+      response = "window.onload = function() { console.log('NetworkSpy Ready'); alert('Script Loaded'); };";
+      responseHeaders["Content-Type"] = "application/javascript";
+    } else if (type === 5) {
+      path = "css_viewer/styles/theme.css";
+      tags = ["CSS", "ASSET"];
+      response = "body{background:#111;color:#fff;font-family:'Inter',sans-serif}.card{border:1px solid #333;border-radius:12px}.btn{padding:8px 16px;background:blue;color:white}";
+      responseHeaders["Content-Type"] = "text/css";
+    } else if (type === 6) {
+      path = "ts_viewer/src/utils.ts";
+      tags = ["TS", "ASSET"];
+      response = "export const formatBytes = (bytes: number): string => {\n  if (bytes === 0) return '0 Bytes';\n  const k = 1024;\n  return (bytes / Math.pow(k, 2)).toFixed(2) + ' MB';\n};";
+      responseHeaders["Content-Type"] = "text/typescript";
+    } else if (type === 7) {
+      path = "grpc_viewer/v1/UserSyncService/GetUserInfo";
+      tags = ["GRPC", "PROTOBUF"];
+      response = "BINARY_PROTOBUF_DATA_BASE64";
+      responseHeaders["Content-Type"] = "application/grpc";
+    } else if (type === 8) {
+      path = "rabbitmq_viewer/exchange/orders/publish";
+      tags = ["RABBITMQ", "AMQP"];
+      response = JSON.stringify({ order_id: "ORD-556", status: "PENDING", items: ["iMac", "Magic Mouse"] });
+      responseHeaders["Content-Type"] = "application/json";
+    } else if (type === 9) {
+      path = "kafka_viewer/topic/user-events/produce";
+      tags = ["KAFKA", "MESSAGE"];
+      response = JSON.stringify({ event: "USER_LOGIN", user_id: 887, ip: "127.0.0.1" });
+      responseHeaders["Content-Type"] = "application/json";
+    } else if (type === 10) {
+      path = "soap_viewer/Service.asmx";
+      tags = ["SOAP", "XML"];
+      response = '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><soap:Body><GetPriceResponse><Price>29.99</Price></GetPriceResponse></soap:Body></soap:Envelope>';
+      responseHeaders["Content-Type"] = "text/xml";
+    } else if (type === 11) {
+      path = "protobuf_viewer/binary/payload.pb";
+      tags = ["PROTOBUF", "BINARY"];
+      response = "MOCK_BINARY_PROTOBUF_STREAM";
+      responseHeaders["Content-Type"] = "application/x-protobuf";
+    }
   } else if (randomDomain === "docs.system.com") {
-      path = "schemas/config.xml";
-      tags = ["XML", "CONFIG"];
-      response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n  <config enabled=\"true\">\n    <timeout>3000</timeout>\n    <endpoint>https://api.internal</endpoint>\n  </config>\n</root>";
-      responseHeaders["Content-Type"] = "application/xml";
+    path = "schemas/config.xml";
+    tags = ["XML", "CONFIG"];
+    response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n  <config enabled=\"true\">\n    <timeout>3000</timeout>\n    <endpoint>https://api.internal</endpoint>\n  </config>\n</root>";
+    responseHeaders["Content-Type"] = "application/xml";
   } else if (randomDomain === "data.raw.com") {
-      path = "v1/binary-stream";
-      tags = ["HEX", "BINARY"];
-      response = Array.from({length: 32}, () => Math.floor(Math.random()*256).toString(16).padStart(2, '0')).join('');
-      responseHeaders["Content-Type"] = "application/octet-stream";
+    path = "v1/binary-stream";
+    tags = ["HEX", "BINARY"];
+    response = Array.from({ length: 32 }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+    responseHeaders["Content-Type"] = "application/octet-stream";
   }
 
   return {
     id: String(Math.floor(Math.random() * 9000000000000000000) + 1000000000000000000),
-    tags,
+    tags: [],
     url: `${randomDomain.includes('socket') ? 'wss' : 'https'}://${randomDomain}:${port}/${path}`,
     client: ["Google Map", "Weather App", "Video Streaming", "Social Media App"][Math.floor(Math.random() * 4)],
     method,
@@ -349,22 +373,22 @@ fragment UserFields on User {
     request,
     response,
     headers: {
-        "Authorization": randomDomain === "api.authanalysis.com" && request.includes('Authorization') 
-            ? request.split(': ')[1] 
-            : undefined,
-        "Cookie": randomDomain === "api.authanalysis.com" && request.startsWith('Cookie')
-            ? request.split(': ')[1]
-            : undefined,
-        "X-Debug-JWT": generateJWT({ mode: "debug_stream" }),
-        "Content-Type": (randomDomain === "api.github.com" || randomDomain === "api.openai.com") ? "application/json" : undefined
+      "Authorization": randomDomain === "api.authanalysis.com" && request.includes('Authorization')
+        ? request.split(': ')[1]
+        : undefined,
+      "Cookie": randomDomain === "api.authanalysis.com" && request.startsWith('Cookie')
+        ? request.split(': ')[1]
+        : undefined,
+      "X-Debug-JWT": generateJWT({ mode: "debug_stream" }),
+      "Content-Type": (randomDomain === "api.github.com" || randomDomain === "api.openai.com") ? "application/json" : undefined
     },
     responseHeaders,
     performance: {
-        dns: Math.floor(Math.random() * 50) + 5,
-        tcp: Math.floor(Math.random() * 100) + 10,
-        tls: Math.floor(Math.random() * 150) + 20,
-        ttfb: Math.floor(Math.random() * 500) + 50,
-        download: Math.floor(Math.random() * 200) + 10
+      dns: Math.floor(Math.random() * 50) + 5,
+      tcp: Math.floor(Math.random() * 100) + 10,
+      tls: Math.floor(Math.random() * 150) + 20,
+      ttfb: Math.floor(Math.random() * 500) + 50,
+      download: Math.floor(Math.random() * 200) + 10
     }
   };
 }

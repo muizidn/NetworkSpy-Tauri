@@ -3,7 +3,7 @@ import SplitPane, { Pane, SashContent } from "split-pane-react";
 
 import { TauriEnvProvider, useAppProvider } from "@src/packages/app-env";
 import { TagProvider, useTagContext, TagModel } from "@src/context/TagContext";
-import { isTrafficMatch } from "@src/utils/tagMatcher";
+import { syncTrafficMatch, asyncTrafficMatch } from "@src/utils/tagMatcher";
 import { Traffic } from "../../models/Traffic";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
 import { Header } from "../../packages/header/Header";
@@ -93,12 +93,12 @@ const Content = () => {
 
         // Tier 1: Synchronous Tagging (Max 10 active tags)
         const syncTags = tags
-          .filter((t: TagModel) => t.enabled && t.isSync && isTrafficMatch({ uri: traffic.uri, method: traffic.method }, t))
+          .filter((t: TagModel) => t.enabled && t.isSync && syncTrafficMatch({ uri: traffic.uri, method: traffic.method }, t))
           .map((t: TagModel) => t.tag);
 
         const listItem: TrafficItemMap = {
           id: traffic.id,
-          tags: syncTags.length > 0 ? syncTags : ["UNTAGGED"],
+          tags: syncTags.length > 0 ? syncTags : [],
           url: traffic.uri || "-",
           client: "Local",
           method: traffic.method,
@@ -112,18 +112,27 @@ const Content = () => {
         };
 
         // Tier 2: Asynchronous Tagging (Deferred matching)
-        const asyncTagRules = tags.filter((t: TagModel) => t.enabled && !t.isSync);
-        if (asyncTagRules.length > 0) {
-          setTimeout(() => {
-            const asyncTags = asyncTagRules
-              .filter((t: TagModel) => isTrafficMatch({ uri: traffic.uri, method: traffic.method }, t))
-              .map((t: TagModel) => t.tag);
+        const asyncRules = tags.filter((t: TagModel) => t.enabled && !t.isSync);
+        if (asyncRules.length > 0) {
+          setTimeout(async () => {
+            const matchResults = await Promise.all(
+              asyncRules.map(async (rule) => {
+                const isMatch = await asyncTrafficMatch(
+                  { id: traffic.id, uri: traffic.uri, method: traffic.method },
+                  rule,
+                  provider
+                );
+                return isMatch ? rule.tag : null;
+              })
+            );
+
+            const asyncTags = matchResults.filter((tag): tag is string => tag !== null);
 
             if (asyncTags.length > 0) {
               setTrafficList(current => current.map(item => {
                 if (item.id === traffic.id) {
                   const existingTags = (item.tags as string[]) || [];
-                  const mergedTags = Array.from(new Set([...existingTags.filter(t => t !== "UNTAGGED"), ...asyncTags]));
+                  const mergedTags = Array.from(new Set([...existingTags, ...asyncTags]));
                   return { ...item, tags: mergedTags };
                 }
                 return item;
