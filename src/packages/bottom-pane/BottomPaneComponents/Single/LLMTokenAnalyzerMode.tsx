@@ -27,6 +27,8 @@ export const LLMTokenAnalyzerMode = () => {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"input" | "output">("output");
   const [encodingName, setEncodingName] = useState<"cl100k_base" | "p50k_base" | "r50k_base">("cl100k_base");
+  const [inputChoiceIndex, setInputChoiceIndex] = useState(0);
+  const [outputChoiceIndex, setOutputChoiceIndex] = useState(0);
   
   useEffect(() => {
     if (!selected) {
@@ -35,6 +37,8 @@ export const LLMTokenAnalyzerMode = () => {
       return;
     }
     setLoading(true);
+    setInputChoiceIndex(0);
+    setOutputChoiceIndex(0);
     
     Promise.all([
         provider.getRequestPairData(String(selected.id)).catch(() => null),
@@ -48,24 +52,45 @@ export const LLMTokenAnalyzerMode = () => {
     }).finally(() => setLoading(false));
   }, [selected, provider]);
 
-  const extractText = (data: RequestPairData | null) => {
+  const extractText = (data: RequestPairData | null, type: 'input' | 'output') => {
     if (!data?.body) return "";
     try {
         const parsed = JSON.parse(data.body);
+        const index = type === 'input' ? inputChoiceIndex : outputChoiceIndex;
+
         // Response patterns
-        if (parsed.choices?.[0]?.message?.content) return parsed.choices[0].message.content;
-        if (parsed.choices?.[0]?.text) return parsed.choices[0].text;
-        // Request patterns
-        if (parsed.messages && Array.isArray(parsed.messages)) {
-            return parsed.messages.map((m: any) => `${m.role}: ${m.content}`).join("\n\n");
+        if (type === 'output') {
+            const choices = parsed.choices || [];
+            const choice = choices[index] || choices[0];
+            const content = choice?.message?.content || choice?.text || parsed.content || "";
+            
+            if (Array.isArray(content)) {
+                return content.map((p: any) => p.text || "").join("\n");
+            }
+            return content;
         }
-        if (parsed.prompt) return parsed.prompt;
+
+        // Request patterns (Prompt)
+        if (type === 'input') {
+            if (parsed.messages && Array.isArray(parsed.messages)) {
+                return parsed.messages.map((m: any) => {
+                    let contentStr = "";
+                    if (typeof m.content === 'string') {
+                        contentStr = m.content;
+                    } else if (Array.isArray(m.content)) {
+                        contentStr = m.content.map((p: any) => p.text || "").join("\n");
+                    }
+                    return `${m.role.toUpperCase()}:\n${contentStr}`;
+                }).join("\n\n");
+            }
+            if (parsed.prompt) return parsed.prompt;
+        }
     } catch(e) {}
     return data.body;
   };
 
-  const inputText = useMemo(() => extractText(inputData), [inputData]);
-  const outputText = useMemo(() => extractText(outputData), [outputData]);
+  const inputText = useMemo(() => extractText(inputData, 'input'), [inputData, inputChoiceIndex]);
+  const outputText = useMemo(() => extractText(outputData, 'output'), [outputData, outputChoiceIndex]);
 
   const enc = useMemo(() => getEncoding(encodingName), [encodingName]);
   
@@ -139,6 +164,35 @@ export const LLMTokenAnalyzerMode = () => {
                 Output ({outputAnalysis.count})
             </button>
           </div>
+
+          {viewMode === "output" && (
+              <div className="flex bg-zinc-900 rounded-lg p-1 border border-zinc-800">
+                  {(() => {
+                      const choiceCount = (() => {
+                          if (!outputData?.body) return 1;
+                          try {
+                              const parsed = JSON.parse(outputData.body);
+                              return parsed.choices?.length || 1;
+                          } catch(e) { return 1; }
+                      })();
+                      
+                      if (choiceCount <= 1) return null;
+
+                      return Array.from({ length: choiceCount }).map((_, n) => (
+                          <button 
+                            key={n}
+                            onClick={() => setOutputChoiceIndex(n)}
+                            className={twMerge(
+                                "px-4 py-2 rounded text-[11px] font-bold transition-all",
+                                outputChoiceIndex === n ? "bg-zinc-700 text-white shadow-md" : "text-zinc-600 hover:text-zinc-500"
+                            )}
+                          >
+                              Choice {n + 1}
+                          </button>
+                      ));
+                  })()}
+              </div>
+          )}
         </div>
 
         <div className="flex items-center gap-6">

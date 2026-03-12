@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { FiZap, FiSettings, FiActivity, FiTerminal, FiDatabase, FiLayers } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
@@ -21,6 +21,7 @@ export const LLMStreamingMode = () => {
   const [accumulatedText, setAccumulatedText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null);
+  const [targetChoiceIndex, setTargetChoiceIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(0);
 
@@ -45,7 +46,18 @@ export const LLMStreamingMode = () => {
       } else {
         try {
           const parsed = JSON.parse(cleanData);
-          content = parsed.choices?.[0]?.delta?.content || parsed.content || "";
+          const choice = parsed.choices?.[targetChoiceIndex] || parsed.choices?.[0];
+          const delta = choice?.delta;
+          
+          if (delta) {
+             if (typeof delta.content === 'string') {
+                 content = delta.content;
+             } else if (Array.isArray(delta.content)) {
+                 content = delta.content.map((p: any) => p.text || "").join("");
+             } else if (delta.content === null) {
+                 content = "";
+             }
+          }
         } catch (e) {
           content = cleanData;
         }
@@ -75,7 +87,25 @@ export const LLMStreamingMode = () => {
         cleanup();
         setIsStreaming(false);
     };
-  }, [selected, provider]);
+  }, [selected, provider, targetChoiceIndex]);
+
+  const choiceCount = useMemo(() => {
+    let max = 1;
+    chunks.forEach(c => {
+        try {
+            const clean = c.data.replace(/^data:\s*/, '').trim();
+            if (clean !== '[DONE]') {
+                const parsed = JSON.parse(clean);
+                if (parsed.choices) {
+                    parsed.choices.forEach((ch: any) => {
+                        if (ch.index + 1 > max) max = ch.index + 1;
+                    });
+                }
+            }
+        } catch(e) {}
+    });
+    return max;
+  }, [chunks]);
 
   if (!selected) return <div className="h-full flex items-center justify-center text-zinc-500 italic">Select a stream to inspect</div>;
 
@@ -104,6 +134,24 @@ export const LLMStreamingMode = () => {
         </div>
 
         <div className="flex gap-2">
+            {choiceCount > 1 && (
+                <div className="flex bg-black/40 rounded-lg p-1 border border-zinc-800 mr-2">
+                    {Array.from({ length: choiceCount }).map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => {
+                                setTargetChoiceIndex(idx);
+                            }}
+                            className={twMerge(
+                                "px-4 py-2 rounded text-[11px] font-bold transition-all",
+                                targetChoiceIndex === idx ? "bg-amber-600 text-white shadow-lg" : "text-zinc-600 hover:text-zinc-400"
+                            )}
+                        >
+                            Choice {idx + 1}
+                        </button>
+                    ))}
+                </div>
+            )}
            <div className="flex flex-col items-end px-3 py-1 bg-black/20 rounded-md border border-zinc-800/50">
               <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Event Count</span>
               <span className="text-xs font-mono text-blue-400 font-bold">{chunks.length}</span>

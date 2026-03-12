@@ -5,18 +5,20 @@ import { RequestPairData } from "../../RequestTab";
 import { twMerge } from "tailwind-merge";
 import { FiTerminal, FiBox, FiCpu, FiUser, FiInfo } from "react-icons/fi";
 
-interface LLMData {
-  messages?: {
-    role: string;
-    content: string | null;
-    tool_calls?: {
-      id: string;
-      type: string;
-      function: { name: string; arguments: string }
-    }[];
-    tool_call_id?: string;
-    name?: string;
+interface Message {
+  role: string;
+  content: string | any[] | null;
+  tool_calls?: {
+    id: string;
+    type: string;
+    function: { name: string; arguments: string }
   }[];
+  tool_call_id?: string;
+  name?: string;
+}
+
+interface LLMData {
+  messages?: Message[];
   prompt?: string;
   model: string;
   temperature?: number;
@@ -76,6 +78,37 @@ export const LLMPromptMode = () => {
     }
     return null;
   }, [data]);
+
+  const renderContent = (content: any) => {
+    if (typeof content === 'string') return content;
+    if (Array.isArray(content)) {
+      return (
+        <div className="flex flex-col gap-3">
+          {content.map((part, idx) => {
+            if (part.type === 'text') {
+              return <div key={idx} className="whitespace-pre-wrap">{part.text}</div>;
+            }
+            if (part.type === 'image_url') {
+              return (
+                <div key={idx} className="relative group overflow-hidden rounded-lg border border-white/10 bg-black/40">
+                  <img 
+                    src={part.image_url.url} 
+                    alt="Prompt context" 
+                    className="max-w-full h-auto max-h-64 object-contain transition-transform group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1 text-[8px] font-mono text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    IMAGE: {part.image_url.url.substring(0, 50)}...
+                  </div>
+                </div>
+              );
+            }
+            return <div key={idx} className="text-zinc-500 italic text-xs">[{part.type} content block]</div>;
+          })}
+        </div>
+      );
+    }
+    return String(content || "");
+  };
 
   if (!selected) return <Placeholder text="Select a request to view LLM details" />;
   if (loading) return <Placeholder text="Analyzing prompt data..." />;
@@ -139,7 +172,7 @@ export const LLMPromptMode = () => {
                         ? 'bg-amber-950/20 text-amber-500 border-amber-900/30 font-mono text-[11px]'
                         : 'bg-zinc-900 text-zinc-200 border-zinc-800 rounded-tl-none'
                 )}>
-                  {msg.content}
+                  {renderContent(msg.content)}
                 </div>
               )}
 

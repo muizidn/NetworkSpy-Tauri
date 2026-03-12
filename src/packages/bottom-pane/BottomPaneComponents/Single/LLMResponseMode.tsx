@@ -11,18 +11,20 @@ export const LLMResponseMode = () => {
   const selected = selections.firstSelected;
   const [data, setData] = useState<RequestPairData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [choiceIndex, setChoiceIndex] = useState(0);
 
   useEffect(() => {
     if (!selected) {
-      setData(null); // Clear data when no selection
+      setData(null); 
       return;
     }
     setLoading(true);
+    setChoiceIndex(0); // Reset for new traffic
     provider.getResponsePairData(String(selected.id))
       .then(res => setData(res))
       .catch(error => {
         console.error("Failed to fetch response pair data:", error);
-        setData(null); // Clear data on error
+        setData(null); 
       })
       .finally(() => setLoading(false));
   }, [selected, provider]);
@@ -31,28 +33,61 @@ export const LLMResponseMode = () => {
     if (!data?.body) return null;
     try {
       const parsed = JSON.parse(data.body);
-      const content = parsed.choices?.[0]?.message?.content || parsed.choices?.[0]?.text || parsed.content || "";
+      
+      const choices = parsed.choices || [];
+      const choice = choices[choiceIndex] || choices[0] || {};
+      
+      const content = choice.message?.content || choice.text || parsed.content || "";
       const model = parsed.model || "unknown-model";
       const usage = parsed.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-      const finishReason = parsed.choices?.[0]?.finish_reason || "unknown";
+      const finishReason = choice.finish_reason || "unknown";
 
-      return { content, model, usage, finishReason, raw: parsed };
+      return { content, model, usage, finishReason, raw: parsed, choiceCount: choices.length };
     } catch (e) {
       return { 
         content: data.body, 
         model: "raw-data", 
         usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
         finishReason: "n/a",
-        raw: null 
+        raw: null,
+        choiceCount: 0
       };
     }
-  }, [data]);
+  }, [data, choiceIndex]);
+
+  const renderContent = (content: any) => {
+    if (typeof content === 'string') return content;
+    if (Array.isArray(content)) {
+      return (
+        <div className="flex flex-col gap-4">
+          {content.map((part, idx) => {
+            if (part.type === 'text') {
+              return <div key={idx} className="whitespace-pre-wrap">{part.text}</div>;
+            }
+            if (part.type === 'image_url') {
+                return (
+                  <div key={idx} className="relative group overflow-hidden rounded-xl border border-white/10 bg-black/40 p-2">
+                    <img 
+                      src={part.image_url.url} 
+                      alt="Response context" 
+                      className="max-w-full h-auto max-h-96 object-contain rounded-lg"
+                    />
+                  </div>
+                );
+            }
+            return <div key={idx} className="text-zinc-500 italic text-xs">[{part.type} content block]</div>;
+          })}
+        </div>
+      );
+    }
+    return String(content || "");
+  };
 
   if (!selected) return <Placeholder text="Select a response to view LLM details" />;
   if (loading) return <Placeholder text="Fetching AI response data..." />;
   if (!responseInfo) return <Placeholder text="No valid LLM response body found" icon={<FiInfo size={32} />} />;
 
-  const { content, model, usage, finishReason } = responseInfo;
+  const { content, model, usage, finishReason, choiceCount } = responseInfo;
 
   return (
     <div className="flex flex-col h-full bg-[#15181a] text-zinc-300 overflow-hidden select-none">
@@ -78,11 +113,27 @@ export const LLMResponseMode = () => {
           </div>
         </div>
 
-        <div className="flex gap-3">
-           <div className="flex flex-col items-end">
+        <div className="flex items-center gap-6">
+          {choiceCount > 1 && (
+            <div className="flex bg-black/40 rounded-lg p-1 border border-zinc-800">
+                {Array.from({ length: choiceCount }).map((_, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => setChoiceIndex(idx)}
+                        className={twMerge(
+                            "px-4 py-2 rounded text-[11px] font-bold transition-all",
+                            choiceIndex === idx ? "bg-blue-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                        )}
+                    >
+                        Choice {idx + 1}
+                    </button>
+                ))}
+            </div>
+          )}
+          <div className="flex flex-col items-end border-l border-zinc-800 pl-6">
               <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-tighter">Total Usage</span>
               <span className="text-sm font-mono text-blue-400 font-bold">{usage.total_tokens} tokens</span>
-           </div>
+          </div>
         </div>
       </div>
 
@@ -122,7 +173,8 @@ export const LLMResponseMode = () => {
               <div className="space-y-1">
                  <MetaItem label="Model ID" value={model} />
                  <MetaItem label="Finish Reason" value={finishReason} />
-                 <MetaItem label="Token/s" value={(usage.total_tokens / 1.5).toFixed(1)} />
+                 <MetaItem label="Choices" value={choiceCount.toString()} />
+                 <MetaItem label="Active Choice" value={`Choice ${choiceIndex + 1}`} />
               </div>
             </div>
 
@@ -140,14 +192,14 @@ export const LLMResponseMode = () => {
         <div className="w-[70%] bg-[#111314] flex flex-col">
           <div className="px-6 py-3 bg-zinc-900/30 border-b border-zinc-800 text-[10px] uppercase font-bold text-zinc-500 tracking-[0.2em] flex items-center justify-between">
             <span>Result Content</span>
-            <span className="font-normal normal-case text-zinc-700 italic">assistant message • stop reason: {finishReason}</span>
+            <span className="font-normal normal-case text-zinc-700 italic">assistant message • choice: {choiceIndex + 1} • {finishReason}</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
             <div className="max-w-2xl mx-auto space-y-4">
                {/* Content Rendering */}
-               <div className="text-lg leading-relaxed text-zinc-200 font-serif whitespace-pre-wrap">
-                  {content}
+               <div className="text-lg leading-relaxed text-zinc-200 font-serif">
+                  {renderContent(content)}
                </div>
             </div>
           </div>
