@@ -16,7 +16,7 @@ pub fn create_flow_submenu() -> Submenu {
 pub fn handle_flow_menu_event(
     event_id: &str,
     event: &WindowMenuEvent,
-    app_handle: &AppHandle,
+    _app_handle: &AppHandle,
 ) {
     let window = event.window().clone();
     match event_id {

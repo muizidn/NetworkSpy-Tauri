@@ -69,9 +69,9 @@ fn create_menu() -> Menu {
     let file_submenu = file::create_file_submenu();
     let edit_submenu = edit::create_edit_submenu();
     let view_submenu = view::create_view_submenu();
-    let flow_submenu = flow::create_flow_submenu();
+    // let flow_submenu = flow::create_flow_submenu();
     let tools_submenu = tools::create_tools_submenu();
-    let diff_submenu = diff::create_diff_submenu();
+    // let diff_submenu = diff::create_diff_submenu();
     let scripting_submenu = scripting::create_scripting_submenu();
     let certificate_submenu = certificate::create_certificate_submenu();
     let setup_submenu = setup::create_setup_submenu();
@@ -135,6 +135,22 @@ fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle)
 }
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.iter().any(|arg| arg == "--install-cert") {
+        let ca_cert = include_str!("ca/network-spy.cer");
+        let installer = CertificateInstaller {};
+        match installer.install_from_content(ca_cert) {
+            Ok(output) => {
+                println!("Certificate installation successful:\n{}", output);
+                std::process::exit(0);
+            }
+            Err(err) => {
+                eprintln!("Certificate installation failed:\n{}", err);
+                std::process::exit(1);
+            }
+        }
+    }
+
     let key_pair = include_str!("ca/network-spy.key");
     let ca_cert = include_str!("ca/network-spy.cer");
 
@@ -158,7 +174,7 @@ fn main() {
         })
         .setup(|app| {
             // listen to the `start_stream` (emitted on any window)
-            let id = app.listen_global("start_stream", |event| {
+            let _id = app.listen_global("start_stream", |event| {
                 println!("got start_stream with payload {:?}", event.payload());
             });
             // unlisten to the event using the `id` returned on the `listen_global` function
@@ -204,7 +220,7 @@ fn main() {
 
                     let body = String::from_utf8_lossy(request.body().as_ref()).to_string();
 
-                    let result = self.app_handle.emit_all(
+                    let _result = self.app_handle.emit_all(
                         "traffic_event",
                         Payload {
                             id: id.to_string(),
@@ -239,7 +255,7 @@ fn main() {
 
                     let body = String::from_utf8_lossy(response.body().as_ref()).to_string();
 
-                    let result = self.app_handle.emit_all(
+                    let _result = self.app_handle.emit_all(
                         "traffic_event",
                         Payload {
                             id: id.to_string(),
@@ -319,11 +335,11 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
 
-    app.run(|app_handle, event| match event {
+    app.run(|_app_handle, event| match event {
         RunEvent::Exit => {
             turn_off_proxy();
         }
-        RunEvent::ExitRequested { api, .. } => {
+        RunEvent::ExitRequested { .. } => {
             turn_off_proxy();
         }
         _ => {}

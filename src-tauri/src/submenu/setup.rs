@@ -11,7 +11,7 @@ pub fn create_setup_submenu() -> Submenu {
     Submenu::new("Setup", setup_menu)
 }
 
-pub fn handle_setup_menu_event(event_id: &str, event: &WindowMenuEvent, app_handle: &AppHandle) {
+pub fn handle_setup_menu_event(event_id: &str, event: &WindowMenuEvent, _app_handle: &AppHandle) {
     let window = event.window().clone();
     match event_id {
         "automatic" => {

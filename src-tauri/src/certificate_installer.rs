@@ -198,3 +198,34 @@ impl CertificateInstaller {
             .ok_or_else(|| "Failed to construct absolute path".into())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::env;
+
+    #[test]
+    fn test_get_absolute_path_with_relative() {
+        let installer = CertificateInstaller {};
+        let rel_path = "src/scripts/test.sh";
+        let result = installer.get_absolute_path(rel_path);
+        assert!(result.is_ok());
+        let abs_path = result.unwrap();
+        let current_dir = env::current_dir().unwrap();
+        assert!(abs_path.contains(current_dir.to_str().unwrap()));
+        assert!(abs_path.ends_with(rel_path));
+    }
+
+    #[test]
+    fn test_get_absolute_path_with_absolute() {
+        let installer = CertificateInstaller {};
+        let abs_path = if cfg!(windows) {
+            "C:\\Temp\\cert.cer"
+        } else {
+            "/tmp/cert.cer"
+        };
+        let result = installer.get_absolute_path(abs_path);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), abs_path);
+    }
+}

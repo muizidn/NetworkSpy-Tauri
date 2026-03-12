@@ -33,7 +33,7 @@ pub fn create_certificate_submenu() -> Submenu {
 pub fn handle_certificate_menu_event(
     event_id: &str,
     event: &tauri::WindowMenuEvent,
-    app_handle: &AppHandle,
+    _app_handle: &AppHandle,
 ) {
     match event_id {
         "install_cert_computer" => {

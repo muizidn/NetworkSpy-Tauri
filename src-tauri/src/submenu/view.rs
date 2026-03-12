@@ -21,7 +21,7 @@ pub fn handle_view_menu_event(
     app_handle: &AppHandle,
 ) {
     let window = event.window().clone();
-    let menu_item = app_handle.get_window(window.label()).unwrap().menu_handle().get_item(event_id);
+    let _menu_item = app_handle.get_window(window.label()).unwrap().menu_handle().get_item(event_id);
 
     // if let Ok(current_title) = menu_item.title() {
     //     let (new_title, action, new_selected) = if current_title.starts_with("Show") {

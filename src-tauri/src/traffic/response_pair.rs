@@ -22,7 +22,7 @@ pub enum ValueType {
 }
 
 #[tauri::command]
-pub fn get_response_pair_data(traffic_id: String) -> ResponsePairData {
+pub fn get_response_pair_data(_traffic_id: String) -> ResponsePairData {
     return ResponsePairData {
         headers: vec![
             KeyValue {
