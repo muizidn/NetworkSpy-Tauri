@@ -32,7 +32,16 @@ export type SingleMode =
     | "llm_streaming"
     | "sse_viewer"
     | "llm_response"
-    | "llm_token_analyzer";
+    | "llm_token_analyzer"
+    | "hex_viewer"
+    | "image_viewer"
+    | "html_viewer"
+    | "xml_viewer"
+    | "audio_viewer"
+    | "video_viewer"
+    | "js_viewer"
+    | "css_viewer"
+    | "ts_viewer";
 
 /**
  * Modes when multiple traffics are selected.

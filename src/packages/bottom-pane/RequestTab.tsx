@@ -71,16 +71,6 @@ export const RequestTab = (props: {
 
   const tabs: Tab[] = [
     {
-      id: "body",
-      title: "Body",
-      content: <DynamicRenderer data={data.body} />,
-    },
-    {
-      id: "raw",
-      title: "Raw",
-      content: <pre>{data.body}</pre>,
-    },
-    {
       id: "header",
       title: "Headers",
       content: (
@@ -101,107 +91,50 @@ export const RequestTab = (props: {
         />
       ),
     },
-    ...(isImage
-      ? [
-          {
-            id: "image",
-            title: "Image",
-            content: <ImageView data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isHTML
-      ? [
-          {
-            id: "html",
-            title: "HTML",
-            content: <HTMLView data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isJSON
-      ? [
-          {
-            id: "json",
-            title: "JSON",
-            content: <DynamicRenderer data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isXML
-      ? [
-          {
-            id: "xml",
-            title: "XML",
-            content: <XMLView data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isJavaScript
-      ? [
-          {
-            id: "javascript",
-            title: "JavaScript",
-            content: <CodeView data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isProtobuf
-      ? [
-          {
-            id: "protobuf",
-            title: "Protobuf",
-            content: <ProtobufView data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isCML
-      ? [
-          {
-            id: "cml",
-            title: "CML",
-            content: <CMLView data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isHLS
-      ? [
-          {
-            id: "m3u8",
-            title: "M3U8 (HLS)",
-            content: <M3U8View data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isMultipart
-      ? [
-          {
-            id: "multipart-form-data",
-            title: "Multipart Form Data",
-            content: <MultipartFormDataView data={data.body} />,
-          },
-        ]
-      : []),
-    ...(isFormURLEncoded
-      ? [
-          {
-            id: "form-urlencoded",
-            title: "Form URL Encoded",
-            content: <FormURLEncodedView params={data.params} />,
-          },
-        ]
-      : []),
     {
-      id: "treeview",
-      title: "TreeView",
-      content: isJSON ? <TreeView data={data.body} /> : null,
+      id: "params",
+      title: "Params",
+      content: (
+        <TableView
+          headers={[
+            {
+              title: "Key",
+              minWidth: 250,
+              renderer: new KeyValueRenderer("key"),
+            },
+            {
+              title: "Value",
+              minWidth: 250,
+              renderer: new KeyValueRenderer("value"),
+            },
+          ]}
+          data={data.params.map(p => ({ key: p.key, value: Array.isArray(p.value) ? p.value.join(', ') : p.value }))}
+        />
+      ),
     },
     {
-      id: "hex",
-      title: "Hex",
-      content: isJSON ? <HexView data={data.body} /> : null,
+      id: "body",
+      title: "Body",
+      content: (
+        <div className="h-full bg-[#111] overflow-hidden">
+            <Editor
+                height="100%"
+                theme="vs-dark"
+                defaultLanguage="text"
+                value={data.body}
+                options={{
+                    readOnly: true,
+                    minimap: { enabled: false },
+                    fontSize: 11,
+                    scrollBeyondLastLine: false,
+                    wordWrap: "on",
+                     automaticLayout: true,
+                }}
+            />
+        </div>
+      ),
     },
   ];
 
-  return <NSTabs title="REQUEST" tabs={tabs} initialTab="body" />;
+  return <NSTabs title="REQUEST" tabs={tabs} initialTab="header" />;
 };

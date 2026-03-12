@@ -77,7 +77,11 @@ function generateJWT(payload = {}): string {
 }
 
 function generateEntry(): object {
-  const domains = ["google.com", "api.github.com", "api.openai.com", "api.authanalysis.com", "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com", "perf.myserver.com"];
+  const domains = [
+    "google.com", "api.github.com", "api.openai.com", "api.authanalysis.com", 
+    "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com", 
+    "perf.myserver.com", "media.cdn.com", "docs.system.com", "data.raw.com"
+  ];
   const randomDomain = domains[Math.floor(Math.random() * domains.length)];
 
   let path = randomPath(randomDomain);
@@ -89,6 +93,7 @@ function generateEntry(): object {
   let request = "Request data";
   let response = ["-", "Response data", "Error message"][Math.floor(Math.random() * 3)];
   let tags = randomTags();
+  let responseHeaders: Record<string, string> = {};
 
   if (randomDomain === "api.openai.com") {
     method = "POST";
@@ -101,11 +106,13 @@ function generateEntry(): object {
     response = tags.includes("STREAMING")
       ? "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}"
       : JSON.stringify({ choices: [{ message: { role: "assistant", content: "Hello! How can I help you?" } }] }, null, 2);
+    responseHeaders["Content-Type"] = "application/json";
   } else if (randomDomain === "api.example.com") {
     method = "GET";
     tags = ["SSE", "REALTIME"];
     request = "Accept: text/event-stream";
     response = "event: update\ndata: {\"status\": \"ok\"}";
+    responseHeaders["Content-Type"] = "text/event-stream";
   } else if (randomDomain === "socket.example.com") {
     method = "GET";
     status = "Connected";
@@ -223,6 +230,8 @@ fragment UserFields on User {
     }, null, 2);
     response = JSON.stringify(scene.response, null, 2);
     tags.push(scene.operationName.toUpperCase());
+    // Ensure request headers include json
+    // Note: in generateEntry, these will be merged into headers
   } else if (randomDomain === "api.authanalysis.com") {
       const scenario = Math.floor(Math.random() * 3);
       tags = ["AUTH", "IDENTITY", "SECURITY"];
@@ -250,6 +259,54 @@ fragment UserFields on User {
       tags = ["PERFORMANCE", "METRICS"];
       request = "{}";
       response = JSON.stringify({ status: "healthy", latency: "high" });
+  } else if (randomDomain === "media.cdn.com") {
+      const type = Math.floor(Math.random() * 7);
+      if (type === 0) {
+          path = "assets/hero-bg.png";
+          tags = ["IMAGE", "STATIC"];
+          response = "MOCK_IMAGE_DATA_BASE64_PLACEHOLDER";
+          responseHeaders["Content-Type"] = "image/png";
+      } else if (type === 1) {
+          path = "stream/podcast-ep1.mp3";
+          tags = ["AUDIO", "MEDIA"];
+          response = "MOCK_AUDIO_DATA_BLOB";
+          responseHeaders["Content-Type"] = "audio/mpeg";
+      } else if (type === 2) {
+          path = "video/live/index.m3u8";
+          tags = ["VIDEO", "HLS", "STREAM"];
+          response = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n#EXTINF:10.0,\nchunk0.ts\n#EXTINF:10.0,\nchunk1.ts";
+          responseHeaders["Content-Type"] = "application/x-mpegURL";
+      } else if (type === 3) {
+          path = "web/landing.html";
+          tags = ["HTML", "BROWSER"];
+          response = "<!DOCTYPE html><html><body style='background:#111;color:#eee'><h1>Mock Page</h1><p>This is a rendered HTML preview.</p></body></html>";
+          responseHeaders["Content-Type"] = "text/html";
+      } else if (type === 4) {
+          path = "scripts/main.min.js";
+          tags = ["JS", "ASSET"];
+          response = "window.onload = function() { console.log('NetworkSpy Ready'); alert('Script Loaded'); };";
+          responseHeaders["Content-Type"] = "application/javascript";
+      } else if (type === 5) {
+          path = "styles/theme.css";
+          tags = ["CSS", "ASSET"];
+          response = "body{background:#111;color:#fff;font-family:'Inter',sans-serif}.card{border:1px solid #333;border-radius:12px}.btn{padding:8px 16px;background:blue;color:white}";
+          responseHeaders["Content-Type"] = "text/css";
+      } else if (type === 6) {
+          path = "src/utils.ts";
+          tags = ["TS", "ASSET"];
+          response = "export const formatBytes = (bytes: number): string => {\n  if (bytes === 0) return '0 Bytes';\n  const k = 1024;\n  return (bytes / Math.pow(k, 2)).toFixed(2) + ' MB';\n};";
+          responseHeaders["Content-Type"] = "text/typescript";
+      }
+  } else if (randomDomain === "docs.system.com") {
+      path = "schemas/config.xml";
+      tags = ["XML", "CONFIG"];
+      response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n  <config enabled=\"true\">\n    <timeout>3000</timeout>\n    <endpoint>https://api.internal</endpoint>\n  </config>\n</root>";
+      responseHeaders["Content-Type"] = "application/xml";
+  } else if (randomDomain === "data.raw.com") {
+      path = "v1/binary-stream";
+      tags = ["HEX", "BINARY"];
+      response = Array.from({length: 32}, () => Math.floor(Math.random()*256).toString(16).padStart(2, '0')).join('');
+      responseHeaders["Content-Type"] = "application/octet-stream";
   }
 
   return {
@@ -271,8 +328,10 @@ fragment UserFields on User {
         "Cookie": randomDomain === "api.authanalysis.com" && request.startsWith('Cookie')
             ? request.split(': ')[1]
             : undefined,
-        "X-Debug-JWT": generateJWT({ mode: "debug_stream" })
+        "X-Debug-JWT": generateJWT({ mode: "debug_stream" }),
+        "Content-Type": (randomDomain === "api.github.com" || randomDomain === "api.openai.com") ? "application/json" : undefined
     },
+    responseHeaders,
     performance: {
         dns: Math.floor(Math.random() * 50) + 5,
         tcp: Math.floor(Math.random() * 100) + 10,

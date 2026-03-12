@@ -221,15 +221,16 @@ export class MockAppProvider implements IAppProvider {
           request: {
             version: "HTTP/1.1",
             header: {
-                "content-type": (item.url?.includes("graphql") || item.url?.includes("openai")) ? "application/json" : "text/plain",
-                ...(item.headers || {})
+                "content-type": "text/plain",
+                ...Object.fromEntries(Object.entries(item.headers || {}).map(([k, v]) => [k.toLowerCase(), v]))
             },
             body: item.request as string || null,
           },
           response: {
             version: "HTTP/1.1",
             header: {
-                "content-type": item.url?.includes("event-stream") ? "text/event-stream" : "application/json"
+                "content-type": "application/json",
+                ...Object.fromEntries(Object.entries(item.responseHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]))
             },
             body: item.response as string || null,
           },

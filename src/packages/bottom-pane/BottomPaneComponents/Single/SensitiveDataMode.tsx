@@ -77,7 +77,7 @@ export const SensitiveDataMode = () => {
     if (loading) return <Placeholder text="Analyzing payload..." icon={<FiShield className="animate-pulse" />} />;
 
     return (
-        <div className="h-full bg-[#0a0a0a] p-8 overflow-auto custom-scrollbar font-sans select-none">
+        <div className="bg-[#0a0a0a] p-8 min-h-full font-sans select-none">
             <div className="max-w-4xl mx-auto">
                 <div className="flex items-center gap-6 mb-12 border-b border-zinc-900 pb-8">
                     <div className="w-16 h-16 rounded-2xl bg-orange-600/10 flex items-center justify-center text-orange-500 border border-orange-500/20 shadow-lg shadow-orange-900/10">

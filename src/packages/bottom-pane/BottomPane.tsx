@@ -36,6 +36,13 @@ import { LLMStreamingMode } from "./BottomPaneComponents/Single/LLMStreamingMode
 import { SSEViewerMode } from "./BottomPaneComponents/Single/SSEViewerMode";
 import { LLMResponseMode } from "./BottomPaneComponents/Single/LLMResponseMode";
 import { LLMTokenAnalyzerMode } from "./BottomPaneComponents/Single/LLMTokenAnalyzerMode";
+import { HexViewerMode } from "./BottomPaneComponents/Single/HexViewerMode";
+import { ImageViewerMode } from "./BottomPaneComponents/Single/ImageViewerMode";
+import { HTMLViewerMode } from "./BottomPaneComponents/Single/HTMLViewerMode";
+import { XMLViewerMode } from "./BottomPaneComponents/Single/XMLViewerMode";
+import { AudioViewerMode } from "./BottomPaneComponents/Single/AudioViewerMode";
+import { VideoViewerMode } from "./BottomPaneComponents/Single/VideoViewerMode";
+import { SourceViewerMode } from "./BottomPaneComponents/Single/SourceViewerMode";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 
 export const BottomPane = () => {
@@ -52,7 +59,9 @@ export const BottomPane = () => {
             Loading viewer...
           </div>
         }>
-          {renderMode(mode, sizes, setSizes)}
+          <div className="flex-grow overflow-y-auto h-full custom-scrollbar bg-[#111] pb-10">
+            {renderMode(mode, sizes, setSizes)}
+          </div>
         </Suspense>
       </ErrorBoundary>
     </div>
@@ -163,6 +172,33 @@ const renderMode = (
 
     case "llm_token_analyzer":
       return <LLMTokenAnalyzerMode />;
+
+    case "hex_viewer":
+      return <HexViewerMode />;
+
+    case "image_viewer":
+      return <ImageViewerMode />;
+
+    case "html_viewer":
+      return <HTMLViewerMode />;
+
+    case "xml_viewer":
+      return <XMLViewerMode />;
+
+    case "audio_viewer":
+      return <AudioViewerMode />;
+
+    case "video_viewer":
+      return <VideoViewerMode />;
+
+    case "js_viewer":
+      return <SourceViewerMode language="javascript" title="JavaScript" />;
+
+    case "css_viewer":
+      return <SourceViewerMode language="css" title="Stylesheet" />;
+
+    case "ts_viewer":
+      return <SourceViewerMode language="typescript" title="TypeScript" />;
 
     default:
       return null;

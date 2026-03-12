@@ -67,6 +67,15 @@ export const BottomPaneOptions = () => {
       { id: "sse_viewer", title: "SSE Viewer", onClick: () => setMode("sse_viewer") },
       { id: "llm_response", title: "LLM Response", onClick: () => setMode("llm_response") },
       { id: "llm_token_analyzer", title: "LLM Token Analyzer", onClick: () => setMode("llm_token_analyzer") },
+      { id: "hex_viewer", title: "HEX Viewer", onClick: () => setMode("hex_viewer") },
+      { id: "image_viewer", title: "Image Viewer", onClick: () => setMode("image_viewer") },
+      { id: "html_viewer", title: "Browser Preview", onClick: () => setMode("html_viewer") },
+      { id: "xml_viewer", title: "XML Viewer", onClick: () => setMode("xml_viewer") },
+      { id: "audio_viewer", title: "Audio Stream", onClick: () => setMode("audio_viewer") },
+      { id: "video_viewer", title: "Video Viewer", onClick: () => setMode("video_viewer") },
+      { id: "js_viewer", title: "JavaScript Viewer", onClick: () => setMode("js_viewer") },
+      { id: "css_viewer", title: "CSS Viewer", onClick: () => setMode("css_viewer") },
+      { id: "ts_viewer", title: "TypeScript Viewer", onClick: () => setMode("ts_viewer") },
     ],
 
     multiple: [

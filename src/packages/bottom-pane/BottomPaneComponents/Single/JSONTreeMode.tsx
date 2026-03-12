@@ -23,8 +23,8 @@ export const JSONTreeMode = () => {
   if (loading) return <Placeholder text="Loading data..." />;
 
   return (
-    <div className="h-full bg-[#1e1e1e] flex flex-col">
-      <div className="flex-grow overflow-auto p-4">
+    <div className="bg-[#1e1e1e] flex flex-col min-h-full">
+      <div className="flex-grow p-4">
         <TreeView data={data?.body || ""} />
       </div>
     </div>

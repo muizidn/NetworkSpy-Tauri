@@ -24,8 +24,8 @@ export const HeadersMode = () => {
   if (loading) return <Placeholder text="Loading headers..." />;
 
   return (
-    <div className="h-full bg-[#1e1e1e] flex flex-col">
-      <div className="flex-grow overflow-auto p-4">
+    <div className="bg-[#1e1e1e] flex flex-col min-h-full">
+      <div className="flex-grow p-4">
         <div className="mb-6">
           <h3 className="text-[10px] font-black uppercase text-blue-500 mb-2 tracking-widest">Request Headers</h3>
           <TableView

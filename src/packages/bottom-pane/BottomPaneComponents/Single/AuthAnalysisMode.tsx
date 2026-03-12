@@ -56,7 +56,7 @@ export const AuthAnalysisMode = () => {
     if (loading) return <Placeholder text="Loading data..." />;
 
     return (
-        <div className="h-full bg-[#0a0a0a] p-6 overflow-auto">
+        <div className="bg-[#0a0a0a] p-6 min-h-full">
             <div className="max-w-3xl mx-auto">
                 <div className="flex items-center justify-between mb-8 border-b border-zinc-800 pb-6">
                     <div>
