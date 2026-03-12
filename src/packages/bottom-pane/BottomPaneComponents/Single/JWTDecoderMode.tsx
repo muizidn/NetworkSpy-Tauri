@@ -28,11 +28,26 @@ export const JWTDecoderMode = () => {
 
         const scan = (data: RequestPairData | null, prefix: string) => {
             if (!data) return;
+            // Check URI (for query params)
+            const uri = String(selections.firstSelected?.uri || "");
+            const uriMatch = uri.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
+            if (uriMatch) {
+                uriMatch.forEach((m: string) => {
+                    if (m.split('.').length >= 2) {
+                        // Prevent duplicates
+                        if (!tokens.some(t => t.token === m)) {
+                            tokens.push({ source: `URI Query`, token: m });
+                        }
+                    }
+                });
+            }
+
             // Check Headers
             data.headers.forEach(h => {
-                const matches = h.value?.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
+                const val = String(h.value || "");
+                const matches = val.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
                 if (matches) {
-                    matches.forEach(m => {
+                    matches.forEach((m: string) => {
                         if (m.split('.').length >= 2) {
                             tokens.push({ source: `${prefix} Header: ${h.key}`, token: m });
                         }
@@ -44,7 +59,7 @@ export const JWTDecoderMode = () => {
             if (data.body) {
                 const matches = data.body.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
                 if (matches) {
-                    matches.forEach(m => {
+                    matches.forEach((m: string) => {
                         if (m.split('.').length >= 2) {
                             tokens.push({ source: `${prefix} Body`, token: m });
                         }

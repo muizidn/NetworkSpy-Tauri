@@ -221,7 +221,8 @@ export class MockAppProvider implements IAppProvider {
           request: {
             version: "HTTP/1.1",
             header: {
-                "content-type": (item.url?.includes("graphql") || item.url?.includes("openai")) ? "application/json" : "text/plain"
+                "content-type": (item.url?.includes("graphql") || item.url?.includes("openai")) ? "application/json" : "text/plain",
+                ...(item.headers || {})
             },
             body: item.request as string || null,
           },

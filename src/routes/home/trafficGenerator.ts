@@ -62,11 +62,25 @@ function randomPath(domain: string): string {
   return randomPath;
 }
 
+function generateJWT(payload = {}): string {
+    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" })).replace(/=/g, "");
+    const basePayload = {
+        sub: "1234567890",
+        name: "Mock User",
+        iat: Math.floor(Date.now() / 1000),
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        ...payload
+    };
+    const encodedPayload = btoa(JSON.stringify(basePayload)).replace(/=/g, "");
+    const signature = "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"; // Static mock signature
+    return `${header}.${encodedPayload}.${signature}`;
+}
+
 function generateEntry(): object {
-  const domains = ["google.com", "api.github.com", "api.openai.com", "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com", "socket.example.com"];
+  const domains = ["google.com", "api.github.com", "api.openai.com", "auth.myserver.com", "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com"];
   const randomDomain = domains[Math.floor(Math.random() * domains.length)];
 
-  const path = randomPath(randomDomain);
+  let path = randomPath(randomDomain);
   const port = randomDomain.includes('socket') ? 443 : Math.floor(Math.random() * (443 - 80 + 1)) + 80;
 
   let method = ["GET", "POST", "CONNECT", "DELETE", "PUT"][Math.floor(Math.random() * 5)];
@@ -209,6 +223,26 @@ fragment UserFields on User {
     }, null, 2);
     response = JSON.stringify(scene.response, null, 2);
     tags.push(scene.operationName.toUpperCase());
+  } else if (randomDomain === "auth.myserver.com") {
+      const isLogin = Math.random() > 0.5;
+      if (isLogin) {
+          method = "POST";
+          path = "v1/login";
+          tags = ["AUTH", "IDENTITY", "LOGIN"];
+          request = JSON.stringify({ username: "admin", password: "password123" });
+          response = JSON.stringify({ 
+              access_token: generateJWT({ role: "admin", scope: "read:write" }),
+              expires_in: 3600,
+              token_type: "Bearer"
+          }, null, 2);
+      } else {
+          method = "GET";
+          path = "v1/user/info";
+          tags = ["AUTH", "PROFILE"];
+          const jwt = generateJWT({ role: "user", permissions: ["read"] });
+          request = `Authorization: Bearer ${jwt}`; // Mock visualization
+          response = JSON.stringify({ id: "user_123", name: "Mock User", email: "user@example.com" }, null, 2);
+      }
   }
 
   return {
@@ -223,6 +257,12 @@ fragment UserFields on User {
     duration: `${Math.floor(Math.random() * 91) + 10} bytes`,
     request,
     response,
+    headers: {
+        "Authorization": randomDomain === "auth.myserver.com" && method === "GET" 
+            ? `Bearer ${generateJWT({ scope: "api:access" })}` 
+            : undefined,
+        "X-JWT-Header": generateJWT({ type: "debug" })
+    }
   };
 }
 
