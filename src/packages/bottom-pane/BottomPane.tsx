@@ -10,7 +10,10 @@ import { StatusDistributionMode } from "./BottomPaneComponents/None/StatusDistri
 import { MethodDistributionMode } from "./BottomPaneComponents/None/MethodDistributionMode";
 import { GraphQLMode } from "./BottomPaneComponents/Single/GraphQLMode";
 import { LLMPromptMode } from "./BottomPaneComponents/Single/LLMPromptMode";
-import { DiffMode } from "./BottomPaneComponents/Single/DiffMode";
+import { DiffMode } from "./BottomPaneComponents/Multiple/DiffMode";
+import { OWASPMode } from "./BottomPaneComponents/Single/OWASPMode";
+import { MobSFMode } from "./BottomPaneComponents/Single/MobSFMode";
+import { StaticSecurityMode } from "./BottomPaneComponents/Single/StaticSecurityMode";
 import { ReplayMode } from "./BottomPaneComponents/Single/ReplayMode";
 import { WebsocketMode } from "./BottomPaneComponents/Single/WebsocketMode";
 import { TimelineMode } from "./BottomPaneComponents/Multiple/TimelineMode";
@@ -18,6 +21,7 @@ import { CompareMode } from "./BottomPaneComponents/Multiple/CompareMode";
 import { BatchAnalyzeMode } from "./BottomPaneComponents/Multiple/BatchAnalyzeMode";
 import { AISummaryMode } from "./BottomPaneComponents/Multiple/AISummaryMode";
 import { HeadersMode } from "./BottomPaneComponents/Single/HeadersMode";
+import { HeaderExplainerMode } from "./BottomPaneComponents/Single/HeaderExplainerMode";
 import { JSONTreeMode } from "./BottomPaneComponents/Single/JSONTreeMode";
 import { CurlMode } from "./BottomPaneComponents/Single/CurlMode";
 import { CodeSnippetMode } from "./BottomPaneComponents/Single/CodeSnippetMode";
@@ -95,8 +99,8 @@ const renderMode = (
     case "request_response":
       return <RequestResponseMode sizes={sizes} setSizes={setSizes} />;
 
-    case "headers":
-      return <HeadersMode />;
+    case "header_explainer":
+      return <HeaderExplainerMode />;
 
     case "json_tree":
       return <JSONTreeMode />;
@@ -127,6 +131,15 @@ const renderMode = (
 
     case "diff":
       return <DiffMode />;
+
+    case "security_owasp":
+      return <OWASPMode />;
+
+    case "security_mobsf":
+      return <MobSFMode />;
+
+    case "security_static":
+      return <StaticSecurityMode />;
 
     case "replay":
       return <ReplayMode />;

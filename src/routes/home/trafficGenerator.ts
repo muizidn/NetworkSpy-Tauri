@@ -80,7 +80,8 @@ function generateEntry(): object {
   const domains = [
     "google.com", "api.github.com", "api.openai.com", "api.authanalysis.com",
     "slack.com", "microsoft.com", "socket.io", "netflix.com", "api.example.com",
-    "perf.myserver.com", "media.cdn.com", "docs.system.com", "data.raw.com"
+    "perf.myserver.com", "media.cdn.com", "docs.system.com", "data.raw.com",
+    "security-test.cloudflare.net"
   ];
   const randomDomain = domains[Math.floor(Math.random() * domains.length)];
 
@@ -353,11 +354,37 @@ fragment UserFields on User {
     tags = ["XML", "CONFIG"];
     response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root>\n  <config enabled=\"true\">\n    <timeout>3000</timeout>\n    <endpoint>https://api.internal</endpoint>\n  </config>\n</root>";
     responseHeaders["Content-Type"] = "application/xml";
-  } else if (randomDomain === "data.raw.com") {
-    path = "v1/binary-stream";
-    tags = ["HEX", "BINARY"];
-    response = Array.from({ length: 32 }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
-    responseHeaders["Content-Type"] = "application/octet-stream";
+  } else if (randomDomain === "security-test.cloudflare.net") {
+    path = "v1/audit/headers";
+    tags = ["SECURITY", "CLOUDFLARE", "INFRA"];
+    response = JSON.stringify({ status: "Audit complete", nodes: ["SJC", "LAX", "NRT"] });
+    responseHeaders["Content-Type"] = "application/json";
+    responseHeaders["CF-Ray"] = `${randomString(16)}-SJC`;
+    responseHeaders["CF-Cache-Status"] = "DYNAMIC";
+    responseHeaders["CF-IPCountry"] = "JP";
+    responseHeaders["CF-Connecting-IP"] = "203.0.113.1";
+    responseHeaders["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload";
+    responseHeaders["Content-Security-Policy"] = "default-src 'self'; img-src *; media-src media.cdn.com;";
+    responseHeaders["X-Frame-Options"] = "SAMEORIGIN";
+    responseHeaders["X-Content-Type-Options"] = "nosniff";
+    responseHeaders["Set-Cookie"] = "auth_session=secure_token_abc123; HttpOnly; Secure; SameSite=Lax";
+  }
+
+  // Enrich with Headers for Explainer Demo
+  if (Math.random() > 0.4) {
+    responseHeaders["CF-Ray"] = `${randomString(16)}-SJC`;
+    responseHeaders["CF-Cache-Status"] = ["HIT", "MISS", "DYNAMIC", "REVALIDATED"][Math.floor(Math.random() * 4)];
+    responseHeaders["CF-IPCountry"] = "US";
+    responseHeaders["CF-Connecting-IP"] = "172.68.22.104";
+    responseHeaders["Set-Cookie"] = "session_spy=xyz123; Path=/; HttpOnly; Secure; SameSite=Strict";
+  }
+
+  if (Math.random() > 0.6) {
+    responseHeaders["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload";
+    responseHeaders["Content-Security-Policy"] = "default-src 'self'; script-src 'self' https://trusted.cdn.com; object-src 'none';";
+    responseHeaders["X-Frame-Options"] = "DENY";
+    responseHeaders["X-Content-Type-Options"] = "nosniff";
+    responseHeaders["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate";
   }
 
   return {
@@ -380,6 +407,8 @@ fragment UserFields on User {
         ? request.split(': ')[1]
         : undefined,
       "X-Debug-JWT": generateJWT({ mode: "debug_stream" }),
+      "X-Custom-Power-Layer": `NS-${randomString(8)}`,
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
       "Content-Type": (randomDomain === "api.github.com" || randomDomain === "api.openai.com") ? "application/json" : undefined
     },
     responseHeaders,

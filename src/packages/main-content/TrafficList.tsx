@@ -50,7 +50,8 @@ export const TrafficList: React.FC = () => {
       data={filteredTraffic}
       contextMenuRenderer={contextMenuRenderer}
       onSelectedRowChanged={handleSelectedRowChanged}
-      isAllowAutoScroll={isRun}
+      isAllowAutoScroll={true}
+      isAutoScroll={isRun}
     />
   );
 };

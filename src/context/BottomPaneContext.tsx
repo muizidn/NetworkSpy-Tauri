@@ -4,10 +4,10 @@ import React, { createContext, useContext, useState } from "react";
  * Mode when nothing is selected.
  * Shows global traffic summary / analytics.
  */
-export type NoneMode = 
-    | "summary" 
-    | "health_timeline" 
-    | "status_distribution" 
+export type NoneMode =
+    | "summary"
+    | "health_timeline"
+    | "status_distribution"
     | "method_distribution";
 
 /**
@@ -17,10 +17,9 @@ export type SingleMode =
     | "request_response"
     | "graphql"
     | "llm_prompt"
-    | "diff"
     | "replay"
     | "websocket"
-    | "headers"
+    | "header_explainer"
     | "json_tree"
     | "curl"
     | "code_snippet"
@@ -47,7 +46,10 @@ export type SingleMode =
     | "grpc_viewer"
     | "rabbitmq_viewer"
     | "kafka_viewer"
-    | "json_transformer";
+    | "json_transformer"
+    | "security_owasp"
+    | "security_mobsf"
+    | "security_static";
 
 /**
  * Modes when multiple traffics are selected.
@@ -62,7 +64,8 @@ export type MultipleMode =
     | "endpoint_summary"
     | "security_scan"
     | "ai_investigate"
-    | "ai_security";
+    | "ai_security"
+    | "diff";
 
 /**
  * Unified bottom pane mode.

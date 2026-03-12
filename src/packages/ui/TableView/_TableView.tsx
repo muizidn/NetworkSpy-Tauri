@@ -21,6 +21,7 @@ export interface TableViewProps<T> {
   onSelectedRowChanged?: (firstSelected: T | null, items: T[] | null) => void;
   className?: string;
   isAllowAutoScroll?: boolean;
+  isAutoScroll?: boolean;
 }
 
 type SortOrder = "asc" | "desc";
@@ -118,6 +119,7 @@ export const TableView = <T,>({
   onSelectedRowChanged,
   className,
   isAllowAutoScroll,
+  isAutoScroll
 }: TableViewProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<{
     firstSelect?: number;
@@ -225,6 +227,9 @@ export const TableView = <T,>({
       setSelectedRows({ firstSelect: index, rows: [index] });
     }
   }
+
+
+  useEffect(() => setAutoScrollEnabled(isAutoScroll || false), [isAutoScroll]);
 
   useEffect(() => {
     if (!onSelectedRowChanged) {
