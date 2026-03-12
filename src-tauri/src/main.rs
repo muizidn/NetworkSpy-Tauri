@@ -114,6 +114,12 @@ fn install_certificate(cert_path: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn auto_install_certificate() -> Result<String, String> {
+    let ca_cert = include_str!("ca/network-spy.cer");
+    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(ca_cert)
+}
+
+#[tauri::command]
 fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle) {
     tauri::WindowBuilder::new(
         &app_handle,
@@ -129,8 +135,8 @@ fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle)
 }
 
 fn main() {
-    let key_pair = include_str!("ca/hudsucker.key");
-    let ca_cert = include_str!("ca/hudsucker.cer");
+    let key_pair = include_str!("ca/network-spy.key");
+    let ca_cert = include_str!("ca/network-spy.cer");
 
     let proxy_toggle = ProxyToggle {};
     PROXY_TOGGLE
@@ -305,6 +311,7 @@ fn main() {
             turn_on_proxy,
             turn_off_proxy,
             install_certificate,
+            auto_install_certificate,
             open_new_window,
             get_request_pair_data,
             get_response_pair_data,

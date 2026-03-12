@@ -1,5 +1,6 @@
-import React from 'react';
-import { FiCopy, FiExternalLink, FiHelpCircle, FiCheckCircle } from 'react-icons/fi';
+import { invoke } from '@tauri-apps/api/tauri';
+import React, { useState } from 'react';
+import { FiCopy, FiExternalLink, FiHelpCircle, FiCheckCircle, FiDownload, FiLoader } from 'react-icons/fi';
 import { twMerge } from 'tailwind-merge';
 
 export interface GuideStep {
@@ -15,8 +16,27 @@ interface GuideProps {
 }
 
 const Guide: React.FC<GuideProps> = ({ platform, steps, emoji }) => {
+  const [installing, setInstalling] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handleInstall = async () => {
+    setInstalling(true);
+    setStatus("idle");
+    try {
+      await invoke("auto_install_certificate");
+      setStatus("success");
+    } catch (e) {
+      console.error(e);
+      setStatus("error");
+      setErrorMsg(String(e));
+    } finally {
+      setInstalling(false);
+    }
   };
 
   return (
@@ -29,14 +49,47 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, emoji }) => {
                 <span className="text-zinc-800">•</span>
                 <span>{platform}</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white flex items-center gap-4 tracking-tight">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center border border-zinc-800 shadow-xl overflow-hidden p-2">
-                    <img src={emoji} alt="Platform icon" className="w-full h-full object-contain" />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <h1 className="text-4xl md:text-5xl font-black text-white flex items-center gap-4 tracking-tight">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center border border-zinc-800 shadow-xl overflow-hidden p-2">
+                        <img src={emoji} alt="Platform icon" className="w-full h-full object-contain" />
+                    </div>
+                    <span>{platform} Setup</span>
+                </h1>
+
+                <div className="flex flex-col gap-2">
+                    <button 
+                        onClick={handleInstall}
+                        disabled={installing}
+                        className={twMerge(
+                            "group flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm transition-all duration-300 shadow-2xl relative overflow-hidden",
+                            status === "success" 
+                                ? "bg-green-600/20 text-green-400 border border-green-500/30" 
+                                : status === "error"
+                                    ? "bg-red-600 text-white"
+                                    : "bg-blue-600 hover:bg-blue-500 text-white active:scale-95"
+                        )}
+                    >
+                        {installing ? (
+                            <FiLoader className="animate-spin" size={18} />
+                        ) : status === "success" ? (
+                            <FiCheckCircle size={18} />
+                        ) : (
+                            <FiDownload size={18} />
+                        )}
+                        <span>
+                            {installing ? "Installing..." : status === "success" ? "Certificate Installed" : "One-Click Install CA"}
+                        </span>
+                    </button>
+                    {status === "error" && (
+                        <p className="text-[10px] text-red-500 font-medium max-w-[250px] leading-tight">
+                            {errorMsg}
+                        </p>
+                    )}
                 </div>
-                <span>{platform} Setup</span>
-            </h1>
-            <p className="text-zinc-500 text-sm max-w-xl leading-relaxed">
-                Follow this comprehensive guide to configure your {platform} environment for secure network interception and debugging with NetworkSpy.
+            </div>
+            <p className="text-zinc-500 text-sm max-w-xl leading-relaxed mt-4">
+                Follow this guide to configure your {platform} environment. Use the <b>One-Click Install</b> button above for a faster setup.
             </p>
         </div>
 

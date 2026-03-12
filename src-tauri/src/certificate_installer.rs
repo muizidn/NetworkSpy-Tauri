@@ -29,9 +29,20 @@ impl CertificateInstaller {
         Err("Unsupported operating system".into())
     }
 
+    pub fn install_from_content(&self, cert_content: &str) -> Result<String, String> {
+        let temp_dir = tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_cert_path = temp_dir.path().join("network-spy.cer");
+        
+        fs::write(&temp_cert_path, cert_content).map_err(|e| format!("Failed to write certificate to temp file: {}", e))?;
+        
+        let path_str = temp_cert_path.to_str().ok_or("Failed to convert temp path to string")?.to_string();
+        
+        self.install(path_str)
+    }
+
     #[cfg(target_os = "macos")]
     fn install_macos(&self, cert_path: String) -> Result<String, String> {
-        let script_path = self.get_absolute_path("src/scripts/install_certificate_mac.sh")?;
+        let script_path = self.get_absolute_path("src/scripts/install_certificates_mac.sh")?;
         let temp_dir = tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
         let temp_script_path = temp_dir.path().join("install_certificate_mac.sh");
         let temp_cert_path = temp_dir.path().join("certificate.pem");
@@ -174,9 +185,13 @@ impl CertificateInstaller {
         }
     }
 
-    fn get_absolute_path(&self, relative_path: &str) -> Result<String, String> {
+    fn get_absolute_path(&self, path: &str) -> Result<String, String> {
+        let path_obj = std::path::Path::new(path);
+        if path_obj.is_absolute() {
+            return Ok(path.to_string());
+        }
         let current_dir = env::current_dir().map_err(|e| e.to_string())?;
-        let absolute_path = current_dir.join(relative_path);
+        let absolute_path = current_dir.join(path);
         absolute_path
             .to_str()
             .map(|s| s.to_string())

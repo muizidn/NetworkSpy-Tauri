@@ -139,17 +139,10 @@ export function LinuxInstaller() {
   ];
 
   return (
-    <div>
-      <button onClick={() => {
-        invoke("install_certificate", {certPath: "src/ca/hudsucker.cer"})
-      }}>
-        Install Linux
-      </button>
-      <Guide
-        platform="Linux"
-        emoji="https://emoji.gg/assets/emoji/3855_linux.png"
-        steps={linuxSteps}
-      />
-    </div>
+    <Guide
+      platform="Linux"
+      emoji="https://emoji.gg/assets/emoji/3855_linux.png"
+      steps={linuxSteps}
+    />
   );
 }
