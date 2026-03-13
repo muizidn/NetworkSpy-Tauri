@@ -17,12 +17,16 @@ pub enum TrafficEvent {
         version: String,
         headers: HashMap<String, String>,
         body: Vec<u8>,
+        content_type: Option<String>,
+        content_encoding: Option<String>,
         intercepted: bool,
     },
     Response {
         id: String,
         headers: HashMap<String, String>,
         body: Vec<u8>,
+        content_type: Option<String>,
+        content_encoding: Option<String>,
         status_code: u16,
     },
     Exit,
@@ -68,10 +72,20 @@ impl TrafficDb {
                 traffic_id TEXT PRIMARY KEY,
                 req_body BLOB,
                 res_body BLOB,
+                req_content_type TEXT,
+                req_content_encoding TEXT,
+                res_content_type TEXT,
+                res_content_encoding TEXT,
                 FOREIGN KEY(traffic_id) REFERENCES traffic(id) ON DELETE CASCADE
             )",
             [],
         )?;
+
+        // Migration: Add missing columns to body table if they don't exist
+        let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_type TEXT", []);
+        let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_encoding TEXT", []);
+        let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_type TEXT", []);
+        let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_encoding TEXT", []);
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS allow_list (
@@ -179,48 +193,54 @@ impl TrafficDb {
         }
     }
 
-    pub fn get_request_body(&self, id: String) -> Result<Option<Vec<u8>>> {
+    pub fn get_request_body_info(&self, id: String) -> Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT req_body FROM body WHERE traffic_id = ?1")?;
-        let res: Result<Option<Vec<u8>>> = stmt.query_row(params![id], |row| {
+        let mut stmt = conn.prepare("SELECT req_body, req_content_type, req_content_encoding FROM body WHERE traffic_id = ?1")?;
+        let res = stmt.query_row(params![id], |row| {
             let data: Option<Vec<u8>> = row.get(0)?;
-            Ok(data.map(|bytes| {
+            let content_type: Option<String> = row.get(1)?;
+            let content_encoding: Option<String> = row.get(2)?;
+            
+            let bytes = data.map(|bytes| {
                 if bytes.starts_with(b"ZSTD") {
-                    match zstd::decode_all(&bytes[4..]) {
-                        Ok(decoded) => decoded,
-                        Err(e) => {
-                            eprintln!("ZSTD Decompression failed for request {}: {}", id, e);
-                            bytes
-                        }
-                    }
+                    zstd::decode_all(&bytes[4..]).unwrap_or(bytes)
                 } else {
                     bytes
                 }
-            }))
+            }).unwrap_or_default();
+            
+            Ok(Some((bytes, content_type, content_encoding)))
+        }).or(Ok(None));
+        res
+    }
+
+    pub fn get_request_body(&self, id: String) -> Result<Option<Vec<u8>>> {
+        self.get_request_body_info(id).map(|opt| opt.map(|(b, _, _)| b))
+    }
+
+    pub fn get_response_body_info(&self, id: String) -> Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT res_body, res_content_type, res_content_encoding FROM body WHERE traffic_id = ?1")?;
+        let res = stmt.query_row(params![id], |row| {
+            let data: Option<Vec<u8>> = row.get(0)?;
+            let content_type: Option<String> = row.get(1)?;
+            let content_encoding: Option<String> = row.get(2)?;
+            
+            let bytes = data.map(|bytes| {
+                if bytes.starts_with(b"ZSTD") {
+                    zstd::decode_all(&bytes[4..]).unwrap_or(bytes)
+                } else {
+                    bytes
+                }
+            }).unwrap_or_default();
+            
+            Ok(Some((bytes, content_type, content_encoding)))
         }).or(Ok(None));
         res
     }
 
     pub fn get_response_body(&self, id: String) -> Result<Option<Vec<u8>>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT res_body FROM body WHERE traffic_id = ?1")?;
-        let res: Result<Option<Vec<u8>>> = stmt.query_row(params![id], |row| {
-            let data: Option<Vec<u8>> = row.get(0)?;
-            Ok(data.map(|bytes| {
-                if bytes.starts_with(b"ZSTD") {
-                    match zstd::decode_all(&bytes[4..]) {
-                        Ok(decoded) => decoded,
-                        Err(e) => {
-                            eprintln!("ZSTD Decompression failed for response {}: {}", id, e);
-                            bytes
-                        }
-                    }
-                } else {
-                    bytes
-                }
-            }))
-        }).or(Ok(None));
-        res
+        self.get_response_body_info(id).map(|opt| opt.map(|(b, _, _)| b))
     }
 
     pub fn get_recent_traffic(&self, limit: usize) -> Vec<TrafficMetadata> {
@@ -248,11 +268,11 @@ impl TrafficDb {
         Ok(())
     }
 
-    pub fn get_all_traffic_with_bodies(&self) -> Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>)>> {
+    pub fn get_all_traffic_with_bodies(&self) -> Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
-             b.req_body, b.res_body 
+             b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding 
              FROM traffic t 
              LEFT JOIN body b ON t.id = b.traffic_id 
              ORDER BY t.timestamp ASC",
@@ -275,6 +295,10 @@ impl TrafficDb {
             
             let req_body: Option<Vec<u8>> = row.get(9)?;
             let res_body: Option<Vec<u8>> = row.get(10)?;
+            let req_ct: Option<String> = row.get(11)?;
+            let req_ce: Option<String> = row.get(12)?;
+            let res_ct: Option<String> = row.get(13)?;
+            let res_ce: Option<String> = row.get(14)?;
             
             let req_decoded = req_body.map(|bytes| {
                 if bytes.starts_with(b"ZSTD") {
@@ -292,7 +316,7 @@ impl TrafficDb {
                 }
             });
             
-            Ok((meta, req_decoded, res_decoded))
+            Ok((meta, req_decoded, res_decoded, req_ct, req_ce, res_ct, res_ce))
         })?;
 
         let mut results = Vec::new();
@@ -324,7 +348,7 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
         ).expect("Failed to prepare insert_traffic");
 
         let mut insert_body = tx.prepare_cached(
-            "INSERT INTO body (traffic_id, req_body) VALUES (?1, ?2) ON CONFLICT(traffic_id) DO UPDATE SET req_body = excluded.req_body"
+            "INSERT INTO body (traffic_id, req_body, req_content_type, req_content_encoding) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(traffic_id) DO UPDATE SET req_body = excluded.req_body, req_content_type = excluded.req_content_type, req_content_encoding = excluded.req_content_encoding"
         ).expect("Failed to prepare insert_body");
 
         let mut update_response = tx.prepare_cached(
@@ -332,48 +356,50 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
         ).expect("Failed to prepare update_response");
 
         let mut update_res_body = tx.prepare_cached(
-            "UPDATE body SET res_body = ?2 WHERE traffic_id = ?1"
+            "UPDATE body SET res_body = ?2, res_content_type = ?3, res_content_encoding = ?4 WHERE traffic_id = ?1"
         ).expect("Failed to prepare update_res_body");
 
         for event in buffer.drain(..) {
             match event {
-                TrafficEvent::Request { id, uri, method, version, headers, body, intercepted } => {
+                TrafficEvent::Request { id, uri, method, version, headers, body, content_type, content_encoding, intercepted } => {
                     let headers_json = serde_json::to_string(&headers).unwrap_or_default();
                     let _ = insert_traffic.execute(params![
                         id, uri, method, version, headers_json, if intercepted { 1 } else { 0 }
                     ]);
                     
-                    if !body.is_empty() {
+                    let body_data = if !body.is_empty() {
                         match zstd::encode_all(&body[..], 3) {
                             Ok(compressed) => {
                                 let mut final_data = b"ZSTD".to_vec();
                                 final_data.extend_from_slice(&compressed);
-                                let _ = insert_body.execute(params![id, final_data]);
+                                Some(final_data)
                             }
-                            Err(_) => {
-                                let _ = insert_body.execute(params![id, body]);
-                            }
+                            Err(_) => Some(body),
                         }
                     } else {
-                        let _ = insert_body.execute(params![id, Option::<Vec<u8>>::None]);
-                    }
+                        None
+                    };
+
+                    let _ = insert_body.execute(params![id, body_data, content_type, content_encoding]);
                 }
-                TrafficEvent::Response { id, headers, body, status_code } => {
+                TrafficEvent::Response { id, headers, body, content_type, content_encoding, status_code } => {
                     let headers_json = serde_json::to_string(&headers).unwrap_or_default();
                     let _ = update_response.execute(params![id, headers_json, status_code]);
                     
-                    if !body.is_empty() {
+                    let body_data = if !body.is_empty() {
                          match zstd::encode_all(&body[..], 3) {
                             Ok(compressed) => {
                                 let mut final_data = b"ZSTD".to_vec();
                                 final_data.extend_from_slice(&compressed);
-                                let _ = update_res_body.execute(params![id, final_data]);
+                                Some(final_data)
                             }
-                            Err(_) => {
-                                let _ = update_res_body.execute(params![id, body]);
-                            }
+                            Err(_) => Some(body),
                         }
-                    }
+                    } else {
+                        None
+                    };
+
+                    let _ = update_res_body.execute(params![id, body_data, content_type, content_encoding]);
                 }
                 TrafficEvent::Exit => {}
             }
@@ -386,7 +412,7 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {
     let mut recent = cache.write().unwrap();
     match event {
-        TrafficEvent::Request { id, uri, method, version, headers, body, intercepted } => {
+        TrafficEvent::Request { id, uri, method, version, headers, body, content_type: _, content_encoding: _, intercepted } => {
             let metadata = TrafficMetadata {
                 id: id.clone(),
                 uri: Some(uri.clone()),
@@ -405,7 +431,7 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
                 recent.pop_back();
             }
         }
-        TrafficEvent::Response { id, headers, body, status_code } => {
+        TrafficEvent::Response { id, headers, body, content_type: _, content_encoding: _, status_code } => {
             if let Some(meta) = recent.iter_mut().find(|m| m.id == *id) {
                 meta.res_headers = Some(serde_json::to_string(headers).unwrap_or_default());
                 meta.status_code = Some(*status_code as i32);

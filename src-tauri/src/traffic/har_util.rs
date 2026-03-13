@@ -25,7 +25,7 @@ pub struct HarCreator {
 pub struct HarEntry {
     #[serde(rename = "startedDateTime")]
     pub started_date_time: String,
-    pub time: u64,
+    pub time: f64,
     pub request: HarRequest,
     pub response: HarResponse,
     pub cache: HashMap<String, String>,
@@ -107,21 +107,29 @@ pub struct HarCookie {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct HarTimings {
+    #[serde(default)]
+    pub dns: i32,
+    #[serde(default)]
+    pub connect: i32,
+    #[serde(default)]
+    pub ssl: i32,
+    #[serde(default)]
+    pub blocked: i32,
     pub send: i32,
     pub wait: i32,
     pub receive: i32,
 }
 
-pub fn create_har_log(entries: Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>)>) -> HarLog {
-    let har_entries = entries.into_iter().map(|(meta, req_body, res_body)| {
+pub fn create_har_log(entries: Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>) -> HarLog {
+    let har_entries = entries.into_iter().map(|(meta, req_body, res_body, req_ct, _req_ce, res_ct, _res_ce)| {
         let req_headers: HashMap<String, String> = serde_json::from_str(meta.req_headers.as_deref().unwrap_or_default()).unwrap_or_default();
         let res_headers: HashMap<String, String> = serde_json::from_str(meta.res_headers.as_deref().unwrap_or_default()).unwrap_or_default();
 
         let har_req_headers = req_headers.iter().map(|(k, v)| HarHeader { name: k.clone(), value: v.clone() }).collect();
         let har_res_headers = res_headers.iter().map(|(k, v)| HarHeader { name: k.clone(), value: v.clone() }).collect();
 
-        let req_mime = req_headers.get("content-type").or_else(|| req_headers.get("Content-Type")).cloned().unwrap_or_else(|| "application/octet-stream".to_string());
-        let res_mime = res_headers.get("content-type").or_else(|| res_headers.get("Content-Type")).cloned().unwrap_or_else(|| "application/octet-stream".to_string());
+        let req_mime = req_ct.unwrap_or_else(|| req_headers.get("content-type").or_else(|| req_headers.get("Content-Type")).cloned().unwrap_or_else(|| "application/octet-stream".to_string()));
+        let res_mime = res_ct.unwrap_or_else(|| res_headers.get("content-type").or_else(|| res_headers.get("Content-Type")).cloned().unwrap_or_else(|| "application/octet-stream".to_string()));
 
         let (res_text, res_encoding) = if let Some(body) = res_body {
             match String::from_utf8(body.clone()) {
@@ -142,7 +150,7 @@ pub fn create_har_log(entries: Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec
 
         HarEntry {
             started_date_time: meta.timestamp,
-            time: 0,
+            time: 0.0,
             request: HarRequest {
                 method: meta.method.unwrap_or_default(),
                 url: meta.uri.unwrap_or_default(),
@@ -171,7 +179,15 @@ pub fn create_har_log(entries: Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec
                 body_size: meta.res_body_size as i32,
             },
             cache: HashMap::new(),
-            timings: HarTimings { send: 0, wait: 0, receive: 0 },
+            timings: HarTimings { 
+                send: 0, 
+                wait: 0, 
+                receive: 0,
+                dns: -1,
+                connect: -1,
+                ssl: -1,
+                blocked: -1,
+            },
         }
     }).collect();
 

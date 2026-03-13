@@ -194,6 +194,9 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
             vec![]
         };
 
+        let content_type = req_headers.get("content-type").or_else(|| req_headers.get("Content-Type")).cloned();
+        let content_encoding = req_headers.get("content-encoding").or_else(|| req_headers.get("Content-Encoding")).cloned();
+
         db.insert_request(TrafficEvent::Request {
             id: id.clone(),
             uri: url.clone(),
@@ -201,6 +204,8 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
             version: version.clone(),
             headers: req_headers.clone(),
             body: req_body,
+            content_type,
+            content_encoding,
             intercepted: true,
         });
 
@@ -238,10 +243,15 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
         let status_code = entry.response.status;
         let res_body_size = entry.response.content.size;
 
+        let content_type = res_headers.get("content-type").or_else(|| res_headers.get("Content-Type")).cloned();
+        let content_encoding = res_headers.get("content-encoding").or_else(|| res_headers.get("Content-Encoding")).cloned();
+
         db.insert_response(TrafficEvent::Response {
             id: id.clone(),
             headers: res_headers.clone(),
             body: res_body,
+            content_type,
+            content_encoding,
             status_code,
         });
 
@@ -250,7 +260,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
             is_request: false,
             data: PayloadTraffic {
                 uri: None,
-                version: Some("HTTP/1.1".to_string()),
+                version: Some(entry.response.http_version.clone()),
                 method: None,
                 headers: res_headers,
                 body_size: res_body_size,
@@ -406,6 +416,9 @@ fn main() {
                     let decompressed_body = decompress_body(&headers, body_vec);
                     let body_size = decompressed_body.len();
 
+                    let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
+                    let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
+
                     self.traffic_db.insert_request(TrafficEvent::Request {
                         id: id.to_string(),
                         uri: uri.clone(),
@@ -413,6 +426,8 @@ fn main() {
                         version: http_version.clone(),
                         headers: headers.clone(),
                         body: decompressed_body,
+                        content_type,
+                        content_encoding,
                         intercepted,
                     });
 
@@ -461,10 +476,15 @@ fn main() {
                     let decompressed_body = decompress_body(&headers, body_vec);
                     let body_size = decompressed_body.len();
 
+                    let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
+                    let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
+
                     self.traffic_db.insert_response(TrafficEvent::Response {
                         id: id.to_string(),
                         headers: headers.clone(),
                         body: decompressed_body,
+                        content_type,
+                        content_encoding,
                         status_code,
                     });
 

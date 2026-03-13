@@ -26,10 +26,10 @@ export const TreeView = ({ data }: { data: string }) => {
     const json = JSON.parse(data || "{}");
     return (
       <div className="p-4 overflow-auto h-full bg-[#0c0c0c] rounded-xl border border-zinc-800/30 m-2 shadow-inner">
-        <JSONTree 
-          data={json} 
-          theme={theme} 
-          invertTheme={false} 
+        <JSONTree
+          data={json}
+          theme={theme}
+          invertTheme={false}
           hideRoot={false}
         />
       </div>
@@ -38,7 +38,8 @@ export const TreeView = ({ data }: { data: string }) => {
     return (
       <div className="h-full flex items-center justify-center text-zinc-500 italic text-xs p-4">
         <div className="bg-red-500/5 px-4 py-2 rounded-lg border border-red-500/10">
-            Invalid JSON: Hierarchy cannot be generated.
+          Invalid JSON: Hierarchy cannot be generated.
+          DATA:{data}
         </div>
       </div>
     );

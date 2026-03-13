@@ -46,14 +46,8 @@ pub fn get_request_pair_data(
             })
             .collect();
 
-        let content_type = row.req_headers.as_ref()
-            .and_then(|h| {
-                let hm: HashMap<String, String> = serde_json::from_str(h).ok()?;
-                hm.get("content-type").or_else(|| hm.get("Content-Type")).cloned()
-            })
-            .unwrap_or_else(|| "text/plain".to_string());
-
-        let body_bytes = db.get_request_body(traffic_id.clone()).unwrap_or(None).unwrap_or_default();
+        let (body_bytes, ct, _ce) = db.get_request_body_info(traffic_id.clone()).unwrap_or(None).unwrap_or((vec![], None, None));
+        let content_type = ct.unwrap_or_else(|| "text/plain".to_string());
         let mut body_path = None;
 
         if !body_bytes.is_empty() {
