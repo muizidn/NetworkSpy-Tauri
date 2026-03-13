@@ -2292,6 +2292,7 @@ dependencies = [
  "bytes",
  "chrono",
  "cron",
+ "crossbeam-channel",
  "hyper",
  "network_spy_proxy",
  "once_cell",
@@ -2303,6 +2304,7 @@ dependencies = [
  "tauri-plugin-context-menu",
  "tempfile",
  "tokio",
+ "zstd",
 ]
 
 [[package]]

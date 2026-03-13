@@ -31,9 +31,9 @@ pub fn get_request_pair_data(
     traffic_id: String,
     db: State<'_, Arc<TrafficDb>>,
 ) -> RequestPairData {
-    let traffic = db.get_traffic(traffic_id).unwrap_or(None);
+    let metadata = db.get_traffic_metadata(traffic_id.clone()).unwrap_or(None);
 
-    if let Some(row) = traffic {
+    if let Some(row) = metadata {
         let headers: HashMap<String, String> =
             serde_json::from_str(row.req_headers.as_deref().unwrap_or_default()).unwrap_or_default();
         
@@ -52,10 +52,13 @@ pub fn get_request_pair_data(
             })
             .unwrap_or_else(|| "text/plain".to_string());
 
+        let body_bytes = db.get_request_body(traffic_id).unwrap_or(None);
+        let body_str = body_bytes.map(|b| String::from_utf8_lossy(&b).to_string()).unwrap_or_default();
+
         return RequestPairData {
             headers: header_list,
-            params: vec![], // TODO: Parse params from URI if needed
-            body: row.req_body.unwrap_or_default(),
+            params: vec![],
+            body: body_str,
             content_type,
             intercepted: row.intercepted,
         };

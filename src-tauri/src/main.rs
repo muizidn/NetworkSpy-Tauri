@@ -15,14 +15,14 @@ use proxy_toggle::ProxyToggle;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
-use std::sync::{mpsc, Arc};
+use std::sync::Arc;
 use std::{env, thread};
 use submenu::{certificate, edit, file, help, scripting, setup, tools, view, window};
 use tauri::{AppHandle, Manager};
 use tauri::{Menu};
 use tauri::RunEvent;
 use tokio::sync::RwLock;
-use traffic::db::TrafficDb;
+use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
 
 #[derive(Clone, Serialize)]
@@ -44,26 +44,7 @@ struct Payload {
     data: PayloadTraffic,
 }
 
-enum DbEvent {
-    Request {
-        id: String,
-        uri: String,
-        method: String,
-        version: String,
-        headers: HashMap<String, String>,
-        body: String,
-        intercepted: bool,
-        client: String,
-    },
-    Response {
-        id: String,
-        headers: HashMap<String, String>,
-        body: String,
-        #[allow(dead_code)]
-        intercepted: bool,
-        status_code: u16,
-    },
-}
+
 
 struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
 
@@ -155,6 +136,14 @@ fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle)
     .unwrap();
 }
 
+#[tauri::command]
+fn get_recent_traffic(
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    limit: usize,
+) -> Vec<traffic::db::TrafficMetadata> {
+    db.get_recent_traffic(limit)
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.iter().any(|arg| arg == "--install-cert") {
@@ -224,22 +213,7 @@ fn main() {
             let allow_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
 
-            let (tx, rx) = mpsc::channel::<DbEvent>();
-            let db_writer = Arc::clone(&traffic_db);
-            
-            // Background DB writer thread
-            thread::spawn(move || {
-                while let Ok(event) = rx.recv() {
-                    match event {
-                        DbEvent::Request { id, uri, method, version, headers, body, intercepted, client: _ } => {
-                            let _ = db_writer.insert_request(id, uri, method, version, &headers, body, intercepted);
-                        }
-                        DbEvent::Response { id, headers, body, status_code: _, .. } => {
-                            let _ = db_writer.insert_response(id, &headers, body);
-                        }
-                    }
-                }
-            });
+            // TrafficDb now handles its own background writer thread internally.
 
             let mut proxy = Proxy::new(key_pair, ca_cert, 9090);
 
@@ -248,7 +222,7 @@ fn main() {
             
             struct MyTrafficListener {
                 app_handle: AppHandle,
-                tx: mpsc::Sender<DbEvent>,
+                traffic_db: Arc<TrafficDb>,
                 request_times: Mutex<HashMap<u64, Instant>>,
             }
 
@@ -277,17 +251,16 @@ fn main() {
 
                     let body_bytes = request.body().as_ref();
                     let body_size = body_bytes.len();
-                    let body = String::from_utf8_lossy(body_bytes).to_string();
+                    let body_vec = body_bytes.to_vec();
 
-                    let _ = self.tx.send(DbEvent::Request {
+                    self.traffic_db.insert_request(TrafficEvent::Request {
                         id: id.to_string(),
                         uri: uri.clone(),
                         method: method.clone(),
                         version: http_version.clone(),
                         headers: headers.clone(),
-                        body: body.clone(),
+                        body: body_vec,
                         intercepted,
-                        client: client_addr.clone(),
                     });
 
                     let _result = self.app_handle.emit_all(
@@ -332,13 +305,12 @@ fn main() {
 
                     let body_bytes = response.body().as_ref();
                     let body_size = body_bytes.len();
-                    let body = String::from_utf8_lossy(body_bytes).to_string();
+                    let body_vec = body_bytes.to_vec();
 
-                    let _ = self.tx.send(DbEvent::Response {
+                    self.traffic_db.insert_response(TrafficEvent::Response {
                         id: id.to_string(),
                         headers: headers.clone(),
-                        body: body.clone(),
-                        intercepted,
+                        body: body_vec,
                         status_code,
                     });
 
@@ -367,7 +339,7 @@ fn main() {
 
             let listener = Arc::new(MyTrafficListener {
                 app_handle: app_handle,
-                tx: tx,
+                traffic_db: Arc::clone(&traffic_db),
                 request_times: Mutex::new(HashMap::new()),
             });
 
@@ -388,15 +360,20 @@ fn main() {
             get_request_pair_data,
             get_response_pair_data,
             update_intercept_allow_list,
+            get_recent_traffic,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");
 
     app.run(|_app_handle, event| match event {
         RunEvent::Exit => {
+            let db = _app_handle.state::<Arc<TrafficDb>>();
+            db.shutdown();
             turn_off_proxy();
         }
         RunEvent::ExitRequested { .. } => {
+            let db = _app_handle.state::<Arc<TrafficDb>>();
+            db.shutdown();
             turn_off_proxy();
         }
         _ => {}
