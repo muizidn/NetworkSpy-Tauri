@@ -8,6 +8,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 use zstd;
 use std::sync::RwLock;
+use chrono;
 
 pub enum TrafficEvent {
     Request {
@@ -20,6 +21,7 @@ pub enum TrafficEvent {
         content_type: Option<String>,
         content_encoding: Option<String>,
         intercepted: bool,
+        client: String,
     },
     Response {
         id: String,
@@ -58,6 +60,7 @@ impl TrafficDb {
                 uri TEXT,
                 method TEXT,
                 version TEXT,
+                client TEXT,
                 req_headers TEXT,
                 res_headers TEXT,
                 status_code INTEGER,
@@ -82,6 +85,7 @@ impl TrafficDb {
         )?;
 
         // Migration: Add missing columns to body table if they don't exist
+        let _ = conn.execute("ALTER TABLE traffic ADD COLUMN client TEXT", []);
         let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_type TEXT", []);
         let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_encoding TEXT", []);
         let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_type TEXT", []);
@@ -167,7 +171,7 @@ impl TrafficDb {
     pub fn get_traffic_metadata(&self, id: String) -> Result<Option<TrafficMetadata>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp FROM traffic WHERE id = ?1",
+            "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client FROM traffic WHERE id = ?1",
         )?;
         
         let mut rows = stmt.query_map(params![id], |row| {
@@ -183,6 +187,7 @@ impl TrafficDb {
                 timestamp: row.get(8)?,
                 req_body_size: 0, // Metadata only query
                 res_body_size: 0, // Metadata only query
+                client: row.get(9)?,
             })
         })?;
 
@@ -272,7 +277,7 @@ impl TrafficDb {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
-             b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding 
+             b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client 
              FROM traffic t 
              LEFT JOIN body b ON t.id = b.traffic_id 
              ORDER BY t.timestamp ASC",
@@ -291,6 +296,7 @@ impl TrafficDb {
                 timestamp: row.get(8)?,
                 req_body_size: 0,
                 res_body_size: 0,
+                client: row.get(15)?,
             };
             
             let req_body: Option<Vec<u8>> = row.get(9)?;
@@ -344,7 +350,7 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 
     {
         let mut insert_traffic = tx.prepare_cached(
-            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted) VALUES (?1, ?2, ?3, ?4, ?5, ?6) ON CONFLICT(id) DO NOTHING"
+            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted, client) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT(id) DO NOTHING"
         ).expect("Failed to prepare insert_traffic");
 
         let mut insert_body = tx.prepare_cached(
@@ -361,10 +367,10 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 
         for event in buffer.drain(..) {
             match event {
-                TrafficEvent::Request { id, uri, method, version, headers, body, content_type, content_encoding, intercepted } => {
+                TrafficEvent::Request { id, uri, method, version, headers, body, content_type, content_encoding, intercepted, client } => {
                     let headers_json = serde_json::to_string(&headers).unwrap_or_default();
                     let _ = insert_traffic.execute(params![
-                        id, uri, method, version, headers_json, if intercepted { 1 } else { 0 }
+                        id, uri, method, version, headers_json, if intercepted { 1 } else { 0 }, client
                     ]);
                     
                     let body_data = if !body.is_empty() {
@@ -412,7 +418,7 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {
     let mut recent = cache.write().unwrap();
     match event {
-        TrafficEvent::Request { id, uri, method, version, headers, body, content_type: _, content_encoding: _, intercepted } => {
+        TrafficEvent::Request { id, uri, method, version, headers, body, content_type: _, content_encoding: _, intercepted, client } => {
             let metadata = TrafficMetadata {
                 id: id.clone(),
                 uri: Some(uri.clone()),
@@ -425,6 +431,7 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
                 timestamp: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
                 req_body_size: body.len(),
                 res_body_size: 0,
+                client: Some(client.clone()),
             };
             recent.push_front(metadata);
             if recent.len() > 10000 {
@@ -455,4 +462,5 @@ pub struct TrafficMetadata {
     pub timestamp: String,
     pub req_body_size: usize,
     pub res_body_size: usize,
+    pub client: Option<String>,
 }

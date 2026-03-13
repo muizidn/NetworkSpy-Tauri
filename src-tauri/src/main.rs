@@ -16,12 +16,11 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
-use std::{env};
+use std::env;
 use tauri::{AppHandle, Manager, Emitter};
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
-use tauri::RunEvent;
 use tokio::sync::RwLock;
-use traffic::db::{TrafficDb, TrafficEvent, TrafficMetadata};
+use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
 use traffic::har_util::{create_har_log, HarLog};
 use flate2::read::{GzDecoder, ZlibDecoder};
@@ -207,6 +206,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
             content_type,
             content_encoding,
             intercepted: true,
+            client: "HAR Import".to_string(),
         });
 
         let _ = app_handle.emit("traffic_event", Payload {
@@ -419,6 +419,9 @@ fn main() {
                     let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
                     let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
 
+                    let client_name = traffic::process_info::get_app_name(&client_addr);
+                    let client_info = format!("{} ({})", client_name, client_addr);
+
                     self.traffic_db.insert_request(TrafficEvent::Request {
                         id: id.to_string(),
                         uri: uri.clone(),
@@ -429,6 +432,7 @@ fn main() {
                         content_type,
                         content_encoding,
                         intercepted,
+                        client: client_info.clone(),
                     });
 
                     let _result = self.app_handle.emit(
@@ -444,7 +448,7 @@ fn main() {
                                 body_size,
                                 intercepted,
                                 status_code: None,
-                                client: Some(client_addr),
+                                client: Some(client_info),
                             },
                         },
                     );
@@ -488,6 +492,9 @@ fn main() {
                         status_code,
                     });
 
+                    let client_name = traffic::process_info::get_app_name(&client_addr);
+                    let client_info = format!("{} ({})", client_name, client_addr);
+
                     let mut headers_with_perf = headers;
                     headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
 
@@ -504,7 +511,7 @@ fn main() {
                                 body_size,
                                 intercepted,
                                 status_code: Some(status_code),
-                                client: Some(client_addr),
+                                client: Some(client_info),
                             },
                         },
                     );

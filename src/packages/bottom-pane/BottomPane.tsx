@@ -55,6 +55,9 @@ import { RabbitMQViewerMode } from "./BottomPaneComponents/Single/Protocols/Rabb
 import { KafkaViewerMode } from "./BottomPaneComponents/Single/Protocols/KafkaViewerMode";
 import { QueryParamsMode } from "./BottomPaneComponents/Single/QueryParamsMode";
 import { CookieViewerMode } from "./BottomPaneComponents/Single/CookieViewerMode";
+import { FirebaseMode } from "./BottomPaneComponents/Single/FirebaseMode";
+import { SupabaseMode } from "./BottomPaneComponents/Single/SupabaseMode";
+import { AppwriteMode } from "./BottomPaneComponents/Single/AppwriteMode";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { useAppProvider } from "../app-env";
 import { FiShield, FiLock, FiUnlock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
@@ -317,6 +320,15 @@ const renderMode = (
 
     case "cookies":
       return <CookieViewerMode />;
+
+    case "firebase_viewer":
+      return <FirebaseMode />;
+
+    case "supabase_viewer":
+      return <SupabaseMode />;
+
+    case "appwrite_viewer":
+      return <AppwriteMode />;
 
     case "replay":
       return <ReplayMode />;

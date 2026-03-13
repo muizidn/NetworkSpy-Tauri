@@ -52,7 +52,10 @@ export type SingleMode =
     | "security_mobsf"
     | "security_static"
     | "query_params"
-    | "cookies";
+    | "cookies"
+    | "firebase_viewer"
+    | "supabase_viewer"
+    | "appwrite_viewer";
 
 /**
  * Modes when multiple traffics are selected.

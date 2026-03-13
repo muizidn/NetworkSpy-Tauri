@@ -5,7 +5,8 @@
 
 use std::env;
 use std::fs;
-use std::io::{self, Read}; // Import Read trait here
+#[cfg(target_os = "linux")]
+use std::io::Read;
 use std::process::Command;
 use tempfile::tempdir;
 
@@ -18,14 +19,21 @@ pub struct CertificateInstaller {}
 impl CertificateInstaller {
     pub fn install(&self, cert_path: String) -> Result<String, String> {
         #[cfg(target_os = "macos")]
-        return self.install_macos(cert_path);
+        {
+            return self.install_macos(cert_path);
+        }
 
         #[cfg(target_os = "linux")]
-        return self.install_linux(cert_path);
+        {
+            return self.install_linux(cert_path);
+        }
 
         #[cfg(target_os = "windows")]
-        return self.install_windows(cert_path);
+        {
+            return self.install_windows(cert_path);
+        }
 
+        #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
         Err("Unsupported operating system".into())
     }
 

@@ -85,8 +85,12 @@ export const BottomPaneOptions = () => {
       { id: "soap_viewer", title: "SOAP Inspector", onClick: () => setMode("soap_viewer") },
       { id: "protobuf_viewer", title: "Protobuf Decoder", onClick: () => setMode("protobuf_viewer") },
       { id: "grpc_viewer", title: "gRPC Observer", onClick: () => setMode("grpc_viewer") },
-      { id: "rabbitmq_viewer", title: "RabbitMQ/AMQP", onClick: () => setMode("rabbitmq_viewer") },
+      {id: "rabbitmq_viewer", title: "RabbitMQ/AMQP", onClick: () => setMode("rabbitmq_viewer") },
       { id: "kafka_viewer", title: "Kafka/Message", onClick: () => setMode("kafka_viewer") },
+      { divider: true },
+      { id: "firebase_viewer", title: "Firebase Context", onClick: () => setMode("firebase_viewer") },
+      { id: "supabase_viewer", title: "Supabase context", onClick: () => setMode("supabase_viewer") },
+      { id: "appwrite_viewer", title: "Appwrite Context", onClick: () => setMode("appwrite_viewer") },
     ],
 
     multiple: [
