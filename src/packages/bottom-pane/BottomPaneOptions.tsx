@@ -91,6 +91,7 @@ export const BottomPaneOptions = () => {
       { id: "firebase_viewer", title: "Firebase Context", onClick: () => setMode("firebase_viewer") },
       { id: "supabase_viewer", title: "Supabase context", onClick: () => setMode("supabase_viewer") },
       { id: "appwrite_viewer", title: "Appwrite Context", onClick: () => setMode("appwrite_viewer") },
+      { id: "ads_viewer", title: "Ads Inspector", onClick: () => setMode("ads_viewer") },
     ],
 
     multiple: [

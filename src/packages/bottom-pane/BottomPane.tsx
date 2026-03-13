@@ -58,6 +58,7 @@ import { CookieViewerMode } from "./BottomPaneComponents/Single/CookieViewerMode
 import { FirebaseMode } from "./BottomPaneComponents/Single/FirebaseMode";
 import { SupabaseMode } from "./BottomPaneComponents/Single/SupabaseMode";
 import { AppwriteMode } from "./BottomPaneComponents/Single/AppwriteMode";
+import { AdsViewerMode } from "./BottomPaneComponents/Single/AdsViewerMode";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { useAppProvider } from "../app-env";
 import { FiShield, FiLock, FiUnlock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
@@ -329,6 +330,9 @@ const renderMode = (
 
     case "appwrite_viewer":
       return <AppwriteMode />;
+
+    case "ads_viewer":
+      return <AdsViewerMode />;
 
     case "replay":
       return <ReplayMode />;

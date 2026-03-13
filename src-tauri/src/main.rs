@@ -275,7 +275,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|arg| arg == "--install-cert") {
         let ca_cert = include_str!("ca/network-spy.cer");
         let installer = CertificateInstaller {};
@@ -346,7 +346,7 @@ fn main() {
             let app_handle = app.app_handle();
 
             let app_data_dir = app_handle.path().app_data_dir().unwrap_or_else(|_| {
-                let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+                let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
                 std::path::PathBuf::from(home).join(".network-spy")
             });
 
