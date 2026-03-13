@@ -3,6 +3,7 @@ import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { ResponsePairData } from "../../ResponseTab";
 import { CodeView } from "../../TabRenderer/CodeView";
+import { decodeBody } from "../../utils/bodyUtils";
 
 import { FiCopy, FiCheck, FiWind, FiMaximize2 } from "react-icons/fi";
 
@@ -58,8 +59,8 @@ export const SourceViewerMode = ({ language, title }: SourceViewerProps) => {
     }, [trafficId, provider]);
 
     const displayCode = useMemo(() => {
-        const raw = data?.body || "";
-        return isFormatted ? beautifyCode(raw, language) : raw;
+        const decoded = decodeBody(data?.body, data?.content_type || language);
+        return isFormatted ? beautifyCode(decoded, language) : decoded;
     }, [data, isFormatted, language]);
 
     const handleCopy = () => {

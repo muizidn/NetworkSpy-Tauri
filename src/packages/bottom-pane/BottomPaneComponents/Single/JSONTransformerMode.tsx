@@ -5,6 +5,7 @@ import { ResponsePairData } from "../../ResponseTab";
 import { CodeView } from "../../TabRenderer/CodeView";
 import { FiFilter, FiZap, FiCopy, FiCheck, FiCpu, FiTerminal, FiChevronDown } from "react-icons/fi";
 import jmespath from "jmespath";
+import { parseBodyAsJson } from "../../utils/bodyUtils";
 
 export const JSONTransformerMode = () => {
     const { provider } = useAppProvider();
@@ -25,9 +26,9 @@ export const JSONTransformerMode = () => {
     }, [trafficId, provider]);
 
     const transformedData = useMemo(() => {
-        if (!data?.body) return "";
+        const json = parseBodyAsJson(data?.body);
+        if (!json) return "";
         try {
-            const json = JSON.parse(data.body);
             if (!query.trim()) return JSON.stringify(json, null, 2);
 
             if (engine === "jmespath") {

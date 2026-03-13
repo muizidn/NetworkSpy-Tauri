@@ -14,43 +14,45 @@ export const StaticSecurityMode = () => {
     const { provider } = useAppProvider();
     const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
     
+    const [data, setData] = useState<any>(null);
     const [scanning, setScanning] = useState(false);
     const [results, setResults] = useState<ScanResult[]>([]);
 
     useEffect(() => {
         if (!trafficId) return;
-        
         setScanning(true);
-        setTimeout(() => {
-            setResults([
-                {
-                    check: "Secret Leak Detection",
-                    status: "fail",
-                    message: "Potential AWS API Key regex match in response body.",
-                    impact: "High: Unauthorized cloud infra access."
-                },
-                {
-                    check: "Insecure TLS Handshake",
-                    status: "pass",
-                    message: "Protocol version TLS 1.3 verified.",
-                    impact: "Minimal: Industry standard encryption."
-                },
-                {
-                    check: "CORS Wildcard Policy",
-                    status: "warn",
-                    message: "Access-Control-Allow-Origin is set to '*'.",
-                    impact: "Medium: Cross-domain data leakage risk."
-                },
-                {
-                    check: "SQL Injection Patterns",
-                    status: "pass",
-                    message: "No common SQLi payloads detected in query params.",
-                    impact: "Low: Heuristic check passed."
-                }
-            ]);
-            setScanning(false);
-        }, 800);
-    }, [trafficId]);
+        provider.getRequestPairData(trafficId)
+            .then(res => setData(res))
+            .finally(() => {
+                setResults([
+                    {
+                        check: "Secret Leak Detection",
+                        status: "fail",
+                        message: "Potential AWS API Key regex match in response body.",
+                        impact: "High: Unauthorized cloud infra access."
+                    },
+                    {
+                        check: "Insecure TLS Handshake",
+                        status: "pass",
+                        message: "Protocol version TLS 1.3 verified.",
+                        impact: "Minimal: Industry standard encryption."
+                    },
+                    {
+                        check: "CORS Wildcard Policy",
+                        status: "warn",
+                        message: "Access-Control-Allow-Origin is set to '*'.",
+                        impact: "Medium: Cross-domain data leakage risk."
+                    },
+                    {
+                        check: "SQL Injection Patterns",
+                        status: "pass",
+                        message: "No common SQLi payloads detected in query params.",
+                        impact: "Low: Heuristic check passed."
+                    }
+                ]);
+                setScanning(false);
+            });
+    }, [trafficId, provider]);
 
     if (!trafficId) return <Placeholder text="Select a request to run high-speed static security checks." />;
 

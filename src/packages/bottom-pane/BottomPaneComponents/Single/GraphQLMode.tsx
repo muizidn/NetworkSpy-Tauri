@@ -5,6 +5,7 @@ import { RequestPairData } from "../../RequestTab";
 import { Editor } from "@monaco-editor/react";
 import { twMerge } from "tailwind-merge";
 import { FiActivity, FiCpu, FiBox, FiTerminal, FiInfo, FiLayers, FiCode, FiCheckCircle, FiAlertTriangle, FiZap } from "react-icons/fi";
+import { decodeBody, parseBodyAsJson } from "../../utils/bodyUtils";
 
 export const GraphQLMode = () => {
   const { provider } = useAppProvider();
@@ -27,9 +28,9 @@ export const GraphQLMode = () => {
   }, [trafficId, provider]);
 
   const gqlData = useMemo(() => {
-    if (!data?.body) return null;
+    const parsed = parseBodyAsJson(data?.body);
+    if (!parsed) return null;
     try {
-      const parsed = JSON.parse(data.body);
       if (parsed.query) {
         // Simple heuristic for operation type
         const queryTrimmed = parsed.query.trim();
@@ -59,12 +60,7 @@ export const GraphQLMode = () => {
   }, [data]);
 
   const responseBody = useMemo(() => {
-    if (!responseData?.body) return null;
-    try {
-      return JSON.stringify(JSON.parse(responseData.body), null, 2);
-    } catch (e) {
-      return responseData.body;
-    }
+    return decodeBody(responseData?.body, "application/json");
   }, [responseData]);
 
   if (!trafficId && !gqlData) return <Placeholder text="Select a GraphQL request to begin inspection" />;

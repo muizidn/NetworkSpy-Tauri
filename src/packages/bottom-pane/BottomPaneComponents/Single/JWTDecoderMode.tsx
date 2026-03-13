@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
+import { decodeBody } from "../../utils/bodyUtils";
 
 export const JWTDecoderMode = () => {
     const { provider } = useAppProvider();
@@ -56,8 +57,9 @@ export const JWTDecoderMode = () => {
             });
 
             // Check Body
-            if (data.body) {
-                const matches = data.body.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
+            const decodedBody = decodeBody(data.body);
+            if (decodedBody) {
+                const matches = decodedBody.match(/ey[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g);
                 if (matches) {
                     matches.forEach((m: string) => {
                         if (m.split('.').length >= 2) {

@@ -5,6 +5,7 @@ import { RequestPairData } from "../../RequestTab";
 import { JSONTree } from "react-json-tree";
 import { FiZap, FiLayers, FiSearch } from "react-icons/fi";
 import jmespath from "jmespath";
+import { parseBodyAsJson } from "../../utils/bodyUtils";
 
 export const JSONTreeMode = () => {
   const { provider } = useAppProvider();
@@ -45,12 +46,7 @@ export const JSONTreeMode = () => {
 
   const rawJson = useMemo(() => {
     const data = activeTab === "request" ? requestData : responseData;
-    if (!data?.body) return null;
-    try {
-      return JSON.parse(data.body);
-    } catch (e) {
-      return null;
-    }
+    return parseBodyAsJson(data?.body);
   }, [activeTab, requestData, responseData]);
 
   const transformedJson = useMemo(() => {

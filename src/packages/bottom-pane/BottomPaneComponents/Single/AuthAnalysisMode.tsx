@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
+import { decodeBody } from "../../utils/bodyUtils";
 
 export const AuthAnalysisMode = () => {
     const { provider } = useAppProvider();
@@ -49,9 +50,10 @@ export const AuthAnalysisMode = () => {
         });
 
         // 3. Check Body
-        if (data.body) {
+        const decodedBody = decodeBody(data.body);
+        if (decodedBody) {
             try {
-                const bodyJson = JSON.parse(data.body);
+                const bodyJson = JSON.parse(decodedBody);
                 Object.entries(bodyJson).forEach(([k, v]) => {
                     if (typeof v === 'string' && v.match(jwtRegex)) {
                         if (v.split('.').length >= 2 && !tokens.some(t => t.token === v)) {
@@ -60,7 +62,7 @@ export const AuthAnalysisMode = () => {
                     }
                 });
             } catch (e) {
-                const matches = data.body.match(jwtRegex);
+                const matches = decodedBody.match(jwtRegex);
                 if (matches) {
                     matches.forEach(m => {
                         if (m.split('.').length >= 2 && !tokens.some(t => t.token === m)) {

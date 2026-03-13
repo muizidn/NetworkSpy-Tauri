@@ -4,6 +4,7 @@ import { useTrafficListContext } from "../../../main-content/context/TrafficList
 import { RequestPairData } from "../../RequestTab";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import { FiCpu, FiCheckCircle, FiAlertTriangle, FiCode, FiArrowRight, FiActivity, FiDatabase } from "react-icons/fi";
+import { decodeBody } from "../../utils/bodyUtils";
 
 interface ValidationError {
     path: string;
@@ -53,12 +54,7 @@ export const JSONSchemaMode = () => {
 
     const activeBody = useMemo(() => {
         const data = activeSource === "request" ? requestData : responseData;
-        if (!data?.body) return "";
-        try {
-            return JSON.stringify(JSON.parse(data.body), null, 4);
-        } catch (e) {
-            return data.body;
-        }
+        return decodeBody(data?.body, "application/json");
     }, [activeSource, requestData, responseData]);
 
     // Simple JSON Schema Generator

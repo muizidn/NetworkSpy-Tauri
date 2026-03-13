@@ -3,6 +3,7 @@ import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 import { Editor } from "@monaco-editor/react";
+import { decodeBody } from "../../utils/bodyUtils";
 
 const escapeShellArg = (arg: string): string => {
   return `'${arg.replace(/'/g, "'\\''")}'`;
@@ -32,8 +33,9 @@ export const CurlMode = () => {
       command += ` \\\n  -H ${escapeShellArg(`${h.key}: ${h.value}`)}`;
     });
 
-    if (data.body) {
-      command += ` \\\n  -d ${escapeShellArg(data.body)}`;
+    const body = decodeBody(data.body);
+    if (body) {
+      command += ` \\\n  -d ${escapeShellArg(body)}`;
     }
 
     return command;

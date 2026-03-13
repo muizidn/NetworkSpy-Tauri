@@ -4,6 +4,7 @@ import { useTrafficListContext } from "../../../main-content/context/TrafficList
 import { RequestPairData } from "../../RequestTab";
 import { twMerge } from "tailwind-merge";
 import { FiTerminal, FiBox, FiCpu, FiUser, FiInfo } from "react-icons/fi";
+import { decodeBody, parseBodyAsJson } from "../../utils/bodyUtils";
 
 interface Message {
   role: string;
@@ -45,9 +46,17 @@ export const LLMPromptMode = () => {
   }, [selected, provider]);
 
   const llmData = useMemo<LLMData | null>(() => {
-    if (!data?.body) return null;
+    const body = data?.body;
+    const parsed = parseBodyAsJson(body);
+    if (!parsed) {
+        if (!body) return null;
+        return {
+            prompt: decodeBody(body),
+            model: "raw-text"
+        };
+    }
+    
     try {
-      const parsed = JSON.parse(data.body);
       if (parsed.messages && Array.isArray(parsed.messages)) {
         return {
           messages: parsed.messages,
@@ -72,7 +81,7 @@ export const LLMPromptMode = () => {
       }
     } catch (e) {
         return {
-            prompt: data.body,
+            prompt: decodeBody(body),
             model: "raw-text"
         };
     }

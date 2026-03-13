@@ -4,6 +4,7 @@ import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { useAppProvider } from "@src/packages/app-env";
 import { RequestPairData } from "../../RequestTab";
+import { decodeBody, parseBodyAsJson } from "../../utils/bodyUtils";
 
 export const LLMResponseMode = () => {
   const { provider } = useAppProvider();
@@ -30,10 +31,21 @@ export const LLMResponseMode = () => {
   }, [selected, provider]);
 
   const responseInfo = useMemo(() => {
-    if (!data?.body) return null;
+    const body = data?.body;
+    const parsed = parseBodyAsJson(body);
+    if (!parsed) {
+        if (!body) return null;
+        return { 
+          content: decodeBody(body), 
+          model: "raw-data", 
+          usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+          finishReason: "n/a",
+          raw: null,
+          choiceCount: 0
+        };
+    }
+
     try {
-      const parsed = JSON.parse(data.body);
-      
       const choices = parsed.choices || [];
       const choice = choices[choiceIndex] || choices[0] || {};
       
@@ -45,7 +57,7 @@ export const LLMResponseMode = () => {
       return { content, model, usage, finishReason, raw: parsed, choiceCount: choices.length };
     } catch (e) {
       return { 
-        content: data.body, 
+        content: decodeBody(data?.body), 
         model: "raw-data", 
         usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
         finishReason: "n/a",

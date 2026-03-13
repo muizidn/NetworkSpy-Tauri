@@ -4,22 +4,23 @@ import { useTrafficListContext } from "../../../main-content/context/TrafficList
 import { ResponsePairData } from "../../ResponseTab";
 import { XMLView } from "../../TabRenderer/XMLView";
 import { FiCopy, FiCheck, FiWind, FiLayers } from "react-icons/fi";
+import { decodeBody } from "../../utils/bodyUtils";
 
 const beautifyXML = (xml: string) => {
     if (!xml) return "";
     let formatted = '';
     let indent = '';
     const tab = '  ';
-    xml.split(/>\s*</).forEach(function(node) {
-        if (node.match( /^\/\w/ )) {
+    xml.split(/>\s*</).forEach(function (node) {
+        if (node.match(/^\/\w/)) {
             indent = indent.substring(tab.length);
         }
         formatted += indent + '<' + node + '>\r\n';
-        if (node.match( /^<?\w[^>]*[^\/]$/ )) {
+        if (node.match(/^<?\w[^>]*[^\/]$/)) {
             indent += tab;
         }
     });
-    return formatted.substring(1, formatted.length-3).trim();
+    return formatted.substring(1, formatted.length - 3).trim();
 };
 
 export const XMLViewerMode = () => {
@@ -40,8 +41,8 @@ export const XMLViewerMode = () => {
     }, [trafficId, provider]);
 
     const displayXML = useMemo(() => {
-        const raw = data?.body || "";
-        return isFormatted ? beautifyXML(raw) : raw;
+        const decoded = decodeBody(data?.body, 'application/xml');
+        return isFormatted ? beautifyXML(decoded) : decoded;
     }, [data, isFormatted]);
 
     const handleCopy = () => {
@@ -53,41 +54,40 @@ export const XMLViewerMode = () => {
     if (!trafficId) return <Placeholder text="Select request for XML structure" />;
     if (loading) return <Placeholder text="Beautifying XML..." />;
 
-    const isXML = data?.content_type?.toLowerCase().includes('xml') || data?.body?.trim().startsWith('<');
+    const isXML = data?.content_type?.toLowerCase().includes('xml') || displayXML?.trim().startsWith('<');
 
     return (
         <div className="bg-[#0a0a0a] flex flex-col min-h-full h-full font-sans">
             <div className="flex items-center justify-between px-6 py-4 bg-[#111] border-b border-orange-500/10 shadow-2xl relative z-10">
                 <div className="flex items-center gap-4">
                     <div className="relative group">
-                         <div className="absolute inset-0 bg-orange-500/10 blur-xl rounded-full scale-0 group-hover:scale-110 transition-transform"></div>
-                         <div className="w-10 h-10 rounded-xl bg-orange-600/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shadow-2xl relative z-10">
+                        <div className="absolute inset-0 bg-orange-500/10 blur-xl rounded-full scale-0 group-hover:scale-110 transition-transform"></div>
+                        <div className="w-10 h-10 rounded-xl bg-orange-600/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shadow-2xl relative z-10">
                             <FiLayers size={20} />
                         </div>
                     </div>
                     <div>
                         <h2 className="text-sm font-black text-white tracking-tight uppercase italic">XML / SOAP Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Type: </span>
-                             <span className="text-[9px] font-mono text-orange-400/80 font-bold uppercase tracking-wider">{data?.content_type || 'application/xml'}</span>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Type: </span>
+                            <span className="text-[9px] font-mono text-orange-400/80 font-bold uppercase tracking-wider">{data?.content_type || 'application/xml'}</span>
                         </div>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
-                    <button 
+                    <button
                         onClick={() => setIsFormatted(!isFormatted)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-300 border ${
-                            isFormatted 
-                            ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' 
-                            : 'bg-zinc-800/50 border-white/5 text-zinc-500 hover:text-zinc-300'
-                        }`}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-300 border ${isFormatted
+                                ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
+                                : 'bg-zinc-800/50 border-white/5 text-zinc-500 hover:text-zinc-300'
+                            }`}
                     >
                         <FiWind size={12} />
                         {isFormatted ? 'BEAUTIFY: ACTIVE' : 'MAKE IT PRETTY'}
                     </button>
 
-                    <button 
+                    <button
                         onClick={handleCopy}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/50 border border-white/5 text-[10px] font-bold text-zinc-400 hover:text-white transition-all duration-300"
                     >
@@ -104,8 +104,8 @@ export const XMLViewerMode = () => {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-500 bg-orange-500/5 rounded-2xl border border-orange-500/10 m-4 italic">
-                         <div className="text-xs mb-1 font-bold uppercase tracking-widest text-orange-500/40">XML Mismatch</div>
-                         <div className="text-[10px] text-zinc-600">This payload does not appear to be valid XML</div>
+                        <div className="text-xs mb-1 font-bold uppercase tracking-widest text-orange-500/40">XML Mismatch</div>
+                        <div className="text-[10px] text-zinc-600">This payload does not appear to be valid XML</div>
                     </div>
                 )}
             </div>

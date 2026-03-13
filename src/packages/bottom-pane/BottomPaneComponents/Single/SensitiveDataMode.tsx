@@ -4,6 +4,7 @@ import { useTrafficListContext } from "../../../main-content/context/TrafficList
 import { RequestPairData } from "../../RequestTab";
 import { FiShield, FiAlertTriangle, FiCheckCircle, FiInfo, FiExternalLink } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
+import { decodeBody } from "../../utils/bodyUtils";
 
 interface LeakInfo {
     type: string;
@@ -49,12 +50,14 @@ export const SensitiveDataMode = () => {
         provider.getRequestPairData(trafficId)
             .then((res) => {
                 const found: LeakInfo[] = [];
-                const body = res.body || "";
+                const body = decodeBody(res.body);
 
                 const addLeak = (type: string, value: string, location: string = 'Body') => {
                     const meta = LEAK_METADATA[type] || { risk: 'Unknown security risk.', solution: 'Review security best practices.' };
                     found.push({ type, value, location, ...meta });
                 };
+
+                if (!body) return;
 
                 // Basic regex patterns
                 if (body.match(/eyJh/)) addLeak('JWT Token', 'JWT pattern detected in payload');

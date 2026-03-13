@@ -3,6 +3,7 @@ import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { ResponsePairData } from "../../ResponseTab";
 import { HTMLWebView } from "../../TabRenderer/HTMLWebView";
+import { decodeBody } from "../../utils/bodyUtils";
 
 export const HTMLViewerMode = () => {
     const { provider } = useAppProvider();
@@ -28,7 +29,7 @@ export const HTMLViewerMode = () => {
         <div className="bg-white flex flex-col min-h-full">
             <div className="flex-grow overflow-hidden">
                 {isHTML ? (
-                    <HTMLWebView data={data?.body || ""} />
+                    <HTMLWebView data={decodeBody(data?.body, 'text/html')} />
                 ) : (
                     <div className="h-full flex items-center justify-center bg-[#0a0a0a] text-zinc-500 text-sm italic">
                         Response is not HTML ({data?.content_type || 'Unknown Type'})

@@ -4,6 +4,7 @@ import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { NSTabs, Tab } from "../ui/NSTabs";
 import { TableView } from "../ui/TableView";
 import { KeyValueRenderer } from "./KeyValueRenderer";
+import { decodeBody } from "./utils/bodyUtils";
 
 export type RequestPairData = {
   headers: { key: string; value: string }[];
@@ -38,21 +39,7 @@ export const RequestTab = (props: {
   }, [trafficId]);
 
   const decodedBody = useMemo(() => {
-    if (!data?.body || data.body.length === 0) return "";
-    try {
-      const text = new TextDecoder().decode(data.body);
-      if (data.content_type.toLowerCase().includes("json")) {
-        try {
-          return JSON.stringify(JSON.parse(text), null, 2);
-        } catch (e) {
-          return text;
-        }
-      }
-      return text;
-    } catch (e) {
-      console.error("Failed to decode body as UTF-8", e);
-      return "[Binary Data]";
-    }
+    return decodeBody(data?.body, data?.content_type);
   }, [data?.body, data?.content_type]);
 
   if (!trafficId || !data) {

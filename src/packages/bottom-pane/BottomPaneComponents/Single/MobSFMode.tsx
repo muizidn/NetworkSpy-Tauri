@@ -15,40 +15,42 @@ export const MobSFMode = () => {
   const { provider } = useAppProvider();
   const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
   
+  const [data, setData] = useState<any>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [findings, setFindings] = useState<MobSFFinding[]>([]);
 
   useEffect(() => {
     if (!trafficId) return;
-    
     setAnalyzing(true);
-    setTimeout(() => {
-      setFindings([
-        {
-          id: "SEC-001",
-          type: "danger",
-          title: "Insecure Data Storage",
-          score: 8.5,
-          description: "Potential local storage of sensitive tokens detected in request parameters. Android/iOS apps should use Keystore/Keychain."
-        },
-        {
-          id: "SEC-002",
-          type: "warning",
-          title: "Insufficient Binary Protections",
-          score: 4.2,
-          description: "Detected legacy User-Agent string. Might indicate missing stack canaries or anti-tampering in the mobile client."
-        },
-        {
-          id: "SEC-003",
-          type: "info",
-          title: "App Transport Security",
-          score: 0.0,
-          description: "HTTPS implementation verified. No weak ciphers detected in the TLS handshake (Heuristic check)."
-        }
-      ]);
-      setAnalyzing(false);
-    }, 1200);
-  }, [trafficId]);
+    provider.getRequestPairData(trafficId)
+      .then(res => setData(res))
+      .finally(() => {
+        setFindings([
+          {
+            id: "SEC-001",
+            type: "danger",
+            title: "Insecure Data Storage",
+            score: 8.5,
+            description: "Potential local storage of sensitive tokens detected in request parameters. Android/iOS apps should use Keystore/Keychain."
+          },
+          {
+            id: "SEC-002",
+            type: "warning",
+            title: "Insufficient Binary Protections",
+            score: 4.2,
+            description: "Detected legacy User-Agent string. Might indicate missing stack canaries or anti-tampering in the mobile client."
+          },
+          {
+            id: "SEC-003",
+            type: "info",
+            title: "App Transport Security",
+            score: 0.0,
+            description: "HTTPS implementation verified. No weak ciphers detected in the TLS handshake (Heuristic check)."
+          }
+        ]);
+        setAnalyzing(false);
+      });
+  }, [trafficId, provider]);
 
   if (!trafficId) return <Placeholder text="Select a request for MobSF-integrated mobile analysis" />;
 

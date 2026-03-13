@@ -15,6 +15,7 @@ export const OWASPMode = () => {
   const { provider } = useAppProvider();
   const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
   
+  const [data, setData] = useState<any>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [findings, setFindings] = useState<SecurityFinding[]>([]);
 
@@ -22,9 +23,10 @@ export const OWASPMode = () => {
     if (!trafficId) return;
     
     setAnalyzing(true);
-    // Simulate OWASP Top 10 Static Analysis
-    setTimeout(() => {
-      const mockFindings: SecurityFinding[] = [
+    provider.getRequestPairData(trafficId)
+      .then(res => setData(res))
+      .finally(() => {
+        setFindings([
         {
           id: "A1:2021",
           severity: "high",
@@ -46,11 +48,10 @@ export const OWASPMode = () => {
             category: "Encryption",
             description: "Sensitive data found in query parameters. Ensure sensitive tokens/secrets are passed via request body or headers."
         }
-      ];
-      setFindings(mockFindings);
-      setAnalyzing(false);
-    }, 1500);
-  }, [trafficId]);
+        ]);
+        setAnalyzing(false);
+      });
+  }, [trafficId, provider]);
 
   if (!trafficId) return <Placeholder text="Select a request to run OWASP analysis" />;
 
