@@ -34,6 +34,7 @@ crossbeam-channel = "0.5"
 zstd = "0.13"
 flate2 = "1.1.9"
 brotli = "8.0.2"
+base64 = "0.22.1"
 
 # [patch."https://github.com/muizidn/NetworkSpyProxy.git"]
 # network_spy_proxy = { path = "../../NetworkSpyProxy" }

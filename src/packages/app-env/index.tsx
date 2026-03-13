@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 import React, { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from "react";
 import { IAppProvider, TauriAppProvider, MockAppProvider } from "./AppProvider";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
@@ -57,6 +58,15 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
     setTrafficSet({});
     setSelections({ firstSelected: null, others: null });
   }, [setTrafficList, setTrafficSet, setSelections]);
+
+  useEffect(() => {
+    const unlisten = listen("traffic_cleared", () => {
+      clearData();
+    });
+    return () => {
+      unlisten.then(u => u());
+    };
+  }, [clearData]);
 
   return (
     <TauriEnvContext.Provider value={{

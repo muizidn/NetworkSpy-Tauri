@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   toggleRightPane
 }) => {
 
-  const { isRun, setIsRun, clearData } = useAppProvider();
+  const { isRun, setIsRun, clearData, provider } = useAppProvider();
 
   const ControlButton = ({
     icon,
@@ -96,6 +96,21 @@ export const Header: React.FC<HeaderProps> = ({
             label="Clear Traffic"
             variant="danger"
             onClick={clearData}
+          />
+
+          <div className="h-4 w-px bg-zinc-800/50 mx-1" />
+
+          <ControlButton
+            id="save"
+            icon="Download"
+            label="Save Session (HAR)"
+            onClick={() => provider.saveSession()}
+          />
+          <ControlButton
+            id="load"
+            icon="FolderOpen"
+            label="Load Session (HAR)"
+            onClick={() => provider.loadSession()}
           />
 
         </div>

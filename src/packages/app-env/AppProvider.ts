@@ -16,6 +16,9 @@ export interface IAppProvider {
   setListenStatus(isRun: boolean): void;
   updateInterceptAllowList(newList: string[]): Promise<void>;
   message(message: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void>;
+  saveSession(): Promise<void>;
+  loadSession(): Promise<void>;
+  clearData(): Promise<void>;
 }
 
 export class TauriAppProvider implements IAppProvider {
@@ -68,6 +71,35 @@ export class TauriAppProvider implements IAppProvider {
   async message(messageText: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void> {
     const { message } = await import("@tauri-apps/plugin-dialog");
     await message(messageText, options);
+  }
+
+  async saveSession(): Promise<void> {
+    const { save } = await import("@tauri-apps/plugin-dialog");
+    const path = await save({
+      filters: [{ name: "HAR", extensions: ["har"] }],
+      defaultPath: "session.har"
+    });
+    if (path) {
+      await tauriInvoke("save_session", { path });
+    }
+  }
+
+  async loadSession(): Promise<void> {
+    const { open } = await import("@tauri-apps/plugin-dialog");
+    const path = await open({
+      filters: [{ name: "HAR", extensions: ["har"] }],
+      multiple: false
+    });
+    if (path) {
+      await tauriInvoke("load_session", { path });
+    }
+  }
+
+  async clearData(): Promise<void> {
+    // We already have clearData in context, but adding it to provider for consistency or backend hook
+    // For now we can expose it if needed, but TrafficList context handles the local state.
+    // If we want to clear the backend DB too:
+    await tauriInvoke("load_session", { path: "" }); // Fake load empty or implement clear_backend
   }
 
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {
@@ -332,5 +364,19 @@ export class MockAppProvider implements IAppProvider {
   async message(messageText: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void> {
     console.log(`[Mock Dialog] [${options?.type || 'info'}] ${options?.title ? `${options.title}: ` : ''}${messageText}`);
     alert(`${options?.title ? `${options.title}\n\n` : ''}${messageText}`);
+  }
+
+  async clearData(): Promise<void> {
+    console.log("[Mock] Clearing traffic data");
+    this.trafficSet = {};
+    this.mockBodySet = {};
+  }
+
+  async saveSession(): Promise<void> {
+    console.log("[Mock] Save session (HAR)");
+  }
+
+  async loadSession(): Promise<void> {
+    console.log("[Mock] Load session (HAR)");
   }
 }

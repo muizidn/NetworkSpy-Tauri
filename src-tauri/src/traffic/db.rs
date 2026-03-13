@@ -247,6 +247,69 @@ impl TrafficDb {
         )?;
         Ok(())
     }
+
+    pub fn get_all_traffic_with_bodies(&self) -> Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>)>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
+             b.req_body, b.res_body 
+             FROM traffic t 
+             LEFT JOIN body b ON t.id = b.traffic_id 
+             ORDER BY t.timestamp ASC",
+        )?;
+        
+        let rows = stmt.query_map([], |row| {
+            let meta = TrafficMetadata {
+                id: row.get(0)?,
+                uri: row.get(1)?,
+                method: row.get(2)?,
+                version: row.get(3)?,
+                req_headers: row.get(4)?,
+                res_headers: row.get(5)?,
+                status_code: row.get(6)?,
+                intercepted: row.get::<_, i32>(7)? != 0,
+                timestamp: row.get(8)?,
+                req_body_size: 0,
+                res_body_size: 0,
+            };
+            
+            let req_body: Option<Vec<u8>> = row.get(9)?;
+            let res_body: Option<Vec<u8>> = row.get(10)?;
+            
+            let req_decoded = req_body.map(|bytes| {
+                if bytes.starts_with(b"ZSTD") {
+                    zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
+                } else {
+                    bytes
+                }
+            });
+            
+            let res_decoded = res_body.map(|bytes| {
+                if bytes.starts_with(b"ZSTD") {
+                    zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
+                } else {
+                    bytes
+                }
+            });
+            
+            Ok((meta, req_decoded, res_decoded))
+        })?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row?);
+        }
+        Ok(results)
+    }
+
+    pub fn clear_all(&self) -> Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM traffic", [])?;
+        conn.execute("DELETE FROM body", [])?;
+        let mut recent = self.recent_traffic.write().unwrap();
+        recent.clear();
+        Ok(())
+    }
 }
 
 fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {

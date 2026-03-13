@@ -7,6 +7,8 @@ import {
   Trash,
   Menu,
   CloseSquare,
+  DocumentDownload,
+  FolderOpen,
 } from "iconsax-react";
 
 const icons = [
@@ -18,6 +20,8 @@ const icons = [
   "Trash",
   "Menu",
   "Close",
+  "Download",
+  "FolderOpen",
 ] as const;
 type IconName = (typeof icons)[number];
 
@@ -39,6 +43,10 @@ export const Icon: React.FC<{ iconName: IconName }> = ({ iconName }) => {
       return <Menu size={20} />;
     case "Close":
       return <CloseSquare size={20} />;
+    case "Download":
+      return <DocumentDownload size={20} />;
+    case "FolderOpen":
+      return <FolderOpen size={20} />;
     default:
       return null; // or some default icon/component
   }

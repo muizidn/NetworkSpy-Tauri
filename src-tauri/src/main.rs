@@ -21,10 +21,12 @@ use tauri::{AppHandle, Manager, Emitter};
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::RunEvent;
 use tokio::sync::RwLock;
-use traffic::db::{TrafficDb, TrafficEvent};
+use traffic::db::{TrafficDb, TrafficEvent, TrafficMetadata};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
+use traffic::har_util::{create_har_log, HarLog};
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
+use base64::{Engine as _, engine::general_purpose};
 
 fn decompress_body(headers: &HashMap<String, String>, body: Vec<u8>) -> Vec<u8> {
     let encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding"));
@@ -145,6 +147,114 @@ fn get_recent_traffic(
     limit: usize,
 ) -> Vec<traffic::db::TrafficMetadata> {
     db.get_recent_traffic(limit)
+}
+
+#[tauri::command]
+async fn save_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    let data = db.get_all_traffic_with_bodies().map_err(|e| e.to_string())?;
+    let har = create_har_log(data);
+    let json = serde_json::to_string_pretty(&har).map_err(|e| e.to_string())?;
+    fs::write(path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_handle: AppHandle) -> Result<(), String> {
+    let json = fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let har: HarLog = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+
+    db.clear_all().map_err(|e| e.to_string())?;
+    app_handle.emit("traffic_cleared", ()).map_err(|e| e.to_string())?;
+
+    for (i, entry) in har.log.entries.into_iter().enumerate() {
+        let timestamp = entry.started_date_time.clone();
+        let id = format!("har_{}_{}", timestamp, i);
+        
+        // Request
+        let mut req_headers = HashMap::new();
+        for h in entry.request.headers {
+            req_headers.insert(h.name.clone(), h.value);
+        }
+
+        let method = entry.request.method.clone();
+        let url = entry.request.url.clone();
+        let version = entry.request.http_version.clone();
+        let body_size = entry.request.body_size as usize;
+
+        let req_body = if let Some(post) = entry.request.post_data {
+            post.text.into_bytes()
+        } else {
+            vec![]
+        };
+
+        db.insert_request(TrafficEvent::Request {
+            id: id.clone(),
+            uri: url.clone(),
+            method: method.clone(),
+            version: version.clone(),
+            headers: req_headers.clone(),
+            body: req_body,
+            intercepted: false,
+        });
+
+        let _ = app_handle.emit("traffic_event", Payload {
+            id: id.clone(),
+            is_request: true,
+            data: PayloadTraffic {
+                uri: Some(url),
+                version: Some(version.clone()),
+                method: Some(method),
+                headers: req_headers,
+                body_size,
+                intercepted: false,
+                status_code: None,
+                client: Some("HAR Import".to_string()),
+            }
+        });
+
+        // Response
+        let mut res_headers = HashMap::new();
+        for h in entry.response.headers {
+            res_headers.insert(h.name.clone(), h.value);
+        }
+
+        let res_body = if let Some(text) = entry.response.content.text {
+            if entry.response.content.encoding.as_deref() == Some("base64") {
+                general_purpose::STANDARD.decode(text).unwrap_or_default()
+            } else {
+                text.into_bytes()
+            }
+        } else {
+            vec![]
+        };
+
+        let status_code = entry.response.status;
+        let res_body_size = entry.response.content.size;
+
+        db.insert_response(TrafficEvent::Response {
+            id: id.clone(),
+            headers: res_headers.clone(),
+            body: res_body,
+            status_code,
+        });
+
+        let _ = app_handle.emit("traffic_event", Payload {
+            id: id.clone(),
+            is_request: false,
+            data: PayloadTraffic {
+                uri: None,
+                version: Some("HTTP/1.1".to_string()),
+                method: None,
+                headers: res_headers,
+                body_size: res_body_size,
+                intercepted: false,
+                status_code: Some(status_code),
+                client: Some("HAR Import".to_string()),
+            }
+        });
+    }
+    
+    Ok(())
 }
 
 fn main() {
@@ -397,6 +507,8 @@ fn main() {
             get_response_pair_data,
             update_intercept_allow_list,
             get_recent_traffic,
+            save_session,
+            load_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
