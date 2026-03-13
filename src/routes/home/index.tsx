@@ -76,8 +76,6 @@ const Content = () => {
   };
 
   useEffect(() => {
-    if (!isRun) return;
-
     let unlisten: (() => void) | undefined;
 
     provider.listenTraffic((traffic) => {

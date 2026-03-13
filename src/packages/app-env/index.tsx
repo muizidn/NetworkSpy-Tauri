@@ -60,7 +60,8 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
   }, [setTrafficList, setTrafficSet, setSelections]);
 
   useEffect(() => {
-    const unlisten = listen("traffic_cleared", () => {
+    const unlisten = listen("traffic_cleared", async () => {
+      await activeProvider.clearData();
       clearData();
     });
     return () => {

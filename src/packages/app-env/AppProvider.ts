@@ -96,10 +96,7 @@ export class TauriAppProvider implements IAppProvider {
   }
 
   async clearData(): Promise<void> {
-    // We already have clearData in context, but adding it to provider for consistency or backend hook
-    // For now we can expose it if needed, but TrafficList context handles the local state.
-    // If we want to clear the backend DB too:
-    await tauriInvoke("load_session", { path: "" }); // Fake load empty or implement clear_backend
+    this.trafficSet = {};
   }
 
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {

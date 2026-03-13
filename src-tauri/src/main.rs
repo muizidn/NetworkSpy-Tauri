@@ -165,8 +165,15 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
 
     db.clear_all().map_err(|e| e.to_string())?;
     app_handle.emit("traffic_cleared", ()).map_err(|e| e.to_string())?;
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    
+    let entries_count = har.log.entries.len();
+    println!("Importing {} entries from HAR", entries_count);
 
     for (i, entry) in har.log.entries.into_iter().enumerate() {
+        if i % 10 == 0 {
+            std::thread::sleep(std::time::Duration::from_millis(1));
+        }
         let timestamp = entry.started_date_time.clone();
         let id = format!("har_{}_{}", timestamp, i);
         
@@ -194,7 +201,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
             version: version.clone(),
             headers: req_headers.clone(),
             body: req_body,
-            intercepted: false,
+            intercepted: true,
         });
 
         let _ = app_handle.emit("traffic_event", Payload {
@@ -206,7 +213,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
                 method: Some(method),
                 headers: req_headers,
                 body_size,
-                intercepted: false,
+                intercepted: true,
                 status_code: None,
                 client: Some("HAR Import".to_string()),
             }
@@ -247,7 +254,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
                 method: None,
                 headers: res_headers,
                 body_size: res_body_size,
-                intercepted: false,
+                intercepted: true,
                 status_code: Some(status_code),
                 client: Some("HAR Import".to_string()),
             }
