@@ -33,9 +33,8 @@ export class TauriAppProvider implements IAppProvider {
   }
 
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {
-    console.log("CALL getRequestPairData", trafficId);
     const data = await tauriInvoke<RequestPairData>("get_request_pair_data", { trafficId });
-    
+
     if (data.body_path) {
       try {
         data.body = await readFile(data.body_path);
@@ -43,15 +42,13 @@ export class TauriAppProvider implements IAppProvider {
         console.error("Failed to read request body file", e);
       }
     }
-    
-    console.log("REQUEST DATA", data);
+
     return data;
   }
 
   async getResponsePairData(trafficId: string): Promise<ResponsePairData> {
-    console.log("CALL getResponsePairData", trafficId);
     const data = await tauriInvoke<ResponsePairData>("get_response_pair_data", { trafficId });
-    
+
     if (data.body_path) {
       try {
         data.body = await readFile(data.body_path);
@@ -59,8 +56,6 @@ export class TauriAppProvider implements IAppProvider {
         console.error("Failed to read response body file", e);
       }
     }
-
-    console.log("RESPONSE DATA", data);
     return data;
   }
 
