@@ -18,6 +18,7 @@ use std::fs;
 use std::sync::Arc;
 use std::{env};
 use tauri::{AppHandle, Manager, Emitter};
+use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::RunEvent;
 use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
@@ -149,6 +150,40 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
         .setup(|app| {
+            let cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
+            let tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
+
+            let tools_submenu = SubmenuBuilder::new(app, "Tools")
+                .item(&cert_installer_item)
+                .separator()
+                .item(&tag_item)
+                .build()?;
+
+            let menu = MenuBuilder::new(app)
+                .item(&SubmenuBuilder::new(app, "netwok-spy")
+                    .about(None)
+                    .separator()
+                    .services()
+                    .separator()
+                    .hide()
+                    .hide_others()
+                    .show_all()
+                    .separator()
+                    .quit()
+                    .build()?)
+                .item(&tools_submenu)
+                .build()?;
+
+            app.set_menu(menu)?;
+
+            app.on_menu_event(move |app_handle, event| {
+                if event.id() == "cert-installer" {
+                    open_new_window(app_handle.clone(), "certificate-installer".into(), "Certificate Installer".into());
+                } else if event.id() == "tools-tag" {
+                    open_new_window(app_handle.clone(), "tag".into(), "Tag Tools".into());
+                }
+            });
+
             let app_handle = app.app_handle();
 
             let app_data_dir = app_handle.path().app_data_dir().unwrap_or_else(|_| {

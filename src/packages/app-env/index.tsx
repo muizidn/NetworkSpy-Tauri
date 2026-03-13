@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from "react";
 import { IAppProvider, TauriAppProvider, MockAppProvider } from "./AppProvider";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
+import { RUNNING_IN_TAURI } from "@src/context/TauriProvider";
 
 export interface IAppProviderContext {
   provider: IAppProvider;
@@ -14,7 +15,7 @@ export const TauriEnvContext = createContext<IAppProviderContext | undefined>(
 );
 
 export const getAppProvider = (): IAppProvider => {
-  if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+  if (RUNNING_IN_TAURI) {
     return new TauriAppProvider();
   }
   return new MockAppProvider();
