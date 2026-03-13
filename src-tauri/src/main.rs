@@ -14,13 +14,15 @@ use once_cell::sync::OnceCell;
 use proxy_toggle::ProxyToggle;
 use serde::Serialize;
 use std::collections::HashMap;
-use std::process::Command;
+use std::fs;
 use std::sync::{mpsc, Arc};
 use std::{env, thread};
-use submenu::{certificate, diff, edit, file, flow, help, scripting, setup, tools, view, window};
+use submenu::{certificate, edit, file, help, scripting, setup, tools, view, window};
 use tauri::{AppHandle, Manager};
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
-use tauri::{RunEvent, WindowBuilder};
+use tauri::{Menu};
+use tauri::RunEvent;
+use tokio::sync::RwLock;
+use traffic::db::TrafficDb;
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
 
 #[derive(Clone, Serialize)]
@@ -30,6 +32,7 @@ struct PayloadTraffic {
     version: Option<String>,
     body: Option<String>,
     headers: HashMap<String, String>,
+    intercepted: bool,
 }
 
 #[derive(Clone, Serialize)]
@@ -39,9 +42,42 @@ struct Payload {
     data: PayloadTraffic,
 }
 
-#[derive(Clone, Serialize)]
-struct ListenId {
-    id: u32,
+enum DbEvent {
+    Request {
+        id: String,
+        uri: String,
+        method: String,
+        version: String,
+        headers: HashMap<String, String>,
+        body: String,
+        intercepted: bool,
+    },
+    Response {
+        id: String,
+        headers: HashMap<String, String>,
+        body: String,
+        #[allow(dead_code)]
+        intercepted: bool,
+    },
+}
+
+struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
+
+#[tauri::command]
+async fn update_intercept_allow_list(
+    state: tauri::State<'_, InterceptAllowList>,
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    new_list: Vec<String>,
+) -> Result<(), String> {
+    let mut list = state.0.write().await;
+    *list = new_list.clone();
+    
+    for domain in new_list {
+        if let Err(e) = db.add_to_allow_list(domain) {
+            return Err(e.to_string());
+        }
+    }
+    Ok(())
 }
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -50,28 +86,11 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-// #[tauri::command]
-// async fn start_stream<StreamState: std::marker::Send + std::marker::Sync>(app: AppHandle, state: State<'_, StreamState>, _: Invoke) -> Result<()> {
-
-//     for i in 1..=10 {
-//         let data = format!("Data point {}", i);
-//         // Emit event to the frontend
-//         app.emit_all("streamData", Some(data))?;
-
-//         // Simulate delay between data points
-//         std::thread::sleep(std::time::Duration::from_secs(1));
-//     }
-
-//     Ok(())
-// }
-
 fn create_menu() -> Menu {
     let file_submenu = file::create_file_submenu();
     let edit_submenu = edit::create_edit_submenu();
     let view_submenu = view::create_view_submenu();
-    // let flow_submenu = flow::create_flow_submenu();
     let tools_submenu = tools::create_tools_submenu();
-    // let diff_submenu = diff::create_diff_submenu();
     let scripting_submenu = scripting::create_scripting_submenu();
     let certificate_submenu = certificate::create_certificate_submenu();
     let setup_submenu = setup::create_setup_submenu();
@@ -82,9 +101,7 @@ fn create_menu() -> Menu {
         .add_submenu(file_submenu)
         .add_submenu(edit_submenu)
         .add_submenu(view_submenu)
-        //.add_submenu(flow_submenu)
         .add_submenu(tools_submenu)
-        //.add_submenu(diff_submenu)
         .add_submenu(scripting_submenu)
         .add_submenu(certificate_submenu)
         .add_submenu(setup_submenu)
@@ -173,33 +190,63 @@ fn main() {
             tools::handle_tools_menu_event(event_id, &event, &event.window().app_handle());
         })
         .setup(|app| {
-            // listen to the `start_stream` (emitted on any window)
-            let _id = app.listen_global("start_stream", |event| {
-                println!("got start_stream with payload {:?}", event.payload());
-            });
-            // unlisten to the event using the `id` returned on the `listen_global` function
-            // a `once_global` API is also exposed on the `App` struct
-            // app.unlisten(id);
-
-            // emit the `start_stream` event to all webview windows on the frontend
-            // Count Event ==========
-            // アプリハンドルを先に作成しておく。
-            // つい、app を渡したくなってしまうが、この app は &mut App といった
-            // Mutabble な値なため、非同期時の値の整合性の保証がなくなってしまう。
-            // それ故、そのまま非同期ランタイムに渡そうとするとコンパイラに怒られる。
             let app_handle = app.app_handle();
 
-            // app_handle.emit_all("start_stream_listen_id", ListenId { id: id });
+            let app_data_dir = app_handle.path_resolver().app_data_dir().unwrap_or_else(|| {
+                let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+                std::path::PathBuf::from(home).join(".network-spy")
+            });
+
+            if !app_data_dir.exists() {
+                fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
+            }
+
+            let db_path = app_data_dir.join("traffic.db");
+            let traffic_db = Arc::new(TrafficDb::new(db_path).expect("Failed to initialize database"));
+            app_handle.manage(Arc::clone(&traffic_db));
+
+            let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
+            if list.is_empty() {
+                list = vec![
+                    "google.com".to_string(),
+                    "facebook.com".to_string(),
+                    "openai.com".to_string(),
+                    "anthropic.com".to_string(),
+                ];
+                for domain in &list {
+                     let _ = traffic_db.add_to_allow_list(domain.clone());
+                }
+            }
+            let allow_list = Arc::new(RwLock::new(list));
+            app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
+
+            let (tx, rx) = mpsc::channel::<DbEvent>();
+            let db_writer = Arc::clone(&traffic_db);
+            
+            // Background DB writer thread
+            thread::spawn(move || {
+                while let Ok(event) = rx.recv() {
+                    match event {
+                        DbEvent::Request { id, uri, method, version, headers, body, intercepted } => {
+                            let _ = db_writer.insert_request(id, uri, method, version, &headers, body, intercepted);
+                        }
+                        DbEvent::Response { id, headers, body, .. } => {
+                            let _ = db_writer.insert_response(id, &headers, body);
+                        }
+                    }
+                }
+            });
 
             let mut proxy = Proxy::new(key_pair, ca_cert, 9090);
 
             struct MyTrafficListener {
                 app_handle: AppHandle,
+                tx: mpsc::Sender<DbEvent>,
             }
 
             impl TrafficListener for MyTrafficListener {
-                fn request(&self, id: u64, request: Request<Bytes>) {
-                    let uri = request.uri().to_string(); // Extract URI
+                fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool) {
+                    let uri = request.uri().to_string();
                     let http_version = match request.version() {
                         Version::HTTP_10 => "HTTP/1.0".to_string(),
                         Version::HTTP_11 => "HTTP/1.1".to_string(),
@@ -220,6 +267,16 @@ fn main() {
 
                     let body = String::from_utf8_lossy(request.body().as_ref()).to_string();
 
+                    let _ = self.tx.send(DbEvent::Request {
+                        id: id.to_string(),
+                        uri: uri.clone(),
+                        method: method.clone(),
+                        version: http_version.clone(),
+                        headers: headers.clone(),
+                        body: body.clone(),
+                        intercepted,
+                    });
+
                     let _result = self.app_handle.emit_all(
                         "traffic_event",
                         Payload {
@@ -231,12 +288,13 @@ fn main() {
                                 method: Some(method),
                                 headers: headers,
                                 body: Some(body),
+                                intercepted,
                             },
                         },
                     );
                 }
 
-                fn response(&self, id: u64, response: Response<Bytes>) {
+                fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool) {
                     let http_version = match response.version() {
                         Version::HTTP_10 => "HTTP/1.0".to_string(),
                         Version::HTTP_11 => "HTTP/1.1".to_string(),
@@ -255,6 +313,13 @@ fn main() {
 
                     let body = String::from_utf8_lossy(response.body().as_ref()).to_string();
 
+                    let _ = self.tx.send(DbEvent::Response {
+                        id: id.to_string(),
+                        headers: headers.clone(),
+                        body: body.clone(),
+                        intercepted,
+                    });
+
                     let _result = self.app_handle.emit_all(
                         "traffic_event",
                         Payload {
@@ -266,6 +331,7 @@ fn main() {
                                 method: None,
                                 headers: headers,
                                 body: Some(body),
+                                intercepted,
                             },
                         },
                     );
@@ -274,50 +340,12 @@ fn main() {
 
             let listener = Arc::new(MyTrafficListener {
                 app_handle: app_handle,
+                tx: tx,
             });
 
             tauri::async_runtime::spawn(async move {
-                proxy.run_proxy(listener).await;
+                proxy.run_proxy(listener, allow_list).await;
             });
-
-            // // そのままループを作るとメイン処理が固まるので、tauri::async_runtime
-            // // で非同期ランタイムを作成
-            // let _count_handle = tauri::async_runtime::spawn(async move {
-            //     // cron 式で3秒ごとのイベントをスケジュールする。
-            //     let schedule = Schedule::from_str("0/3 * * * * *").unwrap();
-            //     let mut count: u32 = 0;
-            //     let mut next_tick = schedule.upcoming(Utc).next().unwrap();
-
-            //     loop {
-            //         let now = Utc::now();
-
-            //         // 条件に入った際の処理
-            //         if now >= next_tick {
-            //             next_tick = schedule.upcoming(Utc).next().unwrap();
-            //             // 1 カウントする
-            //             count += 1;
-
-            //             println!("SEND EVENT COUNT #{}", count);
-
-            //             // イベントを emit。
-            //             let result = app_handle.emit_all(
-            //                 "traffic_event",
-            //                 Payload {
-            //                     id: count.to_string(),
-            //                 },
-            //             );
-            //             match result {
-            //                 Err(ref err) => println!("{:?}", err),
-            //                 _ => (),
-            //             }
-            //         }
-
-            //         sleep(Duration::from_secs(std::cmp::min(
-            //             (next_tick - now).num_seconds() as u64,
-            //             60,
-            //         )));
-            //     }
-            // });
 
             Ok(())
         })
@@ -331,6 +359,7 @@ fn main() {
             open_new_window,
             get_request_pair_data,
             get_response_pair_data,
+            update_intercept_allow_list,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application");

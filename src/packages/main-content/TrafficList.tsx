@@ -10,6 +10,7 @@ import { useFilterContext } from "@src/context/FilterContext";
 import { TrafficItemMap } from "./model/TrafficItemMap";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useAppProvider } from "../app-env";
+import { FiLock, FiUnlock } from "react-icons/fi";
 
 type TauriInvokeFn = (cmd: string, args?: any) => Promise<any>;
 
@@ -25,6 +26,22 @@ export const TrafficList: React.FC = () => {
       minWidth: 100,
       sortable: true,
       compareValue: (a: any, b: any) => (Number(a) < Number(b) ? -1 : 1),
+    },
+    {
+      title: "Mode",
+      renderer: {
+        render: ({ input }: { input: TrafficItemMap }) => {
+          const intercepted = input.intercepted as boolean;
+          return (
+            <div className={`flex items-center justify-center h-full ${
+              intercepted ? 'text-purple-400' : 'text-zinc-500'
+            }`} title={intercepted ? 'Intercepted (Decrypted)' : 'Tunneled (Encrypted)'}>
+              {intercepted ? <FiUnlock size={14} /> : <FiLock size={14} />}
+            </div>
+          );
+        }
+      },
+      minWidth: 100,
     },
     { title: "Tags", renderer: new TagsRenderer("tags"), minWidth: 100 },
     { title: "URL", renderer: new TextRenderer("url"), minWidth: 400 },

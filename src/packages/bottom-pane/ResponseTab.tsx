@@ -26,6 +26,7 @@ export type ResponsePairData = {
   params: { key: string; value: string | string[] }[];
   body: string;
   content_type: string;
+  intercepted: boolean;
 };
 
 export const ResponseTab = (props: {

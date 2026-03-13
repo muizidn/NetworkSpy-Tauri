@@ -54,11 +54,94 @@ import { GRPCViewerMode } from "./BottomPaneComponents/Single/Protocols/GRPCView
 import { RabbitMQViewerMode } from "./BottomPaneComponents/Single/Protocols/RabbitMQViewerMode";
 import { KafkaViewerMode } from "./BottomPaneComponents/Single/Protocols/KafkaViewerMode";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
+import { useAppProvider } from "../app-env";
+import { FiShield, FiLock, FiUnlock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
+import { Dialog } from "../ui/Dialog";
 
 export const BottomPane = () => {
-  const { mode } = useBottomPaneContext();
+  const { mode, selectionType } = useBottomPaneContext();
   const [sizes, setSizes] = useState<any[]>(["50%", "50%"]);
   const { selections } = useTrafficListContext();
+  const { provider } = useAppProvider();
+  const [isIntercepting, setIsIntercepting] = useState(false);
+  const [dialogConfig, setDialogConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'error' | 'success';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info'
+  });
+
+  const selected = selections.firstSelected;
+
+  const handleIntercept = async () => {
+    if (!selected || !selected.url) return;
+    try {
+      setIsIntercepting(true);
+      const url = new URL(selected.url as string);
+      const domain = url.hostname;
+      await provider.updateInterceptAllowList([domain]);
+      setDialogConfig({
+        isOpen: true,
+        title: 'Interception Updated',
+        message: `Domain ${domain} has been added to the interception allow-list. Future traffic will be decrypted.`,
+        type: 'success'
+      });
+    } catch (e) {
+      console.error(e);
+      setDialogConfig({
+        isOpen: true,
+        title: 'Update Failed',
+        message: "Failed to update interception settings. Please check console for details.",
+        type: 'error'
+      });
+    } finally {
+      setIsIntercepting(false);
+    }
+  };
+
+  const handleInterceptAll = async () => {
+    if (!selections.others) return;
+    try {
+      setIsIntercepting(true);
+      const tunneledDomains = Array.from(new Set(
+        selections.others
+          .filter(t => t && !t.intercepted && t.url)
+          .map(t => {
+            try { return new URL(t.url as string).hostname; } catch { return null; }
+          })
+          .filter(Boolean) as string[]
+      ));
+
+      if (tunneledDomains.length === 0) return;
+
+      await provider.updateInterceptAllowList(tunneledDomains);
+      setDialogConfig({
+        isOpen: true,
+        title: 'Batch Update Successful',
+        message: `Successfully added ${tunneledDomains.length} domains to the interception allow-list.`,
+        type: 'success'
+      });
+    } catch (e) {
+      console.error(e);
+      setDialogConfig({
+        isOpen: true,
+        title: 'Batch Update Failed',
+        message: "Failed to process batch update.",
+        type: 'error'
+      });
+    } finally {
+      setIsIntercepting(false);
+    }
+  };
+
+  const isMultiple = selectionType === "multiple";
+  const tunneledCount = selections.others ? selections.others.filter(t => t && !t.intercepted).length : 0;
+  const interceptedCount = selections.others ? selections.others.filter(t => t && t.intercepted).length : 0;
 
   return (
     <div className="flex flex-col w-full relative h-full">
@@ -69,11 +152,97 @@ export const BottomPane = () => {
             Loading viewer...
           </div>
         }>
-          <div className="flex-grow overflow-y-auto h-full custom-scrollbar bg-[#111] pb-10">
-            {renderMode(mode, sizes, setSizes)}
+          <div className="flex-grow overflow-y-auto h-full custom-scrollbar bg-[#111] pb-12">
+            {(() => {
+              if (!selected) return renderMode(mode, sizes, setSizes);
+
+              if (!isMultiple) {
+                if (selected.intercepted) {
+                  return renderMode(mode, sizes, setSizes);
+                } else {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-full p-12 text-center bg-[#0a0a0a]">
+                      <div className="w-24 h-24 rounded-full bg-zinc-900/50 flex items-center justify-center mb-6 border border-zinc-800 shadow-2xl relative">
+                        <FiLock size={48} className="text-zinc-600" />
+                        <div className="absolute -bottom-1 -right-1 bg-red-500/20 text-red-400 p-1.5 rounded-full border border-red-500/30">
+                          <FiShield size={16} />
+                        </div>
+                      </div>
+                      <h2 className="text-2xl font-black text-white mb-3 tracking-tight">ENCRYPTED TUNNEL</h2>
+                      <p className="text-zinc-500 max-w-md text-sm leading-relaxed mb-10">
+                        Traffic to <span className="text-zinc-300 font-mono font-bold">{new URL(selected.url as string).hostname}</span> is currently being tunneled directly to ensure privacy. Deep inspection is disabled.
+                      </p>
+                      <button
+                        onClick={handleIntercept}
+                        disabled={isIntercepting}
+                        className="flex items-center gap-3 px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-purple-900/40 uppercase tracking-tight"
+                      >
+                        <FiUnlock size={18} />
+                        {isIntercepting ? "Wait..." : "Enable Interception for this host"}
+                      </button>
+                    </div>
+                  );
+                }
+              }
+
+              return renderMode(mode, sizes, setSizes);
+            })()}
           </div>
         </Suspense>
       </ErrorBoundary>
+
+      {/* Interception Overlay/Bar */}
+      {selected && (
+        <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/90 border-t border-zinc-800 p-2.5 px-6 flex items-center justify-between backdrop-blur-xl z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center gap-4">
+            {isMultiple ? (
+              <div className="flex items-center gap-4 border-r border-zinc-800 pr-5 mr-1">
+                <div className="flex items-center gap-2 text-zinc-400 font-bold text-[10px] uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-zinc-600"></span>
+                  <span>{tunneledCount} Tunneled</span>
+                </div>
+                <div className="flex items-center gap-2 text-purple-400 font-bold text-[10px] uppercase tracking-wider">
+                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                  <span>{interceptedCount} Intercepted</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {selected.intercepted ? (
+                  <div className="flex items-center gap-2 text-purple-400 font-black text-[10px] uppercase tracking-widest">
+                    <FiUnlock size={14} className="animate-pulse" />
+                    <span>Interception Active</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-zinc-500 font-black text-[10px] uppercase tracking-widest">
+                    <FiLock size={14} />
+                    <span>Tunneled Connection</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {(isMultiple ? tunneledCount > 0 : !selected.intercepted) && (
+            <button
+              onClick={isMultiple ? handleInterceptAll : handleIntercept}
+              disabled={isIntercepting}
+              className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-purple-900/30"
+            >
+              <FiShield size={12} />
+              {isIntercepting ? "PROVISIONING..." : isMultiple ? `INTERCEPT ${tunneledCount} HOSTS` : "INTERCEPT HOST"}
+            </button>
+          )}
+        </div>
+      )}
+
+      <Dialog 
+        isOpen={dialogConfig.isOpen}
+        onClose={() => setDialogConfig(prev => ({ ...prev, isOpen: false }))}
+        title={dialogConfig.title}
+        message={dialogConfig.message}
+        type={dialogConfig.type}
+      />
     </div>
   );
 };

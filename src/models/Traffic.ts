@@ -2,6 +2,7 @@ export interface Traffic {
     id: string;
     uri: string;
     method: string;
+    intercepted: boolean;
     request: {
         version: string;
         header: {

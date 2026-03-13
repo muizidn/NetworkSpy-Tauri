@@ -1,6 +1,6 @@
 import { useTrafficListContext } from "./context/TrafficList";
 import { twMerge } from "tailwind-merge";
-import { FiExternalLink, FiGlobe, FiClock, FiBox } from "react-icons/fi";
+import { FiExternalLink, FiGlobe, FiClock, FiBox, FiShield, FiLock } from "react-icons/fi";
 import { useTagContext } from "@src/context/TagContext";
 
 const CustomTag = ({ tagName }: { tagName: string }) => {
@@ -21,7 +21,7 @@ const CustomTag = ({ tagName }: { tagName: string }) => {
   );
 };
 
-const UrlColorizer = ({ url }: { url: string }) => {
+const UrlColorizer = ({ url, intercepted }: { url: string, intercepted?: boolean }) => {
   if (!url) return null;
 
   try {
@@ -29,7 +29,8 @@ const UrlColorizer = ({ url }: { url: string }) => {
     const params = Array.from(urlObj.searchParams.entries());
 
     return (
-      <div className="font-mono text-[13px] leading-relaxed break-all select-text whitespace-pre-wrap">
+      <div className="font-mono text-[13px] leading-relaxed break-all select-text whitespace-pre-wrap flex items-center gap-1.5">
+        {intercepted && <FiShield size={12} className="text-purple-400 shrink-0" title="Intercepted (Decrypted)" />}
         <span className="text-zinc-500 font-bold">{urlObj.protocol}//</span>
         <button 
           onClick={() => window.open(url, '_blank')}
@@ -70,9 +71,8 @@ const InfoTag = ({ icon: Icon, label, value, className }: { icon?: any, label?: 
 );
 
 export const SelectionViewer = () => {
-  const { selections } = useTrafficListContext();
+  const { selections, trafficList, setTrafficList } = useTrafficListContext();
   const selected = selections.firstSelected;
-  
   if (!selected) {
     return (
       <div className="flex items-center justify-center h-full text-zinc-600 italic text-[12px] p-4 bg-[#080808] border-t border-black">
@@ -101,7 +101,7 @@ export const SelectionViewer = () => {
     <div className='flex flex-col border-t border-zinc-900 w-full bg-[#0a0a0a] shadow-2xl'>
       {/* URL Section */}
       <div id='url-viewer' className='border-b border-zinc-900/50 w-full p-3 bg-black/40'>
-        <UrlColorizer url={url} />
+        <UrlColorizer url={url} intercepted={selected.intercepted as boolean} />
       </div>
 
       {/* Tags Section */}

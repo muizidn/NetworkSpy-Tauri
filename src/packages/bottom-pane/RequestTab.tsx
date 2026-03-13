@@ -26,6 +26,7 @@ export type RequestPairData = {
   params: { key: string; value: string | string[] }[];
   body: string;
   content_type: string;
+  intercepted: boolean;
 };
 
 export const RequestTab = (props: {

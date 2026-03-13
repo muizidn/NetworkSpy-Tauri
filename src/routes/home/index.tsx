@@ -81,6 +81,7 @@ const Content = () => {
     let unlisten: (() => void) | undefined;
 
     provider.listenTraffic((traffic) => {
+      console.log("TRAFFIC", traffic, traffic.intercepted)
       setTrafficSet((prev) => ({
         ...prev,
         [traffic.id]: traffic,
@@ -109,6 +110,7 @@ const Content = () => {
           request: "-",
           response: traffic.response ? "Data" : "-",
           performance: (traffic as any).performance,
+          intercepted: traffic.intercepted
         };
 
         // Tier 2: Asynchronous Tagging (Deferred matching)

@@ -1,3 +1,7 @@
+use std::sync::Arc;
+use crate::traffic::db::TrafficDb;
+use tauri::State;
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -6,6 +10,7 @@ pub struct ResponsePairData {
     pub params: Vec<KeyValue>,
     pub body: String,
     pub content_type: String,
+    pub intercepted: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -22,55 +27,46 @@ pub enum ValueType {
 }
 
 #[tauri::command]
-pub fn get_response_pair_data(_traffic_id: String) -> ResponsePairData {
-    return ResponsePairData {
-        headers: vec![
-            KeyValue {
-                key: "Authorization".to_string(),
-                value: ValueType::String("Bearer token".to_string()),
-            },
-            KeyValue {
-                key: "X-Cloudflare".to_string(),
-                value: ValueType::String("Nonce, misharp".to_string()),
-            },
-            KeyValue {
-                key: "Content-Type".to_string(),
-                value: ValueType::String("application/json".to_string()), // Change this to test other types
-            },
-        ],
-        params: vec![
-            KeyValue {
-                key: "authToken".to_string(),
-                value: ValueType::String("Bearer token".to_string()),
-            },
-            KeyValue {
-                key: "page".to_string(),
-                value: ValueType::String("1".to_string()),
-            },
-            KeyValue {
-                key: "perPage".to_string(),
-                value: ValueType::String("100".to_string()),
-            },
-            KeyValue {
-                key: "product_ids".to_string(),
-                value: ValueType::Array(vec!["id1".to_string(), "id2".to_string()]),
-            },
-        ],
-        body: r#"
-        {
-            "id": "4541600237192504000",
-            "tags": ["API TESTING", "NETWORK MONITORING"],
-            "url": "https://amazon.com:157/product/books?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJib29rcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.WjtjqnszjFL3Gb-F3TSvTKHl5VxbFf4jJ2yyK_SXxxg",
-            "client": "Video Streaming VALIDNOR",
-            "method": "DELETE",
-            "status": "Failed",
-            "code": "200",
-            "time": "650 ms",
-            "duration": "91 bytes",
-            "response": "Response data",
-            "response": "-"
-        }
-        "#.to_string(),
-        content_type: "application/x-www-form-urlencoded".to_string(), // Change this to test other types
+pub fn get_response_pair_data(
+    traffic_id: String,
+    db: State<'_, Arc<TrafficDb>>,
+) -> ResponsePairData {
+    let traffic = db.get_traffic(traffic_id).unwrap_or(None);
+
+    if let Some(row) = traffic {
+        let headers: HashMap<String, String> =
+            serde_json::from_str(row.res_headers.as_deref().unwrap_or_default()).unwrap_or_default();
+        
+        let header_list: Vec<KeyValue> = headers
+            .into_iter()
+            .map(|(k, v)| KeyValue {
+                key: k,
+                value: ValueType::String(v),
+            })
+            .collect();
+
+        let content_type = row.res_headers.as_ref()
+            .and_then(|h| {
+                let hm: HashMap<String, String> = serde_json::from_str(h).ok()?;
+                hm.get("content-type").or_else(|| hm.get("Content-Type")).cloned()
+            })
+            .unwrap_or_else(|| "text/plain".to_string());
+
+        return ResponsePairData {
+            headers: header_list,
+            params: vec![], // TODO: Parse params if needed
+            body: row.res_body.unwrap_or_default(),
+            content_type,
+            intercepted: row.intercepted,
+        };
+    }
+
+    // Fallback or empty if not found
+    ResponsePairData {
+        headers: vec![],
+        params: vec![],
+        body: "".to_string(),
+        content_type: "text/plain".to_string(),
+        intercepted: true,
     }
 }

@@ -12,6 +12,8 @@ export interface IAppProvider {
   listenSSE(trafficId: string, callback: (chunk: string) => void): () => void;
   listenWebsocket(trafficId: string, callback: (message: any) => void): () => void;
   setListenStatus(isRun: boolean): void;
+  updateInterceptAllowList(newList: string[]): Promise<void>;
+  message(message: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void>;
 }
 
 export class TauriAppProvider implements IAppProvider {
@@ -33,6 +35,15 @@ export class TauriAppProvider implements IAppProvider {
     return tauriInvoke<RequestPairData>("get_response_pair_data", { trafficId });
   }
 
+  async updateInterceptAllowList(newList: string[]): Promise<void> {
+    return tauriInvoke("update_intercept_allow_list", { newList });
+  }
+
+  async message(messageText: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void> {
+    const { message } = await import("@tauri-apps/api/dialog");
+    return message(messageText, options);
+  }
+
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {
     return listen<Payload>("traffic_event", (event) => {
       const payload = event.payload;
@@ -43,6 +54,7 @@ export class TauriAppProvider implements IAppProvider {
           id: payload.id,
           uri: payload.data.uri || "",
           method: payload.data.method || "",
+          intercepted: payload.data.intercepted,
           request: {
             version: payload.data.version || "",
             header: payload.data.headers || {},
@@ -57,6 +69,7 @@ export class TauriAppProvider implements IAppProvider {
           id: payload.id,
           uri: existing?.uri || payload.data.uri || "",
           method: existing?.method || payload.data.method || "",
+          intercepted: payload.data.intercepted,
           request: existing?.request || {
             version: "",
             header: {},
@@ -97,6 +110,7 @@ export class TauriAppProvider implements IAppProvider {
 export class MockAppProvider implements IAppProvider {
   private trafficSet: Record<string, Traffic> = {};
   private isListening: boolean = false;
+  private allowList: Set<string> = new Set([]);
 
   setListenStatus(isRun: boolean): void {
     this.isListening = isRun;
@@ -231,10 +245,19 @@ export class MockAppProvider implements IAppProvider {
       }
       const item = batch.shift();
       if (item) {
+        let intercepted = false;
+        try {
+          const url = new URL(item.url as string);
+          intercepted = this.allowList.has(url.hostname);
+        } catch (e) {
+          intercepted = true; // Fallback for relative or malformed URLs in mock
+        }
+
         const traffic: Traffic = {
           id: item.id,
           uri: item.url as string,
           method: item.method as string,
+          intercepted: intercepted,
           request: {
             version: "HTTP/1.1",
             header: {
@@ -257,5 +280,15 @@ export class MockAppProvider implements IAppProvider {
       }
     }, 300);
     return () => clearInterval(interval);
+  }
+
+  async updateInterceptAllowList(newList: string[]): Promise<void> {
+    newList.forEach(d => this.allowList.add(d));
+    console.log(`[Mock] Allow List Updated:`, Array.from(this.allowList));
+  }
+
+  async message(messageText: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void> {
+    console.log(`[Mock Dialog] [${options?.type || 'info'}] ${options?.title ? `${options.title}: ` : ''}${messageText}`);
+    alert(`${options?.title ? `${options.title}\n\n` : ''}${messageText}`);
   }
 }

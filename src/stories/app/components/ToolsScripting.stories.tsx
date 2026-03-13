@@ -1,7 +1,7 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { TauriEnvContext } from "@src/packages/app-env";
+import { TauriEnvProvider } from "@src/packages/app-env";
 import { MockAppProvider } from "@src/packages/app-env/AppProvider";
 import Scripting from "@src/routes/tools/Scripting/Scripting";
 
@@ -11,7 +11,7 @@ const meta: Meta<typeof Scripting> = {
   decorators: [
     (Story, context) => (
       <DndProvider backend={HTML5Backend}>
-        <TauriEnvContext.Provider value={{ provider: new MockAppProvider() }}>
+        <TauriEnvProvider provider={new MockAppProvider()}>
           <div
             style={{
               height: `600px`,
@@ -20,7 +20,7 @@ const meta: Meta<typeof Scripting> = {
           >
             <Story />
           </div>
-        </TauriEnvContext.Provider>
+        </TauriEnvProvider>
       </DndProvider>
     ),
   ],

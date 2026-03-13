@@ -4,6 +4,7 @@ export interface PayloadTraffic {
     version?: string;
     body?: string;
     headers: { [key: string]: string };
+    intercepted: boolean;
 }
 
 export interface Payload {
