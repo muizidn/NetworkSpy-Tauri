@@ -46,13 +46,13 @@ const RightSidebarContent = () => {
   }, [fullTraffic]);
 
   const StatRow = ({ label, value, percentage, colorClass = "bg-blue-500" }: { label: string, value: string, percentage?: number, colorClass?: string }) => (
-    <div className="flex flex-col space-y-1.5 mb-4 px-1">
+    <div className="flex flex-col space-y-1 mb-3 px-1">
       <div className="flex justify-between items-end">
-        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">{label}</span>
-        <span className="text-xs font-mono text-zinc-300">{value}</span>
+        <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">{label}</span>
+        <span className="text-[10px] font-mono text-zinc-300">{value}</span>
       </div>
       {percentage !== undefined && (
-        <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden border border-zinc-800/50">
+        <div className="h-1 w-full bg-black/40 rounded-full overflow-hidden border border-zinc-800/50">
           <div 
             className={twMerge("h-full transition-all duration-500 rounded-full", colorClass)} 
             style={{ width: `${percentage}%` }} 
@@ -96,9 +96,9 @@ const RightSidebarContent = () => {
     <div className='w-full h-full bg-[#1e1e1e] flex flex-col border-l border-black overflow-hidden select-none'>
       {/* Sidebar Header/Navigation */}
       <div className="flex flex-col shrink-0 bg-[#23262a] border-b border-black">
-        <div className="px-4 py-3 border-b border-black/50">
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
-            <FiActivity className="text-blue-500" size={14} />
+        <div className="px-3 py-2 border-b border-black/50">
+          <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 flex items-center gap-2">
+            <FiActivity className="text-blue-500" size={12} />
             Inspector
           </h2>
         </div>
@@ -112,15 +112,15 @@ const RightSidebarContent = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={twMerge(
-                  "min-w-[50px] flex-1 flex flex-col items-center justify-center py-2 rounded-md transition-all gap-1 border border-transparent",
+                  "min-w-[50px] flex-1 flex flex-col items-center justify-center py-1.5 rounded-md transition-all gap-1 border border-transparent",
                   isActive 
                     ? "bg-[#2d3035] text-blue-400 border-zinc-700/50 shadow-inner" 
                     : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
                 )}
                 title={tab.label}
               >
-                <Icon size={14} />
-                <span className="text-[9px] font-bold uppercase tracking-tight">{tab.label}</span>
+                <Icon size={12} />
+                <span className="text-[8px] font-bold uppercase tracking-tight">{tab.label}</span>
               </button>
             );
           })}
@@ -128,10 +128,10 @@ const RightSidebarContent = () => {
       </div>
 
       {/* Tab Content */}
-      <div className='flex-1 overflow-y-auto p-4 custom-scrollbar'>
+      <div className='flex-1 overflow-y-auto p-3 custom-scrollbar'>
         {activeTab === "Performance" && (
           <div className="animate-in fade-in duration-300">
-            <h3 className="text-xs font-bold text-zinc-400 mb-6 flex items-center gap-2 border-l-2 border-blue-500 pl-2">
+            <h3 className="text-[11px] font-bold text-zinc-400 mb-4 flex items-center gap-2 border-l-2 border-blue-500 pl-2">
               Latency Metrics
             </h3>
             
@@ -163,64 +163,64 @@ const RightSidebarContent = () => {
         )}
 
         {activeTab === "Path" && (
-          <div className="animate-in fade-in duration-300 flex flex-col gap-4">
-             <div className="p-3 rounded-lg bg-black/20 border border-zinc-800/50">
-               <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1 block">Full URL</span>
-               <p className="text-xs font-mono break-all text-white">{url}</p>
+          <div className="animate-in fade-in duration-300 flex flex-col gap-3">
+             <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-800/50">
+               <span className="text-[9px] uppercase font-bold text-zinc-500 mb-0.5 block">Full URL</span>
+               <p className="text-[11px] font-mono break-all text-white">{url}</p>
              </div>
-             <div className="p-3 rounded-lg bg-black/20 border border-zinc-800/50">
-               <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1 block">Method</span>
-               <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] font-bold border border-blue-500/30 uppercase">
+             <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-800/50">
+               <span className="text-[9px] uppercase font-bold text-zinc-500 mb-0.5 block">Method</span>
+               <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[9px] font-bold border border-blue-500/30 uppercase">
                  {method}
                </span>
              </div>
-             <div className="p-3 rounded-lg bg-black/20 border border-zinc-800/50">
-               <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1 block">Content Type</span>
-               <p className="text-xs font-mono text-zinc-300">{contentType}</p>
+             <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-800/50">
+               <span className="text-[9px] uppercase font-bold text-zinc-500 mb-0.5 block">Content Type</span>
+               <p className="text-[11px] font-mono text-zinc-300">{contentType}</p>
              </div>
           </div>
         )}
 
         {activeTab === "Host" && (
           <div className="animate-in fade-in duration-300 flex flex-col gap-1">
-             <div className="p-3 rounded-lg bg-black/20 border border-zinc-800/50 mb-2">
-                <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1 block">Remote Host</span>
-                <span className="text-xs font-mono text-white break-all">{new URL(url.startsWith('http') || url.startsWith('ws') ? url : `http://${url}`).hostname}</span>
+             <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-800/50 mb-1">
+                <span className="text-[9px] uppercase font-bold text-zinc-500 mb-0.5 block">Remote Host</span>
+                <span className="text-[11px] font-mono text-white break-all">{new URL(url.startsWith('http') || url.startsWith('ws') ? url : `http://${url}`).hostname}</span>
              </div>
              
-             <div className="flex justify-between items-center py-2 border-b border-zinc-800/50">
-                <span className="text-xs text-zinc-500">Protocol</span>
-                <span className="text-xs text-zinc-300 uppercase">{url.split(':')[0]}</span>
+             <div className="flex justify-between items-center py-1.5 border-b border-zinc-800/50">
+                <span className="text-[11px] text-zinc-500">Protocol</span>
+                <span className="text-[11px] text-zinc-300 uppercase">{url.split(':')[0]}</span>
              </div>
-             <div className="flex justify-between items-center py-2 border-b border-zinc-800/50">
-                <span className="text-xs text-zinc-500">HTTP Version</span>
-                <span className="text-xs text-zinc-300">{fullTraffic?.request?.version || 'Unknown'}</span>
+             <div className="flex justify-between items-center py-1.5 border-b border-zinc-800/50">
+                <span className="text-[11px] text-zinc-500">HTTP Version</span>
+                <span className="text-[11px] text-zinc-300">{fullTraffic?.request?.version || 'Unknown'}</span>
              </div>
-             <div className="flex justify-between items-center py-2 border-b border-zinc-800/50">
-                <span className="text-xs text-zinc-500">Server Software</span>
-                <span className="text-xs text-zinc-300">{server}</span>
+             <div className="flex justify-between items-center py-1.5 border-b border-zinc-800/50">
+                <span className="text-[11px] text-zinc-500">Server Software</span>
+                <span className="text-[11px] text-zinc-300">{server}</span>
              </div>
           </div>
         )}
 
         {activeTab === "SSL" && (
           <div className="animate-in fade-in duration-300">
-             <div className="flex items-center gap-3 mb-6">
+             <div className="flex items-center gap-2 mb-4">
                 <div className={twMerge(
-                   "w-10 h-10 rounded-full flex items-center justify-center border",
+                   "w-8 h-8 rounded-full flex items-center justify-center border",
                    isHttps ? "bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]" : "bg-rose-500/10 border-rose-500/20"
                 )}>
-                   <FiLock className={isHttps ? "text-emerald-500" : "text-rose-500"} size={18} />
+                   <FiLock className={isHttps ? "text-emerald-500" : "text-rose-500"} size={14} />
                 </div>
                 <div>
-                   <h3 className="text-sm font-bold text-white">{isHttps ? 'Encrypted' : 'Insecure'}</h3>
+                   <h3 className="text-[11px] font-bold text-white">{isHttps ? 'Encrypted' : 'Insecure'}</h3>
                    <p className={twMerge(
-                    "text-[10px] font-bold uppercase",
+                    "text-[9px] font-bold uppercase",
                     isHttps ? "text-emerald-500/80" : "text-rose-500/80"
                   )}>{isHttps ? 'TLS Active' : 'Plaintext'}</p>
                 </div>
              </div>
-             <div className="space-y-4">
+             <div className="space-y-3">
                 <StatRow label="TLS Version" value={isHttps ? "TLS 1.3 (Inferred)" : "NONE"} />
                 <StatRow label="Cipher Suite" value={isHttps ? "TLS_AES_256_GCM_SHA384" : "NONE"} />
                 <StatRow label="HSTS Policy" value={hsts ? "Strict" : "Adaptive"} />
@@ -230,16 +230,16 @@ const RightSidebarContent = () => {
         )}
 
         {activeTab === "Network" && (
-          <div className="animate-in fade-in duration-300 flex flex-col gap-3">
-             <div className="p-3 rounded-lg bg-black/20 border border-zinc-800/50">
-               <span className="text-[10px] uppercase font-bold text-zinc-500 mb-1 block">Connection Type</span>
-               <p className="text-xs text-zinc-300 uppercase font-bold tracking-tighter">
+          <div className="animate-in fade-in duration-300 flex flex-col gap-2">
+             <div className="p-2.5 rounded-lg bg-black/20 border border-zinc-800/50">
+               <span className="text-[9px] uppercase font-bold text-zinc-500 mb-0.5 block">Connection Type</span>
+               <p className="text-[11px] text-zinc-300 uppercase font-bold tracking-tighter">
                  {url.startsWith('ws') ? 'Bidirectional WebSocket' : 'Stateless HTTP'}
                </p>
              </div>
              
-             <div className="space-y-2 mt-2">
-                <div className="flex justify-between text-[10px] uppercase font-bold text-zinc-600 px-1">
+             <div className="space-y-1 mt-1">
+                <div className="flex justify-between text-[9px] uppercase font-bold text-zinc-600 px-1">
                    <span>Metric</span>
                    <span>Snapshot</span>
                 </div>
@@ -248,9 +248,9 @@ const RightSidebarContent = () => {
                   { l: "Keep-Alive", v: "Enabled" },
                   { l: "Socket ID", v: fullTraffic?.id.slice(-8) || "---" }
                 ].map((m, i) => (
-                  <div key={i} className="flex justify-between items-center p-2 rounded bg-zinc-900/40 border border-zinc-800/30">
-                    <span className="text-[10px] text-zinc-500">{m.l}</span>
-                    <span className="text-[10px] font-mono text-zinc-300 uppercase">{m.v}</span>
+                  <div key={i} className="flex justify-between items-center p-1.5 rounded bg-zinc-900/40 border border-zinc-800/30">
+                    <span className="text-[9px] text-zinc-500">{m.l}</span>
+                    <span className="text-[9px] font-mono text-zinc-300 uppercase">{m.v}</span>
                   </div>
                 ))}
              </div>

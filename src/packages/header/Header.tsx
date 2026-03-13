@@ -39,7 +39,7 @@ export const Header: React.FC<HeaderProps> = ({
       <button
         onClick={onClick}
         className={twMerge(
-          "flex items-center justify-center w-8 h-8 rounded-lg relative",
+          "flex items-center justify-center w-6 h-6 rounded flex-shrink-0 relative",
           active
             ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
             : "text-zinc-500 hover:text-zinc-200 hover:bg-white/5 border border-transparent",
@@ -56,16 +56,16 @@ export const Header: React.FC<HeaderProps> = ({
   )
 
   return (
-    <div className="flex items-center justify-between px-4 h-12 bg-[#0a0a0a] border-b border-black select-none">
+    <div className="flex items-center justify-between px-2 h-9 bg-[#0a0a0a] border-b border-black select-none">
 
       {/* Left */}
       <div className="flex items-center gap-4 relative z-10">
 
         <div className="flex items-center gap-2 cursor-pointer">
-          <div className="w-6 h-6 rounded bg-blue-600 flex items-center justify-center text-white font-black italic text-xs">
+          <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center text-white font-black italic text-[9px]">
             NS
           </div>
-          <span className="text-xs font-black tracking-tighter text-zinc-100 uppercase italic opacity-80">
+          <span className="text-[10px] font-black tracking-tighter text-zinc-100 uppercase italic opacity-80">
             NetworkSpy
           </span>
         </div>
@@ -120,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center pointer-events-none z-0">
         <div
           className={twMerge(
-            "flex items-center px-4 py-1.5 rounded-full border text-[10px] font-bold tracking-wider uppercase shadow-lg pointer-events-auto",
+            "flex items-center px-3 py-1 rounded-full border text-[9px] font-bold tracking-wider uppercase shadow-lg pointer-events-auto",
             isRun
               ? "border-emerald-500/20 bg-emerald-500/[0.03]"
               : "border-white/[0.05] bg-white/[0.02]"
@@ -128,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <div
             className={twMerge(
-              "w-2 h-2 rounded-full mr-3",
+              "w-1.5 h-1.5 rounded-full mr-2",
               isRun ? "bg-emerald-500" : "bg-zinc-700"
             )}
           />
@@ -171,16 +171,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center gap-3">
 
-          <div className="flex flex-col items-end gap-0.5">
-            <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest leading-none">
-              Pro Enabled
+          <div className="flex flex-col items-end gap-0.5 mt-0.5">
+            <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest leading-none">
+              Pro
             </span>
-            <span className="text-[8px] font-mono text-zinc-600 leading-none">
-              v0.9.4-alpha
+            <span className="text-[7px] font-mono text-zinc-600 leading-none mt-0.5">
+              v0.9.4
             </span>
           </div>
 
-          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 border border-white/5 flex items-center justify-center text-[10px] font-bold text-zinc-400">
+          <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 border border-white/5 flex items-center justify-center text-[9px] font-bold text-zinc-400">
             M
           </div>
 

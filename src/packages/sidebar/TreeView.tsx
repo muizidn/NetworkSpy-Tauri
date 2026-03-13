@@ -66,13 +66,13 @@ export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
     return (
       <div className="w-full flex flex-col items-start opacity-40">
         <div className="flex justify-between w-full p-1 items-center">
-          <div className="flex space-x-2 items-center">
+          <div className="flex space-x-1.5 items-center">
             {icon}
-            <label className="font-bold text-zinc-500 text-xs uppercase tracking-tight">
+            <label className="font-bold text-zinc-500 text-[10px] uppercase tracking-tight">
               {name}
             </label>
           </div>
-          <span className="text-[10px] text-zinc-600 italic px-2">Empty</span>
+          <span className="text-[9px] text-zinc-600 italic px-2">Empty</span>
         </div>
       </div>
     );
@@ -84,11 +84,11 @@ export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
         onClick={() => setIsShown(!isShown)}
         className="flex justify-between hover:bg-white/5 rounded-md w-full p-1 items-center group transition-colors"
       >
-        <div className="flex space-x-2 items-center">
+        <div className="flex space-x-1.5 items-center">
           <div className="text-zinc-400 group-hover:text-blue-400 transition-colors">
              {icon}
           </div>
-          <label className="font-bold text-zinc-200 cursor-pointer text-xs uppercase tracking-tight">
+          <label className="font-bold text-zinc-200 cursor-pointer text-[10px] uppercase tracking-tight">
             {name}
           </label>
         </div>
@@ -108,8 +108,8 @@ export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
             }) => (
               <div
                 {...getNodeProps()}
-                style={{ paddingLeft: 12 * (level - 1) }}
-                className="flex space-x-2 hover:bg-white/5 rounded-md w-full py-0.5 px-2 items-center group cursor-pointer"
+                style={{ paddingLeft: 8 * (level - 1) }}
+                className="flex space-x-1.5 hover:bg-white/5 rounded-md w-full py-0 px-1.5 items-center group cursor-pointer"
               >
                 <div className="shrink-0">
                   {isBranch ? (
@@ -119,7 +119,7 @@ export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
                   )}
                 </div>
                 <span 
-                  className="text-[11px] text-zinc-300 truncate group-hover:text-zinc-100" 
+                  className="text-[10px] text-zinc-300 truncate group-hover:text-zinc-100" 
                   onClick={(e) => {
                     e.stopPropagation();
                     onClick(element.id.toString());
@@ -138,11 +138,11 @@ export const SidebarTreeView: React.FC<SidebarTreeViewProps> = ({
 
 const ArrowIcon: React.FC<ArrowIconProps> = ({ isOpen }) =>
   isOpen ? (
-    <ArrowDown2 color="currentColor" size={14} className="opacity-60" />
+    <ArrowDown2 color="currentColor" size={12} className="opacity-60" />
   ) : (
-    <ArrowRight2 color="currentColor" size={14} className="opacity-60" />
+    <ArrowRight2 color="currentColor" size={12} className="opacity-60" />
   );
 
 const FolderIcon: React.FC<FolderIconProps> = ({ filename }) => {
-  return <Document size={14} className="text-blue-500/60" />;
+  return <Document size={12} className="text-blue-500/60" />;
 };

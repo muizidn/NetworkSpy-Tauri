@@ -2,12 +2,12 @@ import { Meta, StoryFn, StoryObj } from "@storybook/react";
 import { TrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { LeftSidebar } from "@src/packages/sidebar/LeftSidebar";
+import { TreeSidebar } from "@src/packages/sidebar/TreeSidebar";
 import { trafficListContextStateMock } from "./mock/TrafficListContextStateMock";
 
-const meta: Meta<typeof LeftSidebar> = {
-  title: "Components/LeftSidebar",
-  component: LeftSidebar,
+const meta: Meta<typeof TreeSidebar> = {
+  title: "Components/TreeSidebar",
+  component: TreeSidebar,
   args: {},
   decorators: [
     (Story) => (

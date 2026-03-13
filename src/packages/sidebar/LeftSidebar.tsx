@@ -1,216 +1,64 @@
-import { useEffect, useMemo, useState } from "react";
-import { BsPinAngleFill } from "react-icons/bs";
-import { GrStorage } from "react-icons/gr";
-import { LuAppWindow } from "react-icons/lu";
-import { GoGlobe, GoSearch } from "react-icons/go";
-import { VscListFlat, VscListTree } from "react-icons/vsc";
-import { FiStar, FiLayers } from "react-icons/fi";
-
-import { filterNode, SidebarTreeView, TreeNode } from "./TreeView";
+import React, { useState } from "react";
+import { FiActivity, FiBox, FiSettings } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
-import { useTrafficListContext } from "../main-content/context/TrafficList";
-import {
-  groupUrlsInTree,
-  kTreeNodeIdPrefixSeparator,
-} from "./parseUrlToTreeNode";
-
-type FilterDisplayMode = "tree" | "flat";
 
 export const LeftSidebar = () => {
-  const { trafficList } = useTrafficListContext();
-
-  const [query, setQuery] = useState("");
-  const [filterDisplayMode, setFilterDisplayMode] =
-    useState<FilterDisplayMode>("flat");
-  const [filteredNodes, setFilteredNodes] = useState<
-    {
-      name: string;
-      icon: React.ReactNode;
-      nodes: TreeNode[];
-    }[]
-  >([]);
-
-  const [filteredNodesCount, setFilteredNodesCount] = useState(0);
-
-  const groupedTraffic = useMemo(() => {
-    return {
-      app: trafficList,
-      domain: trafficList,
-    };
-  }, [trafficList]);
-
-  const app = useMemo(() => {
-    return {
-      name: "App",
-      icon: <LuAppWindow />,
-      nodes: groupUrlsInTree("app", groupedTraffic.app, "app"),
-    };
-  }, [groupedTraffic]);
-
-  const domain = useMemo(() => {
-    return {
-      name: "Domain",
-      icon: <GoGlobe />,
-      nodes: groupUrlsInTree("domain", groupedTraffic.domain, "domain"),
-    };
-  }, [groupedTraffic]);
-
-  async function onClickNode(id: string) {
-    const uuidAndUrl = id.split(kTreeNodeIdPrefixSeparator);
-    const url = uuidAndUrl[1];
-    console.log("Selected URL from sidebar:", url);
-    // TODO: Implement a way to communicate with the active tab's FilterContext if needed
-  }
-
-  function flatMapNode(e: TreeNode | null, path: string = ""): TreeNode[] {
-    if (!e) {
-      return [];
-    }
-
-    const currentPath = path ? `${path}/${e.name}` : e.name;
-
-    const selfWithoutChildren = {
-      ...e,
-      name: currentPath,
-      children: undefined,
-    } as TreeNode;
-
-    if (e.children && e.children.length > 0) {
-      const flatmappedChildren = e.children.flatMap((child) =>
-        flatMapNode(child, currentPath)
-      );
-      return [selfWithoutChildren, ...flatmappedChildren];
-    }
-
-    return [selfWithoutChildren];
-  }
-
-  async function filterNodes(query: string) {
-    let nodeFound = 0;
-
-    const trees = [app, domain];
-    const filtered = trees.map((tree) => ({
-      ...tree,
-      nodes: tree.nodes
-        .map((e) => filterNode(query, e, () => (nodeFound += 1)))
-        .filter((e) => e !== null),
-    }));
-    setFilteredNodesCount(nodeFound);
-    switch (filterDisplayMode) {
-      case "tree":
-        //@ts-ignore
-        setFilteredNodes(filtered);
-        break;
-      case "flat":
-        const flatMapped = filtered
-          .flatMap((e) => e.nodes)
-          .flatMap((e) => flatMapNode(e));
-        setFilteredNodes([
-          {
-            name: "Flattened",
-            icon: <VscListFlat />,
-            nodes: flatMapped,
-          },
-        ]);
-        break;
-    }
-  }
-
-  useEffect(() => {
-    filterNodes(query);
-  }, [filterDisplayMode, query]);
-
-  const allTrees = [app, domain];
+  const [activeTab, setActiveTab] = useState("traffic");
 
   return (
-    <div className="bg-[#23262a] border-r border-black h-full w-full flex flex-col space-y-4">
-      <div className="flex items-center space-x-2 w-full px-3 h-10 border-b border-black bg-black/20 shrink-0">
-        <GoSearch className="text-zinc-500 shrink-0" size={14} />
-        <input
-          type="text"
-          className="bg-transparent text-xs text-white focus:outline-none w-full placeholder:text-zinc-600"
-          placeholder="Search endpoints..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+    <div className="w-[40px] shrink-0 bg-[#161616] border-r border-[#000000] flex flex-col items-center py-2 h-full z-10">
+      <div className="flex-1 flex flex-col items-center gap-3 w-full px-1.5">
+        <NavButton
+          icon={<FiActivity size={18} />}
+          label="Traffic Interceptor"
+          isActive={activeTab === "traffic"}
+          onClick={() => setActiveTab("traffic")}
+        />
+        <NavButton
+          icon={<FiBox size={18} />}
+          label="Collections / Workspaces"
+          isActive={activeTab === "collection"}
+          onClick={() => setActiveTab("collection")}
         />
       </div>
-      <div
-        className={twMerge(
-          "p-2 flex flex-col space-y-4 h-full w-full  items-start overflow-scroll",
-          query !== "" && "hidden"
-        )}
-      >
-        <div className="flex flex-col space-y-3 items-start w-full">
-          <div className="flex items-center space-x-2 px-1 shrink-0">
-            <FiLayers className="text-zinc-500" size={14} />
-            <h2 className="font-bold text-xs uppercase tracking-widest text-zinc-400">All Nodes</h2>
-          </div>
-          <div className="w-full space-y-1">
-            {allTrees.map((e) => (
-              <SidebarTreeView
-                key={e.name}
-                icon={e.icon}
-                name={e.name}
-                childrenNodes={e.nodes}
-                onClick={(id) => onClickNode(id)}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-      <div
-        className={twMerge(
-          "flex flex-col space-y-2 items-start w-full max-h-full p-1",
-          query === "" && "hidden"
-        )}
-      >
-        <div className="flex flex-col w-full p-2 border-b border-black bg-black/10 shrink-0">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex flex-col">
-              <h2 className="text-[10px] uppercase tracking-wider font-bold text-zinc-500">
-                Search Results
-              </h2>
-              <span className="text-blue-400 text-xs font-mono">{filteredNodesCount} matches</span>
-            </div>
-
-            <div className="flex bg-black/40 p-0.5 rounded-lg border border-zinc-800">
-              <button
-                onClick={() => setFilterDisplayMode("tree")}
-                className={twMerge(
-                  "p-1.5 rounded-md transition-all flex items-center space-x-1.5",
-                  filterDisplayMode === "tree" ? "bg-zinc-700 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
-                )}
-                title="Tree View"
-              >
-                <VscListTree size={14} />
-                <span className="text-[10px] font-bold uppercase px-1">Tree</span>
-              </button>
-              <button
-                onClick={() => setFilterDisplayMode("flat")}
-                className={twMerge(
-                  "p-1.5 rounded-md transition-all flex items-center space-x-1.5",
-                  filterDisplayMode === "flat" ? "bg-zinc-700 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
-                )}
-                title="Flat View"
-              >
-                <VscListFlat size={14} />
-                <span className="text-[10px] font-bold uppercase px-1">Flat</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="overflow-scroll w-full">
-          {filteredNodes.map((node) => (
-            <SidebarTreeView
-              key={node.name}
-              name={node.name}
-              icon={node.icon}
-              childrenNodes={node.nodes}
-              onClick={(id) => onClickNode(id)}
-            />
-          ))}
-        </div>
+      <div className="flex flex-col items-center gap-3 w-full mb-2 px-1.5">
+        <NavButton
+          icon={<FiSettings size={18} />}
+          label="Settings"
+          isActive={activeTab === "settings"}
+          onClick={() => setActiveTab("settings")}
+        />
       </div>
     </div>
+  );
+};
+
+const NavButton = ({
+  icon,
+  label,
+  isActive,
+  onClick
+}: {
+  icon: React.ReactNode,
+  label: string,
+  isActive: boolean,
+  onClick: () => void
+}) => {
+  return (
+    <button
+      onClick={onClick}
+      className={twMerge(
+        "relative p-1.5 w-8 h-8 rounded-lg transition-all duration-200 flex items-center justify-center group",
+        isActive
+          ? "bg-blue-600 shadow-lg shadow-blue-500/20 text-white"
+          : "text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/80"
+      )}
+      title={label}
+    >
+      {icon}
+      {!isActive && (
+        <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 w-1 h-0 bg-blue-500 rounded-r-md transition-all duration-200 group-hover:h-1/2 opacity-0 group-hover:opacity-100" />
+      )}
+    </button>
   );
 };

@@ -74,7 +74,7 @@ const HeaderCell = <T,>({
       ref={ref}
       role="columnheader"
       className={twMerge(
-        "px-4 py-3 relative bg-[#111111] border-b border-zinc-800 transition-colors group/header",
+        "px-3 py-1.5 relative bg-[#111111] border-b border-zinc-800 transition-colors group/header",
         isLast ? "flex-grow" : "shrink-0",
         isActive ? "text-blue-400 bg-[#161616]" : "text-zinc-500 hover:bg-zinc-800/40"
       )}
@@ -87,9 +87,9 @@ const HeaderCell = <T,>({
       }}
     >
       <div
-        className="flex items-center justify-between cursor-grab w-full gap-2 overflow-hidden"
+        className="flex items-center justify-between cursor-grab w-full gap-1 overflow-hidden"
       >
-        <span className="text-[10px] font-black uppercase tracking-widest truncate">{header.title}</span>
+        <span className="text-[9px] font-black uppercase tracking-widest truncate">{header.title}</span>
         {isActive && (
           <span className="shrink-0 p-0.5 bg-blue-500/10 rounded text-blue-500">
             {sortConfig.order === "asc" ? <FiChevronDown size={12} /> : <FiChevronUp size={12} />}
@@ -169,8 +169,8 @@ export const TableView = <T,>({
   const rowVirtualizer = useVirtualizer({
     count: sortedData.length,
     getScrollElement: () => tbodyRef.current,
-    estimateSize: () => 50, // Estimated row height
-    overscan: 10,
+    estimateSize: () => 30, // Estimated row height
+    overscan: 20,
   });
 
   function getRowIndex(e: MouseEvent): string | null {
@@ -497,7 +497,7 @@ export const TableView = <T,>({
                         key={i}
                         role="gridcell"
                         className={twMerge(
-                          "px-4 py-2 text-zinc-400 text-[12px] truncate",
+                          "px-3 text-zinc-400 text-[11px] truncate",
                           isLast ? "flex-grow" : "shrink-0"
                         )}
                         style={{

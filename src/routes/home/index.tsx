@@ -28,7 +28,7 @@ const Content = () => {
       max: "80%",
     },
   };
-  const [sizes, setSizes] = useState<any[]>(["15%", "70%", "15%"]);
+  const [sizes, setSizes] = useState<any[]>(["70%", "15%"]);
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
   const { provider, isRun, setIsRun, clearData } = useAppProvider();
@@ -203,18 +203,12 @@ const Content = () => {
         rightActive={isDisplayPane.right}
       />
       <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
+        <LeftSidebar />
         <SplitPane
           split='vertical'
           sashRender={() => <SashContent type='vscode' />}
           sizes={sizes}
           onChange={setSizes}>
-          <Pane
-            minSize={isDisplayPane.left ? paneSizeConfig.leftPane.min : 0}
-            maxSize={paneSizeConfig.leftPane.max}>
-            <div className='flex items-center justify-center h-full'>
-              <LeftSidebar />
-            </div>
-          </Pane>
           <Pane>
             <div className='flex items-center justify-center h-full relative'>
               <NSTabs
