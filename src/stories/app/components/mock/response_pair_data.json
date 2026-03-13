@@ -35,5 +35,6 @@
         }
     ],
     "body": "\n        {\n            \"id\": \"4541600237192504000\",\n            \"tags\": [\"API TESTING\", \"NETWORK MONITORING\"],\n            \"url\": \"https://amazon.com:157/product/books?page=1&authToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJib29rcyJdLCJpYXQiOjE2MjMzMzAwNzIsImV4cCI6MTYyMzM0MjY3Mn0.WjtjqnszjFL3Gb-F3TSvTKHl5VxbFf4jJ2yyK_SXxxg\",\n            \"client\": \"Video Streaming VALIDNOR\",\n            \"method\": \"DELETE\",\n            \"status\": \"Failed\",\n            \"code\": \"200\",\n            \"time\": \"650 ms\",\n            \"duration\": \"91 bytes\",\n            \"response\": \"Response data\",\n            \"response\": \"-\"\n        }\n        ",
-    "content_type": "application/x-www-form-urlencoded"
+    "content_type": "application/x-www-form-urlencoded",
+    "intercepted": true
 }
