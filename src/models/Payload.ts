@@ -2,9 +2,11 @@ export interface PayloadTraffic {
     uri?: string;
     method?: string;
     version?: string;
-    body?: string;
+    body_size?: number;
     headers: { [key: string]: string };
     intercepted: boolean;
+    status_code?: number;
+    client?: string;
 }
 
 export interface Payload {

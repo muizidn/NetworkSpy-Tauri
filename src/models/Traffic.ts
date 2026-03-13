@@ -8,13 +8,17 @@ export interface Traffic {
         header: {
             [key: string]: string;
         };
-        body: string | null;
+        size: number;
     };
     response: {
         version: string;
         header: {
             [key: string]: string;
         };
-        body: string | null;
+        size: number;
+        status_code: number;
     } | null;
+    time: string;
+    duration: string;
+    client: string;
 }

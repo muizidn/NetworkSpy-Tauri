@@ -97,18 +97,26 @@ const Content = () => {
           .filter((t: TagModel) => t.enabled && t.isSync && syncTrafficMatch({ uri: traffic.uri, method: traffic.method }, t))
           .map((t: TagModel) => t.tag);
 
+        const formatBytes = (bytes: number) => {
+          if (bytes === 0) return "0 B";
+          const k = 1024;
+          const sizes = ["B", "KB", "MB", "GB"];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+        };
+
         const listItem: TrafficItemMap = {
           id: traffic.id,
           tags: syncTags.length > 0 ? syncTags : [],
           url: traffic.uri || "-",
-          client: "Local",
+          client: traffic.client || "Local",
           method: traffic.method,
-          status: "Completed",
-          code: "200",
-          time: "0 ms",
-          duration: "0 bytes",
-          request: "-",
-          response: traffic.response ? "Data" : "-",
+          status: traffic.response ? "Completed" : "Pending",
+          code: traffic.response?.status_code?.toString() || "-",
+          time: traffic.time || "0 ms",
+          duration: traffic.duration || "0 ms",
+          request: formatBytes(traffic.request.size),
+          response: traffic.response ? formatBytes(traffic.response.size) : "-",
           performance: (traffic as any).performance,
           intercepted: traffic.intercepted
         };

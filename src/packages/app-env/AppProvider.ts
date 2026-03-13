@@ -58,9 +58,12 @@ export class TauriAppProvider implements IAppProvider {
           request: {
             version: payload.data.version || "",
             header: payload.data.headers || {},
-            body: payload.data.body || null,
+            size: payload.data.body_size || 0,
           },
           response: null,
+          time: "0ms",
+          duration: "0ms",
+          client: payload.data.client || "127.0.0.1",
         };
       } else {
         const existing = this.trafficSet[payload.id];
@@ -73,13 +76,17 @@ export class TauriAppProvider implements IAppProvider {
           request: existing?.request || {
             version: "",
             header: {},
-            body: null
+            size: 0,
           },
           response: {
             version: payload.data.version || "",
             header: payload.data.headers || {},
-            body: payload.data.body || null,
+            size: payload.data.body_size || 0,
+            status_code: payload.data.status_code || 0,
           },
+          time: `${payload.data.headers['x-latency-ms'] || 0}ms`,
+          duration: `${payload.data.headers['x-latency-ms'] || 0}ms`,
+          client: payload.data.client || existing?.client || "127.0.0.1",
         };
       }
 
@@ -109,6 +116,7 @@ export class TauriAppProvider implements IAppProvider {
 
 export class MockAppProvider implements IAppProvider {
   private trafficSet: Record<string, Traffic> = {};
+  private mockBodySet: Record<string, { request: string; response: string }> = {};
   private isListening: boolean = false;
   private allowList: Set<string> = new Set([]);
 
@@ -133,9 +141,9 @@ export class MockAppProvider implements IAppProvider {
         id: trafficId,
         headers: Object.entries(traffic.request.header || {}).map(([key, value]) => ({ key, value })),
         params,
-        body: traffic.request.body || "",
+        body: this.mockBodySet[trafficId]?.request || "",
         content_type: traffic.request.header?.['content-type'] || traffic.request.header?.['Content-Type'] || "",
-        raw: `${traffic.method} ${traffic.uri} ${traffic.request.version}\n\n${traffic.request.body || ""}`
+        raw: `${traffic.method} ${traffic.uri} ${traffic.request.version}\n\n${this.mockBodySet[trafficId]?.request || ""}`
       } as unknown as RequestPairData;
     }
 
@@ -166,9 +174,9 @@ export class MockAppProvider implements IAppProvider {
         id: trafficId,
         headers: Object.entries(traffic.response.header || {}).map(([key, value]) => ({ key, value })),
         params,
-        body: traffic.response.body || "",
+        body: this.mockBodySet[trafficId]?.response || "",
         content_type: traffic.response.header?.['content-type'] || traffic.response.header?.['Content-Type'] || "",
-        raw: `${traffic.response.version} 200 OK\n\n${traffic.response.body || ""}`
+        raw: `${traffic.response.version} 200 OK\n\n${this.mockBodySet[trafficId]?.response || ""}`
       } as unknown as RequestPairData;
     }
 
@@ -209,11 +217,11 @@ export class MockAppProvider implements IAppProvider {
     }
 
     // For OpenAI mocked data, we can "re-stream" its response if it was marked as streaming
-    const responseBody = traffic.response?.body || "";
+    const responseBody = this.mockBodySet[trafficId]?.response || "";
     const isStreaming = responseBody.includes('data:');
 
     if (isStreaming) {
-      const chunks = responseBody.split('\n').filter(l => l.trim().length > 0);
+      const chunks = responseBody.split('\n').filter((l: string) => l.trim().length > 0);
       let i = 0;
       const interval = setInterval(() => {
         if (i >= chunks.length) {
@@ -253,6 +261,9 @@ export class MockAppProvider implements IAppProvider {
           intercepted = true; // Fallback for relative or malformed URLs in mock
         }
 
+        const reqBody = item.request as string || "";
+        const resBody = item.response as string || "";
+
         const traffic: Traffic = {
           id: item.id,
           uri: item.url as string,
@@ -264,7 +275,7 @@ export class MockAppProvider implements IAppProvider {
               "content-type": "text/plain",
               ...Object.fromEntries(Object.entries(item.headers || {}).map(([k, v]) => [k.toLowerCase(), v]))
             },
-            body: item.request as string || null,
+            size: reqBody.length,
           },
           response: {
             version: "HTTP/1.1",
@@ -272,10 +283,15 @@ export class MockAppProvider implements IAppProvider {
               "content-type": "application/json",
               ...Object.fromEntries(Object.entries(item.responseHeaders || {}).map(([k, v]) => [k.toLowerCase(), v]))
             },
-            body: item.response as string || null,
+            size: resBody.length,
+            status_code: 200,
           },
+          time: `${Math.floor(Math.random() * 50) + 10}ms`,
+          duration: `${Math.floor(Math.random() * 100) + 20}ms`,
+          client: "Local (Mock)",
         };
         this.trafficSet[traffic.id] = traffic;
+        this.mockBodySet[traffic.id] = { request: reqBody, response: resBody };
         callback(traffic);
       }
     }, 300);

@@ -30,9 +30,11 @@ struct PayloadTraffic {
     uri: Option<String>,
     method: Option<String>,
     version: Option<String>,
-    body: Option<String>,
+    body_size: usize,
     headers: HashMap<String, String>,
     intercepted: bool,
+    status_code: Option<u16>,
+    client: Option<String>,
 }
 
 #[derive(Clone, Serialize)]
@@ -51,6 +53,7 @@ enum DbEvent {
         headers: HashMap<String, String>,
         body: String,
         intercepted: bool,
+        client: String,
     },
     Response {
         id: String,
@@ -58,6 +61,7 @@ enum DbEvent {
         body: String,
         #[allow(dead_code)]
         intercepted: bool,
+        status_code: u16,
     },
 }
 
@@ -227,10 +231,10 @@ fn main() {
             thread::spawn(move || {
                 while let Ok(event) = rx.recv() {
                     match event {
-                        DbEvent::Request { id, uri, method, version, headers, body, intercepted } => {
+                        DbEvent::Request { id, uri, method, version, headers, body, intercepted, client: _ } => {
                             let _ = db_writer.insert_request(id, uri, method, version, &headers, body, intercepted);
                         }
-                        DbEvent::Response { id, headers, body, .. } => {
+                        DbEvent::Response { id, headers, body, status_code: _, .. } => {
                             let _ = db_writer.insert_response(id, &headers, body);
                         }
                     }
@@ -239,13 +243,19 @@ fn main() {
 
             let mut proxy = Proxy::new(key_pair, ca_cert, 9090);
 
+            use std::sync::Mutex;
+            use std::time::Instant;
+            
             struct MyTrafficListener {
                 app_handle: AppHandle,
                 tx: mpsc::Sender<DbEvent>,
+                request_times: Mutex<HashMap<u64, Instant>>,
             }
 
             impl TrafficListener for MyTrafficListener {
-                fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool) {
+                fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
+                    self.request_times.lock().unwrap().insert(id, Instant::now());
+                    
                     let uri = request.uri().to_string();
                     let http_version = match request.version() {
                         Version::HTTP_10 => "HTTP/1.0".to_string(),
@@ -265,7 +275,9 @@ fn main() {
                         })
                         .collect::<HashMap<_, _>>();
 
-                    let body = String::from_utf8_lossy(request.body().as_ref()).to_string();
+                    let body_bytes = request.body().as_ref();
+                    let body_size = body_bytes.len();
+                    let body = String::from_utf8_lossy(body_bytes).to_string();
 
                     let _ = self.tx.send(DbEvent::Request {
                         id: id.to_string(),
@@ -275,6 +287,7 @@ fn main() {
                         headers: headers.clone(),
                         body: body.clone(),
                         intercepted,
+                        client: client_addr.clone(),
                     });
 
                     let _result = self.app_handle.emit_all(
@@ -287,14 +300,20 @@ fn main() {
                                 version: Some(http_version),
                                 method: Some(method),
                                 headers: headers,
-                                body: Some(body),
+                                body_size,
                                 intercepted,
+                                status_code: None,
+                                client: Some(client_addr),
                             },
                         },
                     );
                 }
 
-                fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool) {
+                fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
+                    let start_time = self.request_times.lock().unwrap().remove(&id);
+                    let duration = start_time.map(|t| t.elapsed().as_millis()).unwrap_or(0);
+                    
+                    let status_code = response.status().as_u16();
                     let http_version = match response.version() {
                         Version::HTTP_10 => "HTTP/1.0".to_string(),
                         Version::HTTP_11 => "HTTP/1.1".to_string(),
@@ -311,14 +330,20 @@ fn main() {
                         })
                         .collect::<HashMap<_, _>>();
 
-                    let body = String::from_utf8_lossy(response.body().as_ref()).to_string();
+                    let body_bytes = response.body().as_ref();
+                    let body_size = body_bytes.len();
+                    let body = String::from_utf8_lossy(body_bytes).to_string();
 
                     let _ = self.tx.send(DbEvent::Response {
                         id: id.to_string(),
                         headers: headers.clone(),
                         body: body.clone(),
                         intercepted,
+                        status_code,
                     });
+
+                    let mut headers_with_perf = headers;
+                    headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
 
                     let _result = self.app_handle.emit_all(
                         "traffic_event",
@@ -329,9 +354,11 @@ fn main() {
                                 uri: None,
                                 version: Some(http_version),
                                 method: None,
-                                headers: headers,
-                                body: Some(body),
+                                headers: headers_with_perf,
+                                body_size,
                                 intercepted,
+                                status_code: Some(status_code),
+                                client: Some(client_addr),
                             },
                         },
                     );
@@ -341,6 +368,7 @@ fn main() {
             let listener = Arc::new(MyTrafficListener {
                 app_handle: app_handle,
                 tx: tx,
+                request_times: Mutex::new(HashMap::new()),
             });
 
             tauri::async_runtime::spawn(async move {
