@@ -46,7 +46,8 @@ export const LLMStreamingMode = () => {
       } else {
         try {
           const parsed = JSON.parse(cleanData);
-          const choice = parsed.choices?.[targetChoiceIndex] || parsed.choices?.[0];
+          const choices = parsed.choices || [];
+          const choice = choices[targetChoiceIndex] || choices[0];
           const delta = choice?.delta;
           
           if (delta) {
@@ -54,12 +55,14 @@ export const LLMStreamingMode = () => {
                  content = delta.content;
              } else if (Array.isArray(delta.content)) {
                  content = delta.content.map((p: any) => p.text || "").join("");
-             } else if (delta.content === null) {
-                 content = "";
              }
+          } else if (choice?.text) {
+             // Legacy or specific format
+             content = choice.text;
           }
         } catch (e) {
-          content = cleanData;
+          // If not JSON, it might be raw text from the stream
+          content = ""; 
         }
       }
 

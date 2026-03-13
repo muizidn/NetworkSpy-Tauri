@@ -5,7 +5,7 @@ import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { useAppProvider } from "@src/packages/app-env";
 import { RequestPairData } from "../../RequestTab";
-import { decodeBody, parseBodyAsJson } from "../../utils/bodyUtils";
+import { decodeBody, parseBodyAsJson, parseSSE } from "../../utils/bodyUtils";
 
 // Colors for token visualization
 const TOKEN_COLORS = [
@@ -54,9 +54,23 @@ export const LLMTokenAnalyzerMode = () => {
   }, [selected, provider]);
 
   const extractText = (data: RequestPairData | null, type: 'input' | 'output') => {
-    const parsed = parseBodyAsJson(data?.body);
+    if (!data?.body) return "";
+    
+    const contentType = data.content_type || "";
+    const headers = data.headers || [];
+    const transferEncoding = headers.find(h => h.key.toLowerCase() === 'transfer-encoding')?.value || "";
+    
+    // SSE detection: usually text/event-stream, often chunked
+    const isSSE = contentType.toLowerCase().includes("event-stream") || 
+                  (contentType.toLowerCase().includes("text/") && transferEncoding.toLowerCase().includes("chunked") && decodeBody(data.body).includes("data: "));
+
+    if (isSSE && type === 'output') {
+        return parseSSE(data.body);
+    }
+
+    const parsed = parseBodyAsJson(data.body);
     if (!parsed) {
-      return decodeBody(data?.body);
+      return decodeBody(data.body);
     }
 
     try {
@@ -71,7 +85,7 @@ export const LLMTokenAnalyzerMode = () => {
         if (Array.isArray(content)) {
           return content.map((p: any) => p.text || "").join("\n");
         }
-        return content;
+        return String(content || "");
       }
 
       // Request patterns (Prompt)
@@ -90,7 +104,7 @@ export const LLMTokenAnalyzerMode = () => {
         if (parsed.prompt) return parsed.prompt;
       }
     } catch (e) { }
-    return decodeBody(data?.body);
+    return decodeBody(data.body);
   };
 
   const inputText = useMemo(() => extractText(inputData, 'input'), [inputData, inputChoiceIndex]);

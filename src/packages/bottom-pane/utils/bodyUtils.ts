@@ -38,3 +38,22 @@ export const parseBodyAsJson = (body: Uint8Array | undefined | null | string): a
         return null;
     }
 };
+export const parseSSE = (body: Uint8Array | undefined | null | string): string => {
+    if (!body || body.length === 0) return "";
+    const text = typeof body === 'string' ? body : new TextDecoder().decode(body);
+    let combined = "";
+    const lines = text.split('\n');
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data: ')) {
+            const dataStr = trimmed.slice(6).trim();
+            if (dataStr === '[DONE]') continue;
+            try {
+                const json = JSON.parse(dataStr);
+                const content = json.choices?.[0]?.delta?.content || json.choices?.[0]?.text || "";
+                combined += content;
+            } catch (e) {}
+        }
+    }
+    return combined;
+};

@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { useAppProvider } from "@src/packages/app-env";
 import { RequestPairData } from "../../RequestTab";
-import { decodeBody, parseBodyAsJson } from "../../utils/bodyUtils";
+import { decodeBody, parseBodyAsJson, parseSSE } from "../../utils/bodyUtils";
 
 export const LLMResponseMode = () => {
   const { provider } = useAppProvider();
@@ -32,6 +32,25 @@ export const LLMResponseMode = () => {
 
   const responseInfo = useMemo(() => {
     const body = data?.body;
+    const contentType = data?.content_type || "";
+    const headers = data?.headers || [];
+    const transferEncoding = headers.find(h => h.key.toLowerCase() === 'transfer-encoding')?.value || "";
+    
+    // SSE detection: usually text/event-stream, often chunked
+    const isSSE = contentType.toLowerCase().includes("event-stream") || 
+                  (contentType.toLowerCase().includes("text/") && transferEncoding.toLowerCase().includes("chunked") && decodeBody(body).includes("data: "));
+
+    if (isSSE) {
+        return {
+            content: parseSSE(body),
+            model: "sse-stream",
+            usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+            finishReason: "stop",
+            raw: null,
+            choiceCount: 1
+        };
+    }
+
     const parsed = parseBodyAsJson(body);
     if (!parsed) {
         if (!body) return null;
