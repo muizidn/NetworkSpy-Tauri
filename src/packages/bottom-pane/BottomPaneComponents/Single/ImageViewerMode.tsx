@@ -28,7 +28,7 @@ export const ImageViewerMode = () => {
         <div className="bg-[#0a0a0a] flex flex-col min-h-full">
             <div className="flex-grow flex items-center justify-center p-8">
                 {isImage ? (
-                    <ImageView data={data?.body || ""} />
+                    <ImageView data={data?.body as Uint8Array} />
                 ) : (
                     <div className="text-zinc-500 text-sm italic">Response is not an image ({data?.content_type || 'Unknown Type'})</div>
                 )}

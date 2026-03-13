@@ -22,7 +22,7 @@ export const AudioViewerMode = () => {
     if (!trafficId) return <Placeholder text="Select a request to play audio" />;
     if (loading) return <Placeholder text="Loading audio stream..." />;
 
-    const isAudio = data?.content_type?.toLowerCase().includes('audio') || data?.body?.includes('MOCK_AUDIO');
+    const isAudio = data?.content_type?.toLowerCase().includes('audio');
 
     return (
         <div className="bg-[#0a0a0a] flex flex-col items-center justify-center p-12 min-h-full">
@@ -30,7 +30,7 @@ export const AudioViewerMode = () => {
                 <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6 border border-blue-500/20">
                     <FiMusic className="text-blue-500" size={32} />
                 </div>
-                
+
                 <h3 className="text-sm font-bold text-white mb-1">Audio Stream Detected</h3>
                 <p className="text-[10px] text-zinc-500 mb-8 uppercase tracking-widest">{data?.content_type || 'Unknown Format'}</p>
 

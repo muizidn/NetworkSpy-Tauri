@@ -4,18 +4,19 @@ import { useTrafficListContext } from "../../../../main-content/context/TrafficL
 import { ResponsePairData } from "../../../ResponseTab";
 import { CodeView } from "../../../TabRenderer/CodeView";
 import { FiLayers, FiCopy, FiCheck, FiCode, FiShare2 } from "react-icons/fi";
+import { decodeBody } from "@src/packages/bottom-pane/utils/bodyUtils";
 
 const beautifyXML = (xml: string) => {
     if (!xml) return "";
     let formatted = '';
     let indent = '';
     const tab = '  ';
-    xml.split(/>\s*</).forEach(function(node) {
-        if (node.match( /^\/\w/ )) indent = indent.substring(tab.length);
+    xml.split(/>\s*</).forEach(function (node) {
+        if (node.match(/^\/\w/)) indent = indent.substring(tab.length);
         formatted += indent + '<' + node + '>\r\n';
-        if (node.match( /^<?\w[^>]*[^\/]$/ )) indent += tab;
+        if (node.match(/^<?\w[^>]*[^\/]$/)) indent += tab;
     });
-    return formatted.substring(1, formatted.length-1).trim();
+    return formatted.substring(1, formatted.length - 1).trim();
 };
 
 export const SOAPViewerMode = () => {
@@ -35,7 +36,7 @@ export const SOAPViewerMode = () => {
     }, [trafficId, provider]);
 
     const formattedSOAP = useMemo(() => {
-        return beautifyXML(data?.body || "");
+        return beautifyXML(decodeBody(data?.body) || "");
     }, [data]);
 
     const handleCopy = () => {
@@ -60,13 +61,13 @@ export const SOAPViewerMode = () => {
                     <div>
                         <h2 className="text-sm font-black text-white tracking-tight uppercase italic">Enterprise SOAP Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">WSDL Endpoint: </span>
-                             <span className="text-[9px] font-mono text-blue-400/80 font-bold tracking-wider">SOAP 1.1 / 1.2</span>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">WSDL Endpoint: </span>
+                            <span className="text-[9px] font-mono text-blue-400/80 font-bold tracking-wider">SOAP 1.1 / 1.2</span>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button 
+                    <button
                         onClick={handleCopy}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/50 border border-white/5 text-[10px] font-bold text-zinc-400 hover:text-white transition-all duration-300"
                     >
@@ -78,7 +79,7 @@ export const SOAPViewerMode = () => {
 
             <div className="flex-grow relative bg-[#050505]">
                 <div className="absolute top-4 left-4 z-10">
-                     <span className="text-[9px] font-black text-blue-500/40 bg-black/40 px-2 py-1 rounded border border-blue-500/10 uppercase tracking-[0.2em]">XML Payload</span>
+                    <span className="text-[9px] font-black text-blue-500/40 bg-black/40 px-2 py-1 rounded border border-blue-500/10 uppercase tracking-[0.2em]">XML Payload</span>
                 </div>
                 <CodeView data={formattedSOAP} language="xml" />
             </div>

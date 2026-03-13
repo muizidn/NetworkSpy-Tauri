@@ -5,6 +5,7 @@ import { ResponsePairData } from "../../../ResponseTab";
 import { CodeView } from "../../../TabRenderer/CodeView";
 import { FiCopy, FiCheck, FiCpu, FiGrid, FiActivity } from "react-icons/fi";
 import { SiApachekafka } from "react-icons/si";
+import { decodeBody } from "@src/packages/bottom-pane/utils/bodyUtils";
 
 export const KafkaViewerMode = () => {
     const { provider } = useAppProvider();
@@ -35,9 +36,9 @@ export const KafkaViewerMode = () => {
     const decodedPayload = useMemo(() => {
         if (!data?.body) return "";
         try {
-            const parsed = JSON.parse(data.body);
+            const parsed = decodeBody(data.body);
             return JSON.stringify(parsed, null, 2);
-        } catch (e) { return data.body; }
+        } catch (e) { return "" }
     }, [data]);
 
     const handleCopy = () => {
@@ -62,14 +63,14 @@ export const KafkaViewerMode = () => {
                     <div>
                         <h2 className="text-sm font-black text-white tracking-tight uppercase italic">Apache Kafka Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                             <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Transport: </span>
-                             <span className="text-[9px] font-mono text-indigo-400 font-bold">Binary Wave</span>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Transport: </span>
+                            <span className="text-[9px] font-mono text-indigo-400 font-bold">Binary Wave</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button 
+                    <button
                         onClick={handleCopy}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/50 border border-white/5 text-[10px] font-bold text-zinc-400 hover:text-white transition-all duration-300"
                     >
@@ -82,8 +83,8 @@ export const KafkaViewerMode = () => {
             <div className="flex-grow flex h-full overflow-hidden">
                 <div className="w-80 bg-[#0d0d0d] border-r border-white/5 flex flex-col p-4 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
-                         <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
-                         <h3 className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Segment Metadata</h3>
+                        <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
+                        <h3 className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Segment Metadata</h3>
                     </div>
                     <div className="space-y-1.5">
                         {Object.entries(kafkaMetadata).map(([k, v]) => (
@@ -93,7 +94,7 @@ export const KafkaViewerMode = () => {
                             </div>
                         ))}
                     </div>
-                    
+
                     <div className="pt-4 border-t border-white/5 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
                         <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Broker ID: 101-East</span>

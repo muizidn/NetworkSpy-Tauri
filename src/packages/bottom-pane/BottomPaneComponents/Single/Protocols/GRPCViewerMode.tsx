@@ -4,6 +4,7 @@ import { useTrafficListContext } from "../../../../main-content/context/TrafficL
 import { ResponsePairData } from "../../../ResponseTab";
 import { CodeView } from "../../../TabRenderer/CodeView";
 import { FiCopy, FiCheck, FiHash, FiZap, FiActivity } from "react-icons/fi";
+import { parseBodyAsJson } from "@src/packages/bottom-pane/utils/bodyUtils";
 
 export const GRPCViewerMode = () => {
     const { provider } = useAppProvider();
@@ -34,8 +35,7 @@ export const GRPCViewerMode = () => {
     const decodedMessage = useMemo(() => {
         if (!data?.body) return "";
         try {
-            JSON.parse(data.body);
-            return data.body;
+            return parseBodyAsJson(data.body);
         } catch (e) {
             return JSON.stringify({
                 "service": "NetworkSpy.v1.Inspector",
@@ -72,14 +72,14 @@ export const GRPCViewerMode = () => {
                     <div>
                         <h2 className="text-sm font-black text-white tracking-tight uppercase italic">gRPC Observer</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                             <span className="text-[9px] font-mono text-teal-400 font-bold uppercase tracking-widest">HTTP/2 Framed Stream</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <span className="text-[9px] font-mono text-teal-400 font-bold uppercase tracking-widest">HTTP/2 Framed Stream</span>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button 
+                    <button
                         onClick={handleCopy}
                         className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/50 border border-white/5 text-[10px] font-bold text-zinc-400 hover:text-white transition-all duration-300"
                     >
@@ -99,8 +99,8 @@ export const GRPCViewerMode = () => {
 
                 <div className="w-80 bg-[#0d0d0d] p-4 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
-                         <div className="w-1 h-3 bg-teal-500 rounded-full"></div>
-                         <h3 className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Stream Telemetry</h3>
+                        <div className="w-1 h-3 bg-teal-500 rounded-full"></div>
+                        <h3 className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Stream Telemetry</h3>
                     </div>
                     <div className="space-y-1.5">
                         {Object.entries(grpcMetadata).map(([k, v]) => (
@@ -110,12 +110,12 @@ export const GRPCViewerMode = () => {
                             </div>
                         ))}
                     </div>
-                    
+
                     <div className="pt-4 border-t border-white/5">
-                         <div className="flex items-center gap-2 text-zinc-500">
-                             <FiHash size={12} />
-                             <span className="text-[9px] font-black uppercase tracking-widest">Channel ID: c-7788</span>
-                         </div>
+                        <div className="flex items-center gap-2 text-zinc-500">
+                            <FiHash size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">Channel ID: c-7788</span>
+                        </div>
                     </div>
                 </div>
             </div>

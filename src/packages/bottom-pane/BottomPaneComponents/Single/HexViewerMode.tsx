@@ -23,7 +23,7 @@ export const HexViewerMode = () => {
 
     const handleCopy = () => {
         if (!data?.body) return;
-        const bytes = new TextEncoder().encode(data.body);
+        const bytes = data.body as Uint8Array;
         const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
         navigator.clipboard.writeText(hex);
         setCopied(true);
@@ -33,7 +33,7 @@ export const HexViewerMode = () => {
     if (!trafficId) return <Placeholder text="Select request for binary inspection" />;
     if (loading) return <Placeholder text="Scanning memory segments..." />;
 
-    const byteCount = data?.body ? new TextEncoder().encode(data.body).length : 0;
+    const byteCount = data?.body ? (data.body as Uint8Array).length : 0;
 
     return (
         <div className="bg-[#050505] flex flex-col min-h-full h-full font-sans relative overflow-hidden">
@@ -71,7 +71,7 @@ export const HexViewerMode = () => {
 
             <div className="flex-grow p-6 overflow-auto custom-scrollbar relative z-10">
                 <div className="bg-[#080808] rounded-2xl border border-white/[0.03] p-6 shadow-3xl hover:border-emerald-500/20 transition-all duration-500">
-                    <HexView data={data?.body || ""} />
+                    <HexView data={data?.body as Uint8Array} />
                 </div>
             </div>
         </div>
