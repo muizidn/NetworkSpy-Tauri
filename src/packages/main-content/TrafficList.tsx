@@ -8,7 +8,7 @@ import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { useTrafficListContext } from "./context/TrafficList";
 import { useFilterContext } from "@src/context/FilterContext";
 import { TrafficItemMap } from "./model/TrafficItemMap";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { useAppProvider } from "../app-env";
 import { FiLock, FiUnlock } from "react-icons/fi";
 

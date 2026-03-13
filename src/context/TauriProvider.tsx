@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, ReactNode } from "react";
-import * as tauriPath from "@tauri-apps/api/path";
-import * as fs from "@tauri-apps/api/fs";
-import * as os from "@tauri-apps/api/os";
+import { downloadDir, documentDir } from "@tauri-apps/api/path";
+import { mkdir, BaseDirectory } from "@tauri-apps/plugin-fs";
+import { type as getOsType } from "@tauri-apps/plugin-os";
 import tauriConfJson from "../../src-tauri/tauri.conf.json";
 
 declare global {
@@ -10,8 +10,8 @@ declare global {
   }
 }
 
-export const APP_NAME = tauriConfJson.package.productName;
-export const RUNNING_IN_TAURI = window.__TAURI_CTX__ !== undefined;
+export const APP_NAME = tauriConfJson.productName;
+export const RUNNING_IN_TAURI = (window as any).__TAURI_INTERNALS__ !== undefined;
 
 // NOTE: Add cacheable Tauri calls in this file
 interface TauriContextInterface {
@@ -40,23 +40,31 @@ export function TauriProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (RUNNING_IN_TAURI) {
       const callTauriAPIs = async () => {
-        setDownloadDir(await tauriPath.downloadDir());
-        const _documents = await tauriPath.documentDir();
+        setDownloadDir(await downloadDir());
+        const _documents = await documentDir();
         console.log("documents", _documents);
         setDocumentDir(_documents);
-        const _osType = await os.type();
+        const _osType = await getOsType();
         setOsType(_osType);
-        const _fileSep = _osType === "Windows_NT" ? "\\" : "/";
+        const _fileSep = _osType === "windows" ? "\\" : "/";
         setFileSep(_fileSep);
-        await fs.createDir(APP_NAME, {
-          dir: fs.BaseDirectory.Document,
-          recursive: true,
-        });
-        setAppDocuments(`${_documents}${APP_NAME}`);
-        console.log("appDocuments", `${_documents}${APP_NAME}`);
+        
+        try {
+          await mkdir(APP_NAME, {
+            baseDir: BaseDirectory.Document,
+            recursive: true,
+          });
+        } catch (e) {
+          console.error("Failed to create app directory", e);
+        }
+        
+        setAppDocuments(`${_documents}/${APP_NAME}`);
+        console.log("appDocuments", `${_documents}/${APP_NAME}`);
         setLoading(false);
       };
       callTauriAPIs().catch(console.error);
+    } else {
+      setLoading(false);
     }
   }, []);
 

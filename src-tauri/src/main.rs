@@ -3,7 +3,7 @@
 
 pub mod certificate_installer;
 pub mod proxy_toggle;
-pub mod submenu;
+// pub mod submenu;
 pub mod traffic;
 
 use bytes::Bytes;
@@ -16,10 +16,8 @@ use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
-use std::{env, thread};
-use submenu::{certificate, edit, file, help, scripting, setup, tools, view, window};
-use tauri::{AppHandle, Manager};
-use tauri::{Menu};
+use std::{env};
+use tauri::{AppHandle, Manager, Emitter};
 use tauri::RunEvent;
 use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
@@ -44,8 +42,6 @@ struct Payload {
     data: PayloadTraffic,
 }
 
-
-
 struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
 
 #[tauri::command]
@@ -65,35 +61,9 @@ async fn update_intercept_allow_list(
     Ok(())
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-fn create_menu() -> Menu {
-    let file_submenu = file::create_file_submenu();
-    let edit_submenu = edit::create_edit_submenu();
-    let view_submenu = view::create_view_submenu();
-    let tools_submenu = tools::create_tools_submenu();
-    let scripting_submenu = scripting::create_scripting_submenu();
-    let certificate_submenu = certificate::create_certificate_submenu();
-    let setup_submenu = setup::create_setup_submenu();
-    let window_submenu = window::create_window_submenu();
-    let help_submenu = help::create_help_submenu();
-
-    let menu = Menu::new()
-        .add_submenu(file_submenu)
-        .add_submenu(edit_submenu)
-        .add_submenu(view_submenu)
-        .add_submenu(tools_submenu)
-        .add_submenu(scripting_submenu)
-        .add_submenu(certificate_submenu)
-        .add_submenu(setup_submenu)
-        .add_submenu(window_submenu)
-        .add_submenu(help_submenu);
-
-    menu
 }
 
 static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
@@ -122,11 +92,11 @@ fn auto_install_certificate() -> Result<String, String> {
 }
 
 #[tauri::command]
-fn open_new_window(context: String, title: String, app_handle: tauri::AppHandle) {
-    tauri::WindowBuilder::new(
+fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String) {
+    tauri::WebviewWindowBuilder::new(
         &app_handle,
         context.clone(),
-        tauri::WindowUrl::App(format!("/{}", context).into()),
+        tauri::WebviewUrl::App(std::path::PathBuf::from(format!("/{}", context))),
     )
     .title(title)
     .inner_size(1500.0, 700.0)
@@ -172,20 +142,16 @@ fn main() {
         .set(CertificateInstaller {})
         .expect("Failed to set certificate_installer instance");
 
-    let app = tauri::Builder::default()
-        .menu(create_menu())
-        .on_menu_event(|event| {
-            let event_id = event.menu_item_id();
-
-            file::handle_file_menu_event(event_id, &event, &event.window().app_handle());
-            scripting::handle_scripting_menu_event(event_id, &event, &event.window().app_handle());
-            certificate::handle_certificate_menu_event(event_id, &event, &event.window().app_handle());
-            tools::handle_tools_menu_event(event_id, &event, &event.window().app_handle());
-        })
+    tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             let app_handle = app.app_handle();
 
-            let app_data_dir = app_handle.path_resolver().app_data_dir().unwrap_or_else(|| {
+            let app_data_dir = app_handle.path().app_data_dir().unwrap_or_else(|_| {
                 let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
                 std::path::PathBuf::from(home).join(".network-spy")
             });
@@ -212,8 +178,6 @@ fn main() {
             }
             let allow_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
-
-            // TrafficDb now handles its own background writer thread internally.
 
             let mut proxy = Proxy::new(key_pair, ca_cert, 9090);
 
@@ -249,7 +213,7 @@ fn main() {
                         })
                         .collect::<HashMap<_, _>>();
 
-                    let body_bytes = request.body().as_ref();
+                    let body_bytes = request.body();
                     let body_size = body_bytes.len();
                     let body_vec = body_bytes.to_vec();
 
@@ -263,7 +227,7 @@ fn main() {
                         intercepted,
                     });
 
-                    let _result = self.app_handle.emit_all(
+                    let _result = self.app_handle.emit(
                         "traffic_event",
                         Payload {
                             id: id.to_string(),
@@ -272,7 +236,7 @@ fn main() {
                                 uri: Some(uri),
                                 version: Some(http_version),
                                 method: Some(method),
-                                headers: headers,
+                                headers,
                                 body_size,
                                 intercepted,
                                 status_code: None,
@@ -303,7 +267,7 @@ fn main() {
                         })
                         .collect::<HashMap<_, _>>();
 
-                    let body_bytes = response.body().as_ref();
+                    let body_bytes = response.body();
                     let body_size = body_bytes.len();
                     let body_vec = body_bytes.to_vec();
 
@@ -317,7 +281,7 @@ fn main() {
                     let mut headers_with_perf = headers;
                     headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
 
-                    let _result = self.app_handle.emit_all(
+                    let _result = self.app_handle.emit(
                         "traffic_event",
                         Payload {
                             id: id.to_string(),
@@ -338,7 +302,7 @@ fn main() {
             }
 
             let listener = Arc::new(MyTrafficListener {
-                app_handle: app_handle,
+                app_handle: app_handle.clone(),
                 traffic_db: Arc::clone(&traffic_db),
                 request_times: Mutex::new(HashMap::new()),
             });
@@ -349,7 +313,6 @@ fn main() {
 
             Ok(())
         })
-        .plugin(tauri_plugin_context_menu::init())
         .invoke_handler(tauri::generate_handler![
             greet,
             turn_on_proxy,
@@ -362,20 +325,6 @@ fn main() {
             update_intercept_allow_list,
             get_recent_traffic,
         ])
-        .build(tauri::generate_context!())
+        .run(tauri::generate_context!())
         .expect("error while running tauri application");
-
-    app.run(|_app_handle, event| match event {
-        RunEvent::Exit => {
-            let db = _app_handle.state::<Arc<TrafficDb>>();
-            db.shutdown();
-            turn_off_proxy();
-        }
-        RunEvent::ExitRequested { .. } => {
-            let db = _app_handle.state::<Arc<TrafficDb>>();
-            db.shutdown();
-            turn_off_proxy();
-        }
-        _ => {}
-    });
 }

@@ -1,5 +1,5 @@
 import { RequestPairData } from "../bottom-pane/RequestTab";
-import { invoke as tauriInvoke } from "@tauri-apps/api/tauri";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Traffic } from "@src/models/Traffic";
 import { Payload } from "@src/models/Payload";
@@ -40,8 +40,8 @@ export class TauriAppProvider implements IAppProvider {
   }
 
   async message(messageText: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void> {
-    const { message } = await import("@tauri-apps/api/dialog");
-    return message(messageText, options);
+    const { message } = await import("@tauri-apps/plugin-dialog");
+    await message(messageText, options);
   }
 
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {
