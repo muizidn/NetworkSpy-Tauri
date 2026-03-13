@@ -7,21 +7,24 @@ export const FilterTypes = {
   Method: "Method",
   Status: "Status",
   Header: "Header",
-  ContentType: "Content-Type"
+  ContentType: "Content-Type",
 } as const;
 
 export const FilterOperators = {
   Contains: "Contains",
+  NotContains: "Not Contains",
   StartsWith: "Starts with",
   EndsWith: "Ends with",
   Equals: "Equals",
+  NotEquals: "Not Equals",
   MatchesRegex: "Matches Regex"
 } as const;
 
 export type FilterType = typeof FilterTypes[keyof typeof FilterTypes];
 export type FilterOperator = typeof FilterOperators[keyof typeof FilterOperators];
 
-export interface Filter {
+export interface FilterRule {
+  isGroup: false;
   id: string;
   enabled: boolean;
   type: FilterType;
@@ -29,16 +32,26 @@ export interface Filter {
   value: string;
 }
 
+export interface FilterGroup {
+  isGroup: true;
+  id: string;
+  enabled: boolean;
+  logic: "AND" | "OR";
+  children: FilterNode[];
+}
+
+export type FilterNode = FilterRule | FilterGroup;
+
 export interface PredefinedFilter {
   id: string;
   name: string;
-  filters: Filter[];
+  filters: FilterNode[];
   isBuiltIn?: boolean;
 }
 
 interface FilterContextState {
-  filters: Filter[];
-  setFilters: React.Dispatch<React.SetStateAction<Filter[]>>;
+  filters: FilterNode[];
+  setFilters: React.Dispatch<React.SetStateAction<FilterNode[]>>;
   predefinedFilters: PredefinedFilter[];
   activePredefinedIds: string[];
   togglePredefinedFilter: (id: string) => void;
@@ -59,15 +72,15 @@ export const useFilterContext = () => {
 
 const BUILT_IN_FILTERS: PredefinedFilter[] = [
   { id: "all", name: "All", filters: [], isBuiltIn: true },
-  { id: "http", name: "HTTP", filters: [{ id: "built-in-http", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "http:" }], isBuiltIn: true },
-  { id: "https", name: "HTTPS", filters: [{ id: "built-in-https", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "https:" }], isBuiltIn: true },
-  { id: "json", name: "JSON", filters: [{ id: "built-in-json", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.Contains, value: "json" }], isBuiltIn: true },
-  { id: "images", name: "Images", filters: [{ id: "built-in-images", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.MatchesRegex, value: "(image|png|jpg|jpeg|gif)" }], isBuiltIn: true },
+  { id: "http", name: "HTTP", filters: [{ isGroup: false, id: "built-in-http", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "http:" }], isBuiltIn: true },
+  { id: "https", name: "HTTPS", filters: [{ isGroup: false, id: "built-in-https", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "https:" }], isBuiltIn: true },
+  { id: "json", name: "JSON", filters: [{ isGroup: false, id: "built-in-json", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.Contains, value: "json" }], isBuiltIn: true },
+  { id: "images", name: "Images", filters: [{ isGroup: false, id: "built-in-images", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.MatchesRegex, value: "(image|png|jpg|jpeg|gif)" }], isBuiltIn: true },
 ];
 
 export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { trafficList } = useTrafficListContext();
-  const [filters, setFilters] = useState<Filter[]>([]);
+  const [filters, setFilters] = useState<FilterNode[]>([]);
   const [activePredefinedIds, setActivePredefinedIds] = useState<string[]>(["all"]);
   const [userFilters, setUserFilters] = useState<PredefinedFilter[]>(() => {
     try {
@@ -114,7 +127,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setActivePredefinedIds(prev => prev.filter(p => p !== id));
   };
 
-  const applyFilter = (traffic: TrafficItemMap, filter: Filter): boolean => {
+  const evaluateRule = (traffic: TrafficItemMap, filter: FilterRule): boolean => {
     if (!filter.enabled || !filter.value) return true;
 
     let targetValue = "";
@@ -141,12 +154,16 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     switch (filter.operator) {
       case FilterOperators.Contains:
         return target.includes(val);
+      case FilterOperators.NotContains:
+        return !target.includes(val);
       case FilterOperators.StartsWith:
         return target.startsWith(val);
       case FilterOperators.EndsWith:
         return target.endsWith(val);
       case FilterOperators.Equals:
         return target === val;
+      case FilterOperators.NotEquals:
+        return target !== val;
       case FilterOperators.MatchesRegex:
         try {
           return new RegExp(filter.value, "i").test(targetValue);
@@ -158,19 +175,40 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const evaluateNode = (traffic: TrafficItemMap, node: FilterNode): boolean => {
+    if (!node.enabled) return true;
+    if (!node.isGroup) {
+      return evaluateRule(traffic, node);
+    }
+    
+    // Group evaluation
+    const children = node.children;
+    if (children.length === 0) return true;
+    
+    // Filter active children to evaluate
+    const activeChildren = children.filter(c => c.enabled);
+    if (activeChildren.length === 0) return true;
+
+    if (node.logic === "AND") {
+      return activeChildren.every(c => evaluateNode(traffic, c));
+    } else {
+      return activeChildren.some(c => evaluateNode(traffic, c));
+    }
+  };
+
   const filteredTraffic = useMemo(() => {
-    // Collect all unique filter rules from active predefined sets
+    // Collect all active predefined filtered arrays
     const activePredefinedFilters = predefinedFilters
       .filter(p => activePredefinedIds.includes(p.id))
       .flatMap(p => p.filters);
 
     return trafficList.filter((t) => {
-      // Must pass ALL manual filters
-      const passesManual = filters.every((f) => applyFilter(t, f));
+      // Must pass ALL root manual filters (implicit AND)
+      const passesManual = filters.every((f) => evaluateNode(t, f));
       if (!passesManual) return false;
 
-      // Must pass ALL active predefined filters (predefined filters are additive constraints)
-      return activePredefinedFilters.every((f) => applyFilter(t, f));
+      // Must pass ALL active predefined filters
+      return activePredefinedFilters.every((f) => evaluateNode(t, f));
     });
   }, [trafficList, filters, predefinedFilters, activePredefinedIds]);
 
