@@ -1648,6 +1648,7 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 [[package]]
 name = "hudsucker"
 version = "0.24.0"
+source = "git+https://github.com/muizidn/NetworkSpyProxy.git#5046c2c22f7d1074906797e948a6ebaab9de015a"
 dependencies = [
  "async-compression",
  "bstr",
@@ -2403,6 +2404,7 @@ dependencies = [
 [[package]]
 name = "network_spy_proxy"
 version = "0.1.0"
+source = "git+https://github.com/muizidn/NetworkSpyProxy.git#5046c2c22f7d1074906797e948a6ebaab9de015a"
 dependencies = [
  "bstr",
  "bytes",
