@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useEffect } from "react";
 import {
   TableView,
   TableViewContextMenuRenderer,
@@ -11,6 +11,8 @@ import { TrafficItemMap } from "./model/TrafficItemMap";
 import { invoke } from "@tauri-apps/api/core";
 import { useAppProvider } from "../app-env";
 import { FiLock, FiUnlock } from "react-icons/fi";
+import { listen } from "@tauri-apps/api/event";
+import { save } from "@tauri-apps/plugin-dialog";
 
 type TauriInvokeFn = (cmd: string, args?: any) => Promise<any>;
 
@@ -18,6 +20,34 @@ export const TrafficList: React.FC = () => {
   const { setSelections } = useTrafficListContext();
   const { filteredTraffic } = useFilterContext();
   const { isRun } = useAppProvider();
+
+  useEffect(() => {
+    const unlisten = listen<{ ids: string[] }>("export_selected", async (event) => {
+      try {
+        const ids = event.payload.ids;
+        if (!ids || ids.length === 0) return;
+
+        const path = await save({
+          filters: [
+            {
+              name: "HAR Capture",
+              extensions: ["har"],
+            },
+          ],
+        });
+
+        if (path) {
+          await invoke("export_selected_session", { path, ids });
+        }
+      } catch (err) {
+        console.error("Failed to export selected items", err);
+      }
+    });
+
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
 
   const headers: TableViewHeader<TrafficItemMap>[] = useMemo(() => [
     {
@@ -73,6 +103,9 @@ export const TrafficList: React.FC = () => {
   );
 };
 
+import { Menu } from "@tauri-apps/api/menu";
+import { emit } from "@tauri-apps/api/event";
+
 class TrafficListContextMenuRenderer
   implements TableViewContextMenuRenderer<TrafficItemMap> {
   invoke: TauriInvokeFn;
@@ -81,38 +114,24 @@ class TrafficListContextMenuRenderer
   }
 
   async render(items: TrafficItemMap[]): Promise<void> {
-    const contextMenuData = {
-      items: [
-        {
-          label: `Select ${items.length}`,
-          disabled: false,
-          event: "item1clicked",
-          payload: "Hello World!",
-          shortcut: "ctrl+M",
-          subitems: [
-            {
-              label: "Subitem 1",
-              disabled: true,
-              event: "subitem1clicked",
+    try {
+      const ids = items.map((i) => i.id);
+      const menu = await Menu.new({
+        items: [
+          {
+            id: "export_selected",
+            text: `Export ${items.length} items to HAR`,
+            enabled: items.length > 0,
+            action: () => {
+              emit("export_selected", { ids });
             },
-            {
-              is_separator: true,
-            },
-            {
-              label: "Subitem 2",
-              disabled: false,
-              checked: true,
-              event: "subitem2clicked",
-            },
-          ],
-        },
-      ],
-    };
+          },
+        ],
+      });
 
-    await this.invoke(
-      "plugin:context_menu|show_context_menu",
-      // `as any` because otherwise mismatch type
-      contextMenuData as any
-    );
+      await menu.popup();
+    } catch (e) {
+      console.warn("Context menu is only available natively in Tauri", e);
+    }
   }
 }

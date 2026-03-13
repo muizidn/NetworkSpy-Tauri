@@ -332,6 +332,78 @@ impl TrafficDb {
         Ok(results)
     }
 
+    pub fn get_traffic_with_bodies_by_ids(&self, ids: Vec<String>) -> Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
+        let conn = self.conn.lock().unwrap();
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        
+        let mut results = Vec::new();
+        for chunk in ids.chunks(900) {
+            let placeholders: Vec<String> = (0..chunk.len()).map(|_| "?".to_string()).collect();
+            let query = format!(
+                "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
+                 b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client 
+                 FROM traffic t 
+                 LEFT JOIN body b ON t.id = b.traffic_id 
+                 WHERE t.id IN ({})
+                 ORDER BY t.timestamp ASC",
+                placeholders.join(", ")
+            );
+            
+            let mut stmt = conn.prepare(&query)?;
+            let params_slice: Vec<&dyn rusqlite::ToSql> = chunk.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
+            
+            let rows = stmt.query_map(&params_slice[..], |row| {
+                let meta = TrafficMetadata {
+                    id: row.get(0)?,
+                    uri: row.get(1)?,
+                    method: row.get(2)?,
+                    version: row.get(3)?,
+                    req_headers: row.get(4)?,
+                    res_headers: row.get(5)?,
+                    status_code: row.get(6)?,
+                    intercepted: row.get::<_, i32>(7)? != 0,
+                    timestamp: row.get(8)?,
+                    req_body_size: 0,
+                    res_body_size: 0,
+                    client: row.get(15)?,
+                };
+                
+                let req_body: Option<Vec<u8>> = row.get(9)?;
+                let res_body: Option<Vec<u8>> = row.get(10)?;
+                let req_ct: Option<String> = row.get(11)?;
+                let req_ce: Option<String> = row.get(12)?;
+                let res_ct: Option<String> = row.get(13)?;
+                let res_ce: Option<String> = row.get(14)?;
+                
+                let req_decoded = req_body.map(|bytes| {
+                    if bytes.starts_with(b"ZSTD") {
+                        zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
+                    } else {
+                        bytes
+                    }
+                });
+                
+                let res_decoded = res_body.map(|bytes| {
+                    if bytes.starts_with(b"ZSTD") {
+                        zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
+                    } else {
+                        bytes
+                    }
+                });
+                
+                Ok((meta, req_decoded, res_decoded, req_ct, req_ce, res_ct, res_ce))
+            })?;
+            
+            for row in rows {
+                results.push(row?);
+            }
+        }
+        
+        Ok(results)
+    }
+
     pub fn clear_all(&self) -> Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM traffic", [])?;

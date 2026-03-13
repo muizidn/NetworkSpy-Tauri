@@ -158,6 +158,15 @@ async fn save_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Res
 }
 
 #[tauri::command]
+async fn export_selected_session(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e| e.to_string())?;
+    let har = create_har_log(data);
+    let json = serde_json::to_string_pretty(&har).map_err(|e| e.to_string())?;
+    fs::write(path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
 async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_handle: AppHandle) -> Result<(), String> {
     let json = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let har: HarLog = serde_json::from_str(&json).map_err(|e| e.to_string())?;
@@ -543,6 +552,7 @@ fn main() {
             get_recent_traffic,
             save_session,
             load_session,
+            export_selected_session,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
