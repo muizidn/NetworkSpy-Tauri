@@ -17,7 +17,7 @@ import { save } from "@tauri-apps/plugin-dialog";
 type TauriInvokeFn = (cmd: string, args?: any) => Promise<any>;
 
 export const TrafficList: React.FC = () => {
-  const { setSelections } = useTrafficListContext();
+  const { selections, setSelections } = useTrafficListContext();
   const { filteredTraffic } = useFilterContext();
   const { isRun } = useAppProvider();
 
@@ -63,9 +63,8 @@ export const TrafficList: React.FC = () => {
         render: ({ input }: { input: TrafficItemMap }) => {
           const intercepted = input.intercepted as boolean;
           return (
-            <div className={`flex items-center justify-center h-full ${
-              intercepted ? 'text-purple-400' : 'text-zinc-500'
-            }`} title={intercepted ? 'Intercepted (Decrypted)' : 'Tunneled (Encrypted)'}>
+            <div className={`flex items-center justify-center h-full ${intercepted ? 'text-purple-400' : 'text-zinc-500'
+              }`} title={intercepted ? 'Intercepted (Decrypted)' : 'Tunneled (Encrypted)'}>
               {intercepted ? <FiUnlock size={14} /> : <FiLock size={14} />}
             </div>
           );

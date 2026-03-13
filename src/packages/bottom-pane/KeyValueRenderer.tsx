@@ -10,9 +10,8 @@ export class KeyValueRenderer implements Renderer<KeyValuePair> {
   }
   render({ input }: { input: KeyValuePair }): React.ReactNode {
     return (
-      <div className="select-none flex items-center h-full text-wrap">
-        {this.type === 'key' && input.key}
-        {this.type === 'value' && input.value}
+      <div className="select-text flex items-center h-full break-all whitespace-pre-wrap leading-relaxed py-0.5 min-w-0">
+        {this.type === 'key' ? input.key : input.value}
       </div>
     );
   }

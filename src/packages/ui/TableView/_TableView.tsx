@@ -75,15 +75,11 @@ const HeaderCell = <T,>({
       role="columnheader"
       className={twMerge(
         "px-3 py-1.5 relative bg-[#111111] border-b border-zinc-800 transition-colors group/header",
-        isLast ? "flex-grow" : "shrink-0",
         isActive ? "text-blue-400 bg-[#161616]" : "text-zinc-500 hover:bg-zinc-800/40"
       )}
       onClick={() => handleSort(index)}
       style={{
         opacity: isDragging ? 0.5 : 1,
-        width: isLast ? undefined : columnWidth,
-        flexBasis: isLast ? columnWidth : undefined,
-        minWidth: header.minWidth
       }}
     >
       <div
@@ -240,7 +236,7 @@ export const TableView = <T,>({
       : null;
     const allItems = selectedRows.rows.map((i) => sortedData[i]);
     onSelectedRowChanged(firstSelect, allItems);
-  }, [selectedRows, sortedData, onSelectedRowChanged]);
+  }, [selectedRows]);
 
   async function showContextMenu(e: MouseEvent) {
     if (!contextMenuRenderer) {
@@ -437,11 +433,16 @@ export const TableView = <T,>({
 
   const virtualItems = rowVirtualizer.getVirtualItems();
 
+  const gridTemplate = headers.map((h, i) => {
+    const w = columnWidths[i];
+    return i === headers.length - 1 ? `minmax(${w}px, 1fr)` : `${w}px`;
+  }).join(' ');
+
   return (
     <div className={twMerge("w-full h-full flex flex-col bg-[#050505] overflow-x-auto custom-scrollbar", className)}>
-      <div role="grid" className="min-w-full w-max flex flex-col h-full overflow-hidden">
-        <div role="rowgroup" className="sticky top-0 z-30 shrink-0">
-          <div role="row" className="flex w-full">
+      <div role="grid" className="min-w-fit w-full flex flex-col h-full overflow-hidden">
+        <div role="rowgroup" className="sticky top-0 z-30 shrink-0 border-b-2 border-zinc-900/50">
+          <div role="row" className="grid min-w-full" style={{ gridTemplateColumns: gridTemplate }}>
             {headers.map((header, index) => (
               <HeaderCell
                 key={`header-${index}`}
@@ -478,15 +479,16 @@ export const TableView = <T,>({
                 <div
                   key={virtualRow.key}
                   role="row"
+                  ref={rowVirtualizer.measureElement}
                   onContextMenu={showContextMenu}
                   onClick={onClickRow}
                   className={twMerge(
-                    "flex w-full group transition-all duration-150 border-b border-zinc-900/50 absolute top-0 left-0",
+                    "grid min-w-full group transition-all duration-150 border-b border-zinc-900/50 absolute top-0 left-0 items-stretch",
                     isSelected ? "bg-blue-600/10" : "hover:bg-zinc-800/30"
                   )}
                   style={{
-                    height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
+                    gridTemplateColumns: gridTemplate,
                   }}
                   data-index={virtualRow.index}
                 >
@@ -496,15 +498,7 @@ export const TableView = <T,>({
                       <div
                         key={i}
                         role="gridcell"
-                        className={twMerge(
-                          "px-3 text-zinc-400 text-[11px] truncate",
-                          isLast ? "flex-grow" : "shrink-0"
-                        )}
-                        style={{
-                          width: isLast ? undefined : columnWidths[i],
-                          flexBasis: isLast ? columnWidths[i] : undefined,
-                          minWidth: header.minWidth
-                        }}
+                        className="px-3 py-[7px] text-zinc-400 text-[11px] min-w-0 flex flex-col justify-center max-w-full"
                       >
                         {header.renderer.render({
                           input: item,

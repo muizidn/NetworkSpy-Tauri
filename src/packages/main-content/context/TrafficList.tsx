@@ -21,7 +21,7 @@ export interface TrafficListContextState {
     React.SetStateAction<{ [key: string]: Traffic }>
   >;
   selections: TrafficListSelection;
-  setSelections: React.Dispatch<React.SetStateAction<TrafficListSelection>>;
+  setSelections: (selections: TrafficListSelection) => void;
 }
 
 export const TrafficListContext = createContext<
@@ -47,10 +47,14 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
 }) => {
   const [trafficList, setTrafficList] = useState<TrafficItemMap[]>([]);
   const [trafficSet, setTrafficSet] = useState<{ [key: string]: Traffic }>({});
-  const [selections, setSelections] = useState<TrafficListSelection>({
+  const [selections, _setSelections] = useState<TrafficListSelection>({
     firstSelected: null,
     others: null,
   });
+
+  function setSelections(selections: TrafficListSelection) {
+    _setSelections(selections);
+  }
 
   return (
     <TrafficListContext.Provider
