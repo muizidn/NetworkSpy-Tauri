@@ -11,6 +11,7 @@ export const GraphQLMode = () => {
   const { provider } = useAppProvider();
   const { selections } = useTrafficListContext();
   const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [data, setData] = useState<RequestPairData | null>(null);
   const [responseData, setResponseData] = useState<RequestPairData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,7 @@ export const GraphQLMode = () => {
   useEffect(() => {
     if (!trafficId) return;
     setLoading(true);
+    setSelectedIndex(0); // Reset on new selection
     Promise.all([
       provider.getRequestPairData(trafficId),
       provider.getResponsePairData(trafficId)
@@ -27,55 +29,53 @@ export const GraphQLMode = () => {
     }).finally(() => setLoading(false));
   }, [trafficId, provider]);
 
-  const gqlData = useMemo(() => {
-    const parsed = parseBodyAsJson(data?.body);
-    if (!parsed) return null;
-    try {
-      if (parsed.query) {
-        // Simple heuristic for operation type
-        const queryTrimmed = parsed.query.trim();
-        let type = "QUERY";
-        if (queryTrimmed.startsWith("mutation")) type = "MUTATION";
-        if (queryTrimmed.startsWith("subscription")) type = "SUBSCRIPTION";
+  const gqlItems = useMemo(() => {
+    const rawParsed = parseBodyAsJson(data?.body);
+    if (!rawParsed) return [];
+    
+    const items = Array.isArray(rawParsed) ? (rawParsed as any[]) : [rawParsed];
+    
+    return items.map((parsed, idx) => {
+      try {
+        if (parsed.query) {
+          const queryTrimmed = parsed.query.trim();
+          let type = "QUERY";
+          if (queryTrimmed.toLowerCase().startsWith("mutation")) type = "MUTATION";
+          if (queryTrimmed.toLowerCase().startsWith("subscription")) type = "SUBSCRIPTION";
 
-        // Count fragments and directives
-        const fragmentsCount = (parsed.query.match(/fragment\s+/g) || []).length;
-        const directivesCount = (parsed.query.match(/@\w+/g) || []).length;
-        
-        // Nesting depth (naive count of open braces in selection sets)
-        const depth = Math.max(0, ...parsed.query.split('\n').map((line: string) => (line.match(/\{/g) || []).length)) + 1;
+          const fragmentsCount = (parsed.query.match(/fragment\s+/g) || []).length;
+          const directivesCount = (parsed.query.match(/@\w+/g) || []).length;
+          const depth = Math.max(0, ...parsed.query.split('\n').map((line: string) => (line.match(/\{/g) || []).length)) + 1;
 
-        return {
-          query: parsed.query,
-          variables: parsed.variables ? JSON.stringify(parsed.variables, null, 2) : "{}",
-          operationName: parsed.operationName || "Unnamed Operation",
-          type,
-          fragmentsCount,
-          directivesCount,
-          depth
-        };
-      }
-    } catch (e) { }
-    return null;
+          return {
+            query: parsed.query,
+            variables: parsed.variables ? JSON.stringify(parsed.variables, null, 2) : "{}",
+            operationName: parsed.operationName || `Operation ${idx + 1}`,
+            type,
+            fragmentsCount,
+            directivesCount,
+            depth
+          };
+        }
+      } catch (e) { }
+      return null;
+    }).filter((x): x is NonNullable<typeof x> => x !== null);
   }, [data]);
+
+  const activeData = useMemo(() => {
+    return gqlItems[selectedIndex] || gqlItems[0] || null;
+  }, [gqlItems, selectedIndex]);
 
   const responseBody = useMemo(() => {
     return decodeBody(responseData?.body, "application/json");
   }, [responseData]);
 
-  if (!trafficId && !gqlData) return <Placeholder text="Select a GraphQL request to begin inspection" />;
+  if (!trafficId || gqlItems.length === 0) return <Placeholder text="Select a GraphQL request to begin inspection" />;
   if (loading) return <Placeholder text="Analyzing GraphQL traffic..." />;
 
-  // Fill in with mock if still null for demo purposes (though trafficGenerator should provide real data now)
-  const activeData = gqlData || {
-    query: "# No GraphQL query detected in selection",
-    variables: "{}",
-    operationName: "Unknown",
-    type: "QUERY",
-    fragmentsCount: 0,
-    directivesCount: 0,
-    depth: 0
-  };
+  const isBatched = gqlItems.length > 1;
+
+  if (!activeData) return <Placeholder text="No valid GraphQL query detected" />;
 
   return (
     <div className="h-full bg-[#0d0d0d] flex flex-col font-sans overflow-hidden">
@@ -90,7 +90,9 @@ export const GraphQLMode = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <div className="text-sm font-bold text-zinc-200">{activeData.operationName}</div>
+              <div className="text-sm font-bold text-zinc-200">
+                {activeData.operationName}
+              </div>
               {responseBody && responseBody.includes('"errors"') && (
                 <div className="flex items-center gap-1 text-[9px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">
                   <FiAlertTriangle size={10} />
@@ -98,18 +100,37 @@ export const GraphQLMode = () => {
                 </div>
               )}
             </div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">GRAPHQL {activeData.type}</div>
+            <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">
+              {isBatched ? `BATCHED (${gqlItems.length} OPERATIONS)` : `GRAPHQL ${activeData.type}`}
+            </div>
           </div>
         </div>
+
         <div className="flex items-center gap-4">
+          {isBatched && (
+            <div className="flex bg-black/40 rounded-lg p-1 border border-zinc-800 mr-2 shrink-0">
+              {gqlItems.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedIndex(idx)}
+                  className={twMerge(
+                    "px-3 py-1.5 rounded text-[10px] font-bold transition-all",
+                    selectedIndex === idx ? "bg-pink-600 text-white shadow-lg" : "text-zinc-600 hover:text-zinc-400"
+                  )}
+                >
+                  Op {idx + 1}
+                </button>
+              ))}
+            </div>
+          )}
           <div className={twMerge(
-            "flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-sm",
-            activeData.type === 'MUTATION' ? "bg-amber-500/10 border-amber-500/20" : "bg-emerald-500/10 border-emerald-500/20"
+              "flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-sm",
+              activeData.type === 'MUTATION' ? "bg-amber-500/10 border-amber-500/20" : "bg-emerald-500/10 border-emerald-500/20"
           )}>
-            <div className={twMerge("w-1.5 h-1.5 rounded-full", activeData.type === 'MUTATION' ? "bg-amber-500" : "bg-emerald-500")} />
-            <span className={twMerge("text-[10px] font-bold", activeData.type === 'MUTATION' ? "text-amber-500" : "text-emerald-500")}>
+              <div className={twMerge("w-1.5 h-1.5 rounded-full", activeData.type === 'MUTATION' ? "bg-amber-500" : "bg-emerald-500")} />
+              <span className={twMerge("text-[10px] font-bold", activeData.type === 'MUTATION' ? "text-amber-500" : "text-emerald-500")}>
               {activeData.type}
-            </span>
+              </span>
           </div>
         </div>
       </div>

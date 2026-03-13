@@ -4,12 +4,23 @@ import { useMemo } from "react";
 
 export const SummaryMode = () => {
   const { filteredTraffic } = useFilterContext();
+  const { trafficSet } = useTrafficListContext();
+
+  const formatSize = (bytes: number) => {
+    if (bytes <= 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
 
   const stats = useMemo(() => {
     const total = filteredTraffic.length;
     const methods: Record<string, number> = {};
     const statuses: Record<string, number> = {};
     const contentTypes: Record<string, number> = {};
+    let totalReqBytes = 0;
+    let totalResBytes = 0;
 
     filteredTraffic.forEach((item) => {
       const method = (item.method as string) || "UNKNOWN";
@@ -21,20 +32,35 @@ export const SummaryMode = () => {
       const contentType = (item.content_type as string) || "unknown";
       const shortType = contentType.split(";")[0];
       contentTypes[shortType] = (contentTypes[shortType] || 0) + 1;
+
+      const raw = trafficSet[String(item.id)];
+      if (raw) {
+        totalReqBytes += raw.request?.size || 0;
+        totalResBytes += raw.response?.size || 0;
+      }
     });
 
-    return { total, methods, statuses, contentTypes };
-  }, [filteredTraffic]);
+    return { 
+      total, 
+      methods, 
+      statuses, 
+      contentTypes, 
+      totalReqSize: formatSize(totalReqBytes),
+      totalResSize: formatSize(totalResBytes),
+      totalTransfer: formatSize(totalReqBytes + totalResBytes)
+    };
+  }, [filteredTraffic, trafficSet]);
 
   return (
-    <div className="h-full bg-[#1e1e1e] text-white p-6 overflow-auto">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-blue-400">Traffic Summary</h1>
+    <div className="h-full bg-[#1e1e1e] text-white p-6 overflow-auto custom-scrollbar">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-2xl font-black mb-8 text-blue-400 uppercase tracking-tighter">Network Intelligence Summary</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard title="Total Requests" value={stats.total} color="border-blue-500" />
-          <StatCard title="Unique Methods" value={Object.keys(stats.methods).length} color="border-green-500" />
-          <StatCard title="Avg Load Time" value="--" color="border-purple-500" />
+          <StatCard title="Upload (TX)" value={stats.totalReqSize} color="border-orange-500" />
+          <StatCard title="Download (RX)" value={stats.totalResSize} color="border-emerald-500" />
+          <StatCard title="Total Transfer" value={stats.totalTransfer} color="border-purple-500" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

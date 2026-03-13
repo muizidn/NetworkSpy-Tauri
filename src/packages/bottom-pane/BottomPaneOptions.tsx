@@ -60,6 +60,7 @@ export const BottomPaneOptions = () => {
       { id: "jwt_decoder", title: "JWT Decoder", onClick: () => setMode("jwt_decoder") },
       { id: "ai_debug", title: "AI Debug", onClick: () => setMode("ai_debug") },
       { id: "ai_test", title: "AI Test", onClick: () => setMode("ai_test") },
+      { id: "graphql", title: "GraphQL", onClick: () => setMode("graphql") },
       { id: "llm_prompt", title: "LLM Prompt", onClick: () => setMode("llm_prompt") },
       { id: "llm_response", title: "LLM Response", onClick: () => setMode("llm_response") },
       { id: "llm_streaming", title: "LLM Streaming", onClick: () => setMode("llm_streaming") },
