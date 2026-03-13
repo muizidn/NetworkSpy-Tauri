@@ -1,17 +1,16 @@
-import { useState } from "react";
-import { TreeView } from "./TreeView";
+import { useMemo, useState, useEffect } from "react";
+import { CMLView } from "./CMLView";
+import { CodeView } from "./CodeView";
 import { HexView } from "./HexView";
-import { FormURLEncodedView } from "./FormURLEncodedView";
-import { MultipartFormDataView } from "./MultipartFormDataView";
-import { XMLView } from "./XMLView";
-import { ImageView } from "./ImageView";
 import { HTMLView } from "./HTMLView";
 import { HTMLWebView } from "./HTMLWebView";
-import { MessagePackView } from "./MessagePackView";
-import { ProtobufView } from "./ProtobufView";
-import { CodeView } from "./CodeView";
-import { CMLView } from "./CMLView";
+import { ImageView } from "./ImageView";
 import { M3U8View } from "./M3U8View";
+import { MessagePackView } from "./MessagePackView";
+import { MultipartFormDataView } from "./MultipartFormDataView";
+import { ProtobufView } from "./ProtobufView";
+import { TreeView } from "./TreeView";
+import { XMLView } from "./XMLView";
 
 type DataViewType =
   | "TreeView"
@@ -28,35 +27,72 @@ type DataViewType =
   | "CMLView"
   | "M3U8View";
 
-const DynamicRenderer: React.FC<{ data: string }> = ({ data }) => {
+const DynamicRenderer: React.FC<{ data: Uint8Array; contentType?: string }> = ({
+  data,
+  contentType,
+}) => {
   const [selectedView, setSelectedView] = useState<DataViewType>("TreeView");
+
+  useEffect(() => {
+    if (!contentType) return;
+    
+    const ct = contentType.toLowerCase();
+    if (ct.includes("image")) {
+      setSelectedView("ImageView");
+    } else if (ct.includes("json")) {
+      setSelectedView("TreeView");
+    } else if (ct.includes("xml") || ct.includes("html")) {
+      setSelectedView("HTMLView");
+    } else if (ct.includes("protobuf")) {
+      setSelectedView("ProtobufView");
+    } else if (ct.includes("javascript")) {
+      setSelectedView("CodeView");
+    }
+  }, [contentType]);
+
+  const decodedString = useMemo(() => {
+    if (!data || data.length === 0) return "";
+    
+    // Quick heuristic: Check if first 100 bytes contain a null byte (common in binary files)
+    const isLikelyBinary = Array.from(data.slice(0, 100)).some(byte => byte === 0);
+    
+    if (isLikelyBinary && !contentType?.includes("text") && !contentType?.includes("json")) {
+       return "[Binary Data]";
+    }
+
+    try {
+      return new TextDecoder("utf-8", { fatal: true }).decode(data);
+    } catch (e) {
+      return "[Binary Data]";
+    }
+  }, [data, contentType]);
 
   const renderView = () => {
     switch (selectedView) {
       case "TreeView":
-        return <TreeView data={data} />;
+        return <TreeView data={decodedString} />;
       case "HexView":
         return <HexView data={data} />;
       case "MultipartFormDataView":
-        return <MultipartFormDataView data={data} />;
+        return <MultipartFormDataView data={decodedString} />;
       case "XMLView":
-        return <XMLView data={data} />;
+        return <XMLView data={decodedString} />;
       case "ImageView":
         return <ImageView data={data} />;
       case "HTMLView":
-        return <HTMLView data={data} />;
+        return <HTMLView data={decodedString} />;
       case "HTMLWebView":
-        return <HTMLWebView data={data} />;
+        return <HTMLWebView data={decodedString} />;
       case "MessagePackView":
-        return <MessagePackView data={data} />;
+        return <MessagePackView data={decodedString} />;
       case "ProtobufView":
-        return <ProtobufView data={data} />;
+        return <ProtobufView data={decodedString} />;
       case "CodeView":
-        return <CodeView data={data} />;
+        return <CodeView data={decodedString} />;
       case "CMLView":
-        return <CMLView data={data} />;
+        return <CMLView data={decodedString} />;
       case "M3U8View":
-        return <M3U8View data={data} />;
+        return <M3U8View data={decodedString} />;
       default:
         return null;
     }

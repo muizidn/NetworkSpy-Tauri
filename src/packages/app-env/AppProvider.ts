@@ -1,13 +1,15 @@
 import { RequestPairData } from "../bottom-pane/RequestTab";
+import { ResponsePairData } from "../bottom-pane/ResponseTab";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Traffic } from "@src/models/Traffic";
 import { Payload } from "@src/models/Payload";
 import { generateJson } from "@src/routes/home/trafficGenerator";
+import { readFile } from "@tauri-apps/plugin-fs";
 
 export interface IAppProvider {
   getRequestPairData(trafficId: string): Promise<RequestPairData>;
-  getResponsePairData(trafficId: string): Promise<RequestPairData>;
+  getResponsePairData(trafficId: string): Promise<ResponsePairData>;
   listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void>;
   listenSSE(trafficId: string, callback: (chunk: string) => void): () => void;
   listenWebsocket(trafficId: string, callback: (message: any) => void): () => void;
@@ -28,11 +30,35 @@ export class TauriAppProvider implements IAppProvider {
   }
 
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {
-    return tauriInvoke<RequestPairData>("get_request_pair_data", { trafficId });
+    console.log("CALL getRequestPairData", trafficId);
+    const data = await tauriInvoke<RequestPairData>("get_request_pair_data", { trafficId });
+    
+    if (data.body_path) {
+      try {
+        data.body = await readFile(data.body_path);
+      } catch (e) {
+        console.error("Failed to read request body file", e);
+      }
+    }
+    
+    console.log("REQUEST DATA", data);
+    return data;
   }
 
-  async getResponsePairData(trafficId: string): Promise<RequestPairData> {
-    return tauriInvoke<RequestPairData>("get_response_pair_data", { trafficId });
+  async getResponsePairData(trafficId: string): Promise<ResponsePairData> {
+    console.log("CALL getResponsePairData", trafficId);
+    const data = await tauriInvoke<ResponsePairData>("get_response_pair_data", { trafficId });
+    
+    if (data.body_path) {
+      try {
+        data.body = await readFile(data.body_path);
+      } catch (e) {
+        console.error("Failed to read response body file", e);
+      }
+    }
+
+    console.log("RESPONSE DATA", data);
+    return data;
   }
 
   async updateInterceptAllowList(newList: string[]): Promise<void> {
@@ -141,7 +167,7 @@ export class MockAppProvider implements IAppProvider {
         id: trafficId,
         headers: Object.entries(traffic.request.header || {}).map(([key, value]) => ({ key, value })),
         params,
-        body: this.mockBodySet[trafficId]?.request || "",
+        body: new TextEncoder().encode(this.mockBodySet[trafficId]?.request || ""),
         content_type: traffic.request.header?.['content-type'] || traffic.request.header?.['Content-Type'] || "",
         raw: `${traffic.method} ${traffic.uri} ${traffic.request.version}\n\n${this.mockBodySet[trafficId]?.request || ""}`
       } as unknown as RequestPairData;
@@ -153,12 +179,12 @@ export class MockAppProvider implements IAppProvider {
         { key: "Content-Type", value: "application/json" },
         { key: "X-Source", value: "MockAppProvider" }
       ],
-      body: JSON.stringify({ message: "Mock Request Data (Not Found)", trafficId }, null, 2),
+      body: new TextEncoder().encode(JSON.stringify({ message: "Mock Request Data (Not Found)", trafficId }, null, 2)),
       raw: "GET /mock-request HTTP/1.1\n\n"
     } as unknown as RequestPairData;
   }
 
-  async getResponsePairData(trafficId: string): Promise<RequestPairData> {
+  async getResponsePairData(trafficId: string): Promise<ResponsePairData> {
     console.log(`[Mock] getResponsePairData: ${trafficId}`);
     const traffic = this.trafficSet[trafficId];
 
@@ -174,7 +200,7 @@ export class MockAppProvider implements IAppProvider {
         id: trafficId,
         headers: Object.entries(traffic.response.header || {}).map(([key, value]) => ({ key, value })),
         params,
-        body: this.mockBodySet[trafficId]?.response || "",
+        body: new TextEncoder().encode(this.mockBodySet[trafficId]?.response || ""),
         content_type: traffic.response.header?.['content-type'] || traffic.response.header?.['Content-Type'] || "",
         raw: `${traffic.response.version} 200 OK\n\n${this.mockBodySet[trafficId]?.response || ""}`
       } as unknown as RequestPairData;
@@ -186,7 +212,7 @@ export class MockAppProvider implements IAppProvider {
         { key: "Content-Type", value: "application/json" },
         { key: "X-Source", value: "MockAppProvider" }
       ],
-      body: JSON.stringify({ message: "Mock Response Data (Not Found)", trafficId }, null, 2),
+      body: new TextEncoder().encode(JSON.stringify({ message: "Mock Response Data (Not Found)", trafficId }, null, 2)),
       raw: "HTTP/1.1 200 OK\n\n"
     } as unknown as RequestPairData;
   }

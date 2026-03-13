@@ -81,7 +81,6 @@ const Content = () => {
     let unlisten: (() => void) | undefined;
 
     provider.listenTraffic((traffic) => {
-      console.log("TRAFFIC", traffic, traffic.intercepted)
       setTrafficSet((prev) => ({
         ...prev,
         [traffic.id]: traffic,

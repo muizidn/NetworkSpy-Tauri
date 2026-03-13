@@ -23,6 +23,38 @@ use tauri::RunEvent;
 use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
+use flate2::read::{GzDecoder, ZlibDecoder};
+use std::io::Read;
+
+fn decompress_body(headers: &HashMap<String, String>, body: Vec<u8>) -> Vec<u8> {
+    let encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding"));
+    
+    match encoding.map(|s| s.to_lowercase()).as_deref() {
+        Some("gzip") => {
+            let mut decoder = GzDecoder::new(&body[..]);
+            let mut decoded = Vec::new();
+            if decoder.read_to_end(&mut decoded).is_ok() {
+                return decoded;
+            }
+        }
+        Some("deflate") => {
+            let mut decoder = ZlibDecoder::new(&body[..]);
+            let mut decoded = Vec::new();
+            if decoder.read_to_end(&mut decoded).is_ok() {
+                return decoded;
+            }
+        }
+        Some("br") => {
+            let mut decoded = Vec::new();
+            let mut reader = brotli::Decompressor::new(&body[..], 4096);
+            if reader.read_to_end(&mut decoded).is_ok() {
+                return decoded;
+            }
+        }
+        _ => {}
+    }
+    body
+}
 
 #[derive(Clone, Serialize)]
 struct PayloadTraffic {
@@ -249,8 +281,9 @@ fn main() {
                         .collect::<HashMap<_, _>>();
 
                     let body_bytes = request.body();
-                    let body_size = body_bytes.len();
                     let body_vec = body_bytes.to_vec();
+                    let decompressed_body = decompress_body(&headers, body_vec);
+                    let body_size = decompressed_body.len();
 
                     self.traffic_db.insert_request(TrafficEvent::Request {
                         id: id.to_string(),
@@ -258,7 +291,7 @@ fn main() {
                         method: method.clone(),
                         version: http_version.clone(),
                         headers: headers.clone(),
-                        body: body_vec,
+                        body: decompressed_body,
                         intercepted,
                     });
 
@@ -303,13 +336,14 @@ fn main() {
                         .collect::<HashMap<_, _>>();
 
                     let body_bytes = response.body();
-                    let body_size = body_bytes.len();
                     let body_vec = body_bytes.to_vec();
+                    let decompressed_body = decompress_body(&headers, body_vec);
+                    let body_size = decompressed_body.len();
 
                     self.traffic_db.insert_response(TrafficEvent::Response {
                         id: id.to_string(),
                         headers: headers.clone(),
-                        body: body_vec,
+                        body: decompressed_body,
                         status_code,
                     });
 

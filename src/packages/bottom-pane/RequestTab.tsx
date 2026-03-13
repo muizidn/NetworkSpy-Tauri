@@ -1,30 +1,16 @@
 import { Editor } from "@monaco-editor/react";
+import { useEffect, useMemo, useState } from "react";
+import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { NSTabs, Tab } from "../ui/NSTabs";
 import { TableView } from "../ui/TableView";
 import { KeyValueRenderer } from "./KeyValueRenderer";
-import {
-  CMLView,
-  FormURLEncodedView,
-  HexView,
-  HTMLView,
-  HTMLWebView,
-  ImageView,
-  CodeView,
-  M3U8View,
-  MessagePackView,
-  MultipartFormDataView,
-  ProtobufView,
-  TreeView,
-  XMLView,
-} from "./TabRenderer";
 import DynamicRenderer from "./TabRenderer/DynamicRenderer";
-import { useTrafficListContext } from "../main-content/context/TrafficList";
-import { useEffect, useMemo, useRef, useState } from "react";
 
 export type RequestPairData = {
   headers: { key: string; value: string }[];
   params: { key: string; value: string | string[] }[];
-  body: string;
+  body?: Uint8Array;
+  body_path?: string | null;
   content_type: string;
   intercepted: boolean;
 };
@@ -52,23 +38,19 @@ export const RequestTab = (props: {
     loadRequestPairData({ id: trafficId as string });
   }, [trafficId]);
 
+  const decodedBody = useMemo(() => {
+    if (!data?.body || data.body.length === 0) return "";
+    try {
+      return new TextDecoder().decode(data.body);
+    } catch (e) {
+      console.error("Failed to decode body as UTF-8", e);
+      return "[Binary Data]";
+    }
+  }, [data?.body]);
+
   if (!trafficId || !data) {
     return null;
   }
-
-  const contentType = data.content_type || "";
-  const isImage = contentType.includes("image");
-  const isHTML = contentType.includes("html");
-  const isJSON = contentType.includes("json");
-  const isXML = contentType.includes("xml");
-  const isJavaScript = contentType.includes("javascript");
-  const isProtobuf = contentType.includes("protobuf");
-  const isCML = contentType.includes("cml");
-  const isHLS = contentType.includes("application/x-mpegurl");
-  const isMultipart = contentType.includes("multipart/form-data");
-  const isFormURLEncoded = contentType.includes(
-    "application/x-www-form-urlencoded"
-  );
 
   const tabs: Tab[] = [
     {
@@ -117,21 +99,11 @@ export const RequestTab = (props: {
       id: "body",
       title: "Body",
       content: (
-        <div className="h-full bg-[#111] overflow-hidden">
-            <Editor
-                height="100%"
-                theme="vs-dark"
-                defaultLanguage="text"
-                value={data.body}
-                options={{
-                    readOnly: true,
-                    minimap: { enabled: false },
-                    fontSize: 11,
-                    scrollBeyondLastLine: false,
-                    wordWrap: "on",
-                     automaticLayout: true,
-                }}
-            />
+        <div className='h-full bg-[#111] overflow-hidden'>
+          <DynamicRenderer
+            data={data.body || new Uint8Array()}
+            contentType={data.content_type}
+          />
         </div>
       ),
     },

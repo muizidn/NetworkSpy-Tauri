@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use crate::traffic::db::TrafficDb;
-use tauri::State;
+use tauri::{State, AppHandle, Manager};
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct ResponsePairData {
     pub headers: Vec<KeyValue>,
     pub params: Vec<KeyValue>,
-    pub body: String,
+    pub body_path: Option<String>,
     pub content_type: String,
     pub intercepted: bool,
 }
@@ -28,6 +28,7 @@ pub enum ValueType {
 
 #[tauri::command]
 pub fn get_response_pair_data(
+    app: AppHandle,
     traffic_id: String,
     db: State<'_, Arc<TrafficDb>>,
 ) -> ResponsePairData {
@@ -52,13 +53,24 @@ pub fn get_response_pair_data(
             })
             .unwrap_or_else(|| "text/plain".to_string());
 
-        let body_bytes = db.get_response_body(traffic_id).unwrap_or(None);
-        let body_str = body_bytes.map(|b| String::from_utf8_lossy(&b).to_string()).unwrap_or_default();
+        let body_bytes = db.get_response_body(traffic_id.clone()).unwrap_or(None).unwrap_or_default();
+        let mut body_path = None;
+
+        if !body_bytes.is_empty() {
+            if let Ok(app_data_dir) = app.path().app_data_dir() {
+                let bodies_dir = app_data_dir.join("bodies");
+                let _ = std::fs::create_dir_all(&bodies_dir);
+                let file_path = bodies_dir.join(format!("res_{}.bin", traffic_id));
+                if std::fs::write(&file_path, &body_bytes).is_ok() {
+                    body_path = Some(file_path.to_string_lossy().to_string());
+                }
+            }
+        }
 
         return ResponsePairData {
             headers: header_list,
             params: vec![],
-            body: body_str,
+            body_path,
             content_type,
             intercepted: row.intercepted,
         };
@@ -68,7 +80,7 @@ pub fn get_response_pair_data(
     ResponsePairData {
         headers: vec![],
         params: vec![],
-        body: "".to_string(),
+        body_path: None,
         content_type: "text/plain".to_string(),
         intercepted: true,
     }

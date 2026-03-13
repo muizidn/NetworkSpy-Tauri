@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react';
 
-export const HexView = ({ data }: { data: string }) => {
+export const HexView = ({ data }: { data: Uint8Array }) => {
     const hexData = useMemo(() => {
-        if (!data) return [];
+        if (!data || data.length === 0) return [];
         
-        // Convert string to bytes
-        const bytes = new TextEncoder().encode(data);
+        const bytes = data;
         const rows = [];
         const perRow = 16;
         

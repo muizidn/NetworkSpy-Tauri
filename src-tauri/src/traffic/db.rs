@@ -183,9 +183,19 @@ impl TrafficDb {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT req_body FROM body WHERE traffic_id = ?1")?;
         let res: Result<Option<Vec<u8>>> = stmt.query_row(params![id], |row| {
-            let compressed: Option<Vec<u8>> = row.get(0)?;
-            Ok(compressed.map(|data| {
-                zstd::decode_all(&data[..]).unwrap_or_else(|_| data)
+            let data: Option<Vec<u8>> = row.get(0)?;
+            Ok(data.map(|bytes| {
+                if bytes.starts_with(b"ZSTD") {
+                    match zstd::decode_all(&bytes[4..]) {
+                        Ok(decoded) => decoded,
+                        Err(e) => {
+                            eprintln!("ZSTD Decompression failed for request {}: {}", id, e);
+                            bytes
+                        }
+                    }
+                } else {
+                    bytes
+                }
             }))
         }).or(Ok(None));
         res
@@ -195,9 +205,19 @@ impl TrafficDb {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT res_body FROM body WHERE traffic_id = ?1")?;
         let res: Result<Option<Vec<u8>>> = stmt.query_row(params![id], |row| {
-            let compressed: Option<Vec<u8>> = row.get(0)?;
-            Ok(compressed.map(|data| {
-                zstd::decode_all(&data[..]).unwrap_or_else(|_| data)
+            let data: Option<Vec<u8>> = row.get(0)?;
+            Ok(data.map(|bytes| {
+                if bytes.starts_with(b"ZSTD") {
+                    match zstd::decode_all(&bytes[4..]) {
+                        Ok(decoded) => decoded,
+                        Err(e) => {
+                            eprintln!("ZSTD Decompression failed for response {}: {}", id, e);
+                            bytes
+                        }
+                    }
+                } else {
+                    bytes
+                }
             }))
         }).or(Ok(None));
         res
@@ -261,8 +281,16 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
                     ]);
                     
                     if !body.is_empty() {
-                        let compressed = zstd::encode_all(&body[..], 3).unwrap_or_else(|_| body);
-                        let _ = insert_body.execute(params![id, compressed]);
+                        match zstd::encode_all(&body[..], 3) {
+                            Ok(compressed) => {
+                                let mut final_data = b"ZSTD".to_vec();
+                                final_data.extend_from_slice(&compressed);
+                                let _ = insert_body.execute(params![id, final_data]);
+                            }
+                            Err(_) => {
+                                let _ = insert_body.execute(params![id, body]);
+                            }
+                        }
                     } else {
                         let _ = insert_body.execute(params![id, Option::<Vec<u8>>::None]);
                     }
@@ -272,8 +300,16 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
                     let _ = update_response.execute(params![id, headers_json, status_code]);
                     
                     if !body.is_empty() {
-                        let compressed = zstd::encode_all(&body[..], 3).unwrap_or_else(|_| body);
-                        let _ = update_res_body.execute(params![id, compressed]);
+                         match zstd::encode_all(&body[..], 3) {
+                            Ok(compressed) => {
+                                let mut final_data = b"ZSTD".to_vec();
+                                final_data.extend_from_slice(&compressed);
+                                let _ = update_res_body.execute(params![id, final_data]);
+                            }
+                            Err(_) => {
+                                let _ = update_res_body.execute(params![id, body]);
+                            }
+                        }
                     }
                 }
                 TrafficEvent::Exit => {}
