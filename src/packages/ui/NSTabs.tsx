@@ -40,6 +40,7 @@ interface NSTabsProps {
   onRename?: (id: string, newTitle: string) => void;
   onReorder?: (dragIndex: number, hoverIndex: number) => void;
   initialTab?: string;
+  designStyle?: "chrome" | "opera" | "basic";
 }
 
 import { FiPlus } from "react-icons/fi";
@@ -52,6 +53,7 @@ export const NSTabs: React.FC<NSTabsProps> = ({
   onAdd,
   onRename,
   onReorder,
+  designStyle = "chrome",
 }) => {
   const [currentTab, setCurrentTab] = useState(initialTab || tabs[0]?.id || "");
   const prevTabsLength = useRef(tabs.length);
@@ -63,9 +65,12 @@ export const NSTabs: React.FC<NSTabsProps> = ({
       if (lastTab) {
         setCurrentTab(lastTab.id);
       }
+    } else if (tabs.length > 0 && !tabs.find(t => t.id === currentTab)) {
+      // If the current tab was removed or invalid, switch to the first tab
+      setCurrentTab(tabs[0].id);
     }
     prevTabsLength.current = tabs.length;
-  }, [tabs]);
+  }, [tabs, currentTab]);
 
   // Memoize tabs to avoid unnecessary re-renders
   const memoizedTabs = useMemo(() => tabs, [tabs]);
@@ -99,8 +104,16 @@ export const NSTabs: React.FC<NSTabsProps> = ({
       id={`tabs-for-${title}`}
       className="flex flex-col h-full bg-[#23262a] text-white w-full relative overflow-hidden"
     >
-      <div className="flex overflow-x-auto no-scrollbar bg-[#23262a] z-10 h-9 border-b border-black shrink-0 relative">
-        {title && <h3 className="px-3 text-xs flex items-center shrink-0 uppercase tracking-wider text-zinc-500 font-bold">{title}</h3>}
+      <div
+        className={twMerge(
+          "flex flex-nowrap overflow-x-auto no-scrollbar z-10 shrink-0 relative items-end",
+          designStyle === "chrome" && "bg-[#0a0a0a] pt-1.5 px-2",
+          designStyle === "opera" && "bg-[#181a1f] pt-1 px-1 border-b border-black h-9",
+          designStyle === "basic" && "bg-transparent border-b border-zinc-800/80 px-1"
+        )}
+      >
+        {designStyle === "chrome" && <div className="absolute bottom-0 left-0 right-0 h-px bg-[#333] z-0" />}
+        {title && <h3 className="px-3 text-xs flex items-center shrink-0 uppercase tracking-wider text-zinc-500 font-bold mb-1.5 z-10">{title}</h3>}
         {memoizedTabs.map((tab, index) => (
           <Tab
             key={tab.id}
@@ -110,15 +123,17 @@ export const NSTabs: React.FC<NSTabsProps> = ({
             currentTab={currentTab}
             setCurrentTab={setCurrentTab}
             onClose={handleTabClose}
+            allowClose={designStyle !== "basic"}
             onRename={onRename}
             moveTab={(dragIndex, hoverIndex) => onReorder?.(dragIndex, hoverIndex)}
+            designStyle={designStyle}
           />
         ))}
         {onAdd && (
           <div className="w-full flex justify-end sticky right-0 z-20">
             <button
               onClick={onAdd}
-              className="flex items-center justify-center px-3 bg-[#23262a] hover:bg-[#2a2d32] transition-colors border-l border-black text-zinc-400 hover:text-white z-20 shadow-[-4px_0_8px_rgba(0,0,0,0.3)]"
+              className="flex items-center justify-center h-[28px] w-8 mb-[2px] bg-[#23262a] hover:bg-white/10 transition-colors text-zinc-400 hover:text-white rounded-md"
               title="Open new tab"
             >
               <FiPlus size={14} />
@@ -126,7 +141,7 @@ export const NSTabs: React.FC<NSTabsProps> = ({
           </div>
         )}
       </div>
-      <div className="relative w-full h-full">
+      <div className="relative w-full h-full bg-[#23262a] z-0">
         {memoizedTabs.map((tab) => (
           <TabPanel key={tab.id} current={currentTab} tag={tab.id}>
             {tab.content}

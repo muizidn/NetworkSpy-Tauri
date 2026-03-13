@@ -112,5 +112,5 @@ export const RequestTab = (props: {
     },
   ];
 
-  return <NSTabs title="REQUEST" tabs={tabs} initialTab="header" />;
+  return <NSTabs title="REQUEST" tabs={tabs} initialTab="header" designStyle="basic" />;
 };

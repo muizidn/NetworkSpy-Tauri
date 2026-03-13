@@ -91,5 +91,5 @@ export const ResponseTab = (props: {
     },
   ];
 
-  return <NSTabs title="RESPONSE" tabs={tabs} initialTab="header" />;
+  return <NSTabs title="RESPONSE" tabs={tabs} initialTab="header" designStyle="basic" />;
 };
