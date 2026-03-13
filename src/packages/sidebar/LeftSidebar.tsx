@@ -33,12 +33,9 @@ export const LeftSidebar = () => {
   const [filteredNodesCount, setFilteredNodesCount] = useState(0);
 
   const groupedTraffic = useMemo(() => {
-    const urls = trafficList.filter((t: any) => t.url).map((t: any) => t.url as string);
     return {
-      app: urls,
-      domain: urls,
-      pinned: urls,
-      saved: urls,
+      app: trafficList,
+      domain: trafficList,
     };
   }, [trafficList]);
 
@@ -46,7 +43,7 @@ export const LeftSidebar = () => {
     return {
       name: "App",
       icon: <LuAppWindow />,
-      nodes: groupUrlsInTree("app", groupedTraffic.app),
+      nodes: groupUrlsInTree("app", groupedTraffic.app, "app"),
     };
   }, [groupedTraffic]);
 
@@ -54,23 +51,7 @@ export const LeftSidebar = () => {
     return {
       name: "Domain",
       icon: <GoGlobe />,
-      nodes: groupUrlsInTree("domain", groupedTraffic.domain),
-    };
-  }, [groupedTraffic]);
-
-  const pinned = useMemo(() => {
-    return {
-      name: "Pinned",
-      icon: <BsPinAngleFill />,
-      nodes: groupUrlsInTree("pinned", groupedTraffic.pinned),
-    };
-  }, [groupedTraffic]);
-
-  const saved = useMemo(() => {
-    return {
-      name: "Saved",
-      icon: <GrStorage />,
-      nodes: groupUrlsInTree("saved", groupedTraffic.saved),
+      nodes: groupUrlsInTree("domain", groupedTraffic.domain, "domain"),
     };
   }, [groupedTraffic]);
 
@@ -107,7 +88,7 @@ export const LeftSidebar = () => {
   async function filterNodes(query: string) {
     let nodeFound = 0;
 
-    const trees = [pinned, saved, app, domain];
+    const trees = [app, domain];
     const filtered = trees.map((tree) => ({
       ...tree,
       nodes: tree.nodes
@@ -139,7 +120,6 @@ export const LeftSidebar = () => {
     filterNodes(query);
   }, [filterDisplayMode, query]);
 
-  const favoriteTrees = [pinned, saved];
   const allTrees = [app, domain];
 
   return (
@@ -161,24 +141,6 @@ export const LeftSidebar = () => {
         )}
       >
         <div className="flex flex-col space-y-3 items-start w-full">
-          <div className="flex items-center space-x-2 px-1 shrink-0">
-            <FiStar className="text-amber-400" size={14} />
-            <h2 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Favorites</h2>
-          </div>
-          <div className="w-full space-y-1">
-            {favoriteTrees.map((e) => (
-              <SidebarTreeView
-                key={e.name}
-                name={e.name}
-                icon={e.icon}
-                childrenNodes={e.nodes}
-                onClick={(id) => onClickNode(id)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col space-y-3 items-start w-full pt-4 border-t border-black/30">
           <div className="flex items-center space-x-2 px-1 shrink-0">
             <FiLayers className="text-zinc-500" size={14} />
             <h2 className="font-bold text-xs uppercase tracking-widest text-zinc-400">All Nodes</h2>
