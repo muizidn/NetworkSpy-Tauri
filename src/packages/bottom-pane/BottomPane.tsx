@@ -53,6 +53,8 @@ import { ProtobufViewerMode } from "./BottomPaneComponents/Single/Protocols/Prot
 import { GRPCViewerMode } from "./BottomPaneComponents/Single/Protocols/GRPCViewerMode";
 import { RabbitMQViewerMode } from "./BottomPaneComponents/Single/Protocols/RabbitMQViewerMode";
 import { KafkaViewerMode } from "./BottomPaneComponents/Single/Protocols/KafkaViewerMode";
+import { QueryParamsMode } from "./BottomPaneComponents/Single/QueryParamsMode";
+import { CookieViewerMode } from "./BottomPaneComponents/Single/CookieViewerMode";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { useAppProvider } from "../app-env";
 import { FiShield, FiLock, FiUnlock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
@@ -309,6 +311,12 @@ const renderMode = (
 
     case "security_static":
       return <StaticSecurityMode />;
+
+    case "query_params":
+      return <QueryParamsMode />;
+
+    case "cookies":
+      return <CookieViewerMode />;
 
     case "replay":
       return <ReplayMode />;

@@ -49,6 +49,8 @@ export const BottomPaneOptions = () => {
 
     single: [
       { id: "request_response", title: "Request Response", onClick: () => setMode("request_response") },
+      { id: "query_params", title: "Query Params", onClick: () => setMode("query_params") },
+      { id: "cookies", title: "Cookies", onClick: () => setMode("cookies") },
       { id: "header_explainer", title: "Header Explainer", onClick: () => setMode("header_explainer") },
       { id: "json_tree", title: "JSON Tree", onClick: () => setMode("json_tree") },
       { id: "curl", title: "cURL", onClick: () => setMode("curl") },

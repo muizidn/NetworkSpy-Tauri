@@ -3,6 +3,7 @@ import { FiZap, FiSettings, FiActivity, FiTerminal, FiDatabase, FiLayers } from 
 import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { useAppProvider } from "@src/packages/app-env";
+import { parseSSEChunks } from "../../utils/bodyUtils";
 
 interface SSEChunk {
   id: string;
@@ -22,6 +23,7 @@ export const LLMStreamingMode = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [hoveredChunkId, setHoveredChunkId] = useState<string | null>(null);
   const [targetChoiceIndex, setTargetChoiceIndex] = useState(0);
+  const [isBeautified, setIsBeautified] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(0);
 
@@ -34,6 +36,28 @@ export const LLMStreamingMode = () => {
     setIsStreaming(true);
     startTimeRef.current = Date.now();
 
+    // 1. Pre-populate from existing response body if any
+    provider.getResponsePairData(String(selected.id)).then(res => {
+      if (res?.body) {
+          const storedChunks = parseSSEChunks(res.body).map(c => ({
+              ...c,
+              id: Math.random().toString(36).substr(2, 9),
+              timestamp: "Captured",
+              elapsedMs: 0
+          }));
+          
+          if (storedChunks.length > 0) {
+            setChunks(storedChunks);
+            setAccumulatedText(storedChunks.map(c => c.content).join(""));
+            
+            // If the last stored chunk is [DONE], we can stop streaming status
+            const hasDone = storedChunks.some(c => c.event === 'control' && c.data.includes('[DONE]'));
+            if (hasDone) setIsStreaming(false);
+          }
+      }
+    }).catch(() => {});
+
+    // 2. Listen for live updates
     const cleanup = provider.listenSSE(String(selected.id), (rawData) => {
       let content = "";
       let eventType = "message";
@@ -57,13 +81,9 @@ export const LLMStreamingMode = () => {
                  content = delta.content.map((p: any) => p.text || "").join("");
              }
           } else if (choice?.text) {
-             // Legacy or specific format
              content = choice.text;
           }
-        } catch (e) {
-          // If not JSON, it might be raw text from the stream
-          content = ""; 
-        }
+        } catch (e) {}
       }
 
       const newChunk: SSEChunk = {
@@ -75,15 +95,27 @@ export const LLMStreamingMode = () => {
         elapsedMs: Date.now() - startTimeRef.current
       };
 
-      setChunks(prev => [...prev, newChunk]);
+      setChunks(prev => {
+        // Prevent obvious duplicates if the listener replays chunks that were just loaded from the static body
+        if (prev.some(p => p.data === rawData && p.timestamp === "Captured")) {
+            return prev;
+        }
+        return [...prev, newChunk];
+      });
+
       if (content) {
-        setAccumulatedText(prev => prev + content);
+        setAccumulatedText(prev => {
+            // Deduplicate logic for content if needed (optional, safer to rely on chunks for rendering)
+            return prev + content;
+        });
       }
 
-      // Auto-scroll logic
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
+      // Auto-scroll
+      setTimeout(() => {
+          if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+          }
+      }, 50);
     });
 
     return () => {
@@ -170,16 +202,31 @@ export const LLMStreamingMode = () => {
         
         {/* Left: Stream List */}
         <div className="w-1/2 border-r border-zinc-900 flex flex-col bg-black/10">
-          <div className="px-4 py-2 bg-zinc-900/40 border-b border-zinc-800 shrink-0 flex items-center gap-2">
-            <FiTerminal size={12} className="text-zinc-500" />
-            <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-widest">Raw Chunks</span>
+          <div className="px-4 py-2 bg-zinc-900/40 border-b border-zinc-800 shrink-0 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FiTerminal size={12} className="text-zinc-500" />
+              <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-widest">Raw Chunks</span>
+            </div>
+            <button
+                onClick={() => setIsBeautified(!isBeautified)}
+                className={twMerge(
+                    "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest transition-all",
+                    isBeautified ? "bg-amber-600 text-white shadow-lg" : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                )}
+            >
+                {isBeautified ? "Raw" : "Beautify"}
+            </button>
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar scroll-smooth">
             {chunks.map((chunk, i) => (
               <div 
+                id={`chunk-${chunk.id}`}
                 key={chunk.id} 
-                onMouseEnter={() => setHoveredChunkId(chunk.id)}
+                onMouseEnter={() => {
+                  setHoveredChunkId(chunk.id);
+                  document.getElementById(`text-${chunk.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }}
                 onMouseLeave={() => setHoveredChunkId(null)}
                 className={twMerge(
                   "group p-3 rounded-lg border flex flex-col gap-1 transition-all animate-in slide-in-from-left-2 duration-200",
@@ -204,8 +251,21 @@ export const LLMStreamingMode = () => {
                     {chunk.timestamp}
                   </span>
                 </div>
-                <div className="text-[11px] font-mono text-zinc-300 break-all bg-black/20 p-2 rounded border border-white/5">
-                  {chunk.data}
+                <div className="text-[11px] font-mono text-zinc-300 break-all bg-black/20 p-2 rounded border border-white/5 overflow-x-auto">
+                    {(() => {
+                        if (!isBeautified) return chunk.data;
+                        try {
+                            const raw = chunk.data.replace(/^data:\s*/, '').trim();
+                            if (raw === '[DONE]') return chunk.data;
+                            return (
+                                <pre className="whitespace-pre">
+                                    {JSON.stringify(JSON.parse(raw), null, 2)}
+                                </pre>
+                            );
+                        } catch (e) {
+                            return chunk.data;
+                        }
+                    })()}
                 </div>
               </div>
             ))}
@@ -233,8 +293,12 @@ export const LLMStreamingMode = () => {
               <div className="text-sm leading-relaxed text-zinc-200 whitespace-pre-wrap font-sans transition-all">
                 {chunks.map(chunk => (
                    <span 
+                    id={`text-${chunk.id}`}
                     key={chunk.id} 
-                    onMouseEnter={() => setHoveredChunkId(chunk.id)}
+                    onMouseEnter={() => {
+                      setHoveredChunkId(chunk.id);
+                      document.getElementById(`chunk-${chunk.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }}
                     onMouseLeave={() => setHoveredChunkId(null)}
                     className={twMerge(
                       "transition-all duration-150 rounded-sm px-0.5 -mx-0.5",

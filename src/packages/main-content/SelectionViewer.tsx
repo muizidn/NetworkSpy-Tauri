@@ -21,7 +21,7 @@ const CustomTag = ({ tagName }: { tagName: string }) => {
   );
 };
 
-const UrlColorizer = ({ url, intercepted }: { url: string, intercepted?: boolean }) => {
+const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean }) => {
   if (!url) return null;
 
   try {
@@ -29,36 +29,63 @@ const UrlColorizer = ({ url, intercepted }: { url: string, intercepted?: boolean
     const params = Array.from(urlObj.searchParams.entries());
 
     return (
-      <div className="font-mono text-[13px] leading-relaxed break-all select-text whitespace-pre-wrap flex items-center gap-1.5">
-        {intercepted && <FiShield size={12} className="text-purple-400 shrink-0" title="Intercepted (Decrypted)" />}
-        <span className="text-zinc-500 font-bold">{urlObj.protocol}//</span>
-        <button 
-          onClick={() => window.open(url, '_blank')}
-          className="inline-flex items-center gap-1 text-blue-400 font-bold hover:underline hover:text-blue-300 transition-colors group"
+      <div className="font-mono text-[13px] leading-relaxed break-words select-text">
+        {intercepted && (
+          <FiShield
+            size={12}
+            className="inline mr-1 text-purple-400 align-middle"
+            title="Intercepted (Decrypted)"
+          />
+        )}
+
+        <span className="text-zinc-500 font-bold">
+          {urlObj.protocol}//
+        </span>
+
+        <button
+          onClick={() => window.open(url, "_blank")}
+          className="inline items-center gap-1 text-blue-400 font-bold hover:underline hover:text-blue-300 transition-colors group"
           title="Open in Browser"
         >
           {urlObj.hostname}
-          {urlObj.port && <span className="text-zinc-500">:{urlObj.port}</span>}
-          <FiExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+
+          {urlObj.port && (
+            <span className="text-zinc-500">:{urlObj.port}</span>
+          )}
+
+          <FiExternalLink
+            size={10}
+            className="inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          />
         </button>
+
         <span className="text-zinc-300">{urlObj.pathname}</span>
+
         {params.length > 0 && (
           <>
             <span className="text-zinc-500">?</span>
+
             {params.map(([key, value], i) => (
-              <span key={i} className="inline">
+              <span key={i}>
                 <span className="text-orange-400">{key}</span>
                 <span className="text-zinc-500">=</span>
                 <span className="text-green-400">{value}</span>
-                {i < params.length - 1 && <span className="text-zinc-500 mr-1">&</span>}
+
+                {i < params.length - 1 && (
+                  <span className="text-zinc-500">&</span>
+                )}
               </span>
             ))}
           </>
         )}
       </div>
     );
-  } catch (e) {
-    return <p className="text-zinc-300 font-mono text-[13px]">{url}</p>;
+  } catch {
+    return (
+      <p className="text-zinc-300 font-mono text-[13px] break-words">
+        {url}
+      </p>
+    );
   }
 };
 
@@ -110,10 +137,10 @@ export const SelectionViewer = () => {
         <div className={twMerge(
           "px-2 py-0.5 rounded text-[10px] font-black tracking-tighter border",
           method === 'GET' ? 'bg-blue-600/10 border-blue-500/20 text-blue-400' :
-          method === 'POST' ? 'bg-green-600/10 border-green-500/20 text-green-400' :
-          method === 'PUT' ? 'bg-orange-600/10 border-orange-500/20 text-orange-400' :
-          method === 'DELETE' ? 'bg-red-600/10 border-red-500/20 text-red-400' :
-          'bg-zinc-800 border-zinc-700 text-zinc-300'
+            method === 'POST' ? 'bg-green-600/10 border-green-500/20 text-green-400' :
+              method === 'PUT' ? 'bg-orange-600/10 border-orange-500/20 text-orange-400' :
+                method === 'DELETE' ? 'bg-red-600/10 border-red-500/20 text-red-400' :
+                  'bg-zinc-800 border-zinc-700 text-zinc-300'
         )}>
           {method}
         </div>

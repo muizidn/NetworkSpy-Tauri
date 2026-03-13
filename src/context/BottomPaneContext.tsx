@@ -50,7 +50,9 @@ export type SingleMode =
     | "json_schema"
     | "security_owasp"
     | "security_mobsf"
-    | "security_static";
+    | "security_static"
+    | "query_params"
+    | "cookies";
 
 /**
  * Modes when multiple traffics are selected.
