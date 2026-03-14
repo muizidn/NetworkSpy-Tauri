@@ -52,9 +52,9 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
     others: null,
   });
 
-  function setSelections(selections: TrafficListSelection) {
+  const setSelections = React.useCallback((selections: TrafficListSelection) => {
     _setSelections(selections);
-  }
+  }, []);
 
   return (
     <TrafficListContext.Provider

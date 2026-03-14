@@ -21,45 +21,54 @@ export const TrafficList: React.FC = () => {
   const { filteredTraffic } = useFilterContext();
   const { isRun } = useAppProvider();
 
-  useEffect(() => {
-    const unlistenExport = listen<{ ids: string[] }>("export_selected", async (event) => {
-      try {
-        const ids = event.payload.ids;
-        if (!ids || ids.length === 0) return;
+  const handleExport = useCallback(async (ids: (string | number | boolean | string[])[], format: 'har' | 'csv' | 'sqlite' = 'har') => {
+    try {
+      if (!ids || ids.length === 0) return;
 
-        const path = await save({
-          filters: [
-            {
-              name: "HAR Capture",
-              extensions: ["har"],
-            },
-          ],
-        });
+      let extension = 'har';
+      let name = 'HAR Capture';
+      if (format === 'csv') { extension = 'csv'; name = 'CSV Spreadsheet'; }
+      if (format === 'sqlite') { extension = 'sqlite'; name = 'SQLite Database'; }
 
-        if (path) {
-          await invoke("export_selected_session", { path, ids });
-        }
-      } catch (err) {
-        console.error("Failed to export selected items", err);
-      }
-    });
+      const now = new Date();
+      const dateStr = now.getFullYear() +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0') + "-" +
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0') +
+        String(now.getSeconds()).padStart(2, '0');
 
-    const unlistenDelete = listen<{ ids: string[] }>("delete_selected", (event) => {
-      const idsToDelete = new Set(event.payload.ids);
-      
-      setTrafficList(prev => prev.filter((item: TrafficItemMap) => !idsToDelete.has(String(item.id))));
-      setTrafficSet(prev => {
-        const next = { ...prev };
-        event.payload.ids.forEach((id: string) => delete next[id]);
-        return next;
+      const defaultPath = `networkspy-${dateStr}.${extension}`;
+
+      const path = await save({
+        defaultPath,
+        filters: [{ name: name, extensions: [extension] }],
       });
-      setSelections({ firstSelected: null, others: null });
-    });
 
-    return () => {
-      unlistenExport.then((f) => f());
-      unlistenDelete.then((f) => f());
-    };
+      if (path) {
+        const idStrings = ids.map(id => String(id));
+        if (format === 'har') {
+          await invoke("export_selected_to_har", { path, ids: idStrings });
+        } else if (format === 'csv') {
+          await invoke("export_selected_to_csv", { path, ids: idStrings });
+        } else if (format === 'sqlite') {
+          await invoke("export_selected_to_sqlite", { path, ids: idStrings });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to export items", err);
+    }
+  }, []);
+
+  const handleDelete = useCallback((ids: (string | number | boolean | string[])[]) => {
+    const idsToDelete = new Set(ids.map(id => String(id)));
+    setTrafficList(prev => prev.filter((item: TrafficItemMap) => !idsToDelete.has(String(item.id))));
+    setTrafficSet(prev => {
+      const next = { ...prev };
+      ids.forEach(id => delete next[String(id)]);
+      return next;
+    });
+    setSelections({ firstSelected: null, others: null });
   }, [setTrafficList, setTrafficSet, setSelections]);
 
   const headers: TableViewHeader<TrafficItemMap>[] = useMemo(() => [
@@ -74,7 +83,7 @@ export const TrafficList: React.FC = () => {
             if (c >= 500) return 'bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.4)]';
             if (c >= 400) return 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.3)]';
             if (c >= 300) return 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]';
-            if (c >= 200) return 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]';
+            if (c >= 200) return 'bg-green-500 shadow-[0_0_8_rgba(34,197,94,0.3)]';
             if (c >= 100) return 'bg-zinc-400 shadow-[0_0_8px_rgba(161,161,170,0.3)]';
             return 'bg-zinc-600';
           };
@@ -123,7 +132,46 @@ export const TrafficList: React.FC = () => {
     { title: "Response", renderer: new TextRenderer("response") },
   ], []);
 
-  const contextMenuRenderer = useMemo(() => new TrafficListContextMenuRenderer(invoke), []);
+  const contextMenuRenderer = useMemo(() => ({
+    render: async (items: TrafficItemMap[]) => {
+      try {
+        const ids = items.map((i) => i.id);
+        const exportSubmenu = await Submenu.new({
+          text: "Export As...",
+          items: [
+            await MenuItem.new({
+              text: "HAR Archive (.har)",
+              action: () => handleExport(ids, 'har')
+            }),
+            await MenuItem.new({
+              text: "CSV Spreadsheet (.csv)",
+              action: () => handleExport(ids, 'csv')
+            }),
+            await MenuItem.new({
+              text: "Raw SQLite DB (.sqlite)",
+              action: () => handleExport(ids, 'sqlite')
+            }),
+          ]
+        });
+
+        const menu = await Menu.new({
+          items: [
+            exportSubmenu,
+            await MenuItem.new({
+              id: "delete_selected",
+              text: `Delete ${items.length === 1 ? 'item' : `${items.length} items`}`,
+              enabled: items.length > 0,
+              action: () => handleDelete(ids),
+            }),
+          ],
+        });
+
+        await menu.popup();
+      } catch (e) {
+        console.warn("Context menu issue", e);
+      }
+    }
+  }), [handleExport, handleDelete]);
 
   const handleSelectedRowChanged = useCallback((first: TrafficItemMap | null, items: TrafficItemMap[] | null) => {
     setSelections({ firstSelected: first, others: items });
@@ -142,43 +190,4 @@ export const TrafficList: React.FC = () => {
   );
 };
 
-import { Menu } from "@tauri-apps/api/menu";
-import { emit } from "@tauri-apps/api/event";
-
-class TrafficListContextMenuRenderer
-  implements TableViewContextMenuRenderer<TrafficItemMap> {
-  invoke: TauriInvokeFn;
-  constructor(invoke: TauriInvokeFn) {
-    this.invoke = invoke;
-  }
-
-  async render(items: TrafficItemMap[]): Promise<void> {
-    try {
-      const ids = items.map((i) => i.id);
-      const menu = await Menu.new({
-        items: [
-          {
-            id: "export_selected",
-            text: `Export ${items.length} items to HAR`,
-            enabled: items.length > 0,
-            action: () => {
-              emit("export_selected", { ids });
-            },
-          },
-          {
-            id: "delete_selected",
-            text: `Delete ${items.length === 1 ? 'item' : `${items.length} items`}`,
-            enabled: items.length > 0,
-            action: () => {
-              emit("delete_selected", { ids });
-            },
-          },
-        ],
-      });
-
-      await menu.popup();
-    } catch (e) {
-      console.warn("Context menu is only available natively in Tauri", e);
-    }
-  }
-}
+import { Menu, MenuItem, Submenu } from "@tauri-apps/api/menu";

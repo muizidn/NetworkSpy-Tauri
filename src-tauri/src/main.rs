@@ -28,6 +28,7 @@ use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
 use std::sync::atomic::{AtomicU16, Ordering};
 use tokio::sync::mpsc;
+use rusqlite::params;
 
 static ACTUAL_PORT: AtomicU16 = AtomicU16::new(9090);
 static RESTART_TX: OnceCell<mpsc::UnboundedSender<u16>> = OnceCell::new();
@@ -60,6 +61,39 @@ fn decompress_body(headers: &HashMap<String, String>, body: Vec<u8>) -> Vec<u8> 
         _ => {}
     }
     body
+}
+
+fn is_text_content_type(content_type: &Option<String>) -> bool {
+    match content_type {
+        Some(ct) => {
+            let ct = ct.to_lowercase();
+            ct.contains("text") || 
+            ct.contains("json") || 
+            ct.contains("javascript") || 
+            ct.contains("xml") || 
+            ct.contains("html") ||
+            ct.contains("urlencoded") ||
+            ct.contains("graphql")
+        }
+        None => {
+            // If No content type, we can't be sure, but let's assume binary unless specified
+            false
+        }
+    }
+}
+
+fn body_to_string(body: &Option<Vec<u8>>, content_type: &Option<String>) -> String {
+    if let Some(bytes) = body {
+        if bytes.is_empty() { return String::new(); }
+        // Attempt utf8 anyway if it looks like common text types
+        if is_text_content_type(content_type) {
+            String::from_utf8_lossy(bytes).into_owned()
+        } else {
+            format!("<Binary Data: {} bytes>", bytes.len())
+        }
+    } else {
+        String::new()
+    }
 }
 
 #[derive(Clone, Serialize)]
@@ -181,11 +215,86 @@ async fn save_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Res
 }
 
 #[tauri::command]
-async fn export_selected_session(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+async fn export_selected_to_har(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
     let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e| e.to_string())?;
     let har = create_har_log(data);
     let json = serde_json::to_string_pretty(&har).map_err(|e| e.to_string())?;
     fs::write(path, json).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn export_selected_to_csv(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e| e.to_string())?;
+    let mut csv_content = String::from("ID,Timestamp,Method,URI,Status,Client,RequestBody,ResponseBody\n");
+    
+    for (meta, req_body, res_body, req_ct, _, res_ct, _) in data {
+        let line = format!(
+            "{},\"{}\",{},\"{}\",{},\"{}\",\"{}\",\"{}\"\n",
+            meta.id,
+            meta.timestamp,
+            meta.method.unwrap_or_default(),
+            meta.uri.unwrap_or_default().replace('\"', "\"\""),
+            meta.status_code.unwrap_or(0),
+            meta.client.unwrap_or_default().replace('\"', "\"\""),
+            body_to_string(&req_body, &req_ct).replace('\"', "\"\""),
+            body_to_string(&res_body, &res_ct).replace('\"', "\"\"")
+        );
+        csv_content.push_str(&line);
+    }
+    
+    fs::write(path, csv_content).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn export_selected_to_sqlite(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e| e.to_string())?;
+    
+    let conn = rusqlite::Connection::open(&path).map_err(|e| e.to_string())?;
+    
+    conn.execute_batch(
+        "CREATE TABLE traffic (
+            id TEXT PRIMARY KEY,
+            uri TEXT,
+            method TEXT,
+            version TEXT,
+            client TEXT,
+            req_headers TEXT,
+            res_headers TEXT,
+            status_code INTEGER,
+            intercepted INTEGER,
+            timestamp DATETIME
+        );
+        CREATE TABLE body (
+            traffic_id TEXT PRIMARY KEY,
+            req_body BLOB,
+            res_body BLOB,
+            req_body_text TEXT,
+            res_body_text TEXT,
+            req_content_type TEXT,
+            res_content_type TEXT
+        );"
+    ).map_err(|e| e.to_string())?;
+    
+    {
+        let mut ins_traffic = conn.prepare("INSERT INTO traffic (id, uri, method, version, client, req_headers, res_headers, status_code, intercepted, timestamp) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)").map_err(|e| e.to_string())?;
+        let mut ins_body = conn.prepare("INSERT INTO body (traffic_id, req_body, res_body, req_body_text, res_body_text, req_content_type, res_content_type) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)").map_err(|e| e.to_string())?;
+        
+        for (meta, req_body, res_body, req_ct, _, res_ct, _) in data {
+            ins_traffic.execute(params![
+                meta.id, meta.uri, meta.method, meta.version, meta.client, meta.req_headers, meta.res_headers, meta.status_code, if meta.intercepted { 1 } else { 0 }, meta.timestamp
+            ]).map_err(|e| e.to_string())?;
+            
+            let req_text = if is_text_content_type(&req_ct) { Some(body_to_string(&req_body, &req_ct)) } else { None };
+            let res_text = if is_text_content_type(&res_ct) { Some(body_to_string(&res_body, &res_ct)) } else { None };
+
+            ins_body.execute(params![
+                meta.id, req_body, res_body, req_text, res_text, req_ct, res_ct
+            ]).map_err(|e| e.to_string())?;
+        }
+    }
+    
     Ok(())
 }
 
@@ -624,7 +733,9 @@ fn main() {
             get_recent_traffic,
             save_session,
             load_session,
-            export_selected_session,
+            export_selected_to_har,
+            export_selected_to_csv,
+            export_selected_to_sqlite,
             change_proxy_port,
         ])
         .build(tauri::generate_context!())
