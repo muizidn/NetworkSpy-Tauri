@@ -28,7 +28,14 @@ const Content = () => {
       max: "80%",
     },
   };
-  const [sizes, setSizes] = useState<any[]>(["70%", "15%"]);
+  const [sizes, setSizes] = useState<any[]>(() => {
+    const saved = localStorage.getItem("ns_main_window_sizes");
+    return saved ? JSON.parse(saved) : ["70%", "15%"];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("ns_main_window_sizes", JSON.stringify(sizes));
+  }, [sizes]);
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
   const { provider, isRun, setIsRun, clearData } = useAppProvider();

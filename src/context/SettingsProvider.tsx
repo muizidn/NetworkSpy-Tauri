@@ -24,12 +24,19 @@ export const useSettingsContext = () => useContext(SettingsContext);
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
-  const [sizesCenterPane, setSizesCenterPane] = useState([0, 0]);
+  const [sizesCenterPane, setSizesCenterPane] = useState(() => {
+    const saved = localStorage.getItem("ns_center_pane_sizes");
+    return saved ? JSON.parse(saved) : [0, 0];
+  });
 
   useEffect(() => {
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("ns_center_pane_sizes", JSON.stringify(sizesCenterPane));
+  }, [sizesCenterPane]);
 
   return (
     <SettingsContext.Provider

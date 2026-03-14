@@ -16,7 +16,14 @@ export const CenterPane: React.FC = () => {
   const { sizesCenterPane, setSizesCenterPane } = useSettingsContext();
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [restoredHeight, setRestoredHeight] = useState(300);
+  const [restoredHeight, setRestoredHeight] = useState(() => {
+    const saved = localStorage.getItem("ns_restored_center_height");
+    return saved ? parseInt(saved) : 300;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("ns_restored_center_height", restoredHeight.toString());
+  }, [restoredHeight]);
 
   useEffect(() => {
     const updateInitialSizes = () => {
