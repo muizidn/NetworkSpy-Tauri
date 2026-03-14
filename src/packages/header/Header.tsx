@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { Icon } from "../ui/Icon";
+import { usePaneContext } from "@src/context/PaneProvider";
+import React from "react";
 import { twMerge } from "tailwind-merge";
 import { useAppProvider } from "../app-env";
-import { usePaneContext } from "@src/context/PaneProvider";
-import { FiColumns } from "react-icons/fi";
+import { Icon } from "../ui/Icon";
 
 interface HeaderProps {
   toggleBottomPane: () => void;
@@ -17,7 +16,7 @@ export const ControlButton = ({
   onClick,
   active = false,
 }: {
-  icon: string
+  icon: string | React.ReactNode
   onClick: () => void
   active?: boolean
   id: string
@@ -32,7 +31,7 @@ export const ControlButton = ({
         active ? "text-blue-500" : "text-white hover:text-blue-400"
       )}
     >
-      <Icon iconName={icon as any} />
+      {typeof icon === 'string' ? <Icon iconName={icon as any} /> : icon}
     </button>
   </div>
 )
@@ -160,14 +159,24 @@ export const HeaderRight = ({
       <div className="flex items-center gap-1 bg-white/[0.02] p-1 rounded-xl border border-white/5 shadow-inner relative z-10">
         <ControlButton
           id="layout-vertical"
-          icon="Rows"
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" opacity="0.4"></rect>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+            </svg>
+          }
           label="Top down (Horizontal Split)"
           active={isDisplayPane.centerLayout === "vertical"}
           onClick={() => setLayout("vertical")}
         />
         <ControlButton
           id="layout-horizontal"
-          icon="Columns"
+          icon={
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" opacity="0.4"></rect>
+              <line x1="12" y1="3" x2="12" y2="21"></line>
+            </svg>
+          }
           label="Side by side (Vertical Split)"
           active={isDisplayPane.centerLayout === "horizontal"}
           onClick={() => setLayout("horizontal")}
