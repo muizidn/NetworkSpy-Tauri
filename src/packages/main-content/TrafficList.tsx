@@ -52,8 +52,29 @@ export const TrafficList: React.FC = () => {
   const headers: TableViewHeader<TrafficItemMap>[] = useMemo(() => [
     {
       title: "ID",
-      renderer: new TextRenderer("id"),
-      minWidth: 50,
+      renderer: {
+        render: ({ input }: { input: TrafficItemMap }) => {
+          const getStatusColor = (code: string, method: string) => {
+            if (method === 'CONNECT') return 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.3)]';
+            const c = parseInt(code);
+            if (isNaN(c)) return 'bg-zinc-600'; // Pending
+            if (c >= 500) return 'bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.4)]';
+            if (c >= 400) return 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.3)]';
+            if (c >= 300) return 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]';
+            if (c >= 200) return 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]';
+            if (c >= 100) return 'bg-zinc-400 shadow-[0_0_8px_rgba(161,161,170,0.3)]';
+            return 'bg-zinc-600';
+          };
+
+          return (
+            <div className="flex items-center gap-2 px-1">
+              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusColor(String(input.code as number), input.method as string)}`} />
+              <span className="truncate opacity-80 font-mono text-[10px]">{input.id}</span>
+            </div>
+          );
+        }
+      },
+      minWidth: 70,
       sortable: true,
       compareValue: (a: any, b: any) => (Number(a) < Number(b) ? -1 : 1),
     },
