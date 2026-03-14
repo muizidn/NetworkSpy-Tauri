@@ -659,6 +659,8 @@ fn main() {
 
             let db_path = app_data_dir.join("traffic.db");
             
+            #[cfg(debug_assertions)]
+            println!("DB Path: {}", db_path.display());
             
             let traffic_db = Arc::new(TrafficDb::new(db_path).expect("Failed to initialize database"));
             app_handle.manage(Arc::clone(&traffic_db));
