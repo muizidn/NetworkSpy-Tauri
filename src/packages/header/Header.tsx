@@ -199,22 +199,6 @@ export const HeaderRight = ({
           onClick={toggleRightPane}
         />
       </div>
-
-      <div className="h-4 w-px bg-zinc-800/50" />
-
-      <div className="flex items-center gap-3 h-full">
-        <div className="flex flex-col items-end gap-0.5">
-          <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest leading-none">
-            Pro
-          </span>
-          <span className="text-[7px] font-mono text-zinc-600 leading-none mt-0.5">
-            v0.9.4
-          </span>
-        </div>
-        <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 border border-white/5 flex items-center justify-center text-[9px] font-bold text-zinc-400">
-          M
-        </div>
-      </div>
     </div>
   );
 };

@@ -21,7 +21,20 @@ export const LeftSidebar = () => {
           onClick={() => setActiveTab("collection")}
         />
       </div>
-      <div className="flex flex-col items-center gap-3 w-full mb-2 px-1.5">
+      <div className="flex flex-col items-center gap-4 w-full mb-2 px-1.5">
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[7px] font-black text-blue-500 uppercase tracking-widest leading-none">
+            Pro
+          </span>
+          <span className="text-[6px] font-mono text-zinc-600 leading-none mt-0.5">
+            v0.9.4
+          </span>
+        </div>
+
+        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-700 border border-white/5 flex items-center justify-center text-[10px] font-bold text-zinc-400 cursor-pointer hover:border-blue-500/50 transition-colors">
+          M
+        </div>
+
         <NavButton
           icon={<FiSettings size={18} />}
           label="Settings"
