@@ -482,6 +482,7 @@ fn main() {
         .setup(move |app| {
             let cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
             let tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit-app", "Quit netwok-spy").accelerator("Cmd+Q").build(app)?;
 
             let tools_submenu = SubmenuBuilder::new(app, "Tools")
                 .item(&cert_installer_item)
@@ -499,7 +500,7 @@ fn main() {
                     .hide_others()
                     .show_all()
                     .separator()
-                    .quit()
+                    .item(&quit_item)
                     .build()?)
                 .item(&tools_submenu)
                 .build()?;
@@ -511,6 +512,12 @@ fn main() {
                     open_new_window(app_handle.clone(), "certificate-installer".into(), "Certificate Installer".into());
                 } else if event.id() == "tools-tag" {
                     open_new_window(app_handle.clone(), "tag".into(), "Tag Tools".into());
+                } else if event.id() == "quit-app" {
+                    if let Some(toggle) = PROXY_TOGGLE.get() {
+                        toggle.turn_off();
+                        println!("Proxy turned off (Menu Quit)");
+                    }
+                    app_handle.exit(0);
                 }
             });
 
@@ -620,6 +627,15 @@ fn main() {
             export_selected_session,
             change_proxy_port,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => {
+                if let Some(toggle) = PROXY_TOGGLE.get() {
+                    toggle.turn_off();
+                    println!("Proxy turned off (Application Exit)");
+                }
+            }
+            _ => {}
+        });
 }

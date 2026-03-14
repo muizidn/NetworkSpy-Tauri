@@ -48,7 +48,7 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
   provider,
 }) => {
   const activeProvider = useMemo(() => provider || getAppProvider(), [provider]);
-  const [isRun, setIsRun] = useState(false);
+  const [isRun, setIsRun] = useState(true);
   const [currentPort, setCurrentPort] = useState<number | null>(null);
   const { setTrafficList, setTrafficSet, setSelections } = useTrafficListContext();
 
