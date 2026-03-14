@@ -21,6 +21,7 @@ import Scripting from "./routes/tools/Scripting";
 import Tag from "./routes/tools/Tag";
 import WorkspacePage from "./routes/workspace";
 import AccountPage from "./routes/account";
+import ExtensionsPage from "./routes/extensions";
 
 // import ScriptEditor from "./routes/script-editor";
 
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
       {
         path: "/account",
         element: <AccountPage />,
+      },
+      {
+        path: "/extensions",
+        element: <ExtensionsPage />,
       },
       {
         path: "/breakpoint",

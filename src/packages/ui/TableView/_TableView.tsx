@@ -502,7 +502,7 @@ export const TableView = <T,>({
                       <div
                         key={i}
                         role="gridcell"
-                        className="px-3 py-[7px] text-zinc-400 text-[11px] min-w-0 flex flex-col justify-center max-w-full"
+                        className="px-3 py-[7px] text-zinc-200 text-[11px] min-w-0 flex flex-col justify-center max-w-full"
                       >
                         {header.renderer.render({
                           input: item,
