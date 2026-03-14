@@ -23,6 +23,7 @@ export interface TableViewProps<T> {
   className?: string;
   isAllowAutoScroll?: boolean;
   isAutoScroll?: boolean;
+  renderRow?: (item: T, children: React.ReactNode) => React.ReactNode;
 }
 
 type SortOrder = "asc" | "desc";
@@ -117,7 +118,8 @@ export const TableView = <T,>({
   selectedItems,
   className,
   isAllowAutoScroll,
-  isAutoScroll
+  isAutoScroll,
+  renderRow
 }: TableViewProps<T>) => {
   const [selectedRows, setSelectedRows] = useState<{
     firstSelect?: number;
@@ -489,6 +491,25 @@ export const TableView = <T,>({
               const item = sortedData[virtualRow.index];
               const isSelected = selectedRows.rows.includes(virtualRow.index);
 
+              const rowCells = (
+                <>
+                  {headers.map((header, i) => (
+                    <div
+                      key={i}
+                      role="gridcell"
+                      className="px-3 py-[7px] text-zinc-200 text-[11px] min-w-0 flex flex-col justify-center max-w-full"
+                    >
+                      {header.renderer.render({
+                        input: item,
+                        width: columnWidths[i],
+                      })}
+                    </div>
+                  ))}
+                </>
+              );
+
+              const children = renderRow ? renderRow(item, rowCells) : rowCells;
+
               return (
                 <div
                   key={virtualRow.key}
@@ -506,21 +527,7 @@ export const TableView = <T,>({
                   }}
                   data-index={virtualRow.index}
                 >
-                  {headers.map((header, i) => {
-                    const isLast = i === headers.length - 1;
-                    return (
-                      <div
-                        key={i}
-                        role="gridcell"
-                        className="px-3 py-[7px] text-zinc-200 text-[11px] min-w-0 flex flex-col justify-center max-w-full"
-                      >
-                        {header.renderer.render({
-                          input: item,
-                          width: columnWidths[i],
-                        })}
-                      </div>
-                    );
-                  })}
+                  {children}
                 </div>
               );
             })}

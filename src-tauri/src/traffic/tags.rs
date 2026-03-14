@@ -19,7 +19,14 @@ pub struct TagRule {
     pub scope: String, // "metadata" or "body"
     pub color: Option<String>,
     pub bg_color: Option<String>,
-    pub folder: Option<String>,
+    pub folder_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TagFolder {
+    pub id: String,
+    pub name: String,
 }
 
 pub struct TagManager {
@@ -41,7 +48,7 @@ impl TagManager {
 
     pub fn reload_rules(&self) -> Result<()> {
         let conn = self.db.get_connection();
-        let mut stmt = conn.prepare("SELECT id, enabled, name, method, matching_rule, tag, is_sync, scope, color, bg_color, folder FROM tag_rules")?;
+        let mut stmt = conn.prepare("SELECT id, enabled, name, method, matching_rule, tag, is_sync, scope, color, bg_color, folder_id FROM tag_rules")?;
         let rows = stmt.query_map([], |row| {
             Ok(TagRule {
                 id: row.get(0)?,
@@ -54,7 +61,7 @@ impl TagManager {
                 scope: row.get(7)?,
                 color: row.get(8)?,
                 bg_color: row.get(9)?,
-                folder: row.get(10)?,
+                folder_id: row.get(10)?,
             })
         })?;
 
@@ -197,7 +204,7 @@ pub async fn get_tags_from_db(manager: tauri::State<'_, Arc<TagManager>>) -> Res
 pub async fn add_tag_to_db(manager: tauri::State<'_, Arc<TagManager>>, rule: TagRule) -> Result<(), String> {
     let conn = manager.db.get_connection();
     let res = conn.execute(
-        "INSERT INTO tag_rules (id, enabled, name, method, matching_rule, tag, is_sync, scope, color, bg_color, folder) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+        "INSERT INTO tag_rules (id, enabled, name, method, matching_rule, tag, is_sync, scope, color, bg_color, folder_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
         params![
             rule.id,
             if rule.enabled { 1 } else { 0 },
@@ -209,18 +216,12 @@ pub async fn add_tag_to_db(manager: tauri::State<'_, Arc<TagManager>>, rule: Tag
             rule.scope,
             rule.color,
             rule.bg_color,
-            if rule.folder.as_ref().map(|f| f.is_empty()).unwrap_or(true) { None } else { rule.folder.clone() }
+            rule.folder_id
         ],
     );
 
     match res {
         Ok(_) => {
-            // Ensure folder exists if provided
-            if let Some(folder_name) = rule.folder.as_ref() {
-                if !folder_name.is_empty() {
-                    let _ = conn.execute("INSERT OR IGNORE INTO tag_folders (name) VALUES (?1)", params![folder_name]);
-                }
-            }
             drop(conn); // DROP THE LOCK BEFORE RELOADING
             manager.reload_rules().map_err(|e| e.to_string())?;
             Ok(())
@@ -233,7 +234,7 @@ pub async fn add_tag_to_db(manager: tauri::State<'_, Arc<TagManager>>, rule: Tag
 pub async fn update_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: String, rule: TagRule) -> Result<(), String> {
     let conn = manager.db.get_connection();
     let res = conn.execute(
-        "UPDATE tag_rules SET enabled = ?1, name = ?2, method = ?3, matching_rule = ?4, tag = ?5, is_sync = ?6, scope = ?7, color = ?8, bg_color = ?9, folder = ?10 WHERE id = ?11",
+        "UPDATE tag_rules SET enabled = ?1, name = ?2, method = ?3, matching_rule = ?4, tag = ?5, is_sync = ?6, scope = ?7, color = ?8, bg_color = ?9, folder_id = ?10 WHERE id = ?11",
         params![
             if rule.enabled { 1 } else { 0 },
             rule.name,
@@ -244,18 +245,13 @@ pub async fn update_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
             rule.scope,
             rule.color,
             rule.bg_color,
-            if rule.folder.as_ref().map(|f| f.is_empty()).unwrap_or(true) { None } else { rule.folder.clone() },
+            rule.folder_id,
             id
         ],
     );
 
     match res {
         Ok(_) => {
-            if let Some(folder_name) = rule.folder.as_ref() {
-                if !folder_name.is_empty() {
-                    let _ = conn.execute("INSERT OR IGNORE INTO tag_folders (name) VALUES (?1)", params![folder_name]);
-                }
-            }
             drop(conn); // DROP LOCK
             manager.reload_rules().map_err(|e| e.to_string())?;
             Ok(())
@@ -283,20 +279,23 @@ pub async fn toggle_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
 }
 
 #[tauri::command]
-pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folder: String) -> Result<(), String> {
+pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folder_id: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    let folder_val = if folder.trim().is_empty() { None } else { Some(folder) };
-    conn.execute("UPDATE tag_rules SET folder = ?1 WHERE id = ?2", params![folder_val, id]).map_err(|e| e.to_string())?;
+    let folder_val = if folder_id.trim().is_empty() { None } else { Some(folder_id) };
+    conn.execute("UPDATE tag_rules SET folder_id = ?1 WHERE id = ?2", params![folder_val, id]).map_err(|e| e.to_string())?;
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn get_tag_folders(manager: tauri::State<'_, Arc<TagManager>>) -> Result<Vec<String>, String> {
+pub async fn get_tag_folders(manager: tauri::State<'_, Arc<TagManager>>) -> Result<Vec<TagFolder>, String> {
     let conn = manager.db.get_connection();
-    let mut stmt = conn.prepare("SELECT name FROM tag_rule_folder").map_err(|e| e.to_string())?;
-    let rows = stmt.query_map([], |row| row.get(0)).map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT id, name FROM tag_rule_folder").map_err(|e| e.to_string())?;
+    let rows = stmt.query_map([], |row| Ok(TagFolder {
+        id: row.get(0)?,
+        name: row.get(1)?,
+    })).map_err(|e| e.to_string())?;
     let mut folders = Vec::new();
     for row in rows {
         folders.push(row.map_err(|e| e.to_string())?);
@@ -305,21 +304,18 @@ pub async fn get_tag_folders(manager: tauri::State<'_, Arc<TagManager>>) -> Resu
 }
 
 #[tauri::command]
-pub async fn add_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, name: String) -> Result<(), String> {
+pub async fn add_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, name: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("INSERT OR IGNORE INTO tag_rule_folder (name) VALUES (?1)", params![name]).map_err(|e| e.to_string())?;
+    conn.execute("INSERT OR IGNORE INTO tag_rule_folder (id, name) VALUES (?1, ?2)", params![id, name]).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, old_name: String, new_name: String) -> Result<(), String> {
+pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, new_name: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
     
     // 1. Update the folder name in tag_rule_folder
-    conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE name = ?2", params![new_name, old_name]).map_err(|e| e.to_string())?;
-    
-    // 2. Update all tag rules that use this folder
-    conn.execute("UPDATE tag_rules SET folder = ?1 WHERE folder = ?2", params![new_name, old_name]).map_err(|e| e.to_string())?;
+    conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE id = ?2", params![new_name, id]).map_err(|e| e.to_string())?;
     
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
@@ -327,11 +323,11 @@ pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, old_n
 }
 
 #[tauri::command]
-pub async fn delete_tag_folder_from_db(manager: tauri::State<'_, Arc<TagManager>>, name: String) -> Result<(), String> {
+pub async fn delete_tag_folder_from_db(manager: tauri::State<'_, Arc<TagManager>>, id: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("DELETE FROM tag_rule_folder WHERE name = ?1", params![name]).map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM tag_rule_folder WHERE id = ?1", params![id]).map_err(|e| e.to_string())?;
     // Optionally delete or move tags in this folder
-    conn.execute("UPDATE tag_rules SET folder = NULL WHERE folder = ?1", params![name]).map_err(|e| e.to_string())?;
+    conn.execute("UPDATE tag_rules SET folder_id = NULL WHERE folder_id = ?1", params![id]).map_err(|e| e.to_string())?;
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
     Ok(())
