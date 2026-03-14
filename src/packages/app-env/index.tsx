@@ -9,6 +9,7 @@ export interface IAppProviderContext {
   isRun: boolean;
   setIsRun: (isRun: boolean) => void;
   clearData: () => void;
+  currentPort: number | null;
 }
 
 export const TauriEnvContext = createContext<IAppProviderContext | undefined>(
@@ -30,7 +31,8 @@ export const useAppProvider = (): IAppProviderContext => {
       provider: defaultProvider,
       isRun: false,
       setIsRun: () => { },
-      clearData: () => { }
+      clearData: () => { },
+      currentPort: null,
     };
   }
   return context;
@@ -47,10 +49,19 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
 }) => {
   const activeProvider = useMemo(() => provider || getAppProvider(), [provider]);
   const [isRun, setIsRun] = useState(false);
+  const [currentPort, setCurrentPort] = useState<number | null>(null);
   const { setTrafficList, setTrafficSet, setSelections } = useTrafficListContext();
 
   useEffect(() => {
-    activeProvider.setListenStatus(isRun);
+    const handleProxy = async () => {
+      const port = await activeProvider.setListenStatus(isRun);
+      if (isRun && typeof port === 'number') {
+        setCurrentPort(port);
+      } else if (!isRun) {
+        setCurrentPort(null);
+      }
+    };
+    handleProxy();
   }, [activeProvider, isRun]);
 
   const clearData = useCallback(() => {
@@ -74,7 +85,8 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
       provider: activeProvider,
       isRun,
       setIsRun,
-      clearData
+      clearData,
+      currentPort
     }}>
       {children}
     </TauriEnvContext.Provider>

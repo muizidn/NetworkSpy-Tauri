@@ -21,7 +21,8 @@ export interface IAppProvider {
   listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void>;
   listenSSE(trafficId: string, callback: (chunk: string) => void): () => void;
   listenWebsocket(trafficId: string, callback: (message: any) => void): () => void;
-  setListenStatus(isRun: boolean): void;
+  setListenStatus(isRun: boolean): Promise<number | void>;
+  changeProxyPort(port: number): Promise<number>;
   updateInterceptAllowList(newList: string[]): Promise<void>;
   message(message: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void>;
   saveSession(): Promise<void>;
@@ -32,12 +33,16 @@ export interface IAppProvider {
 export class TauriAppProvider implements IAppProvider {
   private trafficSet: Record<string, Traffic> = {};
 
-  setListenStatus(isRun: boolean): void {
+  async setListenStatus(isRun: boolean): Promise<number | void> {
     if (isRun) {
-      tauriInvoke("turn_on_proxy", { port: 9090 });
+      return await tauriInvoke<number>("turn_on_proxy");
     } else {
-      tauriInvoke("turn_off_proxy");
+      await tauriInvoke("turn_off_proxy");
     }
+  }
+
+  async changeProxyPort(port: number): Promise<number> {
+    return await tauriInvoke<number>("change_proxy_port", { port });
   }
 
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {
@@ -180,9 +185,15 @@ export class MockAppProvider implements IAppProvider {
   private isListening: boolean = false;
   private allowList: Set<string> = new Set([]);
 
-  setListenStatus(isRun: boolean): void {
+  async setListenStatus(isRun: boolean): Promise<number | void> {
     this.isListening = isRun;
     console.log(`[MockAppProvider] Traffic Generation: ${isRun ? 'RESUMED' : 'PAUSED'}`);
+    if (isRun) return 9090;
+  }
+
+  async changeProxyPort(port: number): Promise<number> {
+    console.log(`[MockAppProvider] Proxy Port Changed to: ${port}`);
+    return port;
   }
 
   async getRequestPairData(trafficId: string): Promise<RequestPairData> {

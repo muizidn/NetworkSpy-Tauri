@@ -3,6 +3,7 @@ import React from "react";
 import { twMerge } from "tailwind-merge";
 import { useAppProvider } from "../app-env";
 import { Icon } from "../ui/Icon";
+import { PortDialog } from "./components/PortDialog";
 
 interface HeaderProps {
   toggleBottomPane: () => void;
@@ -49,7 +50,6 @@ export const Header: React.FC<HeaderProps> = ({
     >
       <HeaderLeft />
 
-
       <HeaderRight
         toggleBottomPane={toggleBottomPane}
         toggleRightPane={toggleRightPane}
@@ -59,9 +59,23 @@ export const Header: React.FC<HeaderProps> = ({
 }
 
 export const HeaderLeft = () => {
-  const { isRun, setIsRun, clearData, provider } = useAppProvider();
+  const { isRun, setIsRun, clearData, provider, currentPort } = useAppProvider();
+  const [isPortDialogOpen, setIsPortDialogOpen] = React.useState(false);
+
+  const handleUpdatePort = async (newPort: number) => {
+    try {
+      const actualPort = await provider.changeProxyPort(newPort);
+      if (actualPort !== newPort) {
+        await provider.message(`Port ${newPort} was unavailable. Used ${actualPort} instead.`, { title: "Port Auto-Adjusted", type: "info" });
+      }
+    } catch (err) {
+      console.error("Failed to update port", err);
+    }
+  };
+
   return (
-    <div className="flex items-center gap-4 relative z-10 h-full">
+    <>
+      <div className="flex items-center gap-4 relative z-10 h-full">
       <div className="flex items-center gap-2 cursor-pointer">
         <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center text-white font-black italic text-[9px]">
           NS
@@ -91,6 +105,21 @@ export const HeaderLeft = () => {
           variant={isRun ? "success" : "default"}
           onClick={() => setIsRun(!isRun)}
         />
+
+        {isRun && currentPort && (
+          <div 
+            onClick={() => setIsPortDialogOpen(true)}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 animate-in fade-in slide-in-from-left-1 duration-300 cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 transition-all group"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 group-hover:scale-110 transition-transform">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+            <span className="text-[10px] font-mono font-bold text-blue-400">
+              :{currentPort}
+            </span>
+          </div>
+        )}
+
         <ControlButton
           id="clear"
           icon="Trash"
@@ -114,32 +143,18 @@ export const HeaderLeft = () => {
           onClick={() => provider.loadSession()}
         />
       </div>
-    </div>
+      </div>
+      <PortDialog 
+        isOpen={isPortDialogOpen} 
+        currentPort={currentPort || 9090} 
+        onClose={() => setIsPortDialogOpen(false)} 
+        onConfirm={handleUpdatePort} 
+      />
+    </>
   );
 };
 
-export const HeaderMiddle = ({ isRun }: { isRun: boolean }) => (
-  <div className="absolute left-1/2 -translate-x-1/2 flex items-center pointer-events-none z-0">
-    <div
-      className={twMerge(
-        "flex items-center px-3 py-1 rounded-full border text-[9px] font-bold tracking-wider uppercase shadow-lg pointer-events-auto",
-        isRun
-          ? "border-emerald-500/20 bg-emerald-500/[0.03]"
-          : "border-white/[0.05] bg-white/[0.02]"
-      )}
-    >
-      <div
-        className={twMerge(
-          "w-1.5 h-1.5 rounded-full mr-2",
-          isRun ? "bg-emerald-500" : "bg-zinc-700"
-        )}
-      />
-      <span className={isRun ? "text-emerald-500/80" : "text-zinc-600"}>
-        {isRun ? "Proxy Active: 127.0.0.1:9090" : "Sniffer Interrupted"}
-      </span>
-    </div>
-  </div>
-);
+
 
 export const HeaderRight = ({
   toggleBottomPane,

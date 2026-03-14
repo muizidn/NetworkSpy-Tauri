@@ -26,6 +26,11 @@ use traffic::har_util::{create_har_log, HarLog};
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
+use std::sync::atomic::{AtomicU16, Ordering};
+use tokio::sync::mpsc;
+
+static ACTUAL_PORT: AtomicU16 = AtomicU16::new(9090);
+static RESTART_TX: OnceCell<mpsc::UnboundedSender<u16>> = OnceCell::new();
 
 fn decompress_body(headers: &HashMap<String, String>, body: Vec<u8>) -> Vec<u8> {
     let encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding"));
@@ -104,13 +109,31 @@ static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
 static CERTIFICATE_INSTALLER: OnceCell<CertificateInstaller> = OnceCell::new();
 
 #[tauri::command]
-fn turn_on_proxy(port: u64) {
-    PROXY_TOGGLE.get().unwrap().turn_on(port);
+fn turn_on_proxy() -> u16 {
+    let port = ACTUAL_PORT.load(Ordering::SeqCst);
+    PROXY_TOGGLE.get().unwrap().turn_on(port as u64);
+    port
 }
 
 #[tauri::command]
 fn turn_off_proxy() {
     PROXY_TOGGLE.get().unwrap().turn_off();
+}
+
+#[tauri::command]
+fn change_proxy_port(port: u16) -> u16 {
+    let actual_port = (port..65535)
+        .find(|p| std::net::TcpListener::bind(("127.0.0.1", *p)).is_ok())
+        .unwrap_or(port);
+
+    ACTUAL_PORT.store(actual_port, Ordering::SeqCst);
+    
+    // Signal restart if tx is initialized
+    if let Some(tx) = RESTART_TX.get() {
+        let _ = tx.send(actual_port);
+    }
+
+    actual_port
 }
 
 #[tauri::command]
@@ -283,6 +306,145 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
     Ok(())
 }
 
+use std::sync::Mutex;
+use std::time::Instant;
+
+struct MyTrafficListener {
+    app_handle: AppHandle,
+    traffic_db: Arc<TrafficDb>,
+    request_times: Mutex<HashMap<u64, Instant>>,
+}
+
+impl TrafficListener for MyTrafficListener {
+    fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
+        self.request_times.lock().unwrap().insert(id, Instant::now());
+        
+        let uri = request.uri().to_string();
+        let http_version = match request.version() {
+            Version::HTTP_10 => "HTTP/1.0".to_string(),
+            Version::HTTP_11 => "HTTP/1.1".to_string(),
+            Version::HTTP_2 => "HTTP/2".to_string(),
+            Version::HTTP_3 => "HTTP/3".to_string(),
+            _ => "Unknown".to_string(),
+        };
+
+        let method = request.method().as_str().to_string();
+
+        let headers = request
+            .headers()
+            .iter()
+            .map(|(key, value)| {
+                (key.to_string(), value.to_str().unwrap_or("").to_string())
+            })
+            .collect::<HashMap<_, _>>();
+
+        let body_bytes = request.body();
+        let body_vec = body_bytes.to_vec();
+        let decompressed_body = decompress_body(&headers, body_vec);
+        let body_size = decompressed_body.len();
+
+        let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
+        let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
+
+        let client_name = traffic::process_info::get_app_name(&client_addr);
+        let client_info = format!("{} ({})", client_name, client_addr);
+
+        self.traffic_db.insert_request(TrafficEvent::Request {
+            id: id.to_string(),
+            uri: uri.clone(),
+            method: method.clone(),
+            version: http_version.clone(),
+            headers: headers.clone(),
+            body: decompressed_body,
+            content_type,
+            content_encoding,
+            intercepted,
+            client: client_info.clone(),
+        });
+
+        let _result = self.app_handle.emit(
+            "traffic_event",
+            Payload {
+                id: id.to_string(),
+                is_request: true,
+                data: PayloadTraffic {
+                    uri: Some(uri),
+                    version: Some(http_version),
+                    method: Some(method),
+                    headers,
+                    body_size,
+                    intercepted,
+                    status_code: None,
+                    client: Some(client_info),
+                },
+            },
+        );
+    }
+
+    fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
+        let start_time = self.request_times.lock().unwrap().remove(&id);
+        let duration = start_time.map(|t| t.elapsed().as_millis()).unwrap_or(0);
+        
+        let status_code = response.status().as_u16();
+        let http_version = match response.version() {
+            Version::HTTP_10 => "HTTP/1.0".to_string(),
+            Version::HTTP_11 => "HTTP/1.1".to_string(),
+            Version::HTTP_2 => "HTTP/2".to_string(),
+            Version::HTTP_3 => "HTTP/3".to_string(),
+            _ => "Unknown".to_string(),
+        };
+
+        let headers = response
+            .headers()
+            .iter()
+            .map(|(key, value)| {
+                (key.to_string(), value.to_str().unwrap_or("").to_string())
+            })
+            .collect::<HashMap<_, _>>();
+
+        let body_bytes = response.body();
+        let body_vec = body_bytes.to_vec();
+        let decompressed_body = decompress_body(&headers, body_vec);
+        let body_size = decompressed_body.len();
+
+        let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
+        let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
+
+        self.traffic_db.insert_response(TrafficEvent::Response {
+            id: id.to_string(),
+            headers: headers.clone(),
+            body: decompressed_body,
+            content_type,
+            content_encoding,
+            status_code,
+        });
+
+        let client_name = traffic::process_info::get_app_name(&client_addr);
+        let client_info = format!("{} ({})", client_name, client_addr);
+
+        let mut headers_with_perf = headers;
+        headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
+
+        let _result = self.app_handle.emit(
+            "traffic_event",
+            Payload {
+                id: id.to_string(),
+                is_request: false,
+                data: PayloadTraffic {
+                    uri: None,
+                    version: Some(http_version),
+                    method: None,
+                    headers: headers_with_perf,
+                    body_size,
+                    intercepted,
+                    status_code: Some(status_code),
+                    client: Some(client_info),
+                },
+            },
+        );
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|arg| arg == "--install-cert") {
@@ -317,7 +479,7 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
-        .setup(|app| {
+        .setup(move |app| {
             let cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
             let tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
 
@@ -386,155 +548,58 @@ fn main() {
             let allow_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
 
-            let mut proxy = Proxy::new(key_pair, ca_cert, 9090);
-
-            use std::sync::Mutex;
-            use std::time::Instant;
+            let actual_port = (9090..65535)
+                .find(|port| std::net::TcpListener::bind(("127.0.0.1", *port)).is_ok())
+                .unwrap_or(9090);
             
-            struct MyTrafficListener {
-                app_handle: AppHandle,
-                traffic_db: Arc<TrafficDb>,
-                request_times: Mutex<HashMap<u64, Instant>>,
-            }
+            ACTUAL_PORT.store(actual_port, Ordering::SeqCst);
+            println!("Proxy starting on port: {}", actual_port);
 
-            impl TrafficListener for MyTrafficListener {
-                fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
-                    self.request_times.lock().unwrap().insert(id, Instant::now());
-                    
-                    let uri = request.uri().to_string();
-                    let http_version = match request.version() {
-                        Version::HTTP_10 => "HTTP/1.0".to_string(),
-                        Version::HTTP_11 => "HTTP/1.1".to_string(),
-                        Version::HTTP_2 => "HTTP/2".to_string(),
-                        Version::HTTP_3 => "HTTP/3".to_string(),
-                        _ => "Unknown".to_string(),
-                    };
+            let (tx, mut rx) = mpsc::unbounded_channel::<u16>();
+            RESTART_TX.set(tx).expect("Failed to set RESTART_TX");
 
-                    let method = request.method().as_str().to_string();
-
-                    let headers = request
-                        .headers()
-                        .iter()
-                        .map(|(key, value)| {
-                            (key.to_string(), value.to_str().unwrap_or("").to_string())
-                        })
-                        .collect::<HashMap<_, _>>();
-
-                    let body_bytes = request.body();
-                    let body_vec = body_bytes.to_vec();
-                    let decompressed_body = decompress_body(&headers, body_vec);
-                    let body_size = decompressed_body.len();
-
-                    let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
-                    let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
-
-                    let client_name = traffic::process_info::get_app_name(&client_addr);
-                    let client_info = format!("{} ({})", client_name, client_addr);
-
-                    self.traffic_db.insert_request(TrafficEvent::Request {
-                        id: id.to_string(),
-                        uri: uri.clone(),
-                        method: method.clone(),
-                        version: http_version.clone(),
-                        headers: headers.clone(),
-                        body: decompressed_body,
-                        content_type,
-                        content_encoding,
-                        intercepted,
-                        client: client_info.clone(),
-                    });
-
-                    let _result = self.app_handle.emit(
-                        "traffic_event",
-                        Payload {
-                            id: id.to_string(),
-                            is_request: true,
-                            data: PayloadTraffic {
-                                uri: Some(uri),
-                                version: Some(http_version),
-                                method: Some(method),
-                                headers,
-                                body_size,
-                                intercepted,
-                                status_code: None,
-                                client: Some(client_info),
-                            },
-                        },
-                    );
-                }
-
-                fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
-                    let start_time = self.request_times.lock().unwrap().remove(&id);
-                    let duration = start_time.map(|t| t.elapsed().as_millis()).unwrap_or(0);
-                    
-                    let status_code = response.status().as_u16();
-                    let http_version = match response.version() {
-                        Version::HTTP_10 => "HTTP/1.0".to_string(),
-                        Version::HTTP_11 => "HTTP/1.1".to_string(),
-                        Version::HTTP_2 => "HTTP/2".to_string(),
-                        Version::HTTP_3 => "HTTP/3".to_string(),
-                        _ => "Unknown".to_string(),
-                    };
-
-                    let headers = response
-                        .headers()
-                        .iter()
-                        .map(|(key, value)| {
-                            (key.to_string(), value.to_str().unwrap_or("").to_string())
-                        })
-                        .collect::<HashMap<_, _>>();
-
-                    let body_bytes = response.body();
-                    let body_vec = body_bytes.to_vec();
-                    let decompressed_body = decompress_body(&headers, body_vec);
-                    let body_size = decompressed_body.len();
-
-                    let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
-                    let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
-
-                    self.traffic_db.insert_response(TrafficEvent::Response {
-                        id: id.to_string(),
-                        headers: headers.clone(),
-                        body: decompressed_body,
-                        content_type,
-                        content_encoding,
-                        status_code,
-                    });
-
-                    let client_name = traffic::process_info::get_app_name(&client_addr);
-                    let client_info = format!("{} ({})", client_name, client_addr);
-
-                    let mut headers_with_perf = headers;
-                    headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
-
-                    let _result = self.app_handle.emit(
-                        "traffic_event",
-                        Payload {
-                            id: id.to_string(),
-                            is_request: false,
-                            data: PayloadTraffic {
-                                uri: None,
-                                version: Some(http_version),
-                                method: None,
-                                headers: headers_with_perf,
-                                body_size,
-                                intercepted,
-                                status_code: Some(status_code),
-                                client: Some(client_info),
-                            },
-                        },
-                    );
-                }
-            }
-
-            let listener = Arc::new(MyTrafficListener {
-                app_handle: app_handle.clone(),
-                traffic_db: Arc::clone(&traffic_db),
-                request_times: Mutex::new(HashMap::new()),
-            });
+            let app_handle_outer = app_handle.clone();
+            let traffic_db_outer = Arc::clone(&traffic_db);
+            let allow_list_outer = Arc::clone(&allow_list);
 
             tauri::async_runtime::spawn(async move {
-                proxy.run_proxy(listener, allow_list).await;
+                let mut current_port = actual_port;
+                loop {
+                    let app_handle_inner = app_handle_outer.clone();
+                    let traffic_db_inner = Arc::clone(&traffic_db_outer);
+                    let allow_list_inner = Arc::clone(&allow_list_outer);
+
+                    let mut proxy = Proxy::new(key_pair, ca_cert, current_port.into());
+                    let listener = Arc::new(MyTrafficListener {
+                        app_handle: app_handle_inner,
+                        traffic_db: traffic_db_inner,
+                        request_times: Mutex::new(HashMap::new()),
+                    });
+
+                    println!("Proxy server listening on port: {}", current_port);
+                    
+                    // We need a way to stop run_proxy. Since we don't have a shutdown handle,
+                    // we'll run it and listen for port changes.
+                    // NOTE: This assumes run_proxy can be "shadowed" or we just hope 
+                    // the previous one doesn't conflict too much or we'd ideally kill it.
+                    // For now, this provides the "best effort" transition.
+                    
+                    let listener_task = tauri::async_runtime::spawn(async move {
+                        proxy.run_proxy(listener, allow_list_inner).await;
+                    });
+
+                    // Wait for a restart signal
+                    if let Some(new_port) = rx.recv().await {
+                        println!("Restarting proxy on new port: {}", new_port);
+                        listener_task.abort(); // Kill old listener
+                        current_port = new_port;
+                        
+                        // Also update system proxy if it was on
+                        // We can't easily knows if it was ON here, but we can just turn it on/off via toggle
+                    } else {
+                        break;
+                    }
+                }
             });
 
             Ok(())
@@ -553,6 +618,7 @@ fn main() {
             save_session,
             load_session,
             export_selected_session,
+            change_proxy_port,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

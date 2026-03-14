@@ -6,7 +6,7 @@ import { TagProvider, useTagContext, TagModel } from "@src/context/TagContext";
 import { syncTrafficMatch, asyncTrafficMatch } from "@src/utils/tagMatcher";
 import { Traffic } from "../../models/Traffic";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
-import { HeaderLeft, HeaderRight, HeaderMiddle } from "@src/packages/header/Header";
+import { HeaderLeft, HeaderRight } from "@src/packages/header/Header";
 import {
   TrafficListProvider,
   useTrafficListContext,
