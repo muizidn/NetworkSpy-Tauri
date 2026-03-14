@@ -19,6 +19,7 @@ export interface TableViewProps<T> {
   data: T[];
   contextMenuRenderer?: TableViewContextMenuRenderer<T>;
   onSelectedRowChanged?: (firstSelected: T | null, items: T[] | null) => void;
+  selectedItems?: T[] | null;
   className?: string;
   isAllowAutoScroll?: boolean;
   isAutoScroll?: boolean;
@@ -113,6 +114,7 @@ export const TableView = <T,>({
   data,
   contextMenuRenderer,
   onSelectedRowChanged,
+  selectedItems,
   className,
   isAllowAutoScroll,
   isAutoScroll
@@ -227,6 +229,14 @@ export const TableView = <T,>({
       }
     }
   }
+
+  useEffect(() => {
+    if (selectedItems === null || (Array.isArray(selectedItems) && selectedItems.length === 0)) {
+        if (selectedRows.rows.length > 0 || selectedRows.firstSelect !== undefined) {
+           setSelectedRows({ rows: [] });
+        }
+    }
+  }, [selectedItems]);
 
 
   useEffect(() => setAutoScrollEnabled(isAutoScroll || false), [isAutoScroll]);

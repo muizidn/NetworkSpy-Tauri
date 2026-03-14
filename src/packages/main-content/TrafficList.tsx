@@ -17,12 +17,12 @@ import { save } from "@tauri-apps/plugin-dialog";
 type TauriInvokeFn = (cmd: string, args?: any) => Promise<any>;
 
 export const TrafficList: React.FC = () => {
-  const { selections, setSelections } = useTrafficListContext();
+  const { selections, setSelections, setTrafficList, setTrafficSet } = useTrafficListContext();
   const { filteredTraffic } = useFilterContext();
   const { isRun } = useAppProvider();
 
   useEffect(() => {
-    const unlisten = listen<{ ids: string[] }>("export_selected", async (event) => {
+    const unlistenExport = listen<{ ids: string[] }>("export_selected", async (event) => {
       try {
         const ids = event.payload.ids;
         if (!ids || ids.length === 0) return;
@@ -44,10 +44,23 @@ export const TrafficList: React.FC = () => {
       }
     });
 
+    const unlistenDelete = listen<{ ids: string[] }>("delete_selected", (event) => {
+      const idsToDelete = new Set(event.payload.ids);
+      
+      setTrafficList(prev => prev.filter((item: TrafficItemMap) => !idsToDelete.has(String(item.id))));
+      setTrafficSet(prev => {
+        const next = { ...prev };
+        event.payload.ids.forEach((id: string) => delete next[id]);
+        return next;
+      });
+      setSelections({ firstSelected: null, others: null });
+    });
+
     return () => {
-      unlisten.then((f) => f());
+      unlistenExport.then((f) => f());
+      unlistenDelete.then((f) => f());
     };
-  }, []);
+  }, [setTrafficList, setTrafficSet, setSelections]);
 
   const headers: TableViewHeader<TrafficItemMap>[] = useMemo(() => [
     {
@@ -68,8 +81,8 @@ export const TrafficList: React.FC = () => {
 
           return (
             <div className="flex items-center gap-2 px-1">
-              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusColor(String(input.code as number), input.method as string)}`} />
-              <span className="truncate opacity-80 font-mono text-[10px]">{input.id}</span>
+              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusColor(String(input.code), String(input.method))}`} />
+              <span className="truncate opacity-80 font-mono text-[10px]">{input.id as string}</span>
             </div>
           );
         }
@@ -120,6 +133,7 @@ export const TrafficList: React.FC = () => {
     <TableView
       headers={headers}
       data={filteredTraffic}
+      selectedItems={selections.others}
       contextMenuRenderer={contextMenuRenderer}
       onSelectedRowChanged={handleSelectedRowChanged}
       isAllowAutoScroll={true}
@@ -149,6 +163,14 @@ class TrafficListContextMenuRenderer
             enabled: items.length > 0,
             action: () => {
               emit("export_selected", { ids });
+            },
+          },
+          {
+            id: "delete_selected",
+            text: `Delete ${items.length === 1 ? 'item' : `${items.length} items`}`,
+            enabled: items.length > 0,
+            action: () => {
+              emit("delete_selected", { ids });
             },
           },
         ],
