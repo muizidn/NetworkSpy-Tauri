@@ -121,9 +121,13 @@ export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [loadData]);
 
   const renameFolder = useCallback(async (oldName: string, newName: string) => {
-     // Not yet implemented in backend, but we can do it if needed
-     // For now, just skip or implement simple version
-  }, []);
+    try {
+      await invoke("rename_tag_folder", { oldName, newName });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to rename folder", e);
+    }
+  }, [loadData]);
 
   const moveTag = useCallback(async (tagId: string, targetFolder: string) => {
     try {

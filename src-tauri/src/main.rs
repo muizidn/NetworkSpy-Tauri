@@ -23,7 +23,7 @@ use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
 use traffic::har_util::{create_har_log, HarLog};
-use traffic::tags::{TagManager, TagRule, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, delete_tag_folder_from_db};
+use traffic::tags::{TagManager, TagRule, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, rename_tag_folder, delete_tag_folder_from_db};
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
@@ -763,6 +763,7 @@ fn main() {
             move_tag_to_folder,
             get_tag_folders,
             add_tag_folder,
+            rename_tag_folder,
             delete_tag_folder_from_db,
         ])
         .build(tauri::generate_context!())
