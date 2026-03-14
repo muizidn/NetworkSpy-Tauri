@@ -23,6 +23,7 @@ use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
 use traffic::har_util::{create_har_log, HarLog};
+use traffic::tags::{TagManager, TagRule, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, delete_tag_folder_from_db};
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
@@ -106,6 +107,7 @@ struct PayloadTraffic {
     intercepted: bool,
     status_code: Option<u16>,
     client: Option<String>,
+    tags: Vec<String>,
 }
 
 #[derive(Clone, Serialize)]
@@ -348,6 +350,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
             content_encoding,
             intercepted: true,
             client: "HAR Import".to_string(),
+            tags: vec![],
         });
 
         let _ = app_handle.emit("traffic_event", Payload {
@@ -362,6 +365,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
                 intercepted: true,
                 status_code: None,
                 client: Some("HAR Import".to_string()),
+                tags: vec![],
             }
         });
 
@@ -408,6 +412,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
                 intercepted: true,
                 status_code: Some(status_code),
                 client: Some("HAR Import".to_string()),
+                tags: vec![],
             }
         });
     }
@@ -421,14 +426,16 @@ use std::time::Instant;
 struct MyTrafficListener {
     app_handle: AppHandle,
     traffic_db: Arc<TrafficDb>,
-    request_times: Mutex<HashMap<u64, Instant>>,
+    tag_manager: Arc<TagManager>,
+    request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
 }
 
 impl TrafficListener for MyTrafficListener {
     fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
-        self.request_times.lock().unwrap().insert(id, Instant::now());
-        
         let uri = request.uri().to_string();
+        let method = request.method().as_str().to_string();
+        self.request_times.lock().unwrap().insert(id, (Instant::now(), uri.clone(), method.clone()));
+        
         let http_version = match request.version() {
             Version::HTTP_10 => "HTTP/1.0".to_string(),
             Version::HTTP_11 => "HTTP/1.1".to_string(),
@@ -436,8 +443,6 @@ impl TrafficListener for MyTrafficListener {
             Version::HTTP_3 => "HTTP/3".to_string(),
             _ => "Unknown".to_string(),
         };
-
-        let method = request.method().as_str().to_string();
 
         let headers = request
             .headers()
@@ -458,18 +463,24 @@ impl TrafficListener for MyTrafficListener {
         let client_name = traffic::process_info::get_app_name(&client_addr);
         let client_info = format!("{} ({})", client_name, client_addr);
 
+        let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
+
         self.traffic_db.insert_request(TrafficEvent::Request {
             id: id.to_string(),
             uri: uri.clone(),
             method: method.clone(),
             version: http_version.clone(),
             headers: headers.clone(),
-            body: decompressed_body,
+            body: decompressed_body.clone(),
             content_type,
             content_encoding,
             intercepted,
             client: client_info.clone(),
+            tags: tags.clone(),
         });
+        
+        // Async tagging for request body if needed
+        self.tag_manager.async_tagging(id.to_string(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
@@ -485,14 +496,15 @@ impl TrafficListener for MyTrafficListener {
                     intercepted,
                     status_code: None,
                     client: Some(client_info),
+                    tags,
                 },
             },
         );
     }
 
     fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
-        let start_time = self.request_times.lock().unwrap().remove(&id);
-        let duration = start_time.map(|t| t.elapsed().as_millis()).unwrap_or(0);
+        let (start_time, uri, method) = self.request_times.lock().unwrap().remove(&id).unwrap_or((Instant::now(), "".to_string(), "".to_string()));
+        let duration = start_time.elapsed().as_millis();
         
         let status_code = response.status().as_u16();
         let http_version = match response.version() {
@@ -522,7 +534,7 @@ impl TrafficListener for MyTrafficListener {
         self.traffic_db.insert_response(TrafficEvent::Response {
             id: id.to_string(),
             headers: headers.clone(),
-            body: decompressed_body,
+            body: decompressed_body.clone(),
             content_type,
             content_encoding,
             status_code,
@@ -531,8 +543,11 @@ impl TrafficListener for MyTrafficListener {
         let client_name = traffic::process_info::get_app_name(&client_addr);
         let client_info = format!("{} ({})", client_name, client_addr);
 
-        let mut headers_with_perf = headers;
+        let mut headers_with_perf = headers.clone();
         headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
+
+        // Async tagging for response body
+        self.tag_manager.async_tagging(id.to_string(), uri, method, headers, decompressed_body, self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
@@ -548,6 +563,7 @@ impl TrafficListener for MyTrafficListener {
                     intercepted,
                     status_code: Some(status_code),
                     client: Some(client_info),
+                    tags: Vec::new(), // Tags will be updated via tags_updated event if async rules match
                 },
             },
         );
@@ -643,11 +659,12 @@ fn main() {
 
             let db_path = app_data_dir.join("traffic.db");
             
-            #[cfg(debug_assertions)]
-            println!("DB PATH: {}", db_path.display());
             
             let traffic_db = Arc::new(TrafficDb::new(db_path).expect("Failed to initialize database"));
             app_handle.manage(Arc::clone(&traffic_db));
+
+            let tag_manager = Arc::new(TagManager::new(Arc::clone(&traffic_db)));
+            app_handle.manage(Arc::clone(&tag_manager));
 
             let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
             if list.is_empty() {
@@ -689,6 +706,7 @@ fn main() {
                     let listener = Arc::new(MyTrafficListener {
                         app_handle: app_handle_inner,
                         traffic_db: traffic_db_inner,
+                        tag_manager: Arc::clone(&tag_manager),
                         request_times: Mutex::new(HashMap::new()),
                     });
 
@@ -737,6 +755,15 @@ fn main() {
             export_selected_to_csv,
             export_selected_to_sqlite,
             change_proxy_port,
+            get_tags_from_db,
+            add_tag_to_db,
+            update_tag_in_db,
+            delete_tag_from_db,
+            toggle_tag_in_db,
+            move_tag_to_folder,
+            get_tag_folders,
+            add_tag_folder,
+            delete_tag_folder_from_db,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

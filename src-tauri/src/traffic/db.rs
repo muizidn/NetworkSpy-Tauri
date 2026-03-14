@@ -22,6 +22,7 @@ pub enum TrafficEvent {
         content_encoding: Option<String>,
         intercepted: bool,
         client: String,
+        tags: Vec<String>,
     },
     Response {
         id: String,
@@ -30,6 +31,10 @@ pub enum TrafficEvent {
         content_type: Option<String>,
         content_encoding: Option<String>,
         status_code: u16,
+    },
+    UpdateTags {
+        id: String,
+        tags: Vec<String>,
     },
     Exit,
 }
@@ -86,6 +91,7 @@ impl TrafficDb {
 
         // Migration: Add missing columns to body table if they don't exist
         let _ = conn.execute("ALTER TABLE traffic ADD COLUMN client TEXT", []);
+        let _ = conn.execute("ALTER TABLE traffic ADD COLUMN tags TEXT", []);
         let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_type TEXT", []);
         let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_encoding TEXT", []);
         let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_type TEXT", []);
@@ -94,6 +100,30 @@ impl TrafficDb {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS allow_list (
                 domain TEXT PRIMARY KEY
+            )",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS tag_rules (
+                id TEXT PRIMARY KEY,
+                enabled INTEGER DEFAULT 1,
+                name TEXT,
+                method TEXT,
+                matching_rule TEXT,
+                tag TEXT,
+                is_sync INTEGER DEFAULT 1,
+                scope TEXT,
+                color TEXT,
+                bg_color TEXT,
+                folder TEXT
+            )",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS tag_folders (
+                name TEXT PRIMARY KEY
             )",
             [],
         )?;
@@ -160,6 +190,10 @@ impl TrafficDb {
         let _ = self.tx.send(TrafficEvent::Exit);
     }
 
+    pub fn get_connection(&self) -> std::sync::MutexGuard<'_, Connection> {
+        self.conn.lock().unwrap()
+    }
+
     pub fn insert_request(&self, event: TrafficEvent) {
         let _ = self.tx.send(event);
     }
@@ -168,10 +202,14 @@ impl TrafficDb {
         let _ = self.tx.send(event);
     }
 
+    pub fn update_tags(&self, id: String, tags: Vec<String>) {
+        let _ = self.tx.send(TrafficEvent::UpdateTags { id, tags });
+    }
+
     pub fn get_traffic_metadata(&self, id: String) -> Result<Option<TrafficMetadata>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client FROM traffic WHERE id = ?1",
+            "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client, tags FROM traffic WHERE id = ?1",
         )?;
         
         let mut rows = stmt.query_map(params![id], |row| {
@@ -188,6 +226,7 @@ impl TrafficDb {
                 req_body_size: 0, // Metadata only query
                 res_body_size: 0, // Metadata only query
                 client: row.get(9)?,
+                tags: row.get(10)?,
             })
         })?;
 
@@ -277,7 +316,7 @@ impl TrafficDb {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
-             b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client 
+             b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client, t.tags 
              FROM traffic t 
              LEFT JOIN body b ON t.id = b.traffic_id 
              ORDER BY t.timestamp ASC",
@@ -297,6 +336,7 @@ impl TrafficDb {
                 req_body_size: 0,
                 res_body_size: 0,
                 client: row.get(15)?,
+                tags: row.get(16)?,
             };
             
             let req_body: Option<Vec<u8>> = row.get(9)?;
@@ -343,7 +383,7 @@ impl TrafficDb {
             let placeholders: Vec<String> = (0..chunk.len()).map(|_| "?".to_string()).collect();
             let query = format!(
                 "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
-                 b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client 
+                 b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client, t.tags 
                  FROM traffic t 
                  LEFT JOIN body b ON t.id = b.traffic_id 
                  WHERE t.id IN ({})
@@ -368,6 +408,7 @@ impl TrafficDb {
                     req_body_size: 0,
                     res_body_size: 0,
                     client: row.get(15)?,
+                    tags: row.get(16)?,
                 };
                 
                 let req_body: Option<Vec<u8>> = row.get(9)?;
@@ -422,7 +463,7 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 
     {
         let mut insert_traffic = tx.prepare_cached(
-            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted, client) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) ON CONFLICT(id) DO NOTHING"
+            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted, client, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(id) DO NOTHING"
         ).expect("Failed to prepare insert_traffic");
 
         let mut insert_body = tx.prepare_cached(
@@ -437,12 +478,17 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
             "UPDATE body SET res_body = ?2, res_content_type = ?3, res_content_encoding = ?4 WHERE traffic_id = ?1"
         ).expect("Failed to prepare update_res_body");
 
+        let mut update_tags = tx.prepare_cached(
+            "UPDATE traffic SET tags = ?2 WHERE id = ?1"
+        ).expect("Failed to prepare update_tags");
+
         for event in buffer.drain(..) {
             match event {
-                TrafficEvent::Request { id, uri, method, version, headers, body, content_type, content_encoding, intercepted, client } => {
+                TrafficEvent::Request { id, uri, method, version, headers, body, content_type, content_encoding, intercepted, client, tags } => {
                     let headers_json = serde_json::to_string(&headers).unwrap_or_default();
+                    let tags_json = serde_json::to_string(&tags).unwrap_or_default();
                     let _ = insert_traffic.execute(params![
-                        id, uri, method, version, headers_json, if intercepted { 1 } else { 0 }, client
+                        id, uri, method, version, headers_json, if intercepted { 1 } else { 0 }, client, tags_json
                     ]);
                     
                     let body_data = if !body.is_empty() {
@@ -479,6 +525,14 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 
                     let _ = update_res_body.execute(params![id, body_data, content_type, content_encoding]);
                 }
+                TrafficEvent::Response { .. } => {
+                    // Responses don't trigger tags directly in this logic? 
+                    // Wait, actually responses could trigger async tagging but we'll handle that via a separate event.
+                }
+                TrafficEvent::UpdateTags { id, tags } => {
+                     let tags_json = serde_json::to_string(&tags).unwrap_or_default();
+                     let _ = update_tags.execute(params![id, tags_json]);
+                }
                 TrafficEvent::Exit => {}
             }
         }
@@ -490,7 +544,7 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {
     let mut recent = cache.write().unwrap();
     match event {
-        TrafficEvent::Request { id, uri, method, version, headers, body, content_type: _, content_encoding: _, intercepted, client } => {
+        TrafficEvent::Request { id, uri, method, version, headers, body, content_type: _, content_encoding: _, intercepted, client, tags } => {
             let metadata = TrafficMetadata {
                 id: id.clone(),
                 uri: Some(uri.clone()),
@@ -504,6 +558,7 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
                 req_body_size: body.len(),
                 res_body_size: 0,
                 client: Some(client.clone()),
+                tags: Some(serde_json::to_string(tags).unwrap_or_default()),
             };
             recent.push_front(metadata);
             if recent.len() > 10000 {
@@ -515,6 +570,11 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
                 meta.res_headers = Some(serde_json::to_string(headers).unwrap_or_default());
                 meta.status_code = Some(*status_code as i32);
                 meta.res_body_size = body.len();
+            }
+        }
+        TrafficEvent::UpdateTags { id, tags } => {
+            if let Some(meta) = recent.iter_mut().find(|m| m.id == *id) {
+                meta.tags = Some(serde_json::to_string(tags).unwrap_or_default());
             }
         }
         TrafficEvent::Exit => {}
@@ -535,4 +595,5 @@ pub struct TrafficMetadata {
     pub req_body_size: usize,
     pub res_body_size: usize,
     pub client: Option<String>,
+    pub tags: Option<String>,
 }

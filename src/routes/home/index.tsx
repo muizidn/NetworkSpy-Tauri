@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import SplitPane, { Pane, SashContent } from "split-pane-react";
 
 import { TauriEnvProvider, useAppProvider } from "@src/packages/app-env";
-import { TagProvider, useTagContext, TagModel } from "@src/context/TagContext";
-import { syncTrafficMatch, asyncTrafficMatch } from "@src/utils/tagMatcher";
 import { Traffic } from "../../models/Traffic";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
 import { HeaderLeft, HeaderRight } from "@src/packages/header/Header";
@@ -39,7 +37,6 @@ const Content = () => {
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
   const { provider, isRun, setIsRun, clearData } = useAppProvider();
-  const { tags } = useTagContext();
 
   const [tabs, setTabs] = useState<any[]>(() => {
     const saved = localStorage.getItem("ns_workspace_tabs");
@@ -96,11 +93,6 @@ const Content = () => {
           (t) => t.id === traffic.id
         );
 
-        // Tier 1: Synchronous Tagging (Max 10 active tags)
-        const syncTags = tags
-          .filter((t: TagModel) => t.enabled && t.isSync && syncTrafficMatch({ uri: traffic.uri, method: traffic.method }, t))
-          .map((t: TagModel) => t.tag);
-
         const formatBytes = (bytes: number) => {
           if (bytes === 0) return "0 B";
           const k = 1024;
@@ -111,7 +103,7 @@ const Content = () => {
 
         const listItem: TrafficItemMap = {
           id: traffic.id,
-          tags: syncTags.length > 0 ? syncTags : [],
+          tags: traffic.tags || [],
           url: traffic.uri || "-",
           client: traffic.client || "Local",
           method: traffic.method,
@@ -126,41 +118,11 @@ const Content = () => {
           timestamp: traffic.timestamp,
         };
 
-        // Tier 2: Asynchronous Tagging (Deferred matching)
-        const asyncRules = tags.filter((t: TagModel) => t.enabled && !t.isSync);
-        if (asyncRules.length > 0) {
-          setTimeout(async () => {
-            const matchResults = await Promise.all(
-              asyncRules.map(async (rule) => {
-                const isMatch = await asyncTrafficMatch(
-                  { id: traffic.id, uri: traffic.uri, method: traffic.method },
-                  rule,
-                  provider
-                );
-                return isMatch ? rule.tag : null;
-              })
-            );
-
-            const asyncTags = matchResults.filter((tag): tag is string => tag !== null);
-
-            if (asyncTags.length > 0) {
-              setTrafficList(current => current.map(item => {
-                if (item.id === traffic.id) {
-                  const existingTags = (item.tags as string[]) || [];
-                  const mergedTags = Array.from(new Set([...existingTags, ...asyncTags]));
-                  return { ...item, tags: mergedTags };
-                }
-                return item;
-              }));
-            }
-          }, 0);
-        }
-
         if (existingTrafficIndex !== -1) {
           const updatedTraffic = {
             ...prevData[existingTrafficIndex],
             ...listItem,
-            tags: syncTags.length > 0 ? syncTags : prevData[existingTrafficIndex].tags,
+            tags: traffic.tags && traffic.tags.length > 0 ? traffic.tags : prevData[existingTrafficIndex].tags,
           };
           return [
             ...prevData.slice(0, existingTrafficIndex),
@@ -173,8 +135,19 @@ const Content = () => {
       });
     }).then(fn => { unlisten = fn; });
 
+    let unlistenTags: (() => void) | undefined;
+    provider.listenTagsUpdated((event) => {
+      setTrafficList((current) => current.map(item => {
+        if (item.id === event.id) {
+           return { ...item, tags: event.tags };
+        }
+        return item;
+      }));
+    }).then(fn => { unlistenTags = fn; });
+
     return () => {
       if (unlisten) unlisten();
+      if (unlistenTags) unlistenTags();
     };
   }, [provider, isRun]);
 

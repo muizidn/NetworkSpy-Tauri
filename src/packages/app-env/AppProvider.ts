@@ -23,6 +23,7 @@ export interface IAppProvider {
   listenWebsocket(trafficId: string, callback: (message: any) => void): () => void;
   setListenStatus(isRun: boolean): Promise<number | void>;
   changeProxyPort(port: number): Promise<number>;
+  listenTagsUpdated(callback: (event: { id: string, tags: string[] }) => void): Promise<() => void>;
   updateInterceptAllowList(newList: string[]): Promise<void>;
   message(message: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void>;
   saveSession(): Promise<void>;
@@ -128,6 +129,7 @@ export class TauriAppProvider implements IAppProvider {
           duration: "0ms",
           timestamp: Date.now(),
           client: payload.data.client || "127.0.0.1",
+          tags: payload.data.tags || [],
         };
       } else {
         const existing = this.trafficSet[payload.id];
@@ -152,11 +154,23 @@ export class TauriAppProvider implements IAppProvider {
           duration: `${payload.data.headers['x-latency-ms'] || 0}ms`,
           timestamp: existing?.timestamp || Date.now(),
           client: payload.data.client || existing?.client || "127.0.0.1",
+          tags: existing?.tags || [],
         };
       }
 
       this.trafficSet[payload.id] = traffic;
       callback(traffic);
+    });
+  }
+
+  async listenTagsUpdated(callback: (event: { id: string, tags: string[] }) => void): Promise<() => void> {
+    return listen<{ id: string, tags: string[] }>("tags_updated", (event) => {
+      const payload = event.payload;
+      const existing = this.trafficSet[payload.id];
+      if (existing) {
+        existing.tags = payload.tags;
+      }
+      callback(payload);
     });
   }
 
@@ -314,6 +328,10 @@ export class MockAppProvider implements IAppProvider {
     return () => clearInterval(interval);
   }
 
+  async listenTagsUpdated(_callback: (event: { id: string, tags: string[] }) => void): Promise<() => void> {
+    return () => { };
+  }
+
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {
     let batch: any[] = [];
     const interval = setInterval(() => {
@@ -361,6 +379,7 @@ export class MockAppProvider implements IAppProvider {
           duration: `${Math.floor(Math.random() * 100) + 20}ms`,
           timestamp: item.timestamp || Date.now(),
           client: "Local (Mock)",
+          tags: [],
         };
         this.trafficSet[traffic.id] = traffic;
         this.mockBodySet[traffic.id] = { request: reqBody, response: resBody };

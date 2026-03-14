@@ -170,14 +170,15 @@ const TagList: React.FC = () => {
     });
   };
 
-  // Separate root items (no folder) and folder items
-  const rootItems = tags.filter(t => !t.folder && (
+  // Ensure "Default" folder is at least handled or treat as root if missing
+  const allFolderNames = Array.from(new Set([...folders, ...tags.map(t => t.folder).filter(Boolean) as string[]]));
+
+  const rootItems = tags.filter(t => (!t.folder || t.folder.trim() === "") && (
     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.matchingRule.toLowerCase().includes(searchTerm.toLowerCase()) ||
     t.tag.toLowerCase().includes(searchTerm.toLowerCase())
   ));
-
-  const folderGroups = folders.map(folderName => ({
+  const folderGroups = allFolderNames.map(folderName => ({
     name: folderName,
     items: tags.filter(t => t.folder === folderName && (
       t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -199,7 +200,7 @@ const TagList: React.FC = () => {
       scope: formData.get("scope") as 'metadata' | 'body',
       color: formData.get("color") as string,
       bgColor: formData.get("bgColor") as string,
-      folder: (formData.get("folder") as string) || "Default",
+      folder: formData.get("folder") as string || "",
     };
 
     if (editingTag) {
