@@ -78,7 +78,12 @@ export const TrafficList: React.FC = () => {
     { title: "Method", renderer: new TextRenderer("method") },
     { title: "Status", renderer: new TextRenderer("status") },
     { title: "Code", renderer: new TextRenderer("code") },
-    { title: "Time", renderer: new TextRenderer("time") },
+    {
+      title: "Time",
+      renderer: new TextRenderer("time"),
+      sortable: true,
+      compareValue: (a: any, b: any) => (a.timestamp < b.timestamp ? -1 : 1),
+    },
     { title: "Duration", renderer: new TextRenderer("duration") },
     { title: "Request", renderer: new TextRenderer("request") },
     { title: "Response", renderer: new TextRenderer("response") },

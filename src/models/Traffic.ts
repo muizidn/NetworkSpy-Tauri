@@ -20,5 +20,6 @@ export interface Traffic {
     } | null;
     time: string;
     duration: string;
+    timestamp: number;
     client: string;
 }

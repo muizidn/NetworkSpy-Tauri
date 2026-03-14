@@ -27,6 +27,8 @@ export const FilterOperators = {
   NotEquals: "Not Equals",
   GreaterThan: "Greater Than",
   LessThan: "Less Than",
+  After: "After",
+  Before: "Before",
   MatchesRegex: "Matches Regex"
 } as const;
 
@@ -180,6 +182,25 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const parseTimestampValue = (val: any): number => {
+    if (typeof val === 'number') return val;
+    if (typeof val !== 'string') return 0;
+
+    // 1. Try standard date parsing
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) return d.getTime();
+
+    // 2. Try HH:mm:ss[.zzz] (Assume today)
+    const match = val.match(/(\d{1,2}):(\d{1,2}):(\d{1,2})(?:\.(\d{1,3}))?/);
+    if (match) {
+      const date = new Date();
+      date.setHours(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]), parseInt(match[4] || "0"));
+      return date.getTime();
+    }
+
+    return 0;
+  };
+
   const evaluateRule = (traffic: TrafficItemMap, filter: FilterRule): boolean => {
     if (!filter.enabled || !filter.value) return true;
 
@@ -248,12 +269,18 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
     }
 
-    // Numeric and unit-aware operators (GreaterThan, LessThan)
-    if (filter.operator === FilterOperators.GreaterThan || filter.operator === FilterOperators.LessThan) {
+    // Numeric and unit-aware operators (GreaterThan, LessThan, After, Before)
+    const isTimestampOp = filter.operator === FilterOperators.After || filter.operator === FilterOperators.Before;
+    const isNumericOp = filter.operator === FilterOperators.GreaterThan || filter.operator === FilterOperators.LessThan;
+
+    if (isTimestampOp || isNumericOp) {
       let tNum = 0;
       let fNum = 0;
 
-      if (filter.type === "Duration" || filter.type === "Time") {
+      if (filter.type === "Time") {
+        tNum = traffic.timestamp as number;
+        fNum = parseTimestampValue(filter.value);
+      } else if (filter.type === "Duration") {
         tNum = parseTimeValue(targetValue);
         fNum = parseTimeValue(filter.value);
       } else if (filter.type === "Request Size" || filter.type === "Response Size") {
@@ -264,7 +291,8 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         fNum = parseNumericValue(filter.value);
       }
 
-      return filter.operator === FilterOperators.GreaterThan ? tNum > fNum : tNum < fNum;
+      if (filter.operator === FilterOperators.After || filter.operator === FilterOperators.GreaterThan) return tNum > fNum;
+      if (filter.operator === FilterOperators.Before || filter.operator === FilterOperators.LessThan) return tNum < fNum;
     }
 
     return true;

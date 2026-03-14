@@ -110,12 +110,13 @@ const Content = () => {
           method: traffic.method,
           status: traffic.response ? "Completed" : "Pending",
           code: traffic.response?.status_code?.toString() || "-",
-          time: traffic.time || "0 ms",
+          time: traffic.time,
           duration: traffic.duration || "0 ms",
           request: formatBytes(traffic.request.size),
           response: traffic.response ? formatBytes(traffic.response.size) : "-",
           performance: (traffic as any).performance,
-          intercepted: traffic.intercepted
+          intercepted: traffic.intercepted,
+          timestamp: traffic.timestamp,
         };
 
         // Tier 2: Asynchronous Tagging (Deferred matching)

@@ -7,6 +7,14 @@ import { Payload } from "@src/models/Payload";
 import { generateJson } from "@src/routes/home/trafficGenerator";
 import { readFile } from "@tauri-apps/plugin-fs";
 
+const formatTimestamp = (date: Date) => {
+  const h = date.getHours().toString().padStart(2, '0');
+  const m = date.getMinutes().toString().padStart(2, '0');
+  const s = date.getSeconds().toString().padStart(2, '0');
+  const ms = date.getMilliseconds().toString().padStart(3, '0');
+  return `${h}:${m}:${s}.${ms}`;
+};
+
 export interface IAppProvider {
   getRequestPairData(trafficId: string): Promise<RequestPairData>;
   getResponsePairData(trafficId: string): Promise<ResponsePairData>;
@@ -111,8 +119,9 @@ export class TauriAppProvider implements IAppProvider {
             size: payload.data.body_size || 0,
           },
           response: null,
-          time: "0ms",
+          time: formatTimestamp(new Date()),
           duration: "0ms",
+          timestamp: Date.now(),
           client: payload.data.client || "127.0.0.1",
         };
       } else {
@@ -134,8 +143,9 @@ export class TauriAppProvider implements IAppProvider {
             size: payload.data.body_size || 0,
             status_code: payload.data.status_code || 0,
           },
-          time: `${payload.data.headers['x-latency-ms'] || 0}ms`,
+          time: existing?.time || formatTimestamp(new Date()),
           duration: `${payload.data.headers['x-latency-ms'] || 0}ms`,
+          timestamp: existing?.timestamp || Date.now(),
           client: payload.data.client || existing?.client || "127.0.0.1",
         };
       }
@@ -336,8 +346,9 @@ export class MockAppProvider implements IAppProvider {
             size: resBody.length,
             status_code: 200,
           },
-          time: `${Math.floor(Math.random() * 50) + 10}ms`,
+          time: formatTimestamp(new Date(item.timestamp || Date.now())),
           duration: `${Math.floor(Math.random() * 100) + 20}ms`,
+          timestamp: item.timestamp || Date.now(),
           client: "Local (Mock)",
         };
         this.trafficSet[traffic.id] = traffic;
