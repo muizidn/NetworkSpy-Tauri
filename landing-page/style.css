@@ -348,7 +348,32 @@ nav {
   box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1);
 }
 
-/* Footer */
+/* Video Section */
+.video-section {
+  padding: 6rem 0;
+  text-align: center;
+}
+
+.video-container {
+  max-width: 900px;
+  margin: 4rem auto 0;
+  border-radius: 2rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border);
+  position: relative;
+  aspect-ratio: 16/9;
+  background: #020617;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
 footer {
   padding: 4rem 0;
   background: var(--card-bg);
