@@ -6,15 +6,15 @@ import { TagProvider, useTagContext, TagModel } from "@src/context/TagContext";
 import { syncTrafficMatch, asyncTrafficMatch } from "@src/utils/tagMatcher";
 import { Traffic } from "../../models/Traffic";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
-import { Header } from "../../packages/header/Header";
+import { HeaderLeft, HeaderRight, HeaderMiddle } from "@src/packages/header/Header";
 import {
   TrafficListProvider,
   useTrafficListContext,
-} from "../../packages/main-content/context/TrafficList";
-import { TrafficItemMap } from "../../packages/main-content/model/TrafficItemMap";
-import { LeftSidebar } from "../../packages/sidebar/LeftSidebar";
-import { RightSidebar } from "../../packages/sidebar/RightSidebar";
-import { NSTabs } from "../../packages/ui/NSTabs";
+} from "@src/packages/main-content/context/TrafficList";
+import { TrafficItemMap } from "@src/packages/main-content/model/TrafficItemMap";
+import { LeftSidebar } from "@src/packages/sidebar/LeftSidebar";
+import { RightSidebar } from "@src/packages/sidebar/RightSidebar";
+import { NSTabs } from "@src/packages/ui/NSTabs";
 import { CenterPane } from "./CenterPane";
 
 const Content = () => {
@@ -193,16 +193,8 @@ const Content = () => {
   };
 
   return (
-    <div className='select-none flex flex-col h-screen'>
-      <Header
-        toggleLeftPane={toggleLeftPane}
-        toggleBottomPane={toggleBottomPane}
-        toggleRightPane={toggleRightPane}
-        leftActive={isDisplayPane.left}
-        bottomActive={isDisplayPane.bottom}
-        rightActive={isDisplayPane.right}
-      />
-      <div className='flex flex-grow overflow-hidden w-full h-full border-t border-black'>
+    <div className='select-none flex flex-col h-screen overflow-hidden'>
+      <div className='flex flex-grow overflow-hidden w-full h-full'>
         <LeftSidebar />
         <SplitPane
           split='vertical'
@@ -216,6 +208,15 @@ const Content = () => {
                 onAdd={handleAddTab}
                 onClose={handleCloseTab}
                 onRename={handleRenameTab}
+                integratedTitlebar={false}
+                extraLeftContent={<HeaderLeft />}
+                extraRightContent={
+                  <HeaderRight
+                    toggleLeftPane={toggleLeftPane}
+                    toggleBottomPane={toggleBottomPane}
+                    toggleRightPane={toggleRightPane}
+                  />
+                }
               />
             </div>
           </Pane>

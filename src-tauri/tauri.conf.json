@@ -14,7 +14,10 @@
         "title": "Network Spy",
         "width": 1200,
         "height": 800,
-        "resizable": true
+        "resizable": true,
+        "theme": "Dark",
+        "titleBarStyle": "Transparent",
+        "hiddenTitle": true
       }
     ],
     "security": {
