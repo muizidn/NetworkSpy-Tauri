@@ -285,7 +285,8 @@ pub async fn toggle_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
 #[tauri::command]
 pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folder: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("UPDATE tag_rules SET folder = ?1 WHERE id = ?2", params![folder, id]).map_err(|e| e.to_string())?;
+    let folder_val = if folder.trim().is_empty() { None } else { Some(folder) };
+    conn.execute("UPDATE tag_rules SET folder = ?1 WHERE id = ?2", params![folder_val, id]).map_err(|e| e.to_string())?;
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
     Ok(())
@@ -294,7 +295,7 @@ pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: 
 #[tauri::command]
 pub async fn get_tag_folders(manager: tauri::State<'_, Arc<TagManager>>) -> Result<Vec<String>, String> {
     let conn = manager.db.get_connection();
-    let mut stmt = conn.prepare("SELECT name FROM tag_folders").map_err(|e| e.to_string())?;
+    let mut stmt = conn.prepare("SELECT name FROM tag_rule_folder").map_err(|e| e.to_string())?;
     let rows = stmt.query_map([], |row| row.get(0)).map_err(|e| e.to_string())?;
     let mut folders = Vec::new();
     for row in rows {
@@ -306,14 +307,29 @@ pub async fn get_tag_folders(manager: tauri::State<'_, Arc<TagManager>>) -> Resu
 #[tauri::command]
 pub async fn add_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, name: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("INSERT OR IGNORE INTO tag_folders (name) VALUES (?1)", params![name]).map_err(|e| e.to_string())?;
+    conn.execute("INSERT OR IGNORE INTO tag_rule_folder (name) VALUES (?1)", params![name]).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, old_name: String, new_name: String) -> Result<(), String> {
+    let conn = manager.db.get_connection();
+    
+    // 1. Update the folder name in tag_rule_folder
+    conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE name = ?2", params![new_name, old_name]).map_err(|e| e.to_string())?;
+    
+    // 2. Update all tag rules that use this folder
+    conn.execute("UPDATE tag_rules SET folder = ?1 WHERE folder = ?2", params![new_name, old_name]).map_err(|e| e.to_string())?;
+    
+    drop(conn);
+    manager.reload_rules().map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 pub async fn delete_tag_folder_from_db(manager: tauri::State<'_, Arc<TagManager>>, name: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("DELETE FROM tag_folders WHERE name = ?1", params![name]).map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM tag_rule_folder WHERE name = ?1", params![name]).map_err(|e| e.to_string())?;
     // Optionally delete or move tags in this folder
     conn.execute("UPDATE tag_rules SET folder = NULL WHERE folder = ?1", params![name]).map_err(|e| e.to_string())?;
     drop(conn);

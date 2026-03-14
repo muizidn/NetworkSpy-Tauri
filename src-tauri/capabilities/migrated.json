@@ -29,6 +29,9 @@
     },
     "dialog:allow-message",
     "dialog:allow-save",
-    "dialog:allow-open"
+    "dialog:allow-open",
+    "core:event:allow-listen",
+    "core:event:allow-emit",
+    "core:path:allow-resolve-directory"
   ]
 }

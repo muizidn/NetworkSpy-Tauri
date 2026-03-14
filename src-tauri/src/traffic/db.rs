@@ -121,8 +121,13 @@ impl TrafficDb {
             [],
         )?;
 
+        // Migration: Rename tag_folders to tag_rule_folder if needed
+        let _ = conn.execute("CREATE TABLE IF NOT EXISTS tag_rule_folder (name TEXT PRIMARY KEY)", []);
+        let _ = conn.execute("INSERT OR IGNORE INTO tag_rule_folder SELECT name FROM tag_folders", []);
+        let _ = conn.execute("DROP TABLE IF EXISTS tag_folders", []);
+
         conn.execute(
-            "CREATE TABLE IF NOT EXISTS tag_folders (
+            "CREATE TABLE IF NOT EXISTS tag_rule_folder (
                 name TEXT PRIMARY KEY
             )",
             [],
