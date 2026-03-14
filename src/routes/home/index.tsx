@@ -192,7 +192,6 @@ const Content = () => {
   return (
     <div className='select-none flex flex-col h-screen overflow-hidden'>
       <div className='flex flex-grow overflow-hidden w-full h-full'>
-        <LeftSidebar />
         <SplitPane
           split='vertical'
           sashRender={() => <SashContent type='vscode' />}
@@ -231,13 +230,7 @@ const Content = () => {
 
 const App: React.FC = () => {
   return (
-    <TrafficListProvider>
-      <TauriEnvProvider>
-        <PaneProvider>
-          <Content />
-        </PaneProvider>
-      </TauriEnvProvider>
-    </TrafficListProvider>
+    <Content />
   );
 };
 

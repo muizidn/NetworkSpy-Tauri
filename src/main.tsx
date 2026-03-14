@@ -19,6 +19,8 @@ import Logging from "./routes/tools/Logging";
 import Rewrite from "./routes/tools/Rewrite";
 import Scripting from "./routes/tools/Scripting";
 import Tag from "./routes/tools/Tag";
+import WorkspacePage from "./routes/workspace";
+import AccountPage from "./routes/account";
 
 // import ScriptEditor from "./routes/script-editor";
 
@@ -35,6 +37,14 @@ const router = createBrowserRouter([
       {
         path: "/settings",
         element: <Settings />,
+      },
+      {
+        path: "/workspace",
+        element: <WorkspacePage />,
+      },
+      {
+        path: "/account",
+        element: <AccountPage />,
       },
       {
         path: "/breakpoint",
@@ -72,14 +82,24 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TagProvider } from "./context/TagContext";
 
+import { TrafficListProvider } from "@src/packages/main-content/context/TrafficList";
+import { TauriEnvProvider } from "@src/packages/app-env";
+import { PaneProvider } from "./context/PaneProvider";
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
       <TagProvider>
         <SettingsProvider>
-          <DndProvider backend={HTML5Backend}>
-            <RouterProvider router={router} />
-          </DndProvider>
+          <TrafficListProvider>
+            <TauriEnvProvider>
+              <PaneProvider>
+                <DndProvider backend={HTML5Backend}>
+                  <RouterProvider router={router} />
+                </DndProvider>
+              </PaneProvider>
+            </TauriEnvProvider>
+          </TrafficListProvider>
         </SettingsProvider>
       </TagProvider>
     </TauriProvider>
