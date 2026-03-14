@@ -6,8 +6,16 @@ export const FilterTypes = {
   URL: "URL",
   Method: "Method",
   Status: "Status",
-  Header: "Header",
-  ContentType: "Content-Type",
+  Client: "Client",
+  Code: "Code",
+  Time: "Time",
+  Duration: "Duration",
+  RequestSize: "Request Size",
+  ResponseSize: "Response Size",
+  Performance: "Performance",
+  Intercepted: "Intercepted",
+  Tags: "Tags",
+  ID: "ID",
 } as const;
 
 export const FilterOperators = {
@@ -17,6 +25,8 @@ export const FilterOperators = {
   EndsWith: "Ends with",
   Equals: "Equals",
   NotEquals: "Not Equals",
+  GreaterThan: "Greater Than",
+  LessThan: "Less Than",
   MatchesRegex: "Matches Regex"
 } as const;
 
@@ -74,8 +84,6 @@ const BUILT_IN_FILTERS: PredefinedFilter[] = [
   { id: "all", name: "All", filters: [], isBuiltIn: true },
   { id: "http", name: "HTTP", filters: [{ isGroup: false, id: "built-in-http", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "http:" }], isBuiltIn: true },
   { id: "https", name: "HTTPS", filters: [{ isGroup: false, id: "built-in-https", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "https:" }], isBuiltIn: true },
-  { id: "json", name: "JSON", filters: [{ isGroup: false, id: "built-in-json", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.Contains, value: "json" }], isBuiltIn: true },
-  { id: "images", name: "Images", filters: [{ isGroup: false, id: "built-in-images", enabled: true, type: FilterTypes.ContentType, operator: FilterOperators.MatchesRegex, value: "(image|png|jpg|jpeg|gif)" }], isBuiltIn: true },
 ];
 
 export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -127,52 +135,139 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setActivePredefinedIds(prev => prev.filter(p => p !== id));
   };
 
+  const parseNumericValue = (val: any): number => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'boolean') return val ? 1 : 0;
+    if (typeof val !== 'string') return 0;
+    const match = val.match(/([\d.]+)/);
+    return match ? parseFloat(match[1]) : 0;
+  };
+
+  const parseTimeValue = (val: any): number => {
+    if (typeof val === 'number') return val;
+    if (typeof val !== 'string') return 0;
+    const str = val.toLowerCase().trim();
+    const match = str.match(/([\d.]+)\s*(ms|s|m|h)?/);
+    if (!match) return 0;
+    const num = parseFloat(match[1]);
+    const unit = match[2];
+    switch (unit) {
+      case 's': return num * 1000;
+      case 'm': return num * 60000;
+      case 'h': return num * 3600000;
+      case 'ms':
+      default: return num;
+    }
+  };
+
+  const parseSizeValue = (val: any): number => {
+    if (typeof val === 'number') return val;
+    if (typeof val !== 'string') return 0;
+    const str = val.toLowerCase().trim();
+    const match = str.match(/([\d.]+)\s*(gb|mb|kb|k|m|g|b)?/);
+    if (!match) return 0;
+    const num = parseFloat(match[1]);
+    let unit = match[2];
+    if (unit === 'k') unit = 'kb';
+    if (unit === 'm') unit = 'mb';
+    if (unit === 'g') unit = 'gb';
+    switch (unit) {
+      case 'kb': return num * 1024;
+      case 'mb': return num * 1024 * 1024;
+      case 'gb': return num * 1024 * 1024 * 1024;
+      case 'b':
+      default: return num;
+    }
+  };
+
   const evaluateRule = (traffic: TrafficItemMap, filter: FilterRule): boolean => {
     if (!filter.enabled || !filter.value) return true;
 
-    let targetValue = "";
+    let targetValue: any = "";
     switch (filter.type) {
-      case "URL":
-        targetValue = String(traffic["url"] || "");
-        break;
-      case "Method":
-        targetValue = String(traffic["method"] || "");
-        break;
-      case "Status":
-        targetValue = String(traffic["status"] || "");
-        break;
-      case "Content-Type":
-        targetValue = String(traffic["content_type"] || "");
-        break;
-      default:
-        return true;
+      case "URL": targetValue = traffic.url; break;
+      case "Method": targetValue = traffic.method; break;
+      case "Status": targetValue = traffic.status; break;
+      case "Client": targetValue = traffic.client; break;
+      case "Code": targetValue = traffic.code; break;
+      case "Time": targetValue = traffic.time; break;
+      case "Duration": targetValue = traffic.duration; break;
+      case "Request Size": targetValue = traffic.request; break;
+      case "Response Size": targetValue = traffic.response; break;
+      case "Performance": targetValue = traffic.performance; break;
+      case "Intercepted": targetValue = traffic.intercepted; break;
+      case "Tags": targetValue = traffic.tags; break;
+      case "ID": targetValue = traffic.id; break;
+      default: return true;
     }
 
-    const val = filter.value.toLowerCase();
-    const target = targetValue.toLowerCase();
-
-    switch (filter.operator) {
-      case FilterOperators.Contains:
-        return target.includes(val);
-      case FilterOperators.NotContains:
-        return !target.includes(val);
-      case FilterOperators.StartsWith:
-        return target.startsWith(val);
-      case FilterOperators.EndsWith:
-        return target.endsWith(val);
-      case FilterOperators.Equals:
-        return target === val;
-      case FilterOperators.NotEquals:
-        return target !== val;
-      case FilterOperators.MatchesRegex:
-        try {
-          return new RegExp(filter.value, "i").test(targetValue);
-        } catch {
+    // Special handling for Tags (string array)
+    if (filter.type === "Tags" && Array.isArray(targetValue)) {
+      const val = filter.value.toLowerCase();
+      switch (filter.operator) {
+        case FilterOperators.Contains:
+          return targetValue.some(t => t.toLowerCase().includes(val));
+        case FilterOperators.Equals:
+          return targetValue.some(t => t.toLowerCase() === val);
+        case FilterOperators.NotEquals:
+          return !targetValue.some(t => t.toLowerCase() === val);
+        case FilterOperators.StartsWith:
+          return targetValue.some(t => t.toLowerCase().startsWith(val));
+        case FilterOperators.EndsWith:
+          return targetValue.some(t => t.toLowerCase().endsWith(val));
+        default:
           return true;
-        }
-      default:
-        return true;
+      }
     }
+
+    const valStr = filter.value.toLowerCase();
+    const targetStr = String(targetValue || "").toLowerCase();
+
+    // Standard string operators (Contains, Equals, etc.)
+    const stringOperators: string[] = [
+      FilterOperators.Contains,
+      FilterOperators.NotContains,
+      FilterOperators.StartsWith,
+      FilterOperators.EndsWith,
+      FilterOperators.Equals,
+      FilterOperators.NotEquals,
+      FilterOperators.MatchesRegex
+    ];
+
+    if (stringOperators.includes(filter.operator)) {
+      switch (filter.operator) {
+        case FilterOperators.Contains: return targetStr.includes(valStr);
+        case FilterOperators.NotContains: return !targetStr.includes(valStr);
+        case FilterOperators.StartsWith: return targetStr.startsWith(valStr);
+        case FilterOperators.EndsWith: return targetStr.endsWith(valStr);
+        case FilterOperators.Equals: return targetStr === valStr;
+        case FilterOperators.NotEquals: return targetStr !== valStr;
+        case FilterOperators.MatchesRegex:
+          try { return new RegExp(filter.value, "i").test(targetStr); } catch { return true; }
+        default: return true;
+      }
+    }
+
+    // Numeric and unit-aware operators (GreaterThan, LessThan)
+    if (filter.operator === FilterOperators.GreaterThan || filter.operator === FilterOperators.LessThan) {
+      let tNum = 0;
+      let fNum = 0;
+
+      if (filter.type === "Duration" || filter.type === "Time") {
+        tNum = parseTimeValue(targetValue);
+        fNum = parseTimeValue(filter.value);
+      } else if (filter.type === "Request Size" || filter.type === "Response Size") {
+        tNum = parseSizeValue(targetValue);
+        fNum = parseSizeValue(filter.value);
+      } else {
+        tNum = parseNumericValue(targetValue);
+        fNum = parseNumericValue(filter.value);
+      }
+
+      return filter.operator === FilterOperators.GreaterThan ? tNum > fNum : tNum < fNum;
+    }
+
+    return true;
   };
 
   const evaluateNode = (traffic: TrafficItemMap, node: FilterNode): boolean => {
