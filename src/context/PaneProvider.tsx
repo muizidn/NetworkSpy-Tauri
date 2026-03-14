@@ -4,6 +4,7 @@ export interface PaneState {
   left: boolean;
   bottom: boolean;
   right: boolean;
+  centerLayout: "horizontal" | "vertical";
 }
 
 interface PaneContextType {
@@ -28,6 +29,7 @@ export const PaneProvider: React.FC<{ children: React.ReactNode }> = ({
     left: true,
     bottom: true,
     right: true,
+    centerLayout: "vertical",
   });
 
   return (

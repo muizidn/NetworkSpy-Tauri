@@ -176,20 +176,16 @@ const Content = () => {
     );
   };
 
-  const toggleLeftPane = () => {
-    const isVisible = isDisplayPane.left;
-    setIsDisplayPane((prev) => ({ ...prev, left: !isVisible }));
-    setSizes((prev) => [!isVisible ? "0%" : "15%", prev[1], prev[2]]);
-  };
+
 
   const toggleBottomPane = () => {
-    setIsDisplayPane((prev) => ({ ...prev, bottom: !prev.bottom }));
+    setIsDisplayPane((prev: any) => ({ ...prev, bottom: !prev.bottom }));
   };
 
   const toggleRightPane = () => {
     const isVisible = isDisplayPane.right;
-    setIsDisplayPane((prev) => ({ ...prev, right: !isVisible }));
-    setSizes((prev) => [prev[0], prev[1], !isVisible ? "0%" : "15%"]);
+    setIsDisplayPane((prev: any) => ({ ...prev, right: !isVisible }));
+    setSizes((prev) => [prev[0], isVisible ? "0%" : "25%"]);
   };
 
   return (
@@ -212,7 +208,6 @@ const Content = () => {
                 extraLeftContent={<HeaderLeft />}
                 extraRightContent={
                   <HeaderRight
-                    toggleLeftPane={toggleLeftPane}
                     toggleBottomPane={toggleBottomPane}
                     toggleRightPane={toggleRightPane}
                   />

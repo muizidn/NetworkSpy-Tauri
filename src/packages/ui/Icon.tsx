@@ -10,6 +10,7 @@ import {
   DocumentDownload,
   FolderOpen,
 } from "iconsax-react";
+import { FiColumns, FiAlignJustify } from "react-icons/fi";
 
 const icons = [
   "Play",
@@ -22,6 +23,8 @@ const icons = [
   "Close",
   "Download",
   "FolderOpen",
+  "Columns",
+  "Rows",
 ] as const;
 type IconName = (typeof icons)[number];
 
@@ -47,6 +50,11 @@ export const Icon: React.FC<{ iconName: IconName }> = ({ iconName }) => {
       return <DocumentDownload size={20} />;
     case "FolderOpen":
       return <FolderOpen size={20} />;
+    case "Columns":
+      return <FiColumns size={18} />;
+    case "Rows":
+      // Using AlignJustify as a substitute for "Rows" in Feather icons
+      return <FiAlignJustify size={18} className="rotate-90" />;
     default:
       return null; // or some default icon/component
   }
