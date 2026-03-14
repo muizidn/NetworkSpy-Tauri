@@ -220,7 +220,11 @@ export const TableView = <T,>({
         }));
       }
     } else {
-      setSelectedRows({ firstSelect: index, rows: [index] });
+      if (selectedRows.firstSelect == index) {
+        setSelectedRows({ firstSelect: undefined, rows: [] });
+      } else {
+        setSelectedRows({ firstSelect: index, rows: [index] });
+      }
     }
   }
 
@@ -484,7 +488,7 @@ export const TableView = <T,>({
                   onClick={onClickRow}
                   className={twMerge(
                     "grid min-w-full group transition-all duration-150 border-b border-zinc-900/50 absolute top-0 left-0 items-stretch",
-                    isSelected ? "bg-blue-600/10" : "hover:bg-zinc-800/30"
+                    isSelected ? "bg-blue-600/30" : "hover:bg-zinc-800/30"
                   )}
                   style={{
                     transform: `translateY(${virtualRow.start}px)`,
