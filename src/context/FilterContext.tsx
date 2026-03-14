@@ -13,7 +13,7 @@ export const FilterTypes = {
   RequestSize: "Request Size",
   ResponseSize: "Response Size",
   Performance: "Performance",
-  Intercepted: "Intercepted",
+  SSL: "SSL",
   Tags: "Tags",
   ID: "ID",
 } as const;
@@ -195,7 +195,7 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       case "Request Size": targetValue = traffic.request; break;
       case "Response Size": targetValue = traffic.response; break;
       case "Performance": targetValue = traffic.performance; break;
-      case "Intercepted": targetValue = traffic.intercepted; break;
+      case "SSL": targetValue = traffic.intercepted; break;
       case "Tags": targetValue = traffic.tags; break;
       case "ID": targetValue = traffic.id; break;
       default: return true;
@@ -275,11 +275,11 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     if (!node.isGroup) {
       return evaluateRule(traffic, node);
     }
-    
+
     // Group evaluation
     const children = node.children;
     if (children.length === 0) return true;
-    
+
     // Filter active children to evaluate
     const activeChildren = children.filter(c => c.enabled);
     if (activeChildren.length === 0) return true;
@@ -308,15 +308,15 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   }, [trafficList, filters, predefinedFilters, activePredefinedIds]);
 
   return (
-    <FilterContext.Provider value={{ 
-      filters, 
-      setFilters, 
-      predefinedFilters, 
-      activePredefinedIds, 
-      togglePredefinedFilter, 
+    <FilterContext.Provider value={{
+      filters,
+      setFilters,
+      predefinedFilters,
+      activePredefinedIds,
+      togglePredefinedFilter,
       saveCurrentFilters,
       removePredefinedFilter,
-      filteredTraffic 
+      filteredTraffic
     }}>
       {children}
     </FilterContext.Provider>

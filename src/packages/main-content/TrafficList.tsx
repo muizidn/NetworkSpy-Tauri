@@ -53,12 +53,12 @@ export const TrafficList: React.FC = () => {
     {
       title: "ID",
       renderer: new TextRenderer("id"),
-      minWidth: 100,
+      minWidth: 50,
       sortable: true,
       compareValue: (a: any, b: any) => (Number(a) < Number(b) ? -1 : 1),
     },
     {
-      title: "Mode",
+      title: "SSL",
       renderer: {
         render: ({ input }: { input: TrafficItemMap }) => {
           const intercepted = input.intercepted as boolean;
@@ -70,7 +70,7 @@ export const TrafficList: React.FC = () => {
           );
         }
       },
-      minWidth: 100,
+      minWidth: 50,
     },
     { title: "Tags", renderer: new TagsRenderer("tags"), minWidth: 100 },
     { title: "URL", renderer: new TextRenderer("url"), minWidth: 400 },
