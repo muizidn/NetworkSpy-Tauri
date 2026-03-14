@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetworkSpy | Modern Network Debugging for Mac & Windows</title>
+    <meta name="description" content="NetworkSpy is the ultimate cross-platform tool for network traffic analysis and debugging. Powerful, fast, and beautiful.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="logo">
+                    <div class="logo-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </div>
+                    NetworkSpy
+                </a>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#pro">Pro</a>
+                    <a href="#changelog">Changelog</a>
+                    <a href="#docs">Docs</a>
+                </div>
+                <div class="nav-actions">
+                    <a href="#" class="btn btn-secondary">Sign In</a>
+                    <a href="#" class="btn btn-primary">Download</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h1 class="reveal">The <span>AI-Powered</span> network debugger for modern stacks.</h1>
+                <p class="reveal" style="animation-delay: 0.1s;">Stop manually parsing logs. Let NetworkSpy intercept AI streams and use built-in intelligence to explain complex network issues in seconds.</p>
+                <div class="nav-actions reveal" style="justify-content: center; animation-delay: 0.2s;">
+                    <a href="#" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem;">Download For Mac</a>
+                    <a href="#" class="btn btn-secondary" style="padding: 1rem 2.5rem; font-size: 1.1rem;">View on GitHub</a>
+                </div>
+
+                <div class="hero-mockup reveal" style="animation-delay: 0.4s;">
+                    <div class="hero-glow"></div>
+                    <div class="mockup-container">
+                        <img src="./hero-mockup.png" alt="NetworkSpy Interface" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Proof -->
+        <section class="social-proof">
+            <div class="container">
+                <p class="social-title">TRUSTED BY DEVELOPERS FROM WORLD-CLASS COMPANIES</p>
+                <div class="logos">
+                    <div class="logo-item">VELOCITY</div>
+                    <div class="logo-item">CLOUDFLARE</div>
+                    <div class="logo-item">NETLIFY</div>
+                    <div class="logo-item">STRIPE</div>
+                    <div class="logo-item">VERCEL</div>
+                    <div class="logo-item">SUPABASE</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features">
+            <div class="container">
+                <span class="section-tag">Capabilities</span>
+                <h2>Everything you need for network debugging.</h2>
+                
+                <div class="feature-grid">
+                    <!-- Specialized Viewers Group -->
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        </div>
+                        <h3>Advanced Viewers</h3>
+                        <p>Specialized views for <strong>LLM streams</strong>, <strong>GraphQL</strong>, and <strong>Backend as a Service</strong> (Firebase, Supabase, Appwrite) with schema-aware formatting.</p>
+                    </div>
+
+                    <div class="feature-card reveal" style="animation-delay: 0.1s;">
+                        <div class="feature-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <h3>Security First</h3>
+                        <p>Industry-standard SSL proxying with deep security analysis. Identify vulnerabilities in your API headers and payload encryption instantly.</p>
+                    </div>
+
+                    <div class="feature-card reveal" style="animation-delay: 0.2s;">
+                        <div class="feature-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        </div>
+                        <h3>Enhanced Analysis</h3>
+                        <p>Go beyond simple request lists with advanced data visualization, error pattern detection, and automated performance profiling.</p>
+                    </div>
+
+                    <div class="feature-card reveal" style="animation-delay: 0.3s;">
+                        <div class="feature-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <h3>Smart Summary</h3>
+                        <p>Get an instant high-level overview of your session. Total bandwidth, error rates, and top domains summarized at a glance.</p>
+                    </div>
+
+                    <div class="feature-card reveal" style="animation-delay: 0.4s;">
+                        <div class="feature-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </div>
+                        <h3>Visual Timeline</h3>
+                        <p>Debug race conditions and latency with a precision timeline view. See exactly when every request started and ended in parallel.</p>
+                    </div>
+
+                    <div class="feature-card reveal" style="animation-delay: 0.5s;">
+                        <div class="feature-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        </div>
+                        <h3>Scripting & Mocking</h3>
+                        <p>Write custom JavaScript logic to modify traffic on the fly. Mock any endpoint to simulate edge cases and enjoy a better dev experience.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="container">
+                <div class="cta-box reveal">
+                    <h2>Ready to debug faster?</h2>
+                    <p>Join thousands of developers who use NetworkSpy to ship high-quality apps with confidence.</p>
+                    <a href="#" class="btn btn-primary btn-lg">Download Free for Mac</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Feature Breakdown -->
+        <section class="feature-detail">
+            <div class="container">
+                <!-- Feature 1: LLM/API Debugging -->
+                <div class="feature-detail-row">
+                    <div class="feature-detail-content reveal">
+                        <span class="section-tag">Intelligence</span>
+                        <h2>The World's Best <span>LLM Viewer</span> & Explainer.</h2>
+                        <p>Built specifically for the generative era. Intercept streaming tokens in real-time and let AI automatically explain errors, high latency, or broken schemas.</p>
+                        <ul style="list-style: none; color: var(--text-muted); margin-bottom: 2rem;">
+                            <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 2v8"></path><path d="m16 6-4 4-4-4"></path><rect width="20" height="14" x="2" y="6" rx="2"></rect></svg>
+                                <strong>Real-time Stream Tracking:</strong> Visualize LLM tokens as they arrive.
+                            </li>
+                            <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                <strong>AI Issue Context:</strong> Get human-friendly explanations for 500 errors.
+                            </li>
+                            <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 7v5l3 3"></path></svg>
+                                <strong>Smart Latency Analysis:</strong> Knows exactly why your GPT-4 turbo call is slow.
+                            </li>
+                        </ul>
+                        <a href="#" class="btn btn-primary">Start Debugging AI</a>
+                    </div>
+                    <div class="feature-detail-visual reveal" style="animation-delay: 0.2s;">
+                        <div class="feature-mockup-wrapper" style="border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 0 40px rgba(59, 130, 246, 0.1);">
+                            <img src="./hero-mockup.png" alt="AI-Powered Debugging">
+                            
+                            <!-- Callouts -->
+                            <div class="callout callout-1" style="top: 15%; right: -20px;">
+                                <div class="callout-dot"></div>
+                                <div class="callout-line"></div>
+                                <div class="callout-text">AI Explains: "Invalid OpenAI API Key"</div>
+                            </div>
+                            <div class="callout callout-2" style="bottom: 15%; left: -40px;">
+                                <div class="callout-text">Streaming: 45 tokens/sec</div>
+                                <div class="callout-line"></div>
+                                <div class="callout-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 2: High Security & Privacy -->
+                <div class="feature-detail-row">
+                    <div class="feature-detail-content reveal">
+                        <span class="section-tag">Security</span>
+                        <h2>Safer debugging with deep inspection.</h2>
+                        <p>Protect your sensitive data while debugging. NetworkSpy automatically identifies insecure headers and helps you mask credentials in your logs.</p>
+                        <a href="#" class="btn btn-secondary">Security Compliance Guide</a>
+                    </div>
+                    <div class="feature-detail-visual reveal" style="animation-delay: 0.2s;">
+                        <div class="feature-mockup-wrapper">
+                            <img src="./hero-mockup.png" alt="Security Dashboard">
+                            
+                            <div class="callout callout-2" style="bottom: 25%; left: -50px;">
+                                <div class="callout-text">Automated header vulnerability scans</div>
+                                <div class="callout-line"></div>
+                                <div class="callout-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 3: Visual Timeline -->
+                <div class="feature-detail-row" style="margin-bottom: 0;">
+                    <div class="feature-detail-content reveal">
+                        <span class="section-tag">Productivity</span>
+                        <h2>A truly enjoyable experience.</h2>
+                        <p>Debugging shouldn't be a chore. Our precision timeline view lets you visualize concurrency issues and slow waterfall requests with ease.</p>
+                        <a href="#" class="btn btn-primary">Try for Free</a>
+                    </div>
+                    <div class="feature-detail-visual reveal" style="animation-delay: 0.2s;">
+                        <div class="feature-mockup-wrapper">
+                            <img src="./hero-mockup.png" alt="Timeline View">
+                            
+                            <div class="callout callout-1" style="top: 40%; right: -10px;">
+                                <div class="callout-dot"></div>
+                                <div class="callout-line"></div>
+                                <div class="callout-text">Precision millisecond timing</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-info">
+                    <a href="#" class="logo">
+                        <div class="logo-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        NetworkSpy
+                    </a>
+                    <p>The premium network debugging tool for modern developers.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">Releases</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Community</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 NetworkSpy Inc. All rights reserved.</p>
+                <div style="display: flex; gap: 2rem;">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
