@@ -7,6 +7,7 @@ export interface PayloadTraffic {
     intercepted: boolean;
     status_code?: number;
     client?: string;
+    tags: string[];
 }
 
 export interface Payload {

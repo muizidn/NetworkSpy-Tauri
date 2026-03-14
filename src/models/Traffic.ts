@@ -22,4 +22,5 @@ export interface Traffic {
     duration: string;
     timestamp: number;
     client: string;
+    tags: string[];
 }

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
 import { ToolMethod } from "@src/models/ToolMethod";
 import { v4 as uuidv4 } from 'uuid';
+import { invoke } from "@tauri-apps/api/core";
 
 export interface TagModel {
   id: string;
@@ -40,144 +41,107 @@ export const useTagContext = () => {
   return context;
 };
 
-const STORAGE_KEY = "ns_traffic_tags";
-const FOLDERS_KEY = "ns_traffic_tag_folders";
-const MAX_SYNC_TAGS = 10;
-
 export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [tags, setTags] = useState<TagModel[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse tags from localStorage", e);
-      }
-    }
-    return [
-      {
-        id: uuidv4(),
-        enabled: true,
-        name: "Identify Auth",
-        method: "ALL",
-        matchingRule: "*/v1/auth/*",
-        tag: "AUTH",
-        isSync: true,
-        scope: 'metadata',
-        color: '#60a5fa',
-        bgColor: '#1e3a8a33',
-        folder: ''
-      },
-      {
-        id: uuidv4(),
-        enabled: true,
-        name: "Static Assets",
-        method: "GET",
-        matchingRule: "*.png,*.jpg,*.jpeg,*.gif,*.svg,*.css,*.js",
-        tag: "STATIC",
-        isSync: true,
-        scope: 'metadata',
-        color: '#a1a1aa',
-        bgColor: '#27272a',
-        folder: ''
-      }
-    ];
-  });
+  const [tags, setTags] = useState<TagModel[]>([]);
+  const [folders, setFolders] = useState<string[]>([]);
 
-  const [folders, setFolders] = useState<string[]>(() => {
-    const saved = localStorage.getItem(FOLDERS_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) { }
+  const loadData = useCallback(async () => {
+    try {
+      const fetchedTags = await invoke<TagModel[]>("get_tags_from_db");
+      const fetchedFolders = await invoke<string[]>("get_tag_folders");
+      setTags(fetchedTags);
+      setFolders(fetchedFolders);
+    } catch (e) {
+      console.error("Failed to load tags from DB:", e);
     }
-    const initialFolders = Array.from(new Set(tags.map(t => t.folder || ""))).filter(f => f !== "");
-    return initialFolders;
-  });
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tags));
-  }, [tags]);
+    loadData();
+  }, [loadData]);
 
-  useEffect(() => {
-    localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
-  }, [folders]);
+  const addTag = useCallback(async (tag: Omit<TagModel, "id">) => {
+    const newTag = { ...tag, id: uuidv4() } as TagModel;
+    try {
+      await invoke("add_tag_to_db", { rule: newTag });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to add tag:", e);
+    }
+  }, [loadData]);
 
-  const enforceSyncLimit = useCallback((allTags: TagModel[]) => {
-    // 1. Force scope='body' to be async
-    let processedTags = allTags.map(t => {
-      if (t.scope === 'body' && t.isSync) {
-        return { ...t, isSync: false };
-      }
-      return t;
-    });
+  const updateTag = useCallback(async (id: string, updatedFields: Partial<TagModel>) => {
+    const existing = tags.find(t => t.id === id);
+    if (!existing) return;
+    const updatedRule = { ...existing, ...updatedFields } as TagModel;
+    try {
+      await invoke("update_tag_in_db", { id, rule: updatedRule });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to update tag", e);
+    }
+  }, [tags, loadData]);
 
-    // 2. Enforce 10-slot limit
-    const syncTags = processedTags.filter(t => t.isSync);
-    if (syncTags.length <= MAX_SYNC_TAGS) return processedTags;
+  const deleteTag = useCallback(async (id: string) => {
+    try {
+      await invoke("delete_tag_from_db", { id });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to delete tag", e);
+    }
+  }, [loadData]);
 
-    const tagsToAsyncCount = syncTags.length - MAX_SYNC_TAGS;
-    let demotedCount = 0;
-    
-    return processedTags.map(t => {
-      if (t.isSync && demotedCount < tagsToAsyncCount) {
-        demotedCount++;
-        return { ...t, isSync: false };
-      }
-      return t;
-    });
+  const toggleTag = useCallback(async (id: string) => {
+    const tag = tags.find(t => t.id === id);
+    if (!tag) return;
+    try {
+      await invoke("toggle_tag_in_db", { id, enabled: !tag.enabled });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to toggle tag", e);
+    }
+  }, [tags, loadData]);
+
+  const addFolder = useCallback(async (name: string) => {
+    try {
+      await invoke("add_tag_folder", { name });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to add folder", e);
+    }
+  }, [loadData]);
+
+  const deleteFolder = useCallback(async (folderName: string) => {
+    try {
+      await invoke("delete_tag_folder_from_db", { name: folderName });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to delete folder", e);
+    }
+  }, [loadData]);
+
+  const renameFolder = useCallback(async (oldName: string, newName: string) => {
+     // Not yet implemented in backend, but we can do it if needed
+     // For now, just skip or implement simple version
   }, []);
 
-  const addTag = useCallback((tag: Omit<TagModel, "id">) => {
-    setTags(prev => {
-      const newTagFolder = tag.folder || "";
-      if (newTagFolder && !folders.includes(newTagFolder)) {
-        setFolders(f => Array.from(new Set([...f, newTagFolder])));
-      }
-      const newTags = [...prev, { ...tag, id: uuidv4() }];
-      return enforceSyncLimit(newTags as TagModel[]);
-    });
-  }, [enforceSyncLimit, folders]);
+  const moveTag = useCallback(async (tagId: string, targetFolder: string) => {
+    try {
+      await invoke("move_tag_to_folder", { id: tagId, folder: targetFolder });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to move tag", e);
+    }
+  }, [loadData]);
 
-  const updateTag = useCallback((id: string, updatedFields: Partial<TagModel>) => {
-    setTags(prev => {
-      const newTags = prev.map(t => t.id === id ? { ...t, ...updatedFields } : t);
-      return enforceSyncLimit(newTags);
-    });
-  }, [enforceSyncLimit]);
-
-  const deleteTag = useCallback((id: string) => {
-    setTags(prev => prev.filter(t => t.id !== id));
-  }, []);
-
-  const toggleTag = useCallback((id: string) => {
-    setTags(prev => prev.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t));
-  }, []);
-
-  const deleteFolder = useCallback((folderName: string) => {
-    setTags(prev => prev.filter(t => t.folder !== folderName));
-    setFolders(prev => prev.filter(f => f !== folderName));
-  }, []);
-
-  const addFolder = useCallback((name: string) => {
-    setFolders(prev => {
-      if (prev.includes(name)) return prev;
-      return [...prev, name];
-    });
-  }, []);
-
-  const renameFolder = useCallback((oldName: string, newName: string) => {
-    setFolders(prev => prev.map(f => f === oldName ? newName : f));
-    setTags(prev => prev.map(t => t.folder === oldName ? { ...t, folder: newName } : t));
-  }, []);
-
-  const moveTag = useCallback((tagId: string, targetFolder: string) => {
-    setTags(prev => prev.map(t => t.id === tagId ? { ...t, folder: targetFolder } : t));
-  }, []);
-
-  const toggleFolder = useCallback((folderName: string, enabled: boolean) => {
-    setTags(prev => prev.map(t => t.folder === folderName ? { ...t, enabled } : t));
-  }, []);
+  const toggleFolder = useCallback(async (folderName: string, enabled: boolean) => {
+    // Backend doesn't have toggleFolder yet, but we can iterate
+    const tagsInFolder = tags.filter(t => t.folder === folderName);
+    for (const t of tagsInFolder) {
+      await invoke("toggle_tag_in_db", { id: t.id, enabled });
+    }
+    await loadData();
+  }, [tags, loadData]);
 
   return (
     <TagContext.Provider value={{ 
