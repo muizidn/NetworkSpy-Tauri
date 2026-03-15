@@ -3,7 +3,7 @@ import { FiPlus, FiTrash2, FiSearch, FiInfo } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 
 interface ToolBaseHeaderProps {
-  title: string;
+  title: React.ReactNode;
   description?: string;
   icon: React.ReactNode;
   onAdd?: () => void;

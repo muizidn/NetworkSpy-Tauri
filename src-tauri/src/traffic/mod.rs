@@ -5,3 +5,4 @@ pub mod har_util;
 pub mod process_info;
 pub mod tags;
 pub mod sessions;
+pub mod viewers;

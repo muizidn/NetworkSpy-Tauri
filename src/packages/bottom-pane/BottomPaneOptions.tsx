@@ -4,6 +4,7 @@ import { useBottomPaneContext } from "@src/context/BottomPaneContext";
 import { FiSearch } from "react-icons/fi";
 import { BsPinAngleFill } from "react-icons/bs";
 import { twMerge } from "tailwind-merge";
+import { useViewerContext } from "@src/context/ViewerContext";
 
 export const BottomPaneOptions = () => {
   const { setMode, selectionType, setSelectionType, mode: currentMode } = useBottomPaneContext();
@@ -48,6 +49,7 @@ export const BottomPaneOptions = () => {
     ],
 
     single: [
+      { id: "custom_viewer", title: "Custom Viewer", onClick: () => setMode("custom_viewer") },
       { id: "request_response", title: "Request Response", onClick: () => setMode("request_response") },
       { id: "query_params", title: "Query Params", onClick: () => setMode("query_params") },
       { id: "cookies", title: "Cookies", onClick: () => setMode("cookies") },
@@ -109,14 +111,32 @@ export const BottomPaneOptions = () => {
     ],
   };
 
+  const { viewers } = useViewerContext();
+
   interface ViewerOption {
     id?: string;
     title?: string;
     onClick?: () => void;
     divider?: boolean;
+    isCustom?: boolean;
   }
 
-  const allOptions: ViewerOption[] = optionsBySelection[selectionType] || [];
+  const allOptions = useMemo<ViewerOption[]>(() => {
+    const base = (optionsBySelection[selectionType] as ViewerOption[]) || [];
+    if (selectionType === 'single') {
+      const viewerOptions = viewers.map(v => ({
+        id: v.id, // we use id for pinning, but the mode is the object
+        isCustom: true,
+        title: v.name,
+        onClick: () => setMode({ type: "viewer", id: v.id })
+      }));
+      
+      if (viewerOptions.length > 0) {
+        return [...viewerOptions, { divider: true }, ...base.filter((o: any) => o.id !== 'custom_viewer')];
+      }
+    }
+    return base;
+  }, [selectionType, viewers, optionsBySelection, setMode]);
 
   const filteredAndSortedOptions = useMemo(() => {
     return allOptions
@@ -156,11 +176,13 @@ export const BottomPaneOptions = () => {
           }
 
           const isPinned = pinnedModes.includes(opt.id!);
-          const isActive = currentMode === opt.id;
+          const isActive = typeof currentMode === 'object' && currentMode.type === 'viewer' 
+            ? currentMode.id === opt.id 
+            : currentMode === opt.id;
 
           return (
             <button
-              key={opt.id}
+              key={opt.isCustom ? `custom-${opt.id}` : opt.id}
               onClick={opt.onClick}
               className={twMerge(
                 "group relative flex items-center h-6 px-3 rounded-md transition-all duration-200 whitespace-nowrap text-[11px] font-medium shrink-0",

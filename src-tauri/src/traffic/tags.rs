@@ -68,10 +68,8 @@ impl TagManager {
         let mut rules = Vec::new();
         let mut builder = GlobSetBuilder::new();
 
-        let mut row_count = 0;
         for row in rows {
             let rule = row?;
-            row_count += 1;
             if rule.enabled {
                 // Support comma separated patterns
                 for pattern in rule.matching_rule.split(',') {

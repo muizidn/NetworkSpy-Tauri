@@ -252,6 +252,36 @@ impl TrafficDb {
         }
     }
 
+    pub fn get_request_data(&self, id: &str) -> Option<RequestResponseData> {
+        let meta = self.get_traffic_metadata(id.to_string()).ok()??;
+        let (body, content_type, content_encoding) = self.get_request_body_info(id.to_string()).ok()??;
+        
+        let headers: HashMap<String, String> = serde_json::from_str(meta.req_headers.as_deref().unwrap_or("{}")).unwrap_or_default();
+        
+        Some(RequestResponseData {
+            headers,
+            body,
+            content_type: content_type.unwrap_or_else(|| "text/plain".to_string()),
+            content_encoding,
+            status_code: None,
+        })
+    }
+
+    pub fn get_response_data(&self, id: &str) -> Option<RequestResponseData> {
+        let meta = self.get_traffic_metadata(id.to_string()).ok()??;
+        let (body, content_type, content_encoding) = self.get_response_body_info(id.to_string()).ok()??;
+        
+        let headers: HashMap<String, String> = serde_json::from_str(meta.res_headers.as_deref().unwrap_or("{}")).unwrap_or_default();
+        
+        Some(RequestResponseData {
+            headers,
+            body,
+            content_type: content_type.unwrap_or_else(|| "text/plain".to_string()),
+            content_encoding,
+            status_code: meta.status_code,
+        })
+    }
+
     pub fn get_request_body_info(&self, id: String) -> rusqlite::Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT req_body, req_content_type, req_content_encoding FROM body WHERE traffic_id = ?1")?;
@@ -674,4 +704,14 @@ pub struct TrafficMetadata {
     pub res_body_size: usize,
     pub client: Option<String>,
     pub tags: Option<String>,
+}
+
+#[derive(Clone, serde::Serialize)]
+pub struct RequestResponseData {
+    pub headers: HashMap<String, String>,
+    pub body: Vec<u8>,
+    pub content_type: String,
+    pub content_encoding: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_code: Option<i32>,
 }

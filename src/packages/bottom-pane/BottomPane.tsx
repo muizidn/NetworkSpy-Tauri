@@ -1,7 +1,7 @@
 import { useState, Suspense } from "react";
 
 import { SelectionViewer } from "../main-content/SelectionViewer";
-import { useBottomPaneContext } from "@src/context/BottomPaneContext";
+import { useBottomPaneContext, BottomPaneMode } from "@src/context/BottomPaneContext";
 import { ErrorBoundary } from "../ui/ErrorBoundary";
 import { RequestResponseMode } from "./BottomPaneComponents/Single/RequestResponseMode";
 import { SummaryMode } from "./BottomPaneComponents/None/SummaryMode";
@@ -59,6 +59,8 @@ import { FirebaseMode } from "./BottomPaneComponents/Single/FirebaseMode";
 import { SupabaseMode } from "./BottomPaneComponents/Single/SupabaseMode";
 import { AppwriteMode } from "./BottomPaneComponents/Single/AppwriteMode";
 import { AdsViewerMode } from "./BottomPaneComponents/Single/AdsViewerMode";
+import { CustomViewerMode } from "@src/packages/bottom-pane/BottomPaneComponents/Single/CustomViewerMode";
+
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { useAppProvider } from "../app-env";
 import { FiShield, FiLock, FiUnlock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
@@ -254,11 +256,17 @@ export const BottomPane = () => {
 };
 
 const renderMode = (
-  mode: string,
+  mode: BottomPaneMode,
   sizes: any[],
   setSizes: (sizes: any[]) => void
 ) => {
+  if (typeof mode === 'object' && mode.type === 'viewer') {
+    return <CustomViewerMode viewerId={mode.id} />;
+  }
+
   switch (mode) {
+    case "custom_viewer":
+      return <CustomViewerMode />;
     case "summary":
       return <SummaryMode />;
 
