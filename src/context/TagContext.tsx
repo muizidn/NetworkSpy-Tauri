@@ -138,7 +138,7 @@ export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const moveTag = useCallback(async (tagId: string, targetFolderId: string) => {
     try {
-      await invoke("move_tag_to_folder", { id: tagId, folder_id: targetFolderId });
+      await invoke("move_tag_to_folder", { id: tagId, folderId: targetFolderId });
       await loadData();
     } catch (e) {
       console.error("Failed to move tag", e);

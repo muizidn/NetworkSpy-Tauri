@@ -325,11 +325,11 @@ pub async fn toggle_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
 }
 
 #[tauri::command]
-pub async fn toggle_folder_in_db(manager: tauri::State<'_, Arc<TagManager>>, folder_id: String, enabled: bool) -> Result<(), String> {
+pub async fn toggle_folder_in_db(manager: tauri::State<'_, Arc<TagManager>>, folderId: String, enabled: bool) -> Result<(), String> {
     let conn = manager.db.get_connection();
     conn.execute(
         "UPDATE tag_rules SET enabled = ?1 WHERE folder_id = ?2",
-        params![if enabled { 1 } else { 0 }, folder_id],
+        params![if enabled { 1 } else { 0 }, folderId],
     ).map_err(|e| e.to_string())?;
     
     drop(conn);
@@ -338,9 +338,9 @@ pub async fn toggle_folder_in_db(manager: tauri::State<'_, Arc<TagManager>>, fol
 }
 
 #[tauri::command]
-pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folder_id: String) -> Result<(), String> {
+pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folderId: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    let folder_val = if folder_id.trim().is_empty() { None } else { Some(folder_id) };
+    let folder_val = if folderId.trim().is_empty() { None } else { Some(folderId) };
     let res = conn.execute("UPDATE tag_rules SET folder_id = ?1 WHERE id = ?2", params![folder_val, id]).map_err(|e| e.to_string())?;
     if res == 0 {
         return Err(format!("Tag with id {} not found", id));
@@ -373,11 +373,11 @@ pub async fn add_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: Stri
 }
 
 #[tauri::command]
-pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, new_name: String) -> Result<(), String> {
+pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, newName: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
     
     // 1. Update the folder name in tag_rule_folder
-    let res = conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE id = ?2", params![new_name, id]).map_err(|e| e.to_string())?;
+    let res = conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE id = ?2", params![newName, id]).map_err(|e| e.to_string())?;
     if res == 0 {
         return Err(format!("Folder with id {} not found", id));
     }
