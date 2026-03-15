@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use rusqlite::{params, Result, Connection};
+use rusqlite::{params, Connection};
 use std::sync::{Arc, Mutex};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use std::collections::HashMap;
@@ -46,7 +46,7 @@ impl TagManager {
         manager
     }
 
-    pub fn reload_rules(&self) -> Result<()> {
+    pub fn reload_rules(&self) -> rusqlite::Result<()> {
         let conn = self.db.get_connection();
         let mut stmt = conn.prepare("SELECT id, enabled, name, method, matching_rule, tag, is_sync, scope, color, bg_color, folder_id FROM tag_rules")?;
         let rows = stmt.query_map([], |row| {
@@ -223,7 +223,7 @@ pub async fn add_tag_to_db(manager: tauri::State<'_, Arc<TagManager>>, rule: Tag
     match res {
         Ok(_) => {
             drop(conn); // DROP THE LOCK BEFORE RELOADING
-            manager.reload_rules().map_err(|e| e.to_string())?;
+            manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
             Ok(())
         },
         Err(e) => Err(e.to_string())
@@ -270,7 +270,7 @@ pub async fn update_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
         if let Some(v) = obj.get("scope") { if let Some(s) = v.as_str() { rule.scope = s.to_string(); } }
         if let Some(v) = obj.get("color") { rule.color = v.as_str().map(|s| s.to_string()); }
         if let Some(v) = obj.get("bgColor") { rule.bg_color = v.as_str().map(|s| s.to_string()); }
-        if let Some(v) = obj.get("folderId") { rule.folder_id = v.as_str().map(|s| s.to_string()); }
+        if let Some(v) = obj.get("folder_id") { rule.folder_id = v.as_str().map(|s| s.to_string()); }
     }
 
     // 3. Update DB
@@ -296,7 +296,7 @@ pub async fn update_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
     }
 
     drop(conn); // DROP LOCK
-    manager.reload_rules().map_err(|e| e.to_string())?;
+    manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
     Ok(())
 }
 
@@ -308,7 +308,7 @@ pub async fn delete_tag_from_db(manager: tauri::State<'_, Arc<TagManager>>, id: 
         return Err(format!("Tag with id {} not found", id));
     }
     drop(conn);
-    manager.reload_rules().map_err(|e| e.to_string())?;
+    manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
     Ok(())
 }
 
@@ -320,33 +320,33 @@ pub async fn toggle_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
         return Err(format!("Tag with id {} not found", id));
     }
     drop(conn);
-    manager.reload_rules().map_err(|e| e.to_string())?;
+    manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn toggle_folder_in_db(manager: tauri::State<'_, Arc<TagManager>>, folderId: String, enabled: bool) -> Result<(), String> {
+pub async fn toggle_folder_in_db(manager: tauri::State<'_, Arc<TagManager>>, folder_id: String, enabled: bool) -> Result<(), String> {
     let conn = manager.db.get_connection();
     conn.execute(
         "UPDATE tag_rules SET enabled = ?1 WHERE folder_id = ?2",
-        params![if enabled { 1 } else { 0 }, folderId],
+        params![if enabled { 1 } else { 0 }, folder_id],
     ).map_err(|e| e.to_string())?;
     
     drop(conn);
-    manager.reload_rules().map_err(|e| e.to_string())?;
+    manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folderId: String) -> Result<(), String> {
+pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folder_id: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    let folder_val = if folderId.trim().is_empty() { None } else { Some(folderId) };
+    let folder_val = if folder_id.trim().is_empty() { None } else { Some(folder_id) };
     let res = conn.execute("UPDATE tag_rules SET folder_id = ?1 WHERE id = ?2", params![folder_val, id]).map_err(|e| e.to_string())?;
     if res == 0 {
         return Err(format!("Tag with id {} not found", id));
     }
     drop(conn);
-    manager.reload_rules().map_err(|e| e.to_string())?;
+    manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
     Ok(())
 }
 
@@ -373,17 +373,17 @@ pub async fn add_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: Stri
 }
 
 #[tauri::command]
-pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, newName: String) -> Result<(), String> {
+pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, new_name: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
     
     // 1. Update the folder name in tag_rule_folder
-    let res = conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE id = ?2", params![newName, id]).map_err(|e| e.to_string())?;
+    let res = conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE id = ?2", params![new_name, id]).map_err(|e| e.to_string())?;
     if res == 0 {
         return Err(format!("Folder with id {} not found", id));
     }
     
     drop(conn);
-    manager.reload_rules().map_err(|e| e.to_string())?;
+    manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
     Ok(())
 }
 
@@ -397,6 +397,6 @@ pub async fn delete_tag_folder_from_db(manager: tauri::State<'_, Arc<TagManager>
     // Optionally delete or move tags in this folder
     conn.execute("UPDATE tag_rules SET folder_id = NULL WHERE folder_id = ?1", params![id]).map_err(|e| e.to_string())?;
     drop(conn);
-    manager.reload_rules().map_err(|e| e.to_string())?;
+    manager.reload_rules().map_err(|e: rusqlite::Error| e.to_string())?;
     Ok(())
 }

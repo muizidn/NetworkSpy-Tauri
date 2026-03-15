@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, Result};
+use rusqlite::{params, Connection};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use serde_json;
@@ -46,7 +46,19 @@ pub struct TrafficDb {
 }
 
 impl TrafficDb {
-    pub fn new(db_path: PathBuf) -> Result<Self> {
+    pub fn new_readonly(db_path: PathBuf) -> rusqlite::Result<Self> {
+        let conn = Connection::open_with_flags(&db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        let (tx, _) = unbounded::<TrafficEvent>();
+        let recent_traffic = Arc::new(RwLock::new(VecDeque::new()));
+        
+        Ok(Self {
+            conn: Arc::new(Mutex::new(conn)),
+            tx,
+            recent_traffic,
+        })
+    }
+
+    pub fn new(db_path: PathBuf) -> rusqlite::Result<Self> {
         let conn = Connection::open(&db_path)?;
         
         // Phase 1: SQLite Performance Foundation
@@ -121,7 +133,7 @@ impl TrafficDb {
             [],
         )?;
 
-        conn.execute("ALTER TABLE tag_rules ADD COLUMN folder_id TEXT", []);
+        let _ = conn.execute("ALTER TABLE tag_rules ADD COLUMN folder_id TEXT", []);
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS tag_rule_folder (
@@ -209,7 +221,7 @@ impl TrafficDb {
         let _ = self.tx.send(TrafficEvent::UpdateTags { id, tags });
     }
 
-    pub fn get_traffic_metadata(&self, id: String) -> Result<Option<TrafficMetadata>> {
+    pub fn get_traffic_metadata(&self, id: String) -> rusqlite::Result<Option<TrafficMetadata>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client, tags FROM traffic WHERE id = ?1",
@@ -240,7 +252,7 @@ impl TrafficDb {
         }
     }
 
-    pub fn get_request_body_info(&self, id: String) -> Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
+    pub fn get_request_body_info(&self, id: String) -> rusqlite::Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT req_body, req_content_type, req_content_encoding FROM body WHERE traffic_id = ?1")?;
         let res = stmt.query_row(params![id], |row| {
@@ -261,11 +273,11 @@ impl TrafficDb {
         res
     }
 
-    pub fn get_request_body(&self, id: String) -> Result<Option<Vec<u8>>> {
+    pub fn get_request_body(&self, id: String) -> rusqlite::Result<Option<Vec<u8>>> {
         self.get_request_body_info(id).map(|opt| opt.map(|(b, _, _)| b))
     }
 
-    pub fn get_response_body_info(&self, id: String) -> Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
+    pub fn get_response_body_info(&self, id: String) -> rusqlite::Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT res_body, res_content_type, res_content_encoding FROM body WHERE traffic_id = ?1")?;
         let res = stmt.query_row(params![id], |row| {
@@ -286,16 +298,54 @@ impl TrafficDb {
         res
     }
 
-    pub fn get_response_body(&self, id: String) -> Result<Option<Vec<u8>>> {
+    pub fn get_response_body(&self, id: String) -> rusqlite::Result<Option<Vec<u8>>> {
         self.get_response_body_info(id).map(|opt| opt.map(|(b, _, _)| b))
     }
 
     pub fn get_recent_traffic(&self, limit: usize) -> Vec<TrafficMetadata> {
         let recent = self.recent_traffic.read().unwrap();
-        recent.iter().take(limit).cloned().collect()
+        if !recent.is_empty() {
+            return recent.iter().take(limit).cloned().collect();
+        }
+        // If cache is empty (e.g. readonly session), fallback to DB
+        self.get_all_metadata(limit).unwrap_or_default()
     }
 
-    pub fn get_allow_list(&self) -> Result<Vec<String>> {
+    pub fn get_all_metadata(&self, limit: usize) -> rusqlite::Result<Vec<TrafficMetadata>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client, tags 
+             FROM traffic 
+             ORDER BY timestamp DESC 
+             LIMIT ?1",
+        )?;
+        
+        let rows = stmt.query_map(params![limit], |row| {
+            Ok(TrafficMetadata {
+                id: row.get(0)?,
+                uri: row.get(1)?,
+                method: row.get(2)?,
+                version: row.get(3)?,
+                req_headers: row.get(4)?,
+                res_headers: row.get(5)?,
+                status_code: row.get(6)?,
+                intercepted: row.get::<_, i32>(7)? != 0,
+                timestamp: row.get(8)?,
+                req_body_size: 0,
+                res_body_size: 0,
+                client: row.get(9)?,
+                tags: row.get(10)?,
+            })
+        })?;
+
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row?);
+        }
+        Ok(results)
+    }
+
+    pub fn get_allow_list(&self) -> rusqlite::Result<Vec<String>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare("SELECT domain FROM allow_list")?;
         let rows = stmt.query_map([], |row| row.get(0))?;
@@ -306,7 +356,7 @@ impl TrafficDb {
         Ok(list)
     }
 
-    pub fn add_to_allow_list(&self, domain: String) -> Result<()> {
+    pub fn add_to_allow_list(&self, domain: String) -> rusqlite::Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
             "INSERT OR IGNORE INTO allow_list (domain) VALUES (?1)",
@@ -315,7 +365,7 @@ impl TrafficDb {
         Ok(())
     }
 
-    pub fn get_all_traffic_with_bodies(&self) -> Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
+    pub fn get_all_traffic_with_bodies(&self) -> rusqlite::Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
             "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
@@ -375,7 +425,7 @@ impl TrafficDb {
         Ok(results)
     }
 
-    pub fn get_traffic_with_bodies_by_ids(&self, ids: Vec<String>) -> Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
+    pub fn get_traffic_with_bodies_by_ids(&self, ids: Vec<String>) -> rusqlite::Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
         let conn = self.conn.lock().unwrap();
         if ids.is_empty() {
             return Ok(Vec::new());
@@ -448,13 +498,42 @@ impl TrafficDb {
         Ok(results)
     }
 
-    pub fn clear_all(&self) -> Result<()> {
+    pub fn clear_all(&self) -> rusqlite::Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM traffic", [])?;
         conn.execute("DELETE FROM body", [])?;
         let mut recent = self.recent_traffic.write().unwrap();
         recent.clear();
         Ok(())
+    }
+}
+
+pub fn is_text_content_type(content_type: &Option<String>) -> bool {
+    match content_type {
+        Some(ct) => {
+            let ct = ct.to_lowercase();
+            ct.contains("text") || 
+            ct.contains("json") || 
+            ct.contains("javascript") || 
+            ct.contains("xml") || 
+            ct.contains("html") ||
+            ct.contains("urlencoded") ||
+            ct.contains("graphql")
+        }
+        None => false
+    }
+}
+
+pub fn body_to_string(body: &Option<Vec<u8>>, content_type: &Option<String>) -> String {
+    if let Some(bytes) = body {
+        if bytes.is_empty() { return String::new(); }
+        if is_text_content_type(content_type) {
+            String::from_utf8_lossy(bytes).into_owned()
+        } else {
+            format!("<Binary Data: {} bytes>", bytes.len())
+        }
+    } else {
+        String::new()
     }
 }
 

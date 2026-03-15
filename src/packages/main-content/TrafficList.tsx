@@ -119,7 +119,6 @@ export const TrafficList: React.FC = () => {
     { title: "URL", renderer: new TextRenderer("url"), minWidth: 400 },
     { title: "Client", renderer: new TextRenderer("client"), minWidth: 150 },
     { title: "Method", renderer: new TextRenderer("method") },
-    { title: "Status", renderer: new TextRenderer("status") },
     { title: "Code", renderer: new TextRenderer("code") },
     {
       title: "Time",

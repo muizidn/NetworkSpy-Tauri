@@ -23,7 +23,8 @@ use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
 use traffic::har_util::{create_har_log, HarLog};
-use traffic::tags::{TagManager, TagRule, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, toggle_folder_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, rename_tag_folder, delete_tag_folder_from_db};
+use traffic::tags::{TagManager, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, toggle_folder_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, rename_tag_folder, delete_tag_folder_from_db};
+use traffic::sessions::{SessionManager, get_saved_sessions, get_session_folders, create_session_folder, delete_session_folder, rename_session_folder, move_session_to_folder, delete_saved_session, save_current_capture, get_session_traffic, import_session_from_har, export_session_data};
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
@@ -64,38 +65,7 @@ fn decompress_body(headers: &HashMap<String, String>, body: Vec<u8>) -> Vec<u8> 
     body
 }
 
-fn is_text_content_type(content_type: &Option<String>) -> bool {
-    match content_type {
-        Some(ct) => {
-            let ct = ct.to_lowercase();
-            ct.contains("text") || 
-            ct.contains("json") || 
-            ct.contains("javascript") || 
-            ct.contains("xml") || 
-            ct.contains("html") ||
-            ct.contains("urlencoded") ||
-            ct.contains("graphql")
-        }
-        None => {
-            // If No content type, we can't be sure, but let's assume binary unless specified
-            false
-        }
-    }
-}
-
-fn body_to_string(body: &Option<Vec<u8>>, content_type: &Option<String>) -> String {
-    if let Some(bytes) = body {
-        if bytes.is_empty() { return String::new(); }
-        // Attempt utf8 anyway if it looks like common text types
-        if is_text_content_type(content_type) {
-            String::from_utf8_lossy(bytes).into_owned()
-        } else {
-            format!("<Binary Data: {} bytes>", bytes.len())
-        }
-    } else {
-        String::new()
-    }
-}
+use crate::traffic::db::{is_text_content_type, body_to_string};
 
 #[derive(Clone, Serialize)]
 struct PayloadTraffic {
@@ -209,25 +179,25 @@ fn get_recent_traffic(
 
 #[tauri::command]
 async fn save_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_all_traffic_with_bodies().map_err(|e| e.to_string())?;
+    let data = db.get_all_traffic_with_bodies().map_err(|e: rusqlite::Error| e.to_string())?;
     let har = create_har_log(data);
-    let json = serde_json::to_string_pretty(&har).map_err(|e| e.to_string())?;
-    fs::write(path, json).map_err(|e| e.to_string())?;
+    let json = serde_json::to_string_pretty(&har).map_err(|e: serde_json::Error| e.to_string())?;
+    fs::write(path, json).map_err(|e: std::io::Error| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 async fn export_selected_to_har(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e| e.to_string())?;
+    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e: rusqlite::Error| e.to_string())?;
     let har = create_har_log(data);
-    let json = serde_json::to_string_pretty(&har).map_err(|e| e.to_string())?;
-    fs::write(path, json).map_err(|e| e.to_string())?;
+    let json = serde_json::to_string_pretty(&har).map_err(|e: serde_json::Error| e.to_string())?;
+    fs::write(path, json).map_err(|e: std::io::Error| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
 async fn export_selected_to_csv(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e| e.to_string())?;
+    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e: rusqlite::Error| e.to_string())?;
     let mut csv_content = String::from("ID,Timestamp,Method,URI,Status,Client,RequestBody,ResponseBody\n");
     
     for (meta, req_body, res_body, req_ct, _, res_ct, _) in data {
@@ -251,7 +221,7 @@ async fn export_selected_to_csv(path: String, ids: Vec<String>, db: tauri::State
 
 #[tauri::command]
 async fn export_selected_to_sqlite(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e| e.to_string())?;
+    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e: rusqlite::Error| e.to_string())?;
     
     let conn = rusqlite::Connection::open(&path).map_err(|e| e.to_string())?;
     
@@ -305,7 +275,7 @@ async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_ha
     let json = fs::read_to_string(path).map_err(|e| e.to_string())?;
     let har: HarLog = serde_json::from_str(&json).map_err(|e| e.to_string())?;
 
-    db.clear_all().map_err(|e| e.to_string())?;
+    db.clear_all().map_err(|e: rusqlite::Error| e.to_string())?;
     app_handle.emit("traffic_cleared", ()).map_err(|e| e.to_string())?;
     std::thread::sleep(std::time::Duration::from_millis(100));
     
@@ -668,6 +638,9 @@ fn main() {
             let tag_manager = Arc::new(TagManager::new(Arc::clone(&traffic_db)));
             app_handle.manage(Arc::clone(&tag_manager));
 
+            let session_manager = Arc::new(SessionManager::new(app_data_dir.clone()));
+            app_handle.manage(Arc::clone(&session_manager));
+
             let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
             if list.is_empty() {
                 list = vec![
@@ -677,7 +650,7 @@ fn main() {
                     "anthropic.com".to_string(),
                 ];
                 for domain in &list {
-                     let _ = traffic_db.add_to_allow_list(domain.clone());
+                     let _ = traffic_db.add_to_allow_list(domain.to_string());
                 }
             }
             let allow_list = Arc::new(RwLock::new(list));
@@ -768,6 +741,17 @@ fn main() {
             add_tag_folder,
             rename_tag_folder,
             delete_tag_folder_from_db,
+            get_saved_sessions,
+            get_session_folders,
+            create_session_folder,
+            delete_session_folder,
+            rename_session_folder,
+            move_session_to_folder,
+            delete_saved_session,
+            save_current_capture,
+            get_session_traffic,
+            import_session_from_har,
+            export_session_data,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

@@ -2,6 +2,7 @@ import { usePaneContext } from "@src/context/PaneProvider";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { useAppProvider } from "../app-env";
+import { useSessionContext } from "@src/context/SessionContext";
 import { Icon } from "../ui/Icon";
 import { PortDialog } from "./components/PortDialog";
 
@@ -60,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
 
 export const HeaderLeft = () => {
   const { isRun, setIsRun, clearData, provider, currentPort } = useAppProvider();
+  const { isReviewMode, reviewedSession, viewSession, saveCapture } = useSessionContext();
   const [isPortDialogOpen, setIsPortDialogOpen] = React.useState(false);
 
   const handleUpdatePort = async (newPort: number) => {
@@ -97,16 +99,32 @@ export const HeaderLeft = () => {
 
         <div className="w-1" />
 
-        <ControlButton
-          id="play-pause"
-          icon={isRun ? "Pause" : "Play"}
-          label={isRun ? "Stop Capturing" : "Start Capturing"}
-          active={isRun}
-          variant={isRun ? "success" : "default"}
-          onClick={() => setIsRun(!isRun)}
-        />
+        <div className="w-1" />
 
-        {isRun && currentPort && (
+        {!isReviewMode && (
+          <ControlButton
+            id="play-pause"
+            icon={isRun ? "Pause" : "Play"}
+            label={isRun ? "Stop Capturing" : "Start Capturing"}
+            active={isRun}
+            variant={isRun ? "success" : "default"}
+            onClick={() => setIsRun(!isRun)}
+          />
+        )}
+
+        {isReviewMode && (
+          <div className="flex items-center gap-2 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500">
+             <span className="text-[10px] font-bold uppercase tracking-wider">Reviewing: {reviewedSession?.name}</span>
+             <button 
+               onClick={() => viewSession(null)}
+               className="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 px-1 rounded transition-colors"
+             >
+               Exit
+             </button>
+          </div>
+        )}
+
+        {isRun && currentPort && !isReviewMode && (
           <div 
             onClick={() => setIsPortDialogOpen(true)}
             className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 animate-in fade-in slide-in-from-left-1 duration-300 cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 transition-all group"
@@ -131,16 +149,21 @@ export const HeaderLeft = () => {
         <div className="h-4 w-px bg-zinc-800/50 mx-1" />
 
         <ControlButton
-          id="save"
-          icon="Download"
-          label="Save Session (HAR)"
-          onClick={() => provider.saveSession()}
-        />
-        <ControlButton
-          id="load"
-          icon="FolderOpen"
-          label="Load Session (HAR)"
-          onClick={() => provider.loadSession()}
+          id="save-session"
+          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>}
+          label="Save to Session List"
+          onClick={async () => {
+            const defaultName = new Date().toLocaleString();
+            const name = prompt("Enter session name:", defaultName);
+            if (name) {
+              try {
+                await saveCapture(name);
+                alert("Session saved successfully!");
+              } catch (e) {
+                alert("Failed to save session: " + e);
+              }
+            }
+          }}
         />
       </div>
       </div>

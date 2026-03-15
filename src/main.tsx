@@ -22,6 +22,8 @@ import Tag from "./routes/tools/Tag";
 import WorkspacePage from "./routes/workspace";
 import AccountPage from "./routes/account";
 import ExtensionsPage from "./routes/extensions";
+import SessionPage from "./routes/sessions";
+import { SessionProvider } from "./context/SessionContext";
 
 // import ScriptEditor from "./routes/script-editor";
 
@@ -79,6 +81,10 @@ const router = createBrowserRouter([
         path: "/certificate-installer",
         element: <CertificateInstaller />,
       },
+      {
+        path: "/sessions",
+        element: <SessionPage />,
+      },
     ],
   },
 ]);
@@ -95,17 +101,19 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <TauriProvider>
       <TagProvider>
-        <SettingsProvider>
-          <TrafficListProvider>
-            <TauriEnvProvider>
-              <PaneProvider>
-                <DndProvider backend={HTML5Backend}>
-                  <RouterProvider router={router} />
-                </DndProvider>
-              </PaneProvider>
-            </TauriEnvProvider>
-          </TrafficListProvider>
-        </SettingsProvider>
+        <SessionProvider>
+          <SettingsProvider>
+            <TrafficListProvider>
+              <TauriEnvProvider>
+                <PaneProvider>
+                  <DndProvider backend={HTML5Backend}>
+                    <RouterProvider router={router} />
+                  </DndProvider>
+                </PaneProvider>
+              </TauriEnvProvider>
+            </TrafficListProvider>
+          </SettingsProvider>
+        </SessionProvider>
       </TagProvider>
     </TauriProvider>
   </React.StrictMode>

@@ -4,6 +4,7 @@ import SplitPane, { Pane, SashContent } from "split-pane-react";
 import { TauriEnvProvider, useAppProvider } from "@src/packages/app-env";
 import { Traffic } from "../../models/Traffic";
 import { PaneProvider, usePaneContext } from "../../context/PaneProvider";
+import { useSessionContext } from "../../context/SessionContext";
 import { HeaderLeft, HeaderRight } from "@src/packages/header/Header";
 import {
   TrafficListProvider,
@@ -37,6 +38,7 @@ const Content = () => {
   const { setTrafficList, trafficSet, setTrafficSet } = useTrafficListContext();
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
   const { provider, isRun, setIsRun, clearData } = useAppProvider();
+  const { isReviewMode } = useSessionContext();
 
   const [tabs, setTabs] = useState<any[]>(() => {
     const saved = localStorage.getItem("ns_workspace_tabs");
@@ -80,6 +82,8 @@ const Content = () => {
   };
 
   useEffect(() => {
+    if (isReviewMode) return;
+
     let unlisten: (() => void) | undefined;
 
     provider.listenTraffic((traffic) => {
@@ -107,7 +111,6 @@ const Content = () => {
           url: traffic.uri || "-",
           client: traffic.client || "Local",
           method: traffic.method,
-          status: traffic.response ? "Completed" : "Pending",
           code: traffic.response?.status_code?.toString() || "-",
           time: traffic.time,
           duration: traffic.duration || "0 ms",
@@ -149,7 +152,7 @@ const Content = () => {
       if (unlisten) unlisten();
       if (unlistenTags) unlistenTags();
     };
-  }, [provider, isRun]);
+  }, [provider, isRun, isReviewMode]);
 
   const getNewSizes = (params: any, index: number) => {
     return sizes.map((size, idx) =>
