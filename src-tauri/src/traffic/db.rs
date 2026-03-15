@@ -528,10 +528,6 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 
                     let _ = update_res_body.execute(params![id, body_data, content_type, content_encoding]);
                 }
-                TrafficEvent::Response { .. } => {
-                    // Responses don't trigger tags directly in this logic? 
-                    // Wait, actually responses could trigger async tagging but we'll handle that via a separate event.
-                }
                 TrafficEvent::UpdateTags { id, tags } => {
                      let tags_json = serde_json::to_string(&tags).unwrap_or_default();
                      let _ = update_tags.execute(params![id, tags_json]);

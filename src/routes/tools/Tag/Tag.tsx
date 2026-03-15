@@ -2,7 +2,7 @@ import { TagFolder, TagModel, useTagContext } from "@src/context/TagContext";
 import { ToolMethod } from "@src/models/ToolMethod";
 import { Renderer, TableView, TableViewHeader } from "@src/packages/ui/TableView";
 import { ToolBaseHeader } from "@src/packages/ui/ToolBaseHeader";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import { FiCheck, FiChevronDown, FiChevronRight, FiClock, FiCode, FiEdit3, FiFolder, FiFolderPlus, FiPlus, FiSearch, FiTag, FiTrash2, FiX, FiZap, FiMove, FiMinusCircle } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 
@@ -57,7 +57,19 @@ export class TagCellRenderer implements Renderer<TagModel | TagFolderRow> {
   }
 }
 
-const TagCell = ({ type, input, handlers }: { type: string, input: TagModel | TagFolderRow, handlers: any }) => {
+const TagCell = ({ type, input, handlers }: {
+  type: string, input: TagModel | TagFolderRow, handlers: {
+    onToggle?: (id: string) => void,
+    onEdit?: (tag: TagModel) => void,
+    onDelete?: (id: string) => void,
+    onToggleFolderCollapse?: (id: string) => void,
+    isFolderCollapsed?: (id: string) => boolean,
+    onDeleteFolder?: (id: string, name: string) => void,
+    onRenameFolderRequest?: (folder: TagFolder) => void,
+    onMoveRequest?: (tag: TagModel) => void,
+    onToggleFolderTags?: (id: string, enable: boolean) => void
+  }
+}) => {
   const isFolder = typeof input === "object" && "__isFolder" in input;
 
   let content: React.ReactNode;
@@ -65,11 +77,11 @@ const TagCell = ({ type, input, handlers }: { type: string, input: TagModel | Ta
   if (isFolder) {
     const folder = input as TagFolderRow;
     const isCollapsed = handlers.isFolderCollapsed?.(folder.id);
-    
+
     if (type === "enabled") {
       const allEnabled = folder.enabledCount === folder.itemCount && folder.itemCount > 0;
       const someEnabled = folder.enabledCount > 0 && folder.enabledCount < folder.itemCount;
-      
+
       content = (
         <button
           onClick={() => handlers.onToggleFolderTags?.(folder.id, !allEnabled)}
@@ -248,7 +260,7 @@ const TagList: React.FC = () => {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [editingFolder, setEditingFolder] = useState<TagFolder | null>(null);
-  
+
   const [movingTag, setMovingTag] = useState<TagModel | null>(null);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
@@ -454,12 +466,12 @@ const TagList: React.FC = () => {
               </div>
             </div>
             <div className="p-4 border-t border-zinc-900 bg-zinc-900/20 flex justify-end">
-               <button
-                  onClick={() => { setIsMoveModalOpen(false); setMovingTag(null); }}
-                  className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
-                >
-                  Close
-                </button>
+              <button
+                onClick={() => { setIsMoveModalOpen(false); setMovingTag(null); }}
+                className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

@@ -231,8 +231,49 @@ pub async fn add_tag_to_db(manager: tauri::State<'_, Arc<TagManager>>, rule: Tag
 }
 
 #[tauri::command]
-pub async fn update_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: String, rule: TagRule) -> Result<(), String> {
+pub async fn update_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: String, updates: serde_json::Value) -> Result<(), String> {
     let conn = manager.db.get_connection();
+    
+    // 1. Fetch existing
+    let mut rule = match conn.query_row(
+        "SELECT id, enabled, name, method, matching_rule, tag, is_sync, scope, color, bg_color, folder_id FROM tag_rules WHERE id = ?1",
+        params![id],
+        |row| {
+            Ok(TagRule {
+                id: row.get(0)?,
+                enabled: row.get::<_, i32>(1)? != 0,
+                name: row.get(2)?,
+                method: row.get(3)?,
+                matching_rule: row.get(4)?,
+                tag: row.get(5)?,
+                is_sync: row.get::<_, i32>(6)? != 0,
+                scope: row.get(7)?,
+                color: row.get(8)?,
+                bg_color: row.get(9)?,
+                folder_id: row.get(10)?,
+            })
+        }
+    ) {
+        Ok(r) => r,
+        Err(rusqlite::Error::QueryReturnedNoRows) => return Err(format!("Tag with id {} not found", id)),
+        Err(e) => return Err(e.to_string()),
+    };
+
+    // 2. Apply updates from JSON (handle camelCase from JS)
+    if let Some(obj) = updates.as_object() {
+        if let Some(v) = obj.get("enabled") { if let Some(b) = v.as_bool() { rule.enabled = b; } }
+        if let Some(v) = obj.get("name") { if let Some(s) = v.as_str() { rule.name = s.to_string(); } }
+        if let Some(v) = obj.get("method") { if let Some(s) = v.as_str() { rule.method = s.to_string(); } }
+        if let Some(v) = obj.get("matchingRule") { if let Some(s) = v.as_str() { rule.matching_rule = s.to_string(); } }
+        if let Some(v) = obj.get("tag") { if let Some(s) = v.as_str() { rule.tag = s.to_string(); } }
+        if let Some(v) = obj.get("isSync") { if let Some(b) = v.as_bool() { rule.is_sync = b; } }
+        if let Some(v) = obj.get("scope") { if let Some(s) = v.as_str() { rule.scope = s.to_string(); } }
+        if let Some(v) = obj.get("color") { rule.color = v.as_str().map(|s| s.to_string()); }
+        if let Some(v) = obj.get("bgColor") { rule.bg_color = v.as_str().map(|s| s.to_string()); }
+        if let Some(v) = obj.get("folderId") { rule.folder_id = v.as_str().map(|s| s.to_string()); }
+    }
+
+    // 3. Update DB
     let res = conn.execute(
         "UPDATE tag_rules SET enabled = ?1, name = ?2, method = ?3, matching_rule = ?4, tag = ?5, is_sync = ?6, scope = ?7, color = ?8, bg_color = ?9, folder_id = ?10 WHERE id = ?11",
         params![
@@ -248,31 +289,49 @@ pub async fn update_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
             rule.folder_id,
             id
         ],
-    );
+    ).map_err(|e| e.to_string())?;
 
-    match res {
-        Ok(_) => {
-            drop(conn); // DROP LOCK
-            manager.reload_rules().map_err(|e| e.to_string())?;
-            Ok(())
-        },
-        Err(e) => Err(e.to_string())
+    if res == 0 {
+        return Err(format!("Failed to update tag with id {}", id));
     }
+
+    drop(conn); // DROP LOCK
+    manager.reload_rules().map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]
 pub async fn delete_tag_from_db(manager: tauri::State<'_, Arc<TagManager>>, id: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("DELETE FROM tag_rules WHERE id = ?1", params![id]).map_err(|e| e.to_string())?;
+    let res = conn.execute("DELETE FROM tag_rules WHERE id = ?1", params![id]).map_err(|e| e.to_string())?;
+    if res == 0 {
+        return Err(format!("Tag with id {} not found", id));
+    }
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn toggle_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: String, enabled: bool) -> Result<(), String> {
+pub async fn toggle_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("UPDATE tag_rules SET enabled = ?1 WHERE id = ?2", params![if enabled { 1 } else { 0 }, id]).map_err(|e| e.to_string())?;
+    let res = conn.execute("UPDATE tag_rules SET enabled = NOT enabled WHERE id = ?1", params![id]).map_err(|e| e.to_string())?;
+    if res == 0 {
+        return Err(format!("Tag with id {} not found", id));
+    }
+    drop(conn);
+    manager.reload_rules().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn toggle_folder_in_db(manager: tauri::State<'_, Arc<TagManager>>, folder_id: String, enabled: bool) -> Result<(), String> {
+    let conn = manager.db.get_connection();
+    conn.execute(
+        "UPDATE tag_rules SET enabled = ?1 WHERE folder_id = ?2",
+        params![if enabled { 1 } else { 0 }, folder_id],
+    ).map_err(|e| e.to_string())?;
+    
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
     Ok(())
@@ -282,7 +341,10 @@ pub async fn toggle_tag_in_db(manager: tauri::State<'_, Arc<TagManager>>, id: St
 pub async fn move_tag_to_folder(manager: tauri::State<'_, Arc<TagManager>>, id: String, folder_id: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
     let folder_val = if folder_id.trim().is_empty() { None } else { Some(folder_id) };
-    conn.execute("UPDATE tag_rules SET folder_id = ?1 WHERE id = ?2", params![folder_val, id]).map_err(|e| e.to_string())?;
+    let res = conn.execute("UPDATE tag_rules SET folder_id = ?1 WHERE id = ?2", params![folder_val, id]).map_err(|e| e.to_string())?;
+    if res == 0 {
+        return Err(format!("Tag with id {} not found", id));
+    }
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
     Ok(())
@@ -315,7 +377,10 @@ pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: S
     let conn = manager.db.get_connection();
     
     // 1. Update the folder name in tag_rule_folder
-    conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE id = ?2", params![new_name, id]).map_err(|e| e.to_string())?;
+    let res = conn.execute("UPDATE tag_rule_folder SET name = ?1 WHERE id = ?2", params![new_name, id]).map_err(|e| e.to_string())?;
+    if res == 0 {
+        return Err(format!("Folder with id {} not found", id));
+    }
     
     drop(conn);
     manager.reload_rules().map_err(|e| e.to_string())?;
@@ -325,7 +390,10 @@ pub async fn rename_tag_folder(manager: tauri::State<'_, Arc<TagManager>>, id: S
 #[tauri::command]
 pub async fn delete_tag_folder_from_db(manager: tauri::State<'_, Arc<TagManager>>, id: String) -> Result<(), String> {
     let conn = manager.db.get_connection();
-    conn.execute("DELETE FROM tag_rule_folder WHERE id = ?1", params![id]).map_err(|e| e.to_string())?;
+    let res = conn.execute("DELETE FROM tag_rule_folder WHERE id = ?1", params![id]).map_err(|e| e.to_string())?;
+    if res == 0 {
+        return Err(format!("Folder with id {} not found", id));
+    }
     // Optionally delete or move tags in this folder
     conn.execute("UPDATE tag_rules SET folder_id = NULL WHERE folder_id = ?1", params![id]).map_err(|e| e.to_string())?;
     drop(conn);

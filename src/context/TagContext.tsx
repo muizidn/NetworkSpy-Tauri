@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from "react";
 import { ToolMethod } from "@src/models/ToolMethod";
 import { v4 as uuidv4 } from 'uuid';
 import { invoke } from "@tauri-apps/api/core";
@@ -72,20 +72,19 @@ export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await loadData();
     } catch (e) {
       console.error("Failed to add tag:", e);
+      throw e;
     }
   }, [loadData]);
 
   const updateTag = useCallback(async (id: string, updatedFields: Partial<TagModel>) => {
-    const existing = tags.find(t => t.id === id);
-    if (!existing) return;
-    const updatedRule = { ...existing, ...updatedFields } as TagModel;
     try {
-      await invoke("update_tag_in_db", { id, rule: updatedRule });
+      await invoke("update_tag_in_db", { id, updates: updatedFields });
       await loadData();
     } catch (e) {
       console.error("Failed to update tag", e);
+      throw e;
     }
-  }, [tags, loadData]);
+  }, [loadData]);
 
   const deleteTag = useCallback(async (id: string) => {
     try {
@@ -93,19 +92,19 @@ export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await loadData();
     } catch (e) {
       console.error("Failed to delete tag", e);
+      throw e;
     }
   }, [loadData]);
 
   const toggleTag = useCallback(async (id: string) => {
-    const tag = tags.find(t => t.id === id);
-    if (!tag) return;
     try {
-      await invoke("toggle_tag_in_db", { id, enabled: !tag.enabled });
+      await invoke("toggle_tag_in_db", { id });
       await loadData();
     } catch (e) {
       console.error("Failed to toggle tag", e);
+      throw e;
     }
-  }, [tags, loadData]);
+  }, [loadData]);
 
   const addFolder = useCallback(async (name: string) => {
     try {
@@ -113,6 +112,7 @@ export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await loadData();
     } catch (e) {
       console.error("Failed to add folder", e);
+      throw e;
     }
   }, [loadData]);
 
@@ -122,6 +122,7 @@ export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await loadData();
     } catch (e) {
       console.error("Failed to delete folder", e);
+      throw e;
     }
   }, [loadData]);
 
@@ -131,25 +132,29 @@ export const TagProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await loadData();
     } catch (e) {
       console.error("Failed to rename folder", e);
+      throw e;
     }
   }, [loadData]);
 
   const moveTag = useCallback(async (tagId: string, targetFolderId: string) => {
     try {
-      await invoke("move_tag_to_folder", { id: tagId, folderId: targetFolderId });
+      await invoke("move_tag_to_folder", { id: tagId, folder_id: targetFolderId });
       await loadData();
     } catch (e) {
       console.error("Failed to move tag", e);
+      throw e;
     }
   }, [loadData]);
 
   const toggleFolder = useCallback(async (folderId: string, enabled: boolean) => {
-    const tagsInFolder = tags.filter(t => t.folderId === folderId);
-    for (const t of tagsInFolder) {
-      await invoke("toggle_tag_in_db", { id: t.id, enabled });
+    try {
+      await invoke("toggle_folder_in_db", { folderId, enabled });
+      await loadData();
+    } catch (e) {
+      console.error("Failed to toggle folder", e);
+      throw e;
     }
-    await loadData();
-  }, [tags, loadData]);
+  }, [loadData]);
 
   return (
     <TagContext.Provider value={{
