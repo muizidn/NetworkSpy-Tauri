@@ -61,6 +61,34 @@ const Content = () => {
     localStorage.setItem("ns_workspace_tabs", JSON.stringify(toSave));
   }, [tabs]);
 
+  // Stop traffic when in review mode
+  useEffect(() => {
+    if (isReviewMode && isRun) {
+      setIsRun(false);
+    }
+  }, [isReviewMode, isRun, setIsRun]);
+
+  // Reset traffic list when switching between live and review mode
+  useEffect(() => {
+    if (!isReviewMode) {
+      const loadLiveTraffic = async () => {
+        try {
+          const traffic = await provider.getAllMetadata();
+          setTrafficList(traffic);
+          
+          const newSet: Record<string, any> = {};
+          traffic.forEach(t => {
+            newSet[(t as any).id] = t;
+          });
+          setTrafficSet(newSet);
+        } catch (e) {
+          console.error("Failed to load live traffic", e);
+        }
+      };
+      loadLiveTraffic();
+    }
+  }, [isReviewMode, provider, setTrafficList, setTrafficSet]);
+
   const handleAddTab = () => {
     const newId = `tab-${Date.now()}`;
     const newTab = {

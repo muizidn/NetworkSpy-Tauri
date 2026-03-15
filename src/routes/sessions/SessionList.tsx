@@ -8,6 +8,7 @@ import { twMerge } from "tailwind-merge";
 import { useNavigate } from "react-router-dom";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { useAppProvider } from "@src/packages/app-env";
 
 export interface SessionFolderRow extends SessionFolder {
   __isFolder: true;
@@ -173,6 +174,7 @@ const SessionCell = ({ type, input, handlers }: {
 const SessionList: React.FC = () => {
   const { sessions, folders, deleteSession, deleteFolder, addFolder, renameFolder, moveSession, viewSession, importHar, exportSession } = useSessionContext();
   const { setTrafficList, setTrafficSet } = useTrafficListContext();
+  const { isRun, setIsRun } = useAppProvider();
   const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -202,6 +204,9 @@ const SessionList: React.FC = () => {
 
   const handleViewSession = async (session: Session) => {
     try {
+      if (isRun) {
+        setIsRun(false);
+      }
       const traffic = await viewSession(session);
       if (traffic) {
         setTrafficList(traffic);

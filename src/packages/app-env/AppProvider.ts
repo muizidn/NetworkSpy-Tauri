@@ -29,6 +29,7 @@ export interface IAppProvider {
   saveSession(): Promise<void>;
   loadSession(): Promise<void>;
   clearData(): Promise<void>;
+  getAllMetadata(): Promise<any[]>;
 }
 
 export class TauriAppProvider implements IAppProvider {
@@ -106,6 +107,10 @@ export class TauriAppProvider implements IAppProvider {
 
   async clearData(): Promise<void> {
     this.trafficSet = {};
+  }
+
+  async getAllMetadata(): Promise<any[]> {
+    return await tauriInvoke<any[]>("get_all_metadata");
   }
 
   async listenTraffic(callback: (traffic: Traffic) => void): Promise<() => void> {
@@ -403,6 +408,10 @@ export class MockAppProvider implements IAppProvider {
     console.log("[Mock] Clearing traffic data");
     this.trafficSet = {};
     this.mockBodySet = {};
+  }
+
+  async getAllMetadata(): Promise<any[]> {
+    return [];
   }
 
   async saveSession(): Promise<void> {
