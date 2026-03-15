@@ -19,8 +19,8 @@ interface SessionContextState {
   folders: SessionFolder[];
   isReviewMode: boolean;
   reviewedSession: Session | null;
-  saveCapture: (name: string) => Promise<Session>;
-  importHar: (name: string, path: string) => Promise<Session>;
+  saveCapture: (name: string, folderId?: string) => Promise<Session>;
+  importHar: (name: string, path: string, folderId?: string) => Promise<Session>;
   deleteSession: (id: string) => Promise<void>;
   addFolder: (name: string) => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
@@ -62,14 +62,14 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
     loadData();
   }, [loadData]);
 
-  const saveCapture = async (name: string) => {
-    const session = await invoke<Session>("save_current_capture", { name });
+  const saveCapture = async (name: string, folderId?: string) => {
+    const session = await invoke<Session>("save_capture_to_folder", { name, folderId: folderId || null });
     await loadData();
     return session;
   };
 
-  const importHar = async (name: string, path: string) => {
-    const session = await invoke<Session>("import_session_from_har", { name, path });
+  const importHar = async (name: string, path: string, folderId?: string) => {
+    const session = await invoke<Session>("import_session_to_folder", { name, path, folderId: folderId || null });
     await loadData();
     return session;
   };
@@ -94,12 +94,12 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const renameFolder = async (id: string, newName: string) => {
-    await invoke("rename_session_folder", { id, newName });
+    await invoke("rename_session_folder", { id, new_name: newName });
     await loadData();
   };
 
   const moveSession = async (id: string, folderId: string | null) => {
-    await invoke("move_session_to_folder", { id, folderId });
+    await invoke("move_session_to_folder", { id, folder_id: folderId });
     await loadData();
   };
 

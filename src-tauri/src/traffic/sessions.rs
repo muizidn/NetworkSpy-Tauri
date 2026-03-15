@@ -100,7 +100,7 @@ impl SessionManager {
         Ok(folders)
     }
 
-    pub fn save_capture(&self, name: String, live_db_path: PathBuf) -> rusqlite::Result<Session> {
+    pub fn save_capture(&self, name: String, folder_id: Option<String>, live_db_path: PathBuf) -> rusqlite::Result<Session> {
         let id = Uuid::new_v4().to_string();
         let db_file_name = format!("{}.db", id);
         let dest_path = self.sessions_dir.join(&db_file_name);
@@ -111,20 +111,20 @@ impl SessionManager {
         let created_at = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
         let conn = self.db.lock().unwrap();
         conn.execute(
-            "INSERT INTO sessions (id, name, created_at, db_file) VALUES (?1, ?2, ?3, ?4)",
-            params![id, name, created_at, db_file_name],
+            "INSERT INTO sessions (id, name, folder_id, created_at, db_file) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![id, name, folder_id, created_at, db_file_name],
         )?;
 
         Ok(Session {
             id,
             name,
-            folder_id: None,
+            folder_id,
             created_at,
             db_file: db_file_name,
         })
     }
 
-    pub fn import_har(&self, name: String, har_path: PathBuf) -> Result<Session, String> {
+    pub fn import_har(&self, name: String, folder_id: Option<String>, har_path: PathBuf) -> Result<Session, String> {
         let id = Uuid::new_v4().to_string();
         let db_file_name = format!("{}.db", id);
         let dest_path = self.sessions_dir.join(&db_file_name);
@@ -203,14 +203,14 @@ impl SessionManager {
         let created_at = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
         let conn = self.db.lock().unwrap();
         conn.execute(
-            "INSERT INTO sessions (id, name, created_at, db_file) VALUES (?1, ?2, ?3, ?4)",
-            params![id, name, created_at, db_file_name],
+            "INSERT INTO sessions (id, name, folder_id, created_at, db_file) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![id, name, folder_id, created_at, db_file_name],
         ).map_err(|e| e.to_string())?;
 
         Ok(Session {
             id,
             name,
-            folder_id: None,
+            folder_id,
             created_at,
             db_file: db_file_name,
         })
@@ -314,7 +314,19 @@ pub async fn save_current_capture(
 ) -> Result<Session, String> {
     let app_data_dir = app_handle.path().app_data_dir().unwrap();
     let live_db_path = app_data_dir.join("traffic.db");
-    manager.save_capture(name, live_db_path).map_err(|e| e.to_string())
+    manager.save_capture(name, None, live_db_path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn save_capture_to_folder(
+    manager: tauri::State<'_, Arc<SessionManager>>,
+    name: String,
+    folder_id: Option<String>,
+    app_handle: tauri::AppHandle,
+) -> Result<Session, String> {
+    let app_data_dir = app_handle.path().app_data_dir().unwrap();
+    let live_db_path = app_data_dir.join("traffic.db");
+    manager.save_capture(name, folder_id, live_db_path).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -323,7 +335,17 @@ pub async fn import_session_from_har(
     name: String,
     path: String,
 ) -> Result<Session, String> {
-    manager.import_har(name, PathBuf::from(path)).map_err(|e| e.to_string())
+    manager.import_har(name, None, PathBuf::from(path)).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn import_session_to_folder(
+    manager: tauri::State<'_, Arc<SessionManager>>,
+    name: String,
+    folder_id: Option<String>,
+    path: String,
+) -> Result<Session, String> {
+    manager.import_har(name, folder_id, PathBuf::from(path)).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

@@ -24,7 +24,7 @@ use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
 use traffic::har_util::{create_har_log, HarLog};
 use traffic::tags::{TagManager, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, toggle_folder_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, rename_tag_folder, delete_tag_folder_from_db};
-use traffic::sessions::{SessionManager, get_saved_sessions, get_session_folders, create_session_folder, delete_session_folder, rename_session_folder, move_session_to_folder, delete_saved_session, save_current_capture, get_session_traffic, import_session_from_har, export_session_data};
+use traffic::sessions::{SessionManager, get_saved_sessions, get_session_folders, create_session_folder, delete_session_folder, rename_session_folder, move_session_to_folder, delete_saved_session, save_current_capture, save_capture_to_folder, get_session_traffic, import_session_from_har, import_session_to_folder, export_session_data};
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
@@ -749,8 +749,10 @@ fn main() {
             move_session_to_folder,
             delete_saved_session,
             save_current_capture,
+            save_capture_to_folder,
             get_session_traffic,
             import_session_from_har,
+            import_session_to_folder,
             export_session_data,
         ])
         .build(tauri::generate_context!())

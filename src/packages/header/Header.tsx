@@ -5,6 +5,7 @@ import { useAppProvider } from "../app-env";
 import { useSessionContext } from "@src/context/SessionContext";
 import { Icon } from "../ui/Icon";
 import { PortDialog } from "./components/PortDialog";
+import { SaveSessionDialog } from "./components/SaveSessionDialog";
 
 interface HeaderProps {
   toggleBottomPane: () => void;
@@ -61,8 +62,9 @@ export const Header: React.FC<HeaderProps> = ({
 
 export const HeaderLeft = () => {
   const { isRun, setIsRun, clearData, provider, currentPort } = useAppProvider();
-  const { isReviewMode, reviewedSession, viewSession, saveCapture } = useSessionContext();
+  const { isReviewMode, reviewedSession, viewSession, saveCapture, folders } = useSessionContext();
   const [isPortDialogOpen, setIsPortDialogOpen] = React.useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = React.useState(false);
 
   const handleUpdatePort = async (newPort: number) => {
     try {
@@ -78,100 +80,101 @@ export const HeaderLeft = () => {
   return (
     <>
       <div className="flex items-center gap-4 relative z-10 h-full">
-      <div className="flex items-center gap-2 cursor-pointer">
-        <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center text-white font-black italic text-[9px]">
-          NS
+        <div className="flex items-center gap-2 cursor-pointer">
+          <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center text-white font-black italic text-[9px]">
+            NS
+          </div>
+          <span className="text-[10px] font-black tracking-tighter text-zinc-100 uppercase italic opacity-80">
+            NetworkSpy
+          </span>
         </div>
-        <span className="text-[10px] font-black tracking-tighter text-zinc-100 uppercase italic opacity-80">
-          NetworkSpy
-        </span>
-      </div>
 
-      <div className="h-4 w-px bg-zinc-800/50" />
+        <div className="h-4 w-px bg-zinc-800/50" />
 
-      <div className="flex items-center gap-1.5 ">
-        <ControlButton
-          id="menu"
-          icon="Menu"
-          label="Application Menu"
-          onClick={() => { }}
-        />
-
-        <div className="w-1" />
-
-        <div className="w-1" />
-
-        {!isReviewMode && (
+        <div className="flex items-center gap-1.5 ">
           <ControlButton
-            id="play-pause"
-            icon={isRun ? "Pause" : "Play"}
-            label={isRun ? "Stop Capturing" : "Start Capturing"}
-            active={isRun}
-            variant={isRun ? "success" : "default"}
-            onClick={() => setIsRun(!isRun)}
+            id="menu"
+            icon="Menu"
+            label="Application Menu"
+            onClick={() => { }}
           />
-        )}
 
-        {isReviewMode && (
-          <div className="flex items-center gap-2 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500">
-             <span className="text-[10px] font-bold uppercase tracking-wider">Reviewing: {reviewedSession?.name}</span>
-             <button 
-               onClick={() => viewSession(null)}
-               className="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 px-1 rounded transition-colors"
-             >
-               Exit
-             </button>
-          </div>
-        )}
+          <div className="w-1" />
 
-        {isRun && currentPort && !isReviewMode && (
-          <div 
-            onClick={() => setIsPortDialogOpen(true)}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 animate-in fade-in slide-in-from-left-1 duration-300 cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 transition-all group"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 group-hover:scale-110 transition-transform">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-            <span className="text-[10px] font-mono font-bold text-blue-400">
-              :{currentPort}
-            </span>
-          </div>
-        )}
+          <div className="w-1" />
 
-        <ControlButton
-          id="clear"
-          icon="Trash"
-          label="Clear Traffic"
-          variant="danger"
-          onClick={clearData}
-        />
+          {!isReviewMode && (
+            <ControlButton
+              id="play-pause"
+              icon={isRun ? "Pause" : "Play"}
+              label={isRun ? "Stop Capturing" : "Start Capturing"}
+              active={isRun}
+              variant={isRun ? "success" : "default"}
+              onClick={() => setIsRun(!isRun)}
+            />
+          )}
 
-        <div className="h-4 w-px bg-zinc-800/50 mx-1" />
+          {isReviewMode && (
+            <div className="flex items-center gap-2 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-500">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Reviewing: {reviewedSession?.name}</span>
+              <button
+                onClick={() => viewSession(null)}
+                className="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 px-1 rounded transition-colors"
+              >
+                Exit
+              </button>
+            </div>
+          )}
 
-        <ControlButton
-          id="save-session"
-          icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>}
-          label="Save to Session List"
-          onClick={async () => {
-            const defaultName = new Date().toLocaleString();
-            const name = prompt("Enter session name:", defaultName);
-            if (name) {
-              try {
-                await saveCapture(name);
-                alert("Session saved successfully!");
-              } catch (e) {
-                alert("Failed to save session: " + e);
-              }
-            }
-          }}
-        />
+          {isRun && currentPort && !isReviewMode && (
+            <div
+              onClick={() => setIsPortDialogOpen(true)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 animate-in fade-in slide-in-from-left-1 duration-300 cursor-pointer hover:bg-blue-500/20 hover:border-blue-500/40 transition-all group"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 group-hover:scale-110 transition-transform">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              <span className="text-[10px] font-mono font-bold text-blue-400">
+                :{currentPort}
+              </span>
+            </div>
+          )}
+
+          <ControlButton
+            id="clear"
+            icon="Trash"
+            label="Clear Traffic"
+            variant="danger"
+            onClick={clearData}
+          />
+
+          <div className="h-4 w-px bg-zinc-800/50 mx-1" />
+
+          <ControlButton
+            id="save-session"
+            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>}
+            label="Save to Session List"
+            onClick={() => setIsSaveDialogOpen(true)}
+          />
+        </div>
       </div>
-      </div>
-      <PortDialog 
-        isOpen={isPortDialogOpen} 
-        currentPort={currentPort || 9090} 
-        onClose={() => setIsPortDialogOpen(false)} 
-        onConfirm={handleUpdatePort} 
+      <PortDialog
+        isOpen={isPortDialogOpen}
+        currentPort={currentPort || 9090}
+        onClose={() => setIsPortDialogOpen(false)}
+        onConfirm={handleUpdatePort}
+      />
+      <SaveSessionDialog
+        isOpen={isSaveDialogOpen}
+        folders={folders}
+        onClose={() => setIsSaveDialogOpen(false)}
+        onConfirm={async (name, folderId) => {
+          try {
+            await saveCapture(name, folderId);
+          } catch (e) {
+            alert("Failed to save session: " + e);
+          }
+        }}
       />
     </>
   );

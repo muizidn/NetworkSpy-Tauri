@@ -2,6 +2,7 @@ import { Session, SessionFolder, useSessionContext } from "@src/context/SessionC
 import { Renderer, TableView, TableViewHeader } from "@src/packages/ui/TableView";
 import { ToolBaseHeader } from "@src/packages/ui/ToolBaseHeader";
 import React, { useMemo, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { FiChevronDown, FiChevronRight, FiClock, FiEdit3, FiFolder, FiFolderPlus, FiSearch, FiTrash2, FiX, FiMove, FiMinusCircle, FiEye, FiDownload } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useNavigate } from "react-router-dom";
@@ -186,6 +187,10 @@ const SessionList: React.FC = () => {
   const [exportingSession, setExportingSession] = useState<Session | null>(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
+  const [importingHarPath, setImportingHarPath] = useState<string | null>(null);
+  const [importSessionName, setImportSessionName] = useState("");
+  const [isImportNameModalOpen, setIsImportNameModalOpen] = useState(false);
+
   const toggleFolderCollapse = useCallback((folderId: string) => {
     setCollapsedFolderIds((prev: Set<string>) => {
       const next = new Set(prev);
@@ -219,16 +224,24 @@ const SessionList: React.FC = () => {
       multiple: false
     });
     
-    if (path) {
-      const defaultName = `Imported HAR ${new Date().toLocaleString()}`;
-      const name = prompt("Enter session name:", defaultName);
-      if (name) {
-        try {
-          await importHar(name, path);
-          alert("HAR imported successfully!");
-        } catch (e) {
-          alert("Failed to import HAR: " + e);
-        }
+    if (path && typeof path === 'string') {
+      setImportingHarPath(path);
+      setImportSessionName(`Imported HAR ${new Date().toLocaleString()}`);
+      setIsImportNameModalOpen(true);
+    }
+  };
+
+  const confirmImportHar = async () => {
+    if (importingHarPath && importSessionName.trim()) {
+      try {
+        await importHar(importSessionName.trim(), importingHarPath);
+        // Success
+      } catch (e) {
+        alert("Failed to import HAR: " + e);
+      } finally {
+        setIsImportNameModalOpen(false);
+        setImportingHarPath(null);
+        setImportSessionName("");
       }
     }
   };
@@ -366,9 +379,12 @@ const SessionList: React.FC = () => {
         </div>
       </div>
 
-      {isMoveModalOpen && movingSession && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+      {isMoveModalOpen && movingSession && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div 
+            className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
                 <FiMove className="text-amber-400" />
@@ -418,12 +434,16 @@ const SessionList: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {isFolderModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+      {isFolderModalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div 
+            className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
                 <FiFolderPlus className="text-blue-400" />
@@ -487,12 +507,16 @@ const SessionList: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {isExportModalOpen && exportingSession && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+      {isExportModalOpen && exportingSession && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div 
+            className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
               <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
                 <FiDownload className="text-blue-400" />
@@ -538,7 +562,64 @@ const SessionList: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+      {isImportNameModalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div 
+            className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
+              <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                <FiDownload className="text-amber-400" />
+                Import HAR Session
+              </h3>
+              <button
+                onClick={() => { setIsImportNameModalOpen(false); setImportingHarPath(null); }}
+                className="p-1 hover:bg-white/10 rounded-md text-zinc-500 hover:text-white transition-colors"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-zinc-500">Session Name</label>
+                <input
+                  autoFocus
+                  value={importSessionName}
+                  onChange={(e) => setImportSessionName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && importSessionName.trim()) {
+                      confirmImportHar();
+                    }
+                  }}
+                  placeholder="e.g. Chrome Export"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500/50 transition-colors"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setIsImportNameModalOpen(false); setImportingHarPath(null); }}
+                  className="px-4 py-2 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={!importSessionName.trim()}
+                  onClick={confirmImportHar}
+                  className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-xs font-bold shadow-lg shadow-amber-500/20 transition-all active:scale-95"
+                >
+                  Import
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );
