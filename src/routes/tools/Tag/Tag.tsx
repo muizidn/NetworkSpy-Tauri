@@ -12,6 +12,7 @@ export interface TagFolderRow extends TagFolder {
   __isNested: false;
   itemCount: number;
   enabledCount: number;
+  isCollapsed: boolean;
 }
 
 export class TagCellRenderer implements Renderer<TagModel | TagFolderRow> {
@@ -76,7 +77,7 @@ const TagCell = ({ type, input, handlers }: {
 
   if (isFolder) {
     const folder = input as TagFolderRow;
-    const isCollapsed = handlers.isFolderCollapsed?.(folder.id);
+    const isCollapsed = folder.isCollapsed;
 
     if (type === "enabled") {
       const allEnabled = folder.enabledCount === folder.itemCount && folder.itemCount > 0;
@@ -264,14 +265,14 @@ const TagList: React.FC = () => {
   const [movingTag, setMovingTag] = useState<TagModel | null>(null);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
 
-  const toggleFolderCollapse = (folderId: string) => {
+  const toggleFolderCollapse = useCallback((folderId: string) => {
     setCollapsedFolderIds((prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(folderId)) next.delete(folderId);
       else next.add(folderId);
       return next;
     });
-  };
+  }, []);
 
   const tableData = useMemo(() => {
     const data: (TagModel | TagFolderRow)[] = [];
@@ -298,6 +299,7 @@ const TagList: React.FC = () => {
         __isNested: false,
         itemCount: folderItems.length,
         enabledCount,
+        isCollapsed,
       });
 
       if (!isCollapsed) {
@@ -308,7 +310,7 @@ const TagList: React.FC = () => {
     return data;
   }, [tags, folders, collapsedFolderIds, searchTerm]);
 
-  const rendererHandlers = {
+  const rendererHandlers = useMemo(() => ({
     onToggle: toggleTag,
     onEdit: (tag: TagModel) => { setEditingTag(tag); setIsModalOpen(true); },
     onDelete: deleteTag,
@@ -328,9 +330,9 @@ const TagList: React.FC = () => {
     onToggleFolderTags: (id: string, enable: boolean) => {
       toggleFolder(id, enable);
     }
-  };
+  }), [toggleTag, deleteTag, toggleFolderCollapse, collapsedFolderIds, deleteFolder, toggleFolder]);
 
-  const headers: TableViewHeader<TagModel | TagFolderRow>[] = [
+  const headers: TableViewHeader<TagModel | TagFolderRow>[] = useMemo(() => [
     { title: "Active", minWidth: 80, renderer: new TagCellRenderer("enabled", rendererHandlers) as any },
     { title: "Tag Rule Name", minWidth: 250, renderer: new TagCellRenderer("name", rendererHandlers) as any },
     { title: "Method", minWidth: 80, renderer: new TagCellRenderer("method", rendererHandlers) as any },
@@ -339,7 +341,7 @@ const TagList: React.FC = () => {
     { title: "Pattern", minWidth: 250, renderer: new TagCellRenderer("matchingRule", rendererHandlers) as any },
     { title: "Applied Tag", minWidth: 200, renderer: new TagCellRenderer("tag", rendererHandlers) as any },
     { title: "Actions", minWidth: 120, renderer: new TagCellRenderer("actions", rendererHandlers) as any }
-  ];
+  ], [rendererHandlers]);
 
   const handleSaveTag = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
