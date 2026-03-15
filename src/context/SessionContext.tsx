@@ -94,12 +94,12 @@ export const SessionProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const renameFolder = async (id: string, newName: string) => {
-    await invoke("rename_session_folder", { id, new_name: newName });
+    await invoke("rename_session_folder", { id, newName });
     await loadData();
   };
 
   const moveSession = async (id: string, folderId: string | null) => {
-    await invoke("move_session_to_folder", { id, folder_id: folderId });
+    await invoke("move_session_to_folder", { id, folderId });
     await loadData();
   };
 

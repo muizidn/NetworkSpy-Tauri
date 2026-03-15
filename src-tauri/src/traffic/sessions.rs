@@ -8,6 +8,7 @@ use uuid::Uuid;
 use chrono::Local;
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Session {
     pub id: String,
     pub name: String,
@@ -17,6 +18,7 @@ pub struct Session {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionFolder {
     pub id: String,
     pub name: String,
@@ -50,12 +52,15 @@ impl SessionManager {
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
                 folder_id TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                created_at TEXT NOT NULL,
                 db_file TEXT NOT NULL,
                 FOREIGN KEY(folder_id) REFERENCES session_folders(id) ON DELETE SET NULL
             )",
             [],
         ).unwrap();
+
+        // Migration: Ensure folder_id column exists for existing tables
+        let _ = conn.execute("ALTER TABLE sessions ADD COLUMN folder_id TEXT", []);
 
         Self {
             db: Arc::new(Mutex::new(conn)),

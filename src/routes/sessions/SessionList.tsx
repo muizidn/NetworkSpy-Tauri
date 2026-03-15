@@ -126,7 +126,7 @@ const SessionCell = ({ type, input, handlers }: {
       case "actions":
         content = (
           <div className="flex items-center gap-1 justify-end">
-             <button
+            <button
               onClick={() => handlers.onView?.(session)}
               className="px-3 py-1 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white rounded text-[10px] font-bold transition-all flex items-center gap-1"
               title="View Session"
@@ -176,7 +176,7 @@ const SessionList: React.FC = () => {
   const { setTrafficList, setTrafficSet } = useTrafficListContext();
   const { isRun, setIsRun } = useAppProvider();
   const navigate = useNavigate();
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(new Set());
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
@@ -212,8 +212,8 @@ const SessionList: React.FC = () => {
         setTrafficList(traffic);
         const newSet: Record<string, any> = {};
         traffic.forEach(t => {
-           // We don't have full data in metadata, but enough for list
-           newSet[t.id as string] = t; 
+          // We don't have full data in metadata, but enough for list
+          newSet[t.id as string] = t;
         });
         setTrafficSet(newSet);
         navigate("/");
@@ -228,7 +228,7 @@ const SessionList: React.FC = () => {
       filters: [{ name: "HAR", extensions: ["har"] }],
       multiple: false
     });
-    
+
     if (path && typeof path === 'string') {
       setImportingHarPath(path);
       setImportSessionName(`Imported HAR ${new Date().toLocaleString()}`);
@@ -253,7 +253,7 @@ const SessionList: React.FC = () => {
 
   const handleExport = async (format: 'har' | 'csv' | 'sqlite') => {
     if (!exportingSession) return;
-    
+
     let extension = format === 'sqlite' ? 'db' : format;
     const path = await save({
       filters: [{ name: format.toUpperCase(), extensions: [extension] }],
@@ -279,7 +279,7 @@ const SessionList: React.FC = () => {
     );
 
     // Add Root Items
-    const rootItems = filteredSessions.filter(s => !s.folderId || s.folderId.trim() === "");
+    const rootItems = filteredSessions.filter(s => !s.folderId || (typeof s.folderId === 'string' && s.folderId.trim() === ""));
     data.push(...rootItems);
 
     // Add Folders
@@ -328,9 +328,9 @@ const SessionList: React.FC = () => {
     { title: "Actions", minWidth: 150, renderer: new SessionCellRenderer("actions", rendererHandlers) as any }
   ], [rendererHandlers]);
 
-  const handleMoveSession = (folderId: string | null) => {
+  const handleMoveSession = async (folderId: string | null) => {
     if (movingSession) {
-      moveSession(movingSession.id, folderId);
+      await moveSession(movingSession.id, folderId);
       setMovingSession(null);
       setIsMoveModalOpen(false);
     }
@@ -345,8 +345,8 @@ const SessionList: React.FC = () => {
         actions={
           <div className="flex gap-2">
             <button
-               onClick={handleImportHar}
-               className="px-4 py-2 bg-amber-600/10 hover:bg-amber-600 text-amber-500 hover:text-white rounded-lg text-xs font-bold border border-amber-600/20 transition-all flex items-center gap-2"
+              onClick={handleImportHar}
+              className="px-4 py-2 bg-amber-600/10 hover:bg-amber-600 text-amber-500 hover:text-white rounded-lg text-xs font-bold border border-amber-600/20 transition-all flex items-center gap-2"
             >
               <FiDownload />
               Import HAR
@@ -386,7 +386,7 @@ const SessionList: React.FC = () => {
 
       {isMoveModalOpen && movingSession && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div 
+          <div
             className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -445,7 +445,7 @@ const SessionList: React.FC = () => {
 
       {isFolderModalOpen && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div 
+          <div
             className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -518,7 +518,7 @@ const SessionList: React.FC = () => {
 
       {isExportModalOpen && exportingSession && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div 
+          <div
             className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -572,7 +572,7 @@ const SessionList: React.FC = () => {
       )}
       {isImportNameModalOpen && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div 
+          <div
             className="bg-[#111111] border border-zinc-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200"
             onClick={(e) => e.stopPropagation()}
           >
