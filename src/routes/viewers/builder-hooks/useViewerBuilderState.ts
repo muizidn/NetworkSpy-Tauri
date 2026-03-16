@@ -187,7 +187,8 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
             title: `New ${type.toUpperCase()} Block`,
             code: getDefaultCode(type),
             html: type === 'html' ? getDefaultHtml() : undefined,
-            css: type === 'html' ? getDefaultCss() : undefined
+            css: type === 'html' ? getDefaultCss() : undefined,
+            padding: type === 'html' ? 0 : 24
         };
         setBlocks([...blocks, newBlock]);
     };

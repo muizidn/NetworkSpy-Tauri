@@ -19,7 +19,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize, isVie
     const [activeTab, setActiveTab] = useState<'js' | 'html' | 'css'>('js');
 
     return (
-        <div className={twMerge("group bg-zinc-900/40 border border-zinc-800 overflow-hidden transition-all shadow-xl", isViewerMode ? "col-span-12" : "hover:border-blue-500")}>
+        <div className={twMerge("group bg-zinc-900/40 overflow-hidden transition-all shadow-xl col-span-12", isViewerMode ? "" : "border border-zinc-800 hover:border-blue-500")}>
             {isViewerMode ? null : <div className={twMerge("hidden group-hover:flex px-5 py-3 bg-blue-600 items-center justify-between")}>
                 <div className="flex items-center gap-1.5">
                     <button
@@ -42,6 +42,16 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize, isVie
                     >
                         <FiCode size={16} />
                     </button>
+
+                    <div className="flex items-center gap-2 px-2 border-l border-white/20 ml-1">
+                        <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Padding</span>
+                        <input
+                            type="number"
+                            value={block.padding ?? 24}
+                            onChange={(e) => onUpdate?.({ padding: parseInt(e.target.value) })}
+                            className="w-12 bg-white/10 border border-white/20 rounded px-1.5 py-0.5 text-[10px] font-black text-white focus:outline-none focus:border-white/40"
+                        />
+                    </div>
 
                     <button
                         onClick={onDelete}
@@ -102,7 +112,10 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize, isVie
                     </div>
                 ) : null}
 
-                <div className="p-6">
+                <div
+                    className="p-0"
+                    style={{ padding: block.padding !== undefined ? `${block.padding}px` : '1.5rem' }}
+                >
                     {result?.error ? (
                         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
                             <FiAlertCircle className="text-red-400 shrink-0 mt-0.5" />
