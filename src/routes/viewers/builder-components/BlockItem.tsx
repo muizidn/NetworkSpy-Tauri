@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FiMaximize, FiCode, FiTrash2, FiAlertCircle } from "react-icons/fi";
+import { FiMaximize, FiCode, FiTrash2, FiAlertCircle, FiMinimize } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import Editor from "@monaco-editor/react";
 import { ViewerBlock } from "@src/context/ViewerContext";
@@ -38,7 +38,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                             className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all"
                             title="Focus Mode"
                         >
-                            <FiMaximize size={16} />
+                            {isMaximized ? <FiMinimize size={16} /> : <FiMaximize size={16} />}
                         </button>
 
                         {(isMaximized || !isSmall) && (
