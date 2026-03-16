@@ -75,7 +75,7 @@ const Content = () => {
         try {
           const traffic = await provider.getAllMetadata();
           setTrafficList(traffic);
-          
+
           const newSet: Record<string, any> = {};
           traffic.forEach(t => {
             newSet[(t as any).id] = t;
@@ -170,7 +170,7 @@ const Content = () => {
     provider.listenTagsUpdated((event) => {
       setTrafficList((current) => current.map(item => {
         if (item.id === event.id) {
-           return { ...item, tags: event.tags };
+          return { ...item, tags: event.tags };
         }
         return item;
       }));
