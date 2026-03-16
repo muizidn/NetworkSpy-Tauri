@@ -19,49 +19,72 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize, isVie
     const [activeTab, setActiveTab] = useState<'js' | 'html' | 'css'>('js');
 
     return (
-        <div className={twMerge("group bg-zinc-900/40 overflow-hidden transition-all shadow-xl col-span-12", isViewerMode ? "" : "border border-zinc-800 hover:border-blue-500")}>
-            {isViewerMode ? null : <div className={twMerge("hidden group-hover:flex px-5 py-3 bg-blue-600 items-center justify-between")}>
-                <div className="flex items-center gap-1.5">
-                    <button
-                        onClick={onMaximize}
-                        className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                        title="Focus Mode"
-                    >
-                        <FiMaximize size={16} />
-                    </button>
+        <div className={twMerge(
+            `relative group bg-zinc-900/40 overflow-hidden transition-all shadow-xl ${["col-span-1", "col-span-2", "col-span-3", "col-span-4", "col-span-5", "col-span-6", "col-span-7", "col-span-8", "col-span-9", "col-span-10", "col-span-11", "col-span-12"][(block.colSpan || 12) - 1]}`,
+            isViewerMode ? "" : `border border-zinc-800 hover:border-blue-500`
+        )}>
+            {/* CONTROL */}
+            {isViewerMode ? null : (
+                <div className={twMerge("hidden group-hover:flex absolute top-0 left-0 right-0 z-10 bg-blue-600 items-center justify-between")}>
+                    <div className={twMerge("flex items-center gap-1.5", (block.colSpan || 12 < 6) && "overflow-x-scroll")}>
+                        <button
+                            onClick={onMaximize}
+                            className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                            title="Focus Mode"
+                        >
+                            <FiMaximize size={16} />
+                        </button>
 
-                    <button
-                        onClick={() => setIsEditingCode(!isEditingCode)}
-                        className={twMerge(
-                            "p-2 rounded-lg transition-all",
-                            isEditingCode
-                                ? "bg-white text-blue-600 shadow-lg"
-                                : "text-white/80 hover:text-white hover:bg-white/10"
-                        )}
-                        title="Edit Logic Script"
-                    >
-                        <FiCode size={16} />
-                    </button>
+                        <button
+                            onClick={() => setIsEditingCode(!isEditingCode)}
+                            className={twMerge(
+                                "p-2 rounded-lg transition-all",
+                                isEditingCode
+                                    ? "bg-white text-blue-600 shadow-lg"
+                                    : "text-white/80 hover:text-white hover:bg-white/10"
+                            )}
+                            title="Edit Logic Script"
+                        >
+                            <FiCode size={16} />
+                        </button>
 
-                    <div className="flex items-center gap-2 px-2 border-l border-white/20 ml-1">
-                        <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Padding</span>
-                        <input
-                            type="number"
-                            value={block.padding ?? 24}
-                            onChange={(e) => onUpdate?.({ padding: parseInt(e.target.value) })}
-                            className="w-12 bg-white/10 border border-white/20 rounded px-1.5 py-0.5 text-[10px] font-black text-white focus:outline-none focus:border-white/40"
-                        />
+                        {/* Column Span Select */}
+                        <div className="flex items-center gap-2 px-2 border-l border-white/20 ml-1">
+                            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Width</span>
+                            <select
+                                value={block.colSpan || 12}
+                                onChange={(e) => onUpdate?.({ colSpan: parseInt(e.target.value) as any })}
+                                className="bg-white/10 border border-white/20 rounded px-1 py-0.5 text-[10px] font-black text-white focus:outline-none focus:border-white/40 cursor-pointer appearance-none hover:bg-white/20"
+                            >
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
+                                    <option key={n} value={n} className="bg-zinc-900 text-white">
+                                        {n}/12
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Padding Input */}
+                        <div className="flex items-center gap-2 px-2 border-l border-white/20">
+                            <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">Padding</span>
+                            <input
+                                type="number"
+                                value={block.padding ?? 24}
+                                onChange={(e) => onUpdate?.({ padding: parseInt(e.target.value) })}
+                                className="w-10 bg-white/10 border border-white/20 rounded px-1.5 py-0.5 text-[10px] font-black text-white focus:outline-none focus:border-white/40"
+                            />
+                        </div>
+
+                        <button
+                            onClick={onDelete}
+                            className="p-2 text-white/80 hover:text-red-200 hover:bg-red-500/20 rounded-lg transition-all"
+                            title="Delete Block"
+                        >
+                            <FiTrash2 size={16} />
+                        </button>
                     </div>
-
-                    <button
-                        onClick={onDelete}
-                        className="p-2 text-white/80 hover:text-red-200 hover:bg-red-500/20 rounded-lg transition-all"
-                        title="Delete Block"
-                    >
-                        <FiTrash2 size={16} />
-                    </button>
                 </div>
-            </div>}
+            )}
 
             <div className="p-0">
                 {!isViewerMode && isEditingCode ? (
@@ -106,7 +129,6 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize, isVie
                                     else if (activeTab === 'html') onUpdate?.({ html: val || "" });
                                     else onUpdate?.({ css: val || "" });
                                 }}
-                            // ... rest of your Monaco config remains the same
                             />
                         </div>
                     </div>
@@ -114,10 +136,10 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize, isVie
 
                 <div
                     className="p-0"
-                    style={{ padding: block.padding !== undefined ? `${block.padding}px` : '1.5rem' }}
+                    style={{ padding: block.padding !== undefined ? `${block.padding}px` : '0px' }}
                 >
                     {result?.error ? (
-                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
+                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 m-4">
                             <FiAlertCircle className="text-red-400 shrink-0 mt-0.5" />
                             <div>
                                 <div className="text-red-400 font-bold text-xs mb-1 uppercase tracking-tight">Execution Error</div>

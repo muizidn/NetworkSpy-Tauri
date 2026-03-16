@@ -31,10 +31,12 @@ export const Canvas: React.FC<CanvasProps> = ({
             ) : (
                 <div className="grid grid-cols-12">
                     {blocks.length === 0 ? (
-                        <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-20 flex flex-col items-center justify-center text-zinc-600">
-                            <FiLayers size={48} className="mb-4 opacity-20" />
-                            <p className="text-sm font-medium">Your canvas is empty</p>
-                            <p className="text-xs mt-1">Add blocks from the right panel to start building</p>
+                        <div className="col-span-12 flex justify-center items-center p-20">
+                            <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-20 flex flex-col items-center justify-center text-zinc-600">
+                                <FiLayers size={48} className="mb-4 opacity-20" />
+                                <p className="text-sm font-medium">Your canvas is empty</p>
+                                <p className="text-xs mt-1">Add blocks from the right panel to start building</p>
+                            </div>
                         </div>
                     ) : (
                         blocks.map((block) => (
