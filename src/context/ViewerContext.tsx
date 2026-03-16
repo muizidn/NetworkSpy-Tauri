@@ -6,10 +6,10 @@ export interface ViewerBlock {
   type: 'text' | 'json' | 'headers' | 'table' | 'html';
   title: string;
   code: string;
+  colSpan: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
   html?: string;
   css?: string;
   padding?: number;
-  colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 }
 
 export interface ViewerContent {

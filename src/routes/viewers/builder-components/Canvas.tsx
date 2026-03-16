@@ -47,7 +47,6 @@ export const Canvas: React.FC<CanvasProps> = ({
                                 result={testResults && testResults[block.id]}
                                 onDelete={deleteBlock && (() => deleteBlock(block.id))}
                                 onUpdate={updateBlock && ((updates) => updateBlock(block.id, updates))}
-                                onMaximize={setMaximizedBlockId && (() => setMaximizedBlockId(block.id))}
                             />
                         ))
                     )}

@@ -37,7 +37,7 @@ const AutoResizingIframe = ({ html }: { html: string }) => {
         <html>
             <head>
                 <style>
-                    body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; }
+                    body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background:black; }
                     #wrapper { width: 100%; display: inline-block; }
                 </style>
             </head>
@@ -89,7 +89,7 @@ export const renderResult = (type: ViewerBlock['type'], data: any) => {
         return (
             <div className="h-20 flex flex-col items-center justify-center border border-dashed border-zinc-800/50 rounded-2xl bg-zinc-950/30 m-4">
                 <FiPlay size={18} className="text-zinc-700 mb-1" />
-                <span className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em]">Ready for Preview</span>
+                <span className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em]">Ready for {type.toUpperCase()} Preview</span>
             </div>
         );
     }
@@ -142,16 +142,16 @@ export const renderResult = (type: ViewerBlock['type'], data: any) => {
 
         case 'html':
             return (
-                <div className="w-full bg-white m-0 border-none rounded-none overflow-hidden">
+                <div className="w-full bg-transparent m-0 border-none rounded-none overflow-hidden">
                     <AutoResizingIframe html={String(data)} />
                 </div>
             );
 
         default:
             return (
-                <pre className="text-xs text-zinc-400 font-mono whitespace-pre-wrap bg-black/40 p-5 m-0 border-none rounded-none">
-                    {JSON.stringify(data, null, 2)}
-                </pre>
+                <div className="w-full bg-transparent m-0 border-none rounded-none overflow-hidden">
+                    UNKNOWN BLOCK TYPE
+                </div>
             );
     }
 };

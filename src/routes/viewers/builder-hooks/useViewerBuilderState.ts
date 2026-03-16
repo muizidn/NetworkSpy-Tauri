@@ -28,7 +28,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     const [selectedSessionId, setSelectedSessionId] = useState<string>(parsedContent.previewConfig?.selectedSessionId || "");
     const [selectedTrafficId, setSelectedTrafficId] = useState<string>(parsedContent.previewConfig?.selectedTrafficId || "");
     const [filter, setFilter] = useState<string>(parsedContent.previewConfig?.filter || "");
-    
+
     const [isToolboxVisible, setIsToolboxVisible] = useState(true);
     const [maximizedBlockId, setMaximizedBlockId] = useState<string | null>(null);
     const [sessionTraffic, setSessionTraffic] = useState<any[]>([]);
@@ -186,9 +186,10 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
             type,
             title: `New ${type.toUpperCase()} Block`,
             code: getDefaultCode(type),
+            colSpan: 12,
             html: type === 'html' ? getDefaultHtml() : undefined,
             css: type === 'html' ? getDefaultCss() : undefined,
-            padding: type === 'html' ? 0 : 24
+            padding: type === 'html' ? 0 : 4
         };
         setBlocks([...blocks, newBlock]);
     };
