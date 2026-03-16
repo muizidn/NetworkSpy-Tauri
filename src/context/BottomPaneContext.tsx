@@ -14,6 +14,7 @@ export type NoneMode =
  * Modes when a single traffic is selected.
  */
 export type SingleMode =
+    | "custom_viewer"
     | "request_response"
     | "graphql"
     | "llm_prompt"
@@ -74,13 +75,16 @@ export type MultipleMode =
     | "ai_security"
     | "diff";
 
+export type CustomSingleMode = { type: "viewer"; id: string };
+
 /**
  * Unified bottom pane mode.
  */
 export type BottomPaneMode =
     | NoneMode
     | SingleMode
-    | MultipleMode;
+    | MultipleMode
+    | CustomSingleMode;
 
 export type BottomPaneSelectionType =
     | "none"

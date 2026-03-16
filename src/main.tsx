@@ -23,7 +23,9 @@ import WorkspacePage from "./routes/workspace";
 import AccountPage from "./routes/account";
 import ExtensionsPage from "./routes/extensions";
 import SessionPage from "./routes/sessions";
+import ViewersPage from "./routes/viewers";
 import { SessionProvider } from "./context/SessionContext";
+import { ViewerProvider } from "./context/ViewerContext";
 
 // import ScriptEditor from "./routes/script-editor";
 
@@ -85,6 +87,10 @@ const router = createBrowserRouter([
         path: "/sessions",
         element: <SessionPage />,
       },
+      {
+        path: "/viewers",
+        element: <ViewersPage />,
+      },
     ],
   },
 ]);
@@ -102,17 +108,19 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <TauriProvider>
       <TagProvider>
         <SessionProvider>
-          <SettingsProvider>
-            <TrafficListProvider>
-              <TauriEnvProvider>
-                <PaneProvider>
-                  <DndProvider backend={HTML5Backend}>
-                    <RouterProvider router={router} />
-                  </DndProvider>
-                </PaneProvider>
-              </TauriEnvProvider>
-            </TrafficListProvider>
-          </SettingsProvider>
+          <ViewerProvider>
+            <SettingsProvider>
+              <TrafficListProvider>
+                <TauriEnvProvider>
+                  <PaneProvider>
+                    <DndProvider backend={HTML5Backend}>
+                      <RouterProvider router={router} />
+                    </DndProvider>
+                  </PaneProvider>
+                </TauriEnvProvider>
+              </TrafficListProvider>
+            </SettingsProvider>
+          </ViewerProvider>
         </SessionProvider>
       </TagProvider>
     </TauriProvider>

@@ -446,3 +446,25 @@ pub async fn export_session_data(
     }
     Ok(())
 }
+
+#[tauri::command]
+pub async fn get_session_request_data(
+    manager: tauri::State<'_, Arc<SessionManager>>,
+    session_id: String,
+    traffic_id: String,
+) -> Result<Option<crate::traffic::db::RequestResponseData>, String> {
+    let db_path = manager.get_session_db_path(session_id).map_err(|e| e.to_string())?;
+    let db = crate::traffic::db::TrafficDb::new_readonly(db_path).map_err(|e| e.to_string())?;
+    Ok(db.get_request_data(&traffic_id))
+}
+
+#[tauri::command]
+pub async fn get_session_response_data(
+    manager: tauri::State<'_, Arc<SessionManager>>,
+    session_id: String,
+    traffic_id: String,
+) -> Result<Option<crate::traffic::db::RequestResponseData>, String> {
+    let db_path = manager.get_session_db_path(session_id).map_err(|e| e.to_string())?;
+    let db = crate::traffic::db::TrafficDb::new_readonly(db_path).map_err(|e| e.to_string())?;
+    Ok(db.get_response_data(&traffic_id))
+}
