@@ -37,6 +37,8 @@ brotli = "8.0.2"
 base64 = "0.22.1"
 globset = "0.4.18"
 uuid = { version = "1.8", features = ["v4"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62.2", features = ["Win32_Networking_WinInet", "Win32_Foundation"] }
 
 # [patch."https://github.com/muizidn/NetworkSpyProxy.git"]
