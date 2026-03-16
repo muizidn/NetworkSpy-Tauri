@@ -18,32 +18,24 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize }: Blo
     const [activeTab, setActiveTab] = useState<'js' | 'html' | 'css'>('js');
 
     return (
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl overflow-hidden group hover:border-zinc-700/50 transition-all shadow-xl">
-            <div className="px-5 py-3 bg-zinc-900/60 border-b border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-zinc-800">{block.type}</span>
-                    <input 
-                        value={block.title}
-                        onChange={(e) => onUpdate({ title: e.target.value })}
-                        className="bg-transparent border-none focus:outline-none text-sm font-bold text-zinc-200 w-64"
-                    />
-                </div>
+        <div className="group bg-zinc-900/40 border border-zinc-800 rounded-2xl overflow-hidden group hover:border-zinc-700/50 transition-all shadow-xl">
+            <div className="hidden group-hover:flex px-5 py-3 bg-zinc-900/60 border-b border-zinc-800 items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                    <button 
+                    <button
                         onClick={onMaximize}
                         className="p-2 text-zinc-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all"
                         title="Focus Mode"
                     >
                         <FiMaximize size={16} />
                     </button>
-                    <button 
+                    <button
                         onClick={() => setIsEditingCode(!isEditingCode)}
                         className={twMerge("p-2 rounded-lg transition-all", isEditingCode ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "text-zinc-500 hover:text-blue-400 hover:bg-blue-400/10")}
                         title="Edit Logic Script"
                     >
                         <FiCode size={16} />
                     </button>
-                    <button 
+                    <button
                         onClick={onDelete}
                         className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                     >
@@ -58,19 +50,19 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize }: Blo
                         <div className="px-5 py-2 flex items-center justify-between bg-black/40 border-b border-zinc-800/50">
                             {block.type === 'html' ? (
                                 <div className="flex gap-4">
-                                    <button 
+                                    <button
                                         onClick={() => setActiveTab('js')}
                                         className={twMerge("text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all", activeTab === 'js' ? "text-blue-500 border-blue-500" : "text-zinc-600 border-transparent hover:text-zinc-400")}
                                     >
                                         Logic (JS)
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setActiveTab('html')}
                                         className={twMerge("text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all", activeTab === 'html' ? "text-pink-500 border-pink-500" : "text-zinc-600 border-transparent hover:text-zinc-400")}
                                     >
                                         Markup (HTML)
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => setActiveTab('css')}
                                         className={twMerge("text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all", activeTab === 'css' ? "text-purple-500 border-purple-500" : "text-zinc-600 border-transparent hover:text-zinc-400")}
                                     >
@@ -98,7 +90,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize }: Blo
                                 onMount={(editor, monaco) => {
                                     if (activeTab !== 'js') return;
                                     const ts = monaco.languages.typescript;
-                                    
+
                                     // Set compiler options for JavaScript
                                     (ts as any).javascriptDefaults.setCompilerOptions({
                                         target: (ts as any).ScriptTarget.ESNext,
@@ -136,7 +128,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize }: Blo
                                          */
                                         declare function code(): Promise<any>;
                                     `;
-                                    
+
                                     const libUri = 'ts:filename/extra.d.ts';
                                     (ts as any).javascriptDefaults.addExtraLib(libSource, libUri);
                                 }}
@@ -155,7 +147,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, onMaximize }: Blo
                         </div>
                     </div>
                 ) : null}
-                
+
                 <div className="p-6">
                     {result?.error ? (
                         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3">
