@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { twMerge } from "tailwind-merge";
 
 import ViewerList from "@src/routes/viewers/ViewerList";
 import ViewerBuilder from "@src/routes/viewers/ViewerBuilder";
@@ -6,13 +7,19 @@ import { Viewer } from "@src/context/ViewerContext";
 
 const ViewersPage: React.FC = () => {
     const [selectedViewer, setSelectedViewer] = useState<Viewer | null>(null);
+    const [isCompact, setIsCompact] = useState(false);
 
     return (
         <div className="flex h-full bg-[#050505] overflow-hidden">
-            <div className="w-80 border-r border-zinc-900 flex flex-col h-full bg-[#080808]">
+            <div className={twMerge(
+                "border-r border-zinc-900 flex flex-col h-full bg-[#080808] transition-all duration-300",
+                isCompact ? "w-16" : "w-80"
+            )}>
                 <ViewerList 
                     selectedViewerId={selectedViewer?.id} 
                     onSelectViewer={setSelectedViewer} 
+                    isCompact={isCompact}
+                    onToggleCompact={() => setIsCompact(!isCompact)}
                 />
             </div>
             

@@ -3,9 +3,11 @@ import { invoke } from "@tauri-apps/api/core";
 
 export interface ViewerBlock {
   id: string;
-  type: 'text' | 'json' | 'headers' | 'table';
+  type: 'text' | 'json' | 'headers' | 'table' | 'html';
   title: string;
   code: string;
+  html?: string;
+  css?: string;
 }
 
 export interface ViewerContent {

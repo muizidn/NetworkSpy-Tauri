@@ -136,7 +136,16 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
             `;
             
             const fn = new Function('readRequestHeaders', 'readRequestBody', 'readResponseHeaders', 'readResponseBody', wrappedCode);
-            return await fn(readRequestHeaders, readRequestBody, readResponseHeaders, readResponseBody);
+            const data = await fn(readRequestHeaders, readRequestBody, readResponseHeaders, readResponseBody);
+
+            if (block.type === 'html' && data && typeof data === 'object' && !data.error) {
+                return `
+                    <style>${block.css || ''}</style>
+                    <script>window.DATA = ${JSON.stringify(data)};</script>
+                    ${block.html || ''}
+                `;
+            }
+            return data;
         } catch (e: any) {
             return { error: e.toString() };
         }
@@ -331,6 +340,17 @@ const renderResult = (type: ViewerBlock['type'], data: any) => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            );
+        case 'html':
+            return (
+                <div className="w-full bg-white rounded-xl overflow-hidden border border-zinc-200 min-h-[150px] flex flex-col">
+                    <iframe 
+                        srcDoc={String(data)} 
+                        className="w-full flex-1 border-none min-h-[200px]"
+                        sandbox="allow-scripts"
+                        title="Block HTML Content"
+                    />
                 </div>
             );
         default:

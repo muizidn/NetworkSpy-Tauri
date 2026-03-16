@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { FiChevronDown, FiChevronRight, FiEdit3, FiFolder, FiFolderPlus, FiPlus, FiSearch, FiTrash2, FiX, FiMove, FiEye, FiDownload } from "react-icons/fi";
+import { FiChevronDown, FiChevronRight, FiEdit3, FiFolder, FiFolderPlus, FiPlus, FiSearch, FiTrash2, FiX, FiMove, FiEye, FiDownload, FiColumns } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useViewerContext, Viewer, ViewerFolder } from "@src/context/ViewerContext";
 import { createPortal } from "react-dom";
@@ -9,9 +9,11 @@ import { readTextFile } from "@tauri-apps/plugin-fs";
 interface ViewerListProps {
     selectedViewerId?: string;
     onSelectViewer: (viewer: Viewer | null) => void;
+    isCompact?: boolean;
+    onToggleCompact?: () => void;
 }
 
-const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewer }) => {
+const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewer, isCompact, onToggleCompact }) => {
     const { viewers, folders, deleteViewer, addFolder, deleteFolder, renameFolder, moveViewer, saveViewer } = useViewerContext();
     const [searchTerm, setSearchTerm] = useState("");
     const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(new Set());
@@ -45,9 +47,22 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
 
     return (
         <div className="flex flex-col h-full select-none">
-            <div className="px-4 py-4 border-b border-zinc-900 flex items-center justify-between bg-zinc-900/10">
-                <h2 className="text-xs font-black uppercase tracking-widest text-zinc-400">Viewers</h2>
-                <div className="flex gap-1">
+            <div className={twMerge(
+                "px-4 py-4 border-b border-zinc-900 flex items-center bg-zinc-900/10",
+                isCompact ? "flex-col gap-4 px-2" : "justify-between"
+            )}>
+                {!isCompact && <h2 className="text-xs font-black uppercase tracking-widest text-zinc-400">Viewers</h2>}
+                <div className={twMerge("flex", isCompact ? "flex-col gap-2" : "gap-1")}>
+                    <button 
+                        onClick={onToggleCompact}
+                        className={twMerge(
+                            "p-1.5 rounded transition-all",
+                            isCompact ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200"
+                        )}
+                        title={isCompact ? "Expand Sidebar" : "Compact Sidebar"}
+                    >
+                        <FiColumns size={14} className={isCompact ? "" : "rotate-90"} />
+                    </button>
                     <button 
                         onClick={() => setIsFolderModalOpen(true)}
                         className="p-1.5 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200 rounded transition-colors"
@@ -83,18 +98,20 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
                 </div>
             </div>
 
-            <div className="px-3 py-3 border-b border-zinc-900">
-                <div className="relative">
-                    <FiSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-600" size={12} />
-                    <input 
-                        type="text"
-                        placeholder="Search viewers..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-md pl-8 pr-3 py-1.5 text-[11px] text-zinc-300 focus:outline-none focus:border-blue-500/50 transition-colors"
-                    />
+            {!isCompact && (
+                <div className="px-3 py-3 border-b border-zinc-900">
+                    <div className="relative">
+                        <FiSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-600" size={12} />
+                        <input 
+                            type="text"
+                            placeholder="Search viewers..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-md pl-8 pr-3 py-1.5 text-[11px] text-zinc-300 focus:outline-none focus:border-blue-500/50 transition-colors"
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-0.5">
                 {/* Root items */}
@@ -106,6 +123,7 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
                         onSelect={() => onSelectViewer(viewer)}
                         onRename={() => { setEditingViewer(viewer); setNewViewerName(viewer.name); }}
                         onDelete={() => deleteViewer(viewer.id)}
+                        isCompact={isCompact}
                     />
                 ))}
 
@@ -118,6 +136,7 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
                         onToggle={() => toggleFolderCollapse(folder.id)}
                         onRename={() => { setEditingFolder(folder); setNewFolderName(folder.name); setIsFolderModalOpen(true); }}
                         onDelete={() => confirm(`Delete folder "${folder.name}"?`) && deleteFolder(folder.id)}
+                        isCompact={isCompact}
                     >
                         {filteredViewers.filter(v => v.folderId === folder.id).map(viewer => (
                             <ViewerItem 
@@ -128,6 +147,7 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
                                 onSelect={() => onSelectViewer(viewer)}
                                 onRename={() => { setEditingViewer(viewer); setNewViewerName(viewer.name); }}
                                 onDelete={() => deleteViewer(viewer.id)}
+                                isCompact={isCompact}
                             />
                         ))}
                     </FolderItem>
@@ -224,53 +244,65 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
     );
 };
 
-const ViewerItem = ({ viewer, isActive, onSelect, onRename, onDelete, isNested }: { viewer: Viewer, isActive: boolean, onSelect: () => void, onRename: () => void, onDelete: () => void, isNested?: boolean }) => (
+const ViewerItem = ({ viewer, isActive, onSelect, onRename, onDelete, isNested, isCompact }: { viewer: Viewer, isActive: boolean, onSelect: () => void, onRename: () => void, onDelete: () => void, isNested?: boolean, isCompact?: boolean }) => (
     <div 
         onClick={onSelect}
         className={twMerge(
-            "group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all",
+            "group flex items-center rounded-lg cursor-pointer transition-all",
+            isCompact ? "px-0 py-2 justify-center" : "px-3 py-2 justify-between",
             isActive ? "bg-blue-600/20 text-blue-400" : "hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200",
-            isNested && "ml-4"
+            isNested && !isCompact && "ml-4"
         )}
+        title={isCompact ? viewer.name : undefined}
     >
-        <div className="flex items-center gap-2 truncate">
-            <FiEye size={12} className={isActive ? "text-blue-400" : "text-zinc-600 group-hover:text-zinc-400"} />
-            <span className="text-[11px] font-medium truncate">{viewer.name}</span>
+        <div className={twMerge("flex items-center gap-2 truncate", isCompact && "justify-center overflow-visible")}>
+            <FiEye size={isCompact ? 18 : 12} className={twMerge(isActive ? "text-blue-400" : "text-zinc-600 group-hover:text-zinc-400", isCompact && isActive && "scale-110")} />
+            {!isCompact && <span className="text-[11px] font-medium truncate">{viewer.name}</span>}
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-            <button 
-                onClick={(e) => { e.stopPropagation(); onRename(); }}
-                className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-blue-400 rounded transition-all"
-            >
-                <FiEdit3 size={10} />
-            </button>
-            <button 
-                onClick={(e) => { e.stopPropagation(); if(confirm(`Delete viewer "${viewer.name}"?`)) onDelete(); }}
-                className="p-1 hover:bg-red-500/20 text-zinc-600 hover:text-red-500 rounded transition-all"
-            >
-                <FiTrash2 size={10} />
-            </button>
-        </div>
+        {!isCompact && (
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onRename(); }}
+                    className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-blue-400 rounded transition-all"
+                >
+                    <FiEdit3 size={10} />
+                </button>
+                <button 
+                    onClick={(e) => { e.stopPropagation(); if(confirm(`Delete viewer "${viewer.name}"?`)) onDelete(); }}
+                    className="p-1 hover:bg-red-500/20 text-zinc-600 hover:text-red-500 rounded transition-all"
+                >
+                    <FiTrash2 size={10} />
+                </button>
+            </div>
+        )}
     </div>
 );
 
-const FolderItem = ({ folder, isCollapsed, onToggle, onRename, onDelete, children }: { folder: ViewerFolder, isCollapsed: boolean, onToggle: () => void, onRename: () => void, onDelete: () => void, children: React.ReactNode }) => (
+const FolderItem = ({ folder, isCollapsed, onToggle, onRename, onDelete, children, isCompact }: { folder: ViewerFolder, isCollapsed: boolean, onToggle: () => void, onRename: () => void, onDelete: () => void, children: React.ReactNode, isCompact?: boolean }) => (
     <div className="space-y-0.5">
         <div 
             onClick={onToggle}
-            className="group flex items-center justify-between px-3 py-1.5 rounded-lg cursor-pointer hover:bg-zinc-900/50 transition-all"
+            className={twMerge(
+                "group flex items-center rounded-lg cursor-pointer hover:bg-zinc-900/50 transition-all",
+                isCompact ? "px-0 py-2 justify-center" : "px-3 py-1.5 justify-between"
+            )}
+            title={isCompact ? folder.name : undefined}
         >
-            <div className="flex items-center gap-2">
-                {isCollapsed ? <FiChevronRight size={12} className="text-zinc-600" /> : <FiChevronDown size={12} className="text-blue-500" />}
-                <FiFolder size={12} className={isCollapsed ? "text-zinc-700" : "text-amber-500"} />
-                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500 group-hover:text-zinc-300 transition-colors">{folder.name}</span>
+            <div className={twMerge("flex items-center gap-2", isCompact && "justify-center overflow-visible")}>
+                {!isCompact && (isCollapsed ? <FiChevronRight size={12} className="text-zinc-600" /> : <FiChevronDown size={12} className="text-blue-500" />)}
+                <FiFolder size={isCompact ? 18 : 12} className={isCollapsed ? "text-zinc-700" : "text-amber-500"} />
+                {!isCompact && (
+                    <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500 group-hover:text-zinc-300 transition-colors">{folder.name}</span>
+                )}
             </div>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={(e) => { e.stopPropagation(); onRename(); }} className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-blue-400 rounded"><FiEdit3 size={10} /></button>
-                <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-red-400 rounded"><FiTrash2 size={10} /></button>
-            </div>
+            {!isCompact && (
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); onRename(); }} className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-blue-400 rounded"><FiEdit3 size={10} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-red-400 rounded"><FiTrash2 size={10} /></button>
+                </div>
+            )}
         </div>
-        {!isCollapsed && children}
+        {(!isCollapsed || isCompact) && children}
     </div>
 );
 
