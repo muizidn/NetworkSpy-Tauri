@@ -59,12 +59,30 @@ impl ProxyToggle {
 
     #[cfg(target_os = "windows")]
     fn turn_on_windows(&self, port: u64) {
-        assert!(self.shell("netsh", &["winhttp", "set", "proxy", &format!("127.0.0.1:{}", port)]));
+        let proxy = format!("127.0.0.1:{}", port);
+
+        // Update WinINET proxy (registry)
+        self.shell("reg", &["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "1", "/f"]);
+        self.shell("reg", &["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", &proxy, "/f"]);
+
+        // Notify system
+        refresh_proxy();
+
+        // Optional: WinHTTP
+        self.shell("netsh", &["winhttp", "set", "proxy", &proxy]);
     }
+
 
     #[cfg(target_os = "windows")]
     fn turn_off_windows(&self) {
-        assert!(self.shell("netsh", &["winhttp", "reset", "proxy"]));
+        // Disable proxy
+        self.shell("reg", &["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "0", "/f"]);
+
+        // Notify system
+        refresh_proxy();
+
+        // Optional: WinHTTP
+        self.shell("netsh", &["winhttp", "reset", "proxy"]);
     }
 
     fn shell(&self, launch_path: &str, args: &[&str]) -> bool {
@@ -73,5 +91,16 @@ impl ProxyToggle {
             .status()
             .expect("failed to execute process");
         status.success()
+    }
+}
+
+ // Call this after registry changes
+#[cfg(target_os = "windows")]
+fn refresh_proxy() {
+    use windows::Win32::Networking::WinInet::{InternetSetOptionW, INTERNET_OPTION_SETTINGS_CHANGED, INTERNET_OPTION_REFRESH};
+
+    unsafe {
+        InternetSetOptionW(None, INTERNET_OPTION_SETTINGS_CHANGED, None, 0);
+        InternetSetOptionW(None, INTERNET_OPTION_REFRESH, None, 0);
     }
 }
