@@ -8,6 +8,7 @@ export interface ViewerBlock {
   code: string;
   html?: string;
   css?: string;
+  padding?: number;
 }
 
 export interface ViewerContent {

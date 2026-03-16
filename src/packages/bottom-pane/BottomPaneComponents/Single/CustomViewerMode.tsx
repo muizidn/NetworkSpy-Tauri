@@ -7,6 +7,9 @@ import { JSONTree } from "react-json-tree";
 import { twMerge } from "tailwind-merge";
 import { useSessionContext } from "@src/context/SessionContext";
 import { invoke } from "@tauri-apps/api/core";
+import { renderResult } from "@src/routes/viewers/builder-utils/renderResult";
+import { BlockItem } from "@src/routes/viewers/builder-components/BlockItem";
+import { Canvas } from "@src/routes/viewers/builder-components/Canvas";
 
 const theme = {
     scheme: 'monokai',
@@ -93,7 +96,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
             let body: any;
             if (!isReviewMode) body = (await provider.getRequestPairData(trafficId))?.body;
             else body = await invoke("get_session_request_data", { sessionId: reviewedSession?.id, trafficId }).then((d: any) => d?.body);
-            
+
             if (!body) return "";
             if (body instanceof Uint8Array || Array.isArray(body)) return decoder.decode(new Uint8Array(body));
             return body;
@@ -112,7 +115,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
             let body: any;
             if (!isReviewMode) body = (await provider.getResponsePairData(trafficId))?.body;
             else body = await invoke("get_session_response_data", { sessionId: reviewedSession?.id, trafficId }).then((d: any) => d?.body);
-            
+
             if (!body) return "";
             if (body instanceof Uint8Array || Array.isArray(body)) return decoder.decode(new Uint8Array(body));
             return body;
@@ -134,7 +137,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                     }
                 })()
             `;
-            
+
             const fn = new Function('readRequestHeaders', 'readRequestBody', 'readResponseHeaders', 'readResponseBody', wrappedCode);
             const data = await fn(readRequestHeaders, readRequestBody, readResponseHeaders, readResponseBody);
 
@@ -162,11 +165,11 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
             try {
                 const content: ViewerContent = JSON.parse(selectedViewer.content);
                 const results: Record<string, any> = {};
-                
+
                 for (const block of content.blocks) {
                     results[block.id] = await executeBlock(block);
                 }
-                
+
                 setRunningViewers(results);
             } catch (e) {
                 console.error("Failed to run viewer", e);
@@ -193,14 +196,14 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
 
                         <div className="relative flex-1 max-w-md ml-8">
                             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
-                            <input 
+                            <input
                                 type="text"
                                 placeholder="Search your viewers..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-zinc-300 focus:outline-none focus:border-blue-500/50 transition-all font-medium"
                             />
-                            
+
                             {searchTerm && (
                                 <div className="absolute top-full left-0 right-0 mt-2 bg-[#121212] border border-zinc-800 rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto overflow-hidden custom-scrollbar animate-in fade-in slide-in-from-top-1">
                                     {filteredViewers.length > 0 ? (
@@ -226,7 +229,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                         <div className="flex items-center gap-3 bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-2">
                             <FiEye size={14} className="text-blue-400" />
                             <span className="text-xs font-bold text-zinc-300 uppercase tracking-widest">{selectedViewer.name}</span>
-                            <button 
+                            <button
                                 onClick={() => { setSelectedViewer(null); setRunningViewers({}); }}
                                 className="ml-2 text-zinc-600 hover:text-red-400 transition-colors"
                             >
@@ -238,7 +241,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
             )}
 
             {/* Viewer Content */}
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[#080808]">
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#080808]">
                 {!selectedViewer ? (
                     <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-30 grayscale cursor-default">
                         <FiLayers className="text-6xl text-zinc-500" />
@@ -255,114 +258,22 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                         </div>
                     </div>
                 ) : (
-                    <div className="max-w-4xl mx-auto space-y-8">
-                        {JSON.parse(selectedViewer.content).blocks.map((block: ViewerBlock) => (
-                            <BlockResult 
-                                key={block.id} 
-                                block={block} 
-                                result={runningViewers[block.id]} 
-                            />
-                        ))}
-                    </div>
+                    <Canvas
+                        blocks={JSON.parse(selectedViewer.content).blocks}
+                        testResults={runningViewers}
+                        isViewerMode={true}
+                    />
                 )}
             </div>
         </div>
     );
-};
-
-const BlockResult = ({ block, result }: { block: ViewerBlock, result: any }) => {
-    return (
-        <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm hover:border-zinc-700/50 transition-all">
-            <div className="px-6 py-3 bg-zinc-900/60 border-b border-zinc-800 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-zinc-800">{block.type}</span>
-                    <h3 className="text-sm font-bold text-zinc-200">{block.title}</h3>
-                </div>
-                {result?.error && <FiAlertCircle className="text-red-500" size={16} />}
-            </div>
-            
-            <div className="p-6">
-                {result?.error ? (
-                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
-                        <div className="text-red-400 font-bold text-xs mb-1">Execution Error</div>
-                        <div className="text-[11px] font-mono text-zinc-500 whitespace-pre-wrap">{result.error}</div>
-                    </div>
-                ) : (
-                    renderResult(block.type, result)
-                )}
-            </div>
-        </div>
-    );
-};
-
-const renderResult = (type: ViewerBlock['type'], data: any) => {
-    if (data === undefined || data === null) {
-        return <div className="text-[11px] text-zinc-600 italic uppercase tracking-widest font-black opacity-30">Null / Undefined Output</div>;
-    }
-
-    switch (type) {
-        case 'text':
-            return <div className="text-zinc-300 font-medium text-sm leading-relaxed">{String(data)}</div>;
-        case 'json':
-        case 'headers':
-            return (
-                <div className="bg-black/20 rounded-xl p-4 border border-zinc-800/50">
-                    <JSONTree 
-                        data={data} 
-                        theme={theme}
-                        invertTheme={false} 
-                        hideRoot={true}
-                        labelRenderer={(keyPath: ReadonlyArray<string | number>) => <span className="text-zinc-500 font-mono text-xs font-bold">{keyPath[0]}:</span>}
-                        valueRenderer={(val: any) => <span className="text-orange-400 font-mono text-xs">{String(val)}</span>}
-                    />
-                </div>
-            );
-        case 'table':
-            if (!Array.isArray(data)) return <div className="text-red-400 text-xs">Table block expected an array of objects.</div>;
-            const keys = data.length > 0 ? Object.keys(data[0]) : [];
-            return (
-                <div className="overflow-x-auto rounded-xl border border-zinc-800">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-zinc-800/50">
-                                {keys.map(k => (
-                                    <th key={k} className="px-4 py-2 text-[10px] font-black uppercase text-zinc-500 tracking-wider border-b border-zinc-700">{k}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, i) => (
-                                <tr key={i} className="hover:bg-zinc-800/30 transition-colors">
-                                    {keys.map(k => (
-                                        <td key={k} className="px-4 py-2 border-b border-zinc-800/50 text-xs text-zinc-400 font-mono">{String(row[k])}</td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            );
-        case 'html':
-            return (
-                <div className="w-full bg-white rounded-xl overflow-hidden border border-zinc-200 min-h-[150px] flex flex-col">
-                    <iframe 
-                        srcDoc={String(data)} 
-                        className="w-full flex-1 border-none min-h-[200px]"
-                        sandbox="allow-scripts"
-                        title="Block HTML Content"
-                    />
-                </div>
-            );
-        default:
-            return <pre className="text-xs text-zinc-400 font-mono whitespace-pre-wrap bg-black/40 p-4 rounded-xl border border-zinc-800">{JSON.stringify(data, null, 2)}</pre>;
-    }
 };
 
 const Placeholder = ({ text }: { text: string }) => (
-  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a]">
-    <div className="text-center">
-      <div className="text-5xl font-black opacity-5 mb-4 italic tracking-tighter">CUSTOM VIEWER</div>
-      <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-700">{text}</div>
+    <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a]">
+        <div className="text-center">
+            <div className="text-5xl font-black opacity-5 mb-4 italic tracking-tighter">CUSTOM VIEWER</div>
+            <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-700">{text}</div>
+        </div>
     </div>
-  </div>
-);
+)
