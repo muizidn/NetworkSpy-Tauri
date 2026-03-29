@@ -33,14 +33,51 @@ impl ProxyToggle {
 
     #[cfg(target_os = "macos")]
     fn turn_on_macos(&self, port: u64) {
-        assert!(self.shell("/usr/sbin/networksetup", &["-setwebproxy", "Wi-Fi", "127.0.0.1", &port.to_string()]));
-        assert!(self.shell("/usr/sbin/networksetup", &["-setsecurewebproxy", "Wi-Fi", "127.0.0.1", &port.to_string()]));
+        /*
+         * To ensure all network connections (Wi-Fi, Ethernet/LAN, etc.) are proxied,
+         * we list all available network services and apply the settings to each.
+         */
+        let services = self.get_macos_services();
+        for service in services {
+            let _ = self.shell("/usr/sbin/networksetup", &["-setwebproxy", &service, "127.0.0.1", &port.to_string()]);
+            let _ = self.shell("/usr/sbin/networksetup", &["-setsecurewebproxy", &service, "127.0.0.1", &port.to_string()]);
+        }
     }
 
     #[cfg(target_os = "macos")]
     fn turn_off_macos(&self) {
-        assert!(self.shell("/usr/sbin/networksetup", &["-setwebproxystate", "Wi-Fi", "off"]));
-        assert!(self.shell("/usr/sbin/networksetup", &["-setsecurewebproxystate", "Wi-Fi", "off"]));
+        /*
+         * Iterate through all network services to disable the proxy state.
+         */
+        let services = self.get_macos_services();
+        for service in services {
+            let _ = self.shell("/usr/sbin/networksetup", &["-setwebproxystate", &service, "off"]);
+            let _ = self.shell("/usr/sbin/networksetup", &["-setsecurewebproxystate", &service, "off"]);
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    fn get_macos_services(&self) -> Vec<String> {
+        let output = Command::new("/usr/sbin/networksetup")
+            .arg("-listallnetworkservices")
+            .output();
+
+        match output {
+            Ok(out) => {
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                stdout.lines()
+                    .filter(|line| {
+                        let l = line.trim();
+                        // Skip the explanation line and disabled services (marked with *)
+                        !l.is_empty() && 
+                        !l.contains("denotes") && 
+                        !l.starts_with('*')
+                    })
+                    .map(|l| l.trim().to_string())
+                    .collect()
+            },
+            Err(_) => vec!["Wi-Fi".to_string()] // Fallback to Wi-Fi if command fails
+        }
     }
 
     #[cfg(target_os = "linux")]
