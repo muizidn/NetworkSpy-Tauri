@@ -54,46 +54,46 @@ export const HealthTimelineMode = () => {
   }
 
   return (
-    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-4 @sm:p-6 flex flex-col overflow-auto">
-      <div className="mb-6 flex justify-between items-end border-b border-zinc-800 pb-4 shrink-0">
+    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-4 @sm:p-6 flex flex-col overflow-auto no-scrollbar">
+      <div className="mb-6 flex flex-col @sm:flex-row justify-between items-start @sm:items-end border-b border-zinc-800 pb-4 shrink-0 gap-4">
         <div>
           <h2 className="text-xl font-bold text-white mb-1">Health & Latency History</h2>
-          <p className="text-zinc-500 text-sm">Visualizing system stability and performance trends over time.</p>
+          <p className="text-zinc-500 text-xs @sm:text-sm">Visualizing system stability and performance trends over time.</p>
         </div>
-        <div className="text-right">
-          <span className="block text-xs text-zinc-500 uppercase font-semibold">Sample Size</span>
-          <span className="text-lg font-mono text-blue-400">{filteredTraffic.length} reqs</span>
+        <div className="text-left @sm:text-right">
+          <span className="block text-[10px] text-zinc-500 uppercase font-semibold">Sample Size</span>
+          <span className="text-base @sm:text-lg font-mono text-blue-400">{filteredTraffic.length} requests</span>
         </div>
       </div>
 
-      <div className="h-[400px] bg-zinc-900/50 border border-zinc-800 rounded-xl p-4 shrink-0">
+      <div className="flex-grow w-full min-h-[300px] @sm:min-h-[400px] bg-zinc-900/50 border border-zinc-800 rounded-xl p-2 @sm:p-4 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} />
-            <XAxis dataKey="name" stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-            <YAxis yAxisId="count" stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} />
+            <XAxis dataKey="name" stroke="#52525b" fontSize={9} tickLine={false} axisLine={false} dy={5} />
+            <YAxis yAxisId="count" stroke="#52525b" fontSize={9} tickLine={false} axisLine={false} />
             <YAxis 
               yAxisId="latency" 
               orientation="right" 
               stroke="#a855f7" 
-              fontSize={11} 
+              fontSize={9} 
               tickLine={false} 
               axisLine={false} 
               unit="ms" 
             />
             <Tooltip 
-              contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
+              contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: '10px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
             />
-            <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-            <Line yAxisId="count" type="monotone" dataKey="success" name="Success (2xx)" stroke="#10b981" strokeWidth={3} dot={{ r: 3, fill: '#10b981' }} activeDot={{ r: 6 }} />
-            <Line yAxisId="count" type="monotone" dataKey="error" name="Errors (4xx/5xx)" stroke="#ef4444" strokeWidth={3} dot={{ r: 3, fill: '#ef4444' }} activeDot={{ r: 6 }} />
+            <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
+            <Line yAxisId="count" type="monotone" dataKey="success" name="Success" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+            <Line yAxisId="count" type="monotone" dataKey="error" name="Errors" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
             <Line 
               yAxisId="latency" 
               type="monotone" 
               dataKey="avgLatency" 
               name="Avg Latency" 
               stroke="#a855f7" 
-              strokeWidth={2} 
+              strokeWidth={1} 
               strokeDasharray="5 5"
               dot={false}
             />
