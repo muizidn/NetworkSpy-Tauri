@@ -7,6 +7,7 @@ import { BuilderHeader } from "./builder-components/BuilderHeader";
 import { Canvas } from "./builder-components/Canvas";
 import { Toolbox } from "./builder-components/Toolbox";
 import { SourceDialog } from "./builder-components/SourceDialog";
+import { FullSourceEditor } from "./builder-components/FullSourceEditor";
 
 interface ViewerBuilderProps {
     viewer: Viewer;
@@ -26,6 +27,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
         testResults,
         isRunning,
         isSourceDialogOpen, setIsSourceDialogOpen,
+        viewMode, setViewMode,
         filteredTraffic,
         currentIndex,
         selectedTraffic,
@@ -49,17 +51,31 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
                 isToolboxVisible={isToolboxVisible}
                 setIsToolboxVisible={setIsToolboxVisible}
                 handleSave={handleSave}
+                blocks={blocks}
+                testResults={testResults}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
             />
 
             <div className="flex-1 flex overflow-hidden relative">
-                <Canvas 
-                    blocks={blocks}
-                    maximizedBlockId={maximizedBlockId}
-                    setMaximizedBlockId={setMaximizedBlockId}
-                    testResults={testResults}
-                    updateBlock={updateBlock}
-                    deleteBlock={deleteBlock}
-                />
+                <div className="flex-1 flex overflow-hidden">
+                    {viewMode === 'preview' ? (
+                         <Canvas 
+                         blocks={blocks}
+                         maximizedBlockId={maximizedBlockId}
+                         setMaximizedBlockId={setMaximizedBlockId}
+                         testResults={testResults}
+                         updateBlock={updateBlock}
+                         deleteBlock={deleteBlock}
+                     />
+                    ) : (
+                        <FullSourceEditor 
+                            viewerName={viewerName} 
+                            blocks={blocks} 
+                            testResults={testResults} 
+                        />
+                    )}
+                </div>
 
                 <Toolbox 
                     isVisible={isToolboxVisible}
