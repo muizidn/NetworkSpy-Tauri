@@ -57,7 +57,7 @@ export const OWASPMode = () => {
 
   return (
     <div className="h-full bg-[#050505] flex flex-col overflow-hidden">
-      <div className="flex items-center px-6 py-4 border-b border-zinc-900 bg-[#0a0a0a] justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center px-4 sm:px-6 py-4 border-b border-zinc-900 bg-[#0a0a0a] justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-red-600/20 border border-red-500/30 flex items-center justify-center text-red-500">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor font-black"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v3m0-3h3m-3 0H9m12 1a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -78,7 +78,7 @@ export const OWASPMode = () => {
         )}
       </div>
 
-      <div className="flex-grow p-6 overflow-y-auto no-scrollbar pb-10">
+      <div className="flex-grow p-4 sm:p-6 overflow-y-auto no-scrollbar pb-10">
         <div className="grid grid-cols-1 gap-4 max-w-4xl">
             {findings.map((finding) => (
                 <div key={finding.id} className="group bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 hover:border-red-500/30 transition-all duration-300 relative overflow-hidden">
@@ -114,9 +114,9 @@ export const OWASPMode = () => {
 };
 
 const Placeholder = ({ text }: { text: string }) => (
-    <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-10 text-center">
-      <div className="w-20 h-20 rounded-full bg-red-600/5 flex items-center justify-center text-red-950 mb-6 border border-red-950/10">
-        <svg className="w-10 h-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m0 0v3m0-3h3m-3 0H9m12 1a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-6 sm:p-10 text-center">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/5 flex items-center justify-center text-red-950 mb-6 border border-red-950/10">
+        <svg className="w-8 h-8 sm:w-10 sm:h-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 15v2m0 0v3m0-3h3m-3 0H9m12 1a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       </div>
       <h3 className="text-zinc-400 font-bold mb-1 italic">OWASP Audit Ready</h3>
       <p className="text-[11px] text-zinc-600 max-w-[200px] leading-relaxed">{text}</p>

@@ -82,7 +82,7 @@ export const SensitiveDataMode = () => {
     return (
         <div className="bg-[#0a0a0a] p-8 min-h-full font-sans select-none">
             <div className="max-w-4xl mx-auto">
-                <div className="flex items-center gap-6 mb-12 border-b border-zinc-900 pb-8">
+                <div className="flex items-center gap-4 sm:p-6 mb-12 border-b border-zinc-900 pb-8">
                     <div className="w-16 h-16 rounded-2xl bg-orange-600/10 flex items-center justify-center text-orange-500 border border-orange-500/20 shadow-lg shadow-orange-900/10">
                         <FiAlertTriangle size={32} />
                     </div>
@@ -111,7 +111,7 @@ export const SensitiveDataMode = () => {
                         </div>
                         {leaks.map((leak, i) => (
                             <div key={i} className="group overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/40 hover:border-orange-900/50 transition-all duration-300 shadow-xl">
-                                <div className="p-6 flex flex-col md:flex-row gap-6">
+                                <div className="p-4 sm:p-6 flex flex-col md:flex-row gap-4 sm:p-6">
                                     <div className="flex-grow space-y-4">
                                         <div className="flex items-start justify-between">
                                             <div>
@@ -152,8 +152,8 @@ export const SensitiveDataMode = () => {
 };
 
 const Placeholder = ({ text, icon = null }: { text: string, icon?: React.ReactNode }) => (
-    <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a] p-10 text-center select-none font-sans">
-        <div className="flex flex-col items-center gap-6">
+    <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a] p-6 sm:p-10 text-center select-none font-sans">
+        <div className="flex flex-col items-center gap-4 sm:p-6">
             <div className="text-6xl text-zinc-800 font-black opacity-30 italic animate-in fade-in zoom-in duration-500 select-none">
                 {icon || <FiShield />}
             </div>

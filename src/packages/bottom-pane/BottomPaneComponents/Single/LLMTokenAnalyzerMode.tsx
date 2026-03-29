@@ -136,8 +136,8 @@ export const LLMTokenAnalyzerMode = () => {
   return (
     <div className="flex flex-col h-full bg-[#0d0d0d] text-zinc-300 overflow-hidden select-none font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900 shrink-0">
-        <div className="flex items-center gap-6">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-800 bg-zinc-900 shrink-0">
+        <div className="flex items-center gap-4 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-600/10 rounded-lg border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
               <FiHash className="text-indigo-500" size={18} />
@@ -213,7 +213,7 @@ export const LLMTokenAnalyzerMode = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:p-6">
           <StatBox label="Total Transaction" value={inputAnalysis.count + outputAnalysis.count} icon={<FiActivity size={10} />} color="text-amber-400" />
           <StatBox label="Active Tokens" value={activeAnalysis.count} icon={<FiZap size={10} />} color="text-indigo-400" />
           <StatBox label="Active T/C" value={activeAnalysis.charCount > 0 ? (activeAnalysis.count / activeAnalysis.charCount).toFixed(2) : "0.00"} icon={<FiPieChart size={10} />} color="text-emerald-400" />
@@ -265,7 +265,7 @@ export const LLMTokenAnalyzerMode = () => {
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Technical Specs</span>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-8 custom-scrollbar">
             {/* Cost Card */}
             <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-600/10 to-transparent border border-indigo-500/20">
               <div className="flex items-center gap-2 mb-4">
@@ -343,7 +343,7 @@ const CostItem = ({ label, rate, input, output, cost }: { label: string, rate: s
 );
 
 const Placeholder = ({ text, icon = null }: { text: string, icon?: React.ReactNode }) => (
-  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0d0d] p-10 text-center">
+  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0d0d] p-6 sm:p-10 text-center">
     <div className="flex flex-col items-center gap-4">
       {icon || <div className="text-4xl text-indigo-900 font-bold opacity-30">Token Intelligence</div>}
       <div className="text-sm max-w-md mx-auto">{text}</div>

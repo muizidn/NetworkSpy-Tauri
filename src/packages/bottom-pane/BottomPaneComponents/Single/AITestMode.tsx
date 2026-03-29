@@ -34,7 +34,7 @@ describe('API Contract Validation', () => {
     if (!trafficId) return <Placeholder text="Select a request to generate test cases" />;
 
     return (
-        <div className="h-full bg-[#0a0f0d] p-6 overflow-auto">
+        <div className="h-full bg-[#0a0f0d] p-4 sm:p-6 overflow-auto">
             <div className="max-w-2xl mx-auto">
                 <div className="flex items-center gap-5 mb-10">
                     <div className="w-14 h-14 rounded-2xl bg-emerald-600 flex items-center justify-center text-white shadow-xl shadow-emerald-900/20 shrink-0">
@@ -47,7 +47,7 @@ describe('API Contract Validation', () => {
                 </div>
 
                 {!tests ? (
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 flex flex-col items-center text-center">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-10 flex flex-col items-center text-center">
                         <div className="text-zinc-300 font-bold mb-3">Convert this request into a re-usable unit test</div>
                         <p className="text-xs text-zinc-600 mb-8 max-w-sm italic">AI will generate boilerplate code and common assertions based on the observed response structure.</p>
                         <button

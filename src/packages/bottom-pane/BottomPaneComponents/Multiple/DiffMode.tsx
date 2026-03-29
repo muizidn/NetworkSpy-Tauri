@@ -131,7 +131,7 @@ export const DiffMode = () => {
       <div className="flex-grow relative">
         {loading && (
              <div className="absolute inset-0 bg-black/60 z-20 flex flex-col items-center justify-center backdrop-blur-sm">
-                <div className="w-10 h-10 border-2 border-blue-600/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-blue-600/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Calculating Delta...</div>
              </div>
         )}

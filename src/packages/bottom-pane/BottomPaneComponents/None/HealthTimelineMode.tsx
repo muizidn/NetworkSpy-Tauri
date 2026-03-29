@@ -54,7 +54,7 @@ export const HealthTimelineMode = () => {
   }
 
   return (
-    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-6 flex flex-col overflow-auto">
+    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-4 sm:p-6 flex flex-col overflow-auto">
       <div className="mb-6 flex justify-between items-end border-b border-zinc-800 pb-4 shrink-0">
         <div>
           <h2 className="text-xl font-bold text-white mb-1">Health & Latency History</h2>

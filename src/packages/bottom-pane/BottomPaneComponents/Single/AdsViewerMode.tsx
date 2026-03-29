@@ -89,7 +89,7 @@ export const AdsViewerMode = () => {
 
   return (
     <div className="h-full bg-[#050505] flex flex-col overflow-hidden">
-      <div className="flex items-center px-6 py-4 border-b border-zinc-900 bg-[#0a0a0a] justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center px-4 sm:px-4 sm:px-6 py-4 border-b border-zinc-900 bg-[#0a0a0a] justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
             {getIcon()}
@@ -101,8 +101,8 @@ export const AdsViewerMode = () => {
         </div>
       </div>
 
-      <div className="flex-grow p-6 overflow-y-auto no-scrollbar pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl">
+      <div className="flex-grow p-4 sm:p-4 sm:p-6 overflow-y-auto no-scrollbar pb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-6xl">
             {/* Target Card */}
             <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5">
                 <div className="flex items-center gap-2 mb-4 text-emerald-500">
@@ -110,7 +110,7 @@ export const AdsViewerMode = () => {
                     <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider">Target Identity</h3>
                 </div>
                 <div className="space-y-3">
-                    <DetailRow label="Account / Pixel ID" value={extractedData.pixelId} isCode />
+                    <DetailRow label="Account ID" value={extractedData.pixelId} isCode />
                     <DetailRow label="Network" value={adNetwork} />
                 </div>
             </div>
@@ -129,12 +129,12 @@ export const AdsViewerMode = () => {
 
             {/* User Data Card (if any) */}
             {Object.keys(extractedData.userData).length > 0 && (
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 md:col-span-2">
+                <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:col-span-2">
                     <div className="flex items-center gap-2 mb-4 text-purple-500">
                         <FiUser size={16} />
                         <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider">Hashed User Information</h3>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {Object.entries(extractedData.userData).map(([k, v]) => (
                             <DetailRow key={k} label={k} value={String(v)} isCode />
                         ))}
@@ -143,7 +143,7 @@ export const AdsViewerMode = () => {
             )}
 
             {/* Payload Card */}
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 md:col-span-2">
+            <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 sm:col-span-2">
                 <div className="flex items-center gap-2 mb-4 text-amber-500">
                     <FiHash size={16} />
                     <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider">Custom Event Data</h3>
@@ -157,7 +157,7 @@ export const AdsViewerMode = () => {
                 </div>
             </div>
             
-            <div className="md:col-span-2 opacity-50">
+            <div className="sm:col-span-2 opacity-50">
                 <div className="flex items-start gap-2 p-4 bg-zinc-900/20 border border-zinc-800 rounded-xl">
                     <FiInfo className="mt-0.5 text-zinc-500" size={14} />
                     <p className="text-[10px] text-zinc-500 leading-relaxed uppercase font-bold tracking-tight">
@@ -180,9 +180,9 @@ const DetailRow = ({ label, value, isCode }: { label: string, value: string, isC
 );
 
 const Placeholder = ({ text }: { text: string }) => (
-    <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-10 text-center">
-      <div className="w-20 h-20 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-800 mb-6 border border-zinc-800">
-        <FiTarget className="w-10 h-10 opacity-20" />
+    <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-6 sm:p-10 text-center">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-zinc-900 flex items-center justify-center text-zinc-800 mb-6 border border-zinc-800">
+        <FiTarget className="w-8 h-8 sm:w-10 sm:h-10 opacity-20" />
       </div>
       <h3 className="text-zinc-400 font-bold mb-1 italic uppercase tracking-widest text-xs">Ads Inspector</h3>
       <p className="text-[10px] text-zinc-600 max-w-[200px] leading-relaxed uppercase font-bold tracking-tight">{text}</p>

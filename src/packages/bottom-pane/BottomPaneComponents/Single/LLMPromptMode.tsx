@@ -143,7 +143,7 @@ export const LLMPromptMode = () => {
         </div>
       </div>
 
-      <div className="flex-grow overflow-auto p-6 space-y-6 custom-scrollbar bg-black/20">
+      <div className="flex-grow overflow-auto p-4 sm:p-6 space-y-6 custom-scrollbar bg-black/20">
         {llmData.prompt ? (
           <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl">
             <div className="text-[10px] font-bold text-zinc-500 mb-3 uppercase tracking-widest">Prompt</div>
@@ -206,7 +206,7 @@ export const LLMPromptMode = () => {
 };
 
 const Placeholder = ({ text, icon = null }: { text: string, icon?: any }) => (
-  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0d0d] p-10 text-center">
+  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0d0d] p-6 sm:p-10 text-center">
     <div className="flex flex-col items-center gap-4">
       {icon || <div className="text-4xl text-green-900 font-bold opacity-30">LLM Prompt</div>}
       <div className="text-sm max-w-md mx-auto">{text}</div>

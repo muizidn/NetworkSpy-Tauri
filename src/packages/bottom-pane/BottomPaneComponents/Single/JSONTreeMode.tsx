@@ -130,14 +130,14 @@ export const JSONTreeMode = () => {
   return (
     <div className="h-full bg-[#0a0a0a] flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-zinc-800 flex justify-between items-center bg-[#0c0c0c] shrink-0">
+      <div className="px-4 sm:px-4 sm:px-6 py-4 border-b border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#0c0c0c] shrink-0 gap-4">
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-lg font-black text-white italic tracking-tighter uppercase">JSON Architect</h2>
             <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Structural Analysis & Transformation</div>
           </div>
           
-          <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800 ml-4">
+          <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800 ml-0 sm:ml-4">
             <button
               onClick={() => setActiveTab("request")}
               className={`px-3 py-1 rounded-md text-[9px] font-black uppercase transition-all ${activeTab === "request" ? 'bg-zinc-700 text-white shadow-lg' : 'text-zinc-600 hover:text-zinc-400'}`}
@@ -153,7 +153,7 @@ export const JSONTreeMode = () => {
           </div>
         </div>
 
-        <div className="flex gap-3 items-center">
+        <div className="hidden sm:flex gap-3 items-center">
             {transformedJson && (
                 <div className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">
                     <span className="text-[10px] font-black text-blue-400 uppercase tracking-tighter">
@@ -165,7 +165,7 @@ export const JSONTreeMode = () => {
       </div>
 
       {/* Transformation Toolbar */}
-      <div className="px-6 py-3 border-b border-zinc-900 bg-[#080808] flex gap-4 items-center shrink-0">
+      <div className="px-4 sm:px-6 py-3 border-b border-zinc-900 bg-[#080808] flex flex-col md:flex-row gap-4 items-stretch md:items-center shrink-0">
         <div className="flex-1 flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-1.5 focus-within:border-blue-500/50 transition-all">
             <div className="flex items-center gap-2 shrink-0">
                 <FiSearch className="text-zinc-600 text-sm" />
@@ -183,24 +183,24 @@ export const JSONTreeMode = () => {
                 value={filterQuery}
                 onChange={(e) => setFilterQuery(e.target.value)}
                 placeholder="Query (e.g. data.items[?status==`active`].id)"
-                className="bg-transparent border-none text-xs text-zinc-300 w-full focus:outline-none placeholder:text-zinc-700 font-mono"
+                className="bg-transparent border-none text-xs text-zinc-300 w-full focus:outline-none placeholder:text-zinc-700 font-mono min-w-0"
             />
             {filterQuery && (
                 <button onClick={() => setFilterQuery("")} className="text-zinc-600 hover:text-zinc-400 text-[10px] font-bold uppercase transition-colors">Clear</button>
             )}
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 overflow-x-auto no-scrollbar">
             <button 
                 onClick={() => setIsFlattened(!isFlattened)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all ${isFlattened ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${isFlattened ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'}`}
             >
                 <FiLayers className={isFlattened ? "animate-pulse" : ""} />
                 Flatten
             </button>
             <button 
                 onClick={() => setHideNulls(!hideNulls)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all ${hideNulls ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${hideNulls ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]' : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'}`}
             >
                 <FiZap />
                 Hide Nulls
@@ -209,7 +209,7 @@ export const JSONTreeMode = () => {
       </div>
 
       {/* Tree Content */}
-      <div className="flex-1 overflow-auto p-6 bg-[#0a0a0a]">
+      <div className="flex-1 overflow-auto p-4 sm:p-6 bg-[#0a0a0a]">
         {!rawJson ? (
              <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-30 grayscale pointer-events-none">
                 <FiLayers className="text-6xl text-zinc-500" />

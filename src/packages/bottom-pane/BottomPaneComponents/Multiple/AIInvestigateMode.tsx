@@ -23,7 +23,7 @@ export const AIInvestigateMode = () => {
 
     if (selectedItems.length === 0) {
       return (
-        <div className="h-full flex flex-col items-center justify-center bg-[#050505] text-indigo-200 p-10 text-center">
+        <div className="h-full flex flex-col items-center justify-center bg-[#050505] text-indigo-200 p-6 sm:p-10 text-center">
           <div className="text-4xl opacity-10 font-black mb-4">AI INVESTIGATOR</div>
           <p className="text-sm max-w-xs text-zinc-600">Select multiple requests and ask specific questions about their behavior.</p>
         </div>
@@ -31,7 +31,7 @@ export const AIInvestigateMode = () => {
     }
 
     return (
-      <div className="h-full bg-[#050505] p-6 flex flex-col items-center overflow-auto">
+      <div className="h-full bg-[#050505] p-4 sm:p-6 flex flex-col items-center overflow-auto">
         <div className="max-w-3xl w-full">
           <div className="flex items-center gap-4 mb-10">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-emerald-500 p-[1px]">
@@ -45,7 +45,7 @@ export const AIInvestigateMode = () => {
               </div>
           </div>
 
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-6 shadow-2xl mb-8">
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-2xl mb-8">
               <div className="flex flex-col gap-4">
                   <span className="text-xs font-bold text-zinc-400 pl-1 uppercase">What would you like to know?</span>
                   <div className="relative">

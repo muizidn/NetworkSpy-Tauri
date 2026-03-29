@@ -52,11 +52,11 @@ export const KafkaViewerMode = () => {
 
     return (
         <div className="bg-[#0a0a0a] flex flex-col min-h-full h-full font-sans">
-            <div className="px-6 py-4 bg-[#111] border-b border-indigo-500/10 flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-4 bg-[#111] border-b border-indigo-500/10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="relative">
                         <div className="absolute inset-0 bg-indigo-500/10 blur-xl rounded-full translate-y-2"></div>
-                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white shadow-2xl relative z-10">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white shadow-2xl relative z-10">
                             <SiApachekafka size={22} />
                         </div>
                     </div>
@@ -118,7 +118,7 @@ export const KafkaViewerMode = () => {
 const Placeholder = ({ text }: { text: string }) => (
     <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a] font-sans">
         <div className="text-center">
-            <div className="w-20 h-20 bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center text-white mx-auto mb-6 shadow-2xl relative">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center text-white mx-auto mb-6 shadow-2xl relative">
                 <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full"></div>
                 <SiApachekafka size={40} className="relative z-10" />
             </div>

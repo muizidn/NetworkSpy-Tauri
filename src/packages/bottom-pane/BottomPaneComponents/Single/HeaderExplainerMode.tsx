@@ -135,7 +135,7 @@ export const HeaderExplainerMode = () => {
         </div>
       </div>
 
-      <div className="flex-grow overflow-y-auto no-scrollbar p-6 space-y-4 pb-10">
+      <div className="flex-grow overflow-y-auto no-scrollbar p-4 sm:p-6 space-y-4 pb-10">
         {headers.length === 0 && (
             <div className="text-center py-20 opacity-30 text-xs italic">No {activeTab} headers found...</div>
         )}
@@ -173,7 +173,7 @@ export const HeaderExplainerMode = () => {
             )}
 
             {header.cookieAnalysis && (
-              <div className="mt-4 pt-4 border-t border-zinc-800/50 grid grid-cols-3 gap-3">
+              <div className="mt-4 pt-4 border-t border-zinc-800/50 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className={twMerge("p-2 rounded-lg text-center border", header.cookieAnalysis.isHttpOnly ? "bg-green-600/10 border-green-500/20 text-green-500" : "bg-red-600/10 border-red-500/20 text-red-500")}>
                   <div className="text-[8px] font-black uppercase mb-1 opacity-60">HttpOnly</div>
                   <div className="text-[10px] font-bold">{header.cookieAnalysis.isHttpOnly ? "SECURE" : "INSECURE"}</div>
@@ -196,7 +196,7 @@ export const HeaderExplainerMode = () => {
 };
 
 const Placeholder = ({ text }: { text: string }) => (
-  <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-10 text-center">
+  <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-6 sm:p-10 text-center">
     <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-700 mb-6 rotate-12">
       <FiInfo size={32} />
     </div>

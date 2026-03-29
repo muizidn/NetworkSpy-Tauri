@@ -58,7 +58,7 @@ export const StaticSecurityMode = () => {
 
     return (
         <div className="h-full bg-[#050505] flex flex-col overflow-hidden">
-            <div className="flex items-center px-6 py-4 border-b border-zinc-900 bg-[#0a0a0a] justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center px-4 sm:px-6 py-4 border-b border-zinc-900 bg-[#0a0a0a] justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-500">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor font-black"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -78,7 +78,7 @@ export const StaticSecurityMode = () => {
             </div>
 
             <div className="flex-grow p-4 overflow-y-auto no-scrollbar pb-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {results.map((res, i) => (
                         <div key={i} className="bg-zinc-900/40 border border-zinc-800 rounded-xl p-4 flex flex-col gap-3 group hover:bg-zinc-900/60 transition-colors">
                             <div className="flex justify-between items-start">
@@ -104,7 +104,7 @@ export const StaticSecurityMode = () => {
                     ))}
                 </div>
 
-                <div className="mt-8 bg-orange-950/10 border border-orange-900/20 rounded-2xl p-6">
+                <div className="mt-8 bg-orange-950/10 border border-orange-900/20 rounded-2xl p-4 sm:p-6">
                     <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] mb-4">Static Analysis Metadata</h4>
                     <div className="space-y-3">
                         <div className="flex justify-between items-center text-[11px]">
@@ -127,9 +127,9 @@ export const StaticSecurityMode = () => {
 };
 
 const Placeholder = ({ text }: { text: string }) => (
-    <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-10 text-center">
-      <div className="w-20 h-20 rounded-full bg-orange-600/5 flex items-center justify-center text-orange-950 mb-6 border border-orange-950/10">
-        <svg className="w-10 h-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor font-black"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+    <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-6 sm:p-10 text-center">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-orange-600/5 flex items-center justify-center text-orange-950 mb-6 border border-orange-950/10">
+        <svg className="w-8 h-8 sm:w-10 sm:h-10 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor font-black"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
       </div>
       <h3 className="text-zinc-400 font-bold mb-1 italic">Static Inspector Ready</h3>
       <p className="text-[11px] text-zinc-600 max-w-[200px] leading-relaxed">{text}</p>

@@ -31,7 +31,7 @@ export const AISummaryMode = () => {
   }
 
   return (
-    <div className="h-full bg-zinc-950 p-6 flex flex-col items-center overflow-auto">
+    <div className="h-full bg-zinc-950 p-4 sm:p-6 flex flex-col items-center overflow-auto">
       <div className="max-w-2xl w-full">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-900/40">
@@ -46,7 +46,7 @@ export const AISummaryMode = () => {
         </div>
 
         {summary ? (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-500">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-500">
             <div className="prose prose-invert prose-sm">
                <pre className="whitespace-pre-wrap text-zinc-300 font-sans leading-relaxed">
                   {summary}
@@ -60,7 +60,7 @@ export const AISummaryMode = () => {
             </button>
           </div>
         ) : (
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8 flex flex-col items-center gap-6 text-center">
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8 flex flex-col items-center gap-4 sm:p-6 text-center">
              <div className="space-y-2">
                 <div className="text-zinc-200 font-semibold">Ready to distill traffic data?</div>
                 <div className="text-sm text-zinc-500">Our AI will analyze methods, status codes, and payload patterns to provide a concise overview of the selected traffic items.</div>
