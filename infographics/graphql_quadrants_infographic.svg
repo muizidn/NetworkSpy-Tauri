@@ -1,0 +1,138 @@
+<svg width="100%" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg" style="background:#ffffff;font-family:'Segoe UI',sans-serif;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 10px 15px -3px rgba(0, 0, 0, 0.1)">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" /><feOffset dx="0" dy="4" result="offsetblur" />
+      <feComponentTransfer><feFuncA type="linear" slope="0.15" /></feComponentTransfer>
+      <feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+    
+    <!-- GraphQL Logo Hub -->
+    <symbol id="gql-hub" viewBox="0 0 100 100">
+      <polygon points="50 5, 93.3 30, 93.3 80, 50 105, 6.7 80, 6.7 30" fill="#ffffff" stroke="#e10098" stroke-width="4"/>
+      <circle cx="50" cy="55" r="12" fill="#e10098"/>
+      <line x1="50" y1="5" x2="50" y2="105" stroke="#e10098" stroke-width="2"/>
+      <line x1="6.7" y1="30" x2="93.3" y2="80" stroke="#e10098" stroke-width="2"/>
+      <line x1="6.7" y1="80" x2="93.3" y2="30" stroke="#e10098" stroke-width="2"/>
+    </symbol>
+  </defs>
+
+  <!-- BACKGROUND GRID -->
+  <rect x="0" y="0" width="1200" height="1200" fill="#ffffff" />
+  <line x1="600" y1="100" x2="600" y2="1100" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="10,5" />
+  <line x1="100" y1="600" x2="1100" y2="600" stroke="#e2e8f0" stroke-width="2" stroke-dasharray="10,5" />
+
+  <!-- ═══ CENTRAL HUB ═══ -->
+  <circle cx="600" cy="600" r="100" fill="#ffffff" stroke="#e10098" stroke-width="2" filter="url(#shadow)" />
+  <use href="#gql-hub" x="540" y="540" width="120" height="120" />
+  <text x="600" y="730" text-anchor="middle" font-size="24" font-weight="bold" fill="#1a202c">GraphQL</text>
+  <text x="600" y="755" text-anchor="middle" font-size="14" fill="#e10098" font-weight="bold">THE UNIFIED DATA HUB</text>
+
+  <!-- ═══ QUADRANT 1: THE FOUNDATION (Top-Left) ═══ -->
+  <rect x="50" y="50" width="500" height="500" rx="20" fill="#f8fafc" stroke="#3182ce" stroke-width="1.5" opacity="0.1" />
+  <text x="70" y="100" font-size="22" font-weight="bold" fill="#3182ce">1. The Foundation</text>
+  <text x="70" y="130" font-size="14" fill="#64748b">Schema Definition &amp; Architecture</text>
+
+  <!-- SDL Section -->
+  <rect x="70" y="160" width="220" height="140" rx="10" fill="#1a202c" filter="url(#shadow)" />
+  <text x="80" y="190" font-size="13" font-family="monospace"><tspan fill="#c678dd">type</tspan> <tspan fill="#e5c07b">Product</tspan> <tspan fill="#abb2bf">{</tspan></text>
+  <text x="100" y="215" font-size="13" font-family="monospace"><tspan fill="#61afef">id</tspan><tspan fill="#abb2bf">: </tspan><tspan fill="#d19a66">ID!</tspan></text>
+  <text x="100" y="240" font-size="13" font-family="monospace"><tspan fill="#61afef">name</tspan><tspan fill="#abb2bf">: </tspan><tspan fill="#61afef">String</tspan></text>
+  <text x="80" y="265" font-size="13" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+  
+  <text x="310" y="180" font-size="15" font-weight="bold" fill="#1a202c">Type System</text>
+  <text x="310" y="205" font-size="13" fill="#4a5568">• Scalar (String, Int, ID)</text>
+  <text x="310" y="225" font-size="13" fill="#4a5568">• Object, Union, Interface</text>
+  <text x="310" y="245" font-size="13" fill="#4a5568">• Enum  Input Types</text>
+
+  <!-- Resolvers Flow -->
+  <rect x="70" y="340" width="460" height="160" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+  <text x="90" y="375" font-size="16" font-weight="bold" fill="#1a202c">Resolvers: The Data Bridge</text>
+  <rect x="90" y="395" width="100" height="40" rx="6" fill="#e10098" /><text x="140" y="420" text-anchor="middle" font-size="12" fill="#fff">Request</text>
+  <line x1="190" y1="415" x2="230" y2="415" stroke="#4a5568" stroke-width="2" marker-end="url(#arr-p)" />
+  <rect x="240" y="395" width="100" height="40" rx="6" fill="#3182ce" /><text x="290" y="420" text-anchor="middle" font-size="12" fill="#fff">Resolver</text>
+  <line x1="340" y1="415" x2="380" y2="415" stroke="#4a5568" stroke-width="2" marker-end="url(#arr-p)" />
+  <rect x="390" y="395" width="100" height="40" rx="6" fill="#4a5568" /><text x="440" y="420" text-anchor="middle" font-size="12" fill="#fff">Database</text>
+  <text x="90" y="470" font-size="12" fill="#64748b">Resolvers are functions that fetch data for fields in your schema.</text>
+
+  <!-- ═══ QUADRANT 2: THE INTERACTION (Top-Right) ═══ -->
+  <rect x="650" y="50" width="500" height="500" rx="20" fill="#f0fdf4" stroke="#38a169" stroke-width="1.5" opacity="0.1" />
+  <text x="670" y="100" font-size="22" font-weight="bold" fill="#38a169">2. The Interaction</text>
+  <text x="670" y="130" font-size="14" fill="#64748b">Operations &amp; Fetching Patterns</text>
+
+  <!-- Query Example -->
+  <rect x="670" y="160" width="220" height="150" rx="10" fill="#1a202c" filter="url(#shadow)" />
+  <text x="680" y="190" font-size="12" font-family="monospace"><tspan fill="#c678dd">query</tspan> <tspan fill="#61afef">GetProduct</tspan> <tspan fill="#abb2bf">{</tspan></text>
+  <text x="700" y="210" font-size="12" font-family="monospace"><tspan fill="#61afef">  product</tspan><tspan fill="#abb2bf">(id: </tspan><tspan fill="#98c379">"1"</tspan><tspan fill="#abb2bf">) {</tspan></text>
+  <text x="720" y="230" font-size="12" font-family="monospace"><tspan fill="#61afef">    name</tspan></text>
+  <text x="720" y="250" font-size="12" font-family="monospace"><tspan fill="#61afef">    ...PriceInfo</tspan></text>
+  <text x="700" y="270" font-size="12" font-family="monospace"><tspan fill="#abb2bf">  }</tspan></text>
+  <text x="680" y="290" font-size="12" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+
+  <text x="910" y="180" font-size="15" font-weight="bold" fill="#1a202c">Operation Types</text>
+  <text x="910" y="205" font-size="13" fill="#4a5568" font-weight="bold" color="#3182ce">• Query: Read</text>
+  <text x="910" y="225" font-size="13" fill="#4a5568" font-weight="bold" color="#e53e3e">• Mutation: Write</text>
+  <text x="910" y="245" font-size="13" fill="#4a5568" font-weight="bold" color="#805ad5">• Subscription: Live</text>
+
+  <!-- Optimization Section -->
+  <rect x="670" y="340" width="460" height="160" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+  <text x="690" y="375" font-size="16" font-weight="bold" fill="#1a202c">Client-Side Power</text>
+  <text x="690" y="405" font-size="13" fill="#4a5568" font-weight="bold">Fragments:</text>
+  <text x="690" y="425" font-size="12" fill="#64748b">Reusable units for UI components.</text>
+  <text x="690" y="455" font-size="13" fill="#4a5568" font-weight="bold">Directives (@include, @skip):</text>
+  <text x="690" y="475" font-size="12" fill="#64748b">Conditionally fetch data based on variables.</text>
+
+  <!-- ═══ QUADRANT 3: THE SCALE (Bottom-Left) ═══ -->
+  <rect x="50" y="650" width="500" height="500" rx="20" fill="#faf5ff" stroke="#805ad5" stroke-width="1.5" opacity="0.1" />
+  <text x="70" y="700" font-size="22" font-weight="bold" fill="#805ad5">3. The Scale</text>
+  <text x="70" y="730" font-size="14" fill="#64748b">Federation &amp; Unified Architecture</text>
+
+  <!-- Federation hub diagram -->
+  <rect x="150" y="760" width="140" height="50" rx="25" fill="#805ad5" /><text x="220" y="790" text-anchor="middle" font-size="12" fill="#fff" font-weight="bold">Gateway</text>
+  <path d="M 220 810 L 120 880" stroke="#805ad5" stroke-width="2" stroke-dasharray="4,2" />
+  <path d="M 220 810 L 220 880" stroke="#805ad5" stroke-width="2" stroke-dasharray="4,2" />
+  <path d="M 220 810 L 320 880" stroke="#805ad5" stroke-width="2" stroke-dasharray="4,2" />
+  
+  <rect x="70" y="880" width="90" height="40" rx="6" fill="#fff" stroke="#805ad5" /><text x="115" y="905" text-anchor="middle" font-size="10" fill="#1a202c">Users</text>
+  <rect x="175" y="880" width="90" height="40" rx="6" fill="#fff" stroke="#805ad5" /><text x="220" y="905" text-anchor="middle" font-size="10" fill="#1a202c">Products</text>
+  <rect x="280" y="880" width="90" height="40" rx="6" fill="#fff" stroke="#805ad5" /><text x="325" y="905" text-anchor="middle" font-size="10" fill="#1a202c">Orders</text>
+
+  <rect x="70" y="940" width="460" height="180" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+  <text x="90" y="975" font-size="16" font-weight="bold" fill="#1a202c">Enterprise Strategies</text>
+  <text x="90" y="1005" font-size="13" fill="#805ad5" font-weight="bold">Apollo Federation:</text>
+  <text x="90" y="1025" font-size="12" fill="#4a5568">Split your graph into manageable subgraphs. Entity-based.</text>
+  <text x="90" y="1055" font-size="13" fill="#805ad5" font-weight="bold">GraphQL Mesh:</text>
+  <text x="90" y="1075" font-size="12" fill="#4a5568">Connect REST/gRPC/SQL directly to GraphQL without code.</text>
+  <text x="90" y="1105" font-size="12" font-weight="bold" fill="#805ad5">Gradual Migration · Unified Governance · Supergraph</text>
+
+  <!-- ═══ QUADRANT 4: THE PROFESSIONAL (Bottom-Right) ═══ -->
+  <rect x="650" y="650" width="500" height="500" rx="20" fill="#fffaf0" stroke="#dd6b20" stroke-width="1.5" opacity="0.1" />
+  <text x="670" y="700" font-size="22" font-weight="bold" fill="#dd6b20">4. The Professional</text>
+  <text x="670" y="730" font-size="14" fill="#64748b">Production Stability &amp; Performance</text>
+
+  <!-- Performance Card -->
+  <rect x="670" y="760" width="220" height="150" rx="12" fill="#ffffff" stroke="#dd6b20" stroke-width="2" stroke-dasharray="8,4" />
+  <text x="780" y="795" text-anchor="middle" font-size="16" font-weight="bold" fill="#dd6b20">Performance</text>
+  <text x="690" y="825" font-size="13" fill="#1a202c" font-weight="bold">@defer</text>
+  <text x="690" y="845" font-size="12" fill="#4a5568">Chunked response for slow fields.</text>
+  <text x="690" y="875" font-size="13" fill="#1a202c" font-weight="bold">@stream</text>
+  <text x="690" y="895" font-size="12" fill="#4a5568">Iterate over lists in real-time.</text>
+
+  <rect x="910" y="760" width="220" height="150" rx="12" fill="#fff1f2" stroke="#fca5a5" stroke-width="1" />
+  <text x="1020" y="795" text-anchor="middle" font-size="16" font-weight="bold" fill="#991b1b">Security</text>
+  <text x="930" y="825" font-size="12" fill="#4a5568">• Query Depth Limiting</text>
+  <text x="930" y="845" font-size="12" fill="#4a5568">• Cost Analysis (Complexity)</text>
+  <text x="930" y="865" font-size="12" fill="#4a5568">• Persisted Queries</text>
+  <text x="930" y="885" font-size="12" fill="#4a5568">• Batching Protection</text>
+
+  <rect x="670" y="940" width="460" height="180" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+  <text x="690" y="975" font-size="16" font-weight="bold" fill="#1a202c">Observability &amp; Testing</text>
+  <text x="690" y="1005" font-size="13" fill="#4a5568" font-weight="bold">Introspection:</text>
+  <text x="690" y="1025" font-size="12" fill="#64748b">Queries the schema itself for documentation and IDEs.</text>
+  <text x="690" y="1055" font-size="13" fill="#4a5568" font-weight="bold">Testing Strategies:</text>
+  <text x="690" y="1075" font-size="12" fill="#64748b">Snapshot testing, contract testing, and Mocking Resolvers.</text>
+  <text x="690" y="1105" font-size="12" font-weight="bold" fill="#dd6b20">Tracing · Errors · Latency Metrics · Tooling</text>
+
+  <!-- Footer -->
+  <text x="600" y="1160" text-anchor="middle" font-size="12" fill="#a0aec0">© 2026 Network Spy Academy · Exploring the Graph Ecosystem</text>
+
+</svg>
