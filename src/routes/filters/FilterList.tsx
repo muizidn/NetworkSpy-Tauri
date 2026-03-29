@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { FiSearch, FiTrash2, FiEdit3, FiFilter, FiPlus, FiChevronRight, FiChevronDown, FiFolder, FiEye, FiEyeOff } from "react-icons/fi";
+import React, { useMemo, useState, useRef } from "react";
+import { FiSearch, FiTrash2, FiEdit3, FiFilter, FiPlus, FiChevronRight, FiChevronDown, FiFolder, FiEye, FiEyeOff, FiUpload, FiX, FiCheck, FiInfo, FiCode } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { PredefinedFilter } from "@src/models/Filter";
 import { useFilterPresetContext } from "@src/context/FilterPresetContext";
@@ -17,9 +17,12 @@ const FilterList: React.FC<FilterListProps> = ({ selectedFilterId, onSelectFilte
     showBuiltIn,
     setShowBuiltIn,
     visibleBuiltInIds,
-    setBuiltInVisibility
+    setBuiltInVisibility,
+    addPreset
   } = useFilterPresetContext();
   const [searchTerm, setSearchTerm] = useState("");
+  const [showImportModal, setShowImportModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredPresets = useMemo(() => {
     return predefinedFilters.filter(f =>
@@ -30,12 +33,67 @@ const FilterList: React.FC<FilterListProps> = ({ selectedFilterId, onSelectFilte
   const userFilters = useMemo(() => filteredPresets.filter(f => !f.isBuiltIn), [filteredPresets]);
   const builtInFilters = useMemo(() => filteredPresets.filter(f => f.isBuiltIn), [filteredPresets]);
 
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const data = JSON.parse(content);
+
+        // Handle single filter or array of filters
+        const filtersToImport = Array.isArray(data) ? data : [data];
+
+        for (const f of filtersToImport) {
+          if (f.name && Array.isArray(f.filters)) {
+            await addPreset(f.name, f.filters, f.description);
+          }
+        }
+        
+        setShowImportModal(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } catch (err) {
+        console.error("Failed to parse filter JSON", err);
+        alert("Invalid filter JSON file.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const EXAMPLE_JSON = `[
+  {
+    "name": "My Custom Filter",
+    "description": "Optional description",
+    "filters": [
+      {
+        "id": "unique-id-1",
+        "isGroup": false,
+        "enabled": true,
+        "type": "URL",
+        "operator": "Contains",
+        "value": "api.github.com"
+      }
+    ]
+  }
+]`;
+
   return (
     <div className="flex flex-col h-full select-none">
       <div className="px-5 py-6 border-b border-zinc-900 flex flex-col gap-4 bg-zinc-900/10">
         {!isCompact && (
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black uppercase tracking-widest text-zinc-400">Saved Filters</h2>
+            <div className="flex items-center gap-2">
+                <button 
+                    onClick={() => setShowImportModal(true)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-[10px] font-bold text-zinc-400 hover:text-white hover:border-zinc-700 transition-all active:scale-95 shadow-sm"
+                >
+                    <FiUpload size={12} />
+                    <span>Import</span>
+                </button>
+            </div>
           </div>
         )}
 
@@ -109,6 +167,79 @@ const FilterList: React.FC<FilterListProps> = ({ selectedFilterId, onSelectFilte
           )}
         </div>
       </div>
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#0f0f12] border border-zinc-800 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-600/10 flex items-center justify-center text-blue-500 border border-blue-500/20">
+                  <FiUpload size={14} />
+                </div>
+                <h3 className="font-black text-xs uppercase tracking-widest text-white">Import Configuration</h3>
+              </div>
+              <button onClick={() => setShowImportModal(false)} className="text-zinc-500 hover:text-white transition-colors">
+                <FiX size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <h4 className="text-white text-sm font-bold flex items-center gap-2">
+                  <FiCode className="text-blue-400" />
+                  Expected JSON Format
+                </h4>
+                <p className="text-[11px] text-zinc-500">
+                  Provide a JSON array containing filter definitions. Each item must have a <code className="text-zinc-300">name</code> and a <code className="text-zinc-300">filters</code> array.
+                </p>
+              </div>
+
+              <div className="relative group">
+                <div className="absolute top-0 right-0 p-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[10px] font-mono text-zinc-600 bg-black/50 px-2 py-1 rounded">Read-only guide</span>
+                </div>
+                <pre className="p-5 bg-black border border-zinc-800 rounded-xl font-mono text-[10px] text-zinc-400 overflow-x-auto select-all leading-relaxed max-h-[250px] custom-scrollbar">
+                  {EXAMPLE_JSON}
+                </pre>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-blue-600/5 border border-blue-500/10 rounded-xl">
+                 <FiInfo className="text-blue-500 shrink-0" size={16} />
+                 <p className="text-[10px] text-blue-400 font-medium">
+                   Importing will add these filters to your local library. IDs are regenerated to prevent conflicts.
+                 </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-6 bg-zinc-900/30 border-t border-zinc-800 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="px-6 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImport}
+                accept=".json"
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-8 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-blue-900/20 active:scale-95"
+              >
+                <FiPlus size={14} />
+                Select JSON File
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
