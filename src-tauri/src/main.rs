@@ -179,6 +179,32 @@ fn get_recent_traffic(
 }
 
 #[tauri::command]
+fn get_filter_presets(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::FilterPreset>, String> {
+    db.get_filter_presets().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn add_filter_preset(preset: traffic::db::FilterPreset, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.add_filter_preset(preset).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn update_filter_preset(
+    id: String, 
+    name: Option<String>, 
+    description: Option<String>, 
+    filters: Option<String>, 
+    db: tauri::State<'_, Arc<TrafficDb>>
+) -> Result<(), String> {
+    db.update_filter_preset(id, name, description, filters).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_filter_preset(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.delete_filter_preset(id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn save_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
     let data = db.get_all_traffic_with_bodies().map_err(|e: rusqlite::Error| e.to_string())?;
     let har = create_har_log(data);
@@ -730,6 +756,10 @@ fn main() {
             get_recent_traffic,
             save_session,
             load_session,
+            get_filter_presets,
+            add_filter_preset,
+            update_filter_preset,
+            delete_filter_preset,
             export_selected_to_har,
             export_selected_to_csv,
             export_selected_to_sqlite,

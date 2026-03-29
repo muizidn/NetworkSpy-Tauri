@@ -24,6 +24,7 @@ import AccountPage from "./routes/account";
 import ExtensionsPage from "./routes/extensions";
 import SessionPage from "./routes/sessions";
 import ViewersPage from "./routes/viewers";
+import FiltersPage from "./routes/filters";
 import { SessionProvider } from "./context/SessionContext";
 import { ViewerProvider } from "./context/ViewerContext";
 
@@ -91,6 +92,10 @@ const router = createBrowserRouter([
         path: "/viewers",
         element: <ViewersPage />,
       },
+      {
+        path: "/filters",
+        element: <FiltersPage />,
+      },
     ],
   },
 ]);
@@ -102,6 +107,7 @@ import { TagProvider } from "./context/TagContext";
 import { TrafficListProvider } from "@src/packages/main-content/context/TrafficList";
 import { TauriEnvProvider } from "@src/packages/app-env";
 import { PaneProvider } from "./context/PaneProvider";
+import { FilterPresetProvider } from "./context/FilterPresetContext";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -110,15 +116,17 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         <SessionProvider>
           <ViewerProvider>
             <SettingsProvider>
-              <TrafficListProvider>
-                <TauriEnvProvider>
-                  <PaneProvider>
-                    <DndProvider backend={HTML5Backend}>
-                      <RouterProvider router={router} />
-                    </DndProvider>
-                  </PaneProvider>
-                </TauriEnvProvider>
-              </TrafficListProvider>
+              <FilterPresetProvider>
+                <TrafficListProvider>
+                  <TauriEnvProvider>
+                    <PaneProvider>
+                      <DndProvider backend={HTML5Backend}>
+                        <RouterProvider router={router} />
+                      </DndProvider>
+                    </PaneProvider>
+                  </TauriEnvProvider>
+                </TrafficListProvider>
+              </FilterPresetProvider>
             </SettingsProvider>
           </ViewerProvider>
         </SessionProvider>

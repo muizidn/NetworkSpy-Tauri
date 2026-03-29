@@ -57,6 +57,7 @@ export type FilterNode = FilterRule | FilterGroup;
 export interface PredefinedFilter {
   id: string;
   name: string;
+  description?: string;
   filters: FilterNode[];
   isBuiltIn?: boolean;
 }

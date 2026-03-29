@@ -143,6 +143,16 @@ impl TrafficDb {
             [],
         )?;
 
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS filter_presets (
+                id TEXT PRIMARY KEY,
+                name TEXT,
+                description TEXT,
+                filters TEXT
+            )",
+            [],
+        )?;
+
         // Task 1.2: Add Indexes
         conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp)", [])?;
         conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_uri ON traffic(uri)", [])?;
@@ -647,6 +657,64 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
     }
 
     let _ = tx.commit();
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct FilterPreset {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub filters: String,
+}
+
+impl TrafficDb {
+    pub fn get_filter_presets(&self) -> rusqlite::Result<Vec<FilterPreset>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT id, name, description, filters FROM filter_presets")?;
+        let rows = stmt.query_map([], |row| {
+            Ok(FilterPreset {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                filters: row.get(3)?,
+            })
+        })?;
+        
+        let mut list = Vec::new();
+        for row in rows {
+            list.push(row?);
+        }
+        Ok(list)
+    }
+
+    pub fn add_filter_preset(&self, preset: FilterPreset) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO filter_presets (id, name, description, filters) VALUES (?1, ?2, ?3, ?4)",
+            params![preset.id, preset.name, preset.description, preset.filters],
+        )?;
+        Ok(())
+    }
+
+    pub fn update_filter_preset(&self, id: String, name: Option<String>, description: Option<String>, filters: Option<String>) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        if let Some(n) = name {
+            conn.execute("UPDATE filter_presets SET name = ?2 WHERE id = ?1", params![id, n])?;
+        }
+        if let Some(d) = description {
+            conn.execute("UPDATE filter_presets SET description = ?2 WHERE id = ?1", params![id, d])?;
+        }
+        if let Some(f) = filters {
+            conn.execute("UPDATE filter_presets SET filters = ?2 WHERE id = ?1", params![id, f])?;
+        }
+        Ok(())
+    }
+
+    pub fn delete_filter_preset(&self, id: String) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM filter_presets WHERE id = ?1", params![id])?;
+        Ok(())
+    }
 }
 
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {
