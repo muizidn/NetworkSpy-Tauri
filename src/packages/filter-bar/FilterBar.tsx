@@ -254,6 +254,7 @@ export const FilterBar = () => {
   const handleSaveCurrent = () => {
     if (saveName.trim()) {
       saveCurrentFilters(saveName.trim());
+      setFilters([]); // Clear the filters once saved
       setSaveName("");
       setShowSaveInput(false);
     }
