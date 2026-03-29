@@ -66,6 +66,8 @@ import { useAppProvider } from "../app-env";
 import { FiShield, FiLock, FiUnlock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import { Dialog } from "../ui/Dialog";
 
+import { ContainerQueryProvider } from "@src/context/ContainerQueryContext";
+
 export const BottomPane = () => {
   const { mode, selectionType } = useBottomPaneContext();
   const [sizes, setSizes] = useState<any[]>(["50%", "50%"]);
@@ -160,7 +162,8 @@ export const BottomPane = () => {
             Loading viewer...
           </div>
         }>
-          <div className="flex-grow overflow-y-auto h-full custom-scrollbar bg-[#111] pb-12">
+          <div className="flex-grow overflow-y-auto h-full custom-scrollbar bg-[#111] pb-12 @container">
+            <ContainerQueryProvider>
             {(() => {
               if (!selected) return renderMode(mode, sizes, setSizes);
 
@@ -195,6 +198,7 @@ export const BottomPane = () => {
 
               return renderMode(mode, sizes, setSizes);
             })()}
+            </ContainerQueryProvider>
           </div>
         </Suspense>
       </ErrorBoundary>

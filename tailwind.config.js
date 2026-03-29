@@ -54,5 +54,9 @@ export default {
       "winter",
     ],
   },
-  plugins: [require("@tailwindcss/typography"), require("daisyui")],
+  plugins: [
+    require("@tailwindcss/typography"), 
+    require("daisyui"),
+    require("@tailwindcss/container-queries")
+  ],
 };

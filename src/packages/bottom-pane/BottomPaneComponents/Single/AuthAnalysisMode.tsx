@@ -110,12 +110,12 @@ export const AuthAnalysisMode = () => {
 
     return (
         <div className="bg-[#0a0a0a] overflow-hidden h-full flex flex-col">
-            <div className="px-4 sm:px-4 sm:px-6 py-4 border-b border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-end bg-[#0c0c0c] shrink-0 gap-4">
+            <div className="px-4 @sm:px-4 @sm:px-6 py-4 border-b border-zinc-800 flex flex-col @sm:flex-row justify-between items-start @sm:items-end bg-[#0c0c0c] shrink-0 gap-4">
                 <div>
                     <h2 className="text-xl font-black text-white italic tracking-tighter uppercase font-mono">Auth Auditor</h2>
                     <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Session & Token Inspector</div>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+                <div className="flex gap-2 w-full @sm:w-auto overflow-x-auto no-scrollbar">
                     {detectedTokens.length > 1 && (
                         <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800 shrink-0">
                             {detectedTokens.map((t, i) => (
@@ -132,7 +132,7 @@ export const AuthAnalysisMode = () => {
                 </div>
             </div>
 
-            <div className="flex-grow overflow-auto p-4 sm:p-4 sm:p-6 space-y-6">
+            <div className="flex-grow overflow-auto p-4 @sm:p-4 @sm:p-6 space-y-6">
                 <div className="max-w-4xl mx-auto space-y-8">
                 {detectedTokens.length === 0 && cookies.length === 0 ? (
                     <div className="py-20 text-center bg-zinc-900/10 rounded-3xl border border-dashed border-zinc-800/50">
@@ -158,7 +158,7 @@ export const AuthAnalysisMode = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 @sm:grid-cols-3 gap-4">
                                     <div className="bg-zinc-900/30 border border-zinc-800/50 p-4 rounded-2xl group hover:border-blue-500/30 transition-colors">
                                         <div className="text-[9px] font-bold text-zinc-500 uppercase mb-1 tracking-widest">Algorithm</div>
                                         <div className="text-sm font-black text-white">{activeDetails.token?.split('.')[0] ? (JSON.parse(atob(activeDetails.token.split('.')[0])).alg || 'Unknown') : 'Unknown'}</div>

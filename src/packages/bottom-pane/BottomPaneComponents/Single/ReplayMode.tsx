@@ -34,7 +34,7 @@ export const ReplayMode = () => {
   if (!trafficId) return <div className="h-full flex items-center justify-center text-zinc-500">Select a request to replay</div>;
 
   return (
-    <div className="h-full bg-[#1e1e1e] p-4 sm:p-6 flex flex-col items-center overflow-auto">
+    <div className="h-full bg-[#1e1e1e] p-4 @sm:p-6 flex flex-col items-center overflow-auto">
       <div className="max-w-xl w-full">
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 mb-8 text-center shadow-xl">
           <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-lg shadow-purple-900/40">

@@ -108,7 +108,7 @@ export const JWTDecoderMode = () => {
 
     return (
         <div className="h-full bg-[#0a0a0a] overflow-hidden flex flex-col">
-            <div className="px-4 sm:px-6 py-4 border-b border-zinc-800 flex justify-between items-end bg-[#0c0c0c]">
+            <div className="px-4 @sm:px-6 py-4 border-b border-zinc-800 flex justify-between items-end bg-[#0c0c0c]">
                 <div>
                     <h2 className="text-xl font-black text-white italic tracking-tighter">JWT Decoder</h2>
                     <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Deep Packet Inspection • Auth Tokens</div>
@@ -130,7 +130,7 @@ export const JWTDecoderMode = () => {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto p-4 sm:p-6">
+            <div className="flex-1 overflow-auto p-4 @sm:p-6">
                 <div className="max-w-4xl mx-auto space-y-6">
                     {detectedTokens.length === 0 ? (
                         <div className="py-20 text-center bg-zinc-900/20 rounded-3xl border border-dashed border-zinc-800/50">
@@ -154,7 +154,7 @@ export const JWTDecoderMode = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:p-6">
+                            <div className="grid grid-cols-1 @sm:grid-cols-2 gap-4 @sm:p-6">
                                 {/* Header */}
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 px-1">
@@ -187,7 +187,7 @@ export const JWTDecoderMode = () => {
                             </div>
 
                             {/* Token Metadata/Info */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 @sm:grid-cols-3 gap-4">
                                 <div className="bg-zinc-900/30 border border-zinc-800/50 p-4 rounded-2xl">
                                     <div className="text-[9px] font-bold text-zinc-500 uppercase mb-1">Algorithm</div>
                                     <div className="text-sm font-black text-white">{decoded?.header?.alg || 'Unknown'}</div>

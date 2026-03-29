@@ -147,7 +147,7 @@ export const LLMStreamingMode = () => {
   return (
     <div className="flex flex-col h-full bg-[#15181a] text-zinc-300 font-sans overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-zinc-800 bg-[#1e1e1e]">
+      <div className="flex items-center justify-between px-4 @sm:px-6 py-4 border-b border-zinc-800 bg-[#1e1e1e]">
         <div className="flex items-center gap-3">
           <div className={twMerge(
             "p-2 rounded-lg",

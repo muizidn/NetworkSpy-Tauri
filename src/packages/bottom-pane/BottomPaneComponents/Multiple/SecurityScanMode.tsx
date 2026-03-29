@@ -24,7 +24,7 @@ export const SecurityScanMode = () => {
     }
 
     return (
-      <div className="h-full bg-zinc-950 p-4 sm:p-6 overflow-auto">
+      <div className="h-full bg-zinc-950 p-4 @sm:p-6 overflow-auto">
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between items-center mb-10">
               <div>

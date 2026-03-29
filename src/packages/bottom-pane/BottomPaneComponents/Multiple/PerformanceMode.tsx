@@ -10,7 +10,7 @@ export const PerformanceMode = () => {
     }
 
     return (
-      <div className="bg-[#1e1e1e] p-4 sm:p-6 min-h-full">
+      <div className="bg-[#1e1e1e] p-4 @sm:p-6 min-h-full">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-xl font-bold mb-8 text-yellow-500">Performance Breakdown</h2>
           

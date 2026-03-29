@@ -195,8 +195,8 @@ export const JSONSchemaMode = () => {
     return (
         <div className="h-full bg-[#0a0a0a] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="px-4 sm:px-6 py-4 border-b border-zinc-900 bg-[#0c0c0c] flex justify-between items-center shrink-0">
-                <div className="flex items-center gap-4 sm:p-6">
+            <div className="px-4 @sm:px-6 py-4 border-b border-zinc-900 bg-[#0c0c0c] flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-4 @sm:p-6">
                     <div>
                         <h2 className="text-xl font-black text-white italic tracking-tighter uppercase font-mono">JSON Blueprint</h2>
                         <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Schema Design & Validation</div>
@@ -319,7 +319,7 @@ export const JSONSchemaMode = () => {
 
                 {/* Sidebar: Validation Results */}
                 <div className="w-72 bg-[#080808] border-l border-zinc-900 overflow-auto">
-                    <div className="p-4 sm:p-6 space-y-6">
+                    <div className="p-4 @sm:p-6 space-y-6">
                         <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Analysis Results</h3>
 
                         {validationSuccess === null && validationErrors.length === 0 ? (

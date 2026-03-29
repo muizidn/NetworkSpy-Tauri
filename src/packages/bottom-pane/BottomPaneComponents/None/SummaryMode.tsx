@@ -40,11 +40,11 @@ export const SummaryMode = () => {
       }
     });
 
-    return { 
-      total, 
-      methods, 
-      statuses, 
-      contentTypes, 
+    return {
+      total,
+      methods,
+      statuses,
+      contentTypes,
       totalReqSize: formatSize(totalReqBytes),
       totalResSize: formatSize(totalResBytes),
       totalTransfer: formatSize(totalReqBytes + totalResBytes)
@@ -52,18 +52,18 @@ export const SummaryMode = () => {
   }, [filteredTraffic, trafficSet]);
 
   return (
-    <div className="h-full bg-[#1e1e1e] text-white p-4 sm:p-6 overflow-auto custom-scrollbar">
+    <div className="h-full bg-[#1e1e1e] text-white p-4 @sm:p-6 overflow-auto custom-scrollbar">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-xl sm:text-2xl font-black mb-6 sm:mb-8 text-blue-400 uppercase tracking-tighter">Network Intelligence Summary</h1>
-        
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <h1 className="text-xl @sm:text-2xl font-black mb-6 @sm:mb-8 text-blue-400 uppercase tracking-tighter">Network Intelligence Summary</h1>
+
+        <div className="grid grid-cols-2 @sm:grid-cols-2 @md:grid-cols-2 @lg:grid-cols-4 gap-3 @sm:gap-4 mb-8">
           <StatCard title="Total" value={stats.total} color="border-blue-500" />
           <StatCard title="Upload" value={stats.totalReqSize} color="border-orange-500" />
           <StatCard title="Download" value={stats.totalResSize} color="border-emerald-500" />
           <StatCard title="Transfer" value={stats.totalTransfer} color="border-purple-500" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 @sm:grid-cols-2 gap-8">
           <Section title="HTTP Methods">
             <div className="space-y-2">
               {Object.entries(stats.methods).map(([method, count]) => (
@@ -80,7 +80,7 @@ export const SummaryMode = () => {
             </div>
           </Section>
 
-          <Section title="Content Types" className="sm:col-span-2">
+          <Section title="Content Types" className="@sm:col-span-2">
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(stats.contentTypes).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([type, count]) => (
                 <div key={type} className="flex justify-between items-center bg-zinc-800 p-2 rounded">

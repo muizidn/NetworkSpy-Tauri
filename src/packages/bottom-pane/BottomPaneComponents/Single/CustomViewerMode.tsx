@@ -187,7 +187,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
         <div className="h-full bg-[#0a0a0a] flex flex-col overflow-hidden">
             {/* Header / Selection - Only show if no viewerId prop is provided */}
             {!viewerId && (
-                <div className="px-4 sm:px-6 py-4 border-b border-zinc-900 flex justify-between items-center bg-[#0c0c0c] shrink-0">
+                <div className="px-4 @sm:px-6 py-4 border-b border-zinc-900 flex justify-between items-center bg-[#0c0c0c] shrink-0">
                     <div className="flex items-center gap-4 flex-1">
                         <div>
                             <h2 className="text-lg font-black text-white italic tracking-tighter uppercase">Viewer Selector</h2>
@@ -253,7 +253,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                 ) : isLoading ? (
                     <div className="h-full flex items-center justify-center">
                         <div className="flex flex-col items-center gap-4">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                            <div className="w-8 h-8 @sm:w-10 @sm:h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
                             <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">Executing Logic Blocks...</span>
                         </div>
                     </div>

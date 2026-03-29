@@ -62,7 +62,7 @@ export const JSONTransformerMode = () => {
     return (
         <div className="bg-[#0a0a0a] flex flex-col min-h-full h-full font-sans">
             {/* Transformer Toolbar */}
-            <div className="px-4 sm:px-6 py-4 bg-[#111] border-b border-white/5 space-y-4">
+            <div className="px-4 @sm:px-6 py-4 bg-[#111] border-b border-white/5 space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>

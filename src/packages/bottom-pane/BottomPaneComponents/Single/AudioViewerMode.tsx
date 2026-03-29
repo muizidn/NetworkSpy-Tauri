@@ -27,7 +27,7 @@ export const AudioViewerMode = () => {
     return (
         <div className="bg-[#0a0a0a] flex flex-col items-center justify-center p-12 min-h-full">
             <div className="max-w-md w-full bg-zinc-900/50 border border-zinc-800 rounded-3xl p-8 flex flex-col items-center shadow-2xl">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6 border border-blue-500/20">
+                <div className="w-16 h-16 @sm:w-20 @sm:h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6 border border-blue-500/20">
                     <FiMusic className="text-blue-500" size={32} />
                 </div>
 
@@ -37,7 +37,7 @@ export const AudioViewerMode = () => {
                 {isAudio ? (
                     <div className="w-full flex flex-col gap-4">
                         <div className="bg-black/40 rounded-2xl p-4 border border-white/5 flex items-center gap-4">
-                            <button className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/40 hover:scale-105 transition-transform">
+                            <button className="w-8 h-8 @sm:w-10 @sm:h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/40 hover:scale-105 transition-transform">
                                 <FiPlay className="text-white fill-current" size={16} />
                             </button>
                             <div className="flex-grow">

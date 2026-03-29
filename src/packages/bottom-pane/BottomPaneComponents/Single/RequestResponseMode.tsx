@@ -32,7 +32,7 @@ export const RequestResponseMode = ({
           </div>
         </Pane>
 
-        <div className="h-full no-scrollbar flex items-center justify-center overflow-auto border-l border-zinc-900 border-t sm:border-t-0 sm:border-l">
+        <div className="h-full no-scrollbar flex items-center justify-center overflow-auto border-l border-zinc-900 border-t @sm:border-t-0 @sm:border-l">
           <ResponseTab
             loadData={(traffic) =>
               provider.getResponsePairData(traffic.id as string)

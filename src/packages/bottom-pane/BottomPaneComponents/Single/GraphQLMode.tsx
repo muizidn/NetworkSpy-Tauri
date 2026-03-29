@@ -288,7 +288,7 @@ const ProgressField = ({ label, percentage, color }: { label: string, percentage
 );
 
 const Placeholder = ({ text }: { text: string }) => (
-  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#1e1e1e] p-6 sm:p-10 text-center">
+  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#1e1e1e] p-6 @sm:p-10 text-center">
     <div>
       <div className="text-4xl mb-4 text-zinc-700 font-bold opacity-20">GraphQL</div>
       <div className="text-sm max-w-md mx-auto">{text}</div>

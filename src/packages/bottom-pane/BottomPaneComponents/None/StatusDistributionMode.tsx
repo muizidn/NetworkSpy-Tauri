@@ -34,7 +34,7 @@ export const StatusDistributionMode = () => {
   }
 
   return (
-    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-4 sm:p-6 flex flex-col overflow-auto">
+    <div className="min-h-full bg-[#1e1e1e] text-zinc-300 p-4 @sm:p-6 flex flex-col overflow-auto">
       <div className="mb-6 border-b border-zinc-800 pb-4 shrink-0">
         <h2 className="text-xl font-bold text-white mb-1">Status Code Distribution</h2>
         <p className="text-zinc-500 text-sm">Visual breakdown of response status codes across all captured traffic.</p>
