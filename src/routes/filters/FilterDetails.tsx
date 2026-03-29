@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiEdit3, FiX, FiCheck, FiInfo, FiTag, FiCopy, FiTrash2 } from "react-icons/fi";
-import { PredefinedFilter, FilterNode } from "@src/context/FilterContext";
+import { PredefinedFilter, FilterNode } from "@src/models/Filter";
 import { useFilterPresetContext } from "@src/context/FilterPresetContext";
 import { twMerge } from "tailwind-merge";
 

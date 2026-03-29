@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { PredefinedFilter } from "@src/context/FilterContext";
+import { PredefinedFilter } from "@src/models/Filter";
 import FilterList from "./FilterList";
 import FilterDetails from "./FilterDetails";
 import { FiFilter, FiActivity } from "react-icons/fi";

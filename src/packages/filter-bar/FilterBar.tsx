@@ -1,6 +1,5 @@
 import React from "react";
 import { useFilterContext, FilterNode, FilterRule, FilterGroup, FilterType, FilterOperator, FilterTypes, FilterOperators } from "@src/context/FilterContext";
-import { useFilterPresetContext } from "@src/context/FilterPresetContext";
 import { v4 as uuidv4 } from "uuid";
 import { twMerge } from "tailwind-merge";
 import { FiSearch, FiX } from "react-icons/fi";
@@ -136,16 +135,12 @@ export const FilterBar = () => {
   const {
     filters,
     setFilters,
-    saveCurrentFilters,
-  } = useFilterContext();
-
-  const {
     predefinedFilters,
     activePredefinedIds,
-    togglePreset,
-    removePreset,
-    visibleBuiltInIds
-  } = useFilterPresetContext();
+    togglePredefinedFilter,
+    saveCurrentFilters,
+    removePredefinedFilter
+  } = useFilterContext();
 
   const [searchTerm, setSearchTerm] = React.useState("");
 
@@ -154,10 +149,10 @@ export const FilterBar = () => {
       f.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     return {
-      appPredefined: filtered.filter(f => f.isBuiltIn && visibleBuiltInIds.includes(f.id)),
+      appPredefined: filtered.filter(f => f.isBuiltIn),
       userPredefined: filtered.filter(f => !f.isBuiltIn)
     };
-  }, [predefinedFilters, searchTerm, visibleBuiltInIds]);
+  }, [predefinedFilters, searchTerm]);
 
   const addRule = (parentId: string | null = null) => {
     const newRule: FilterRule = {
@@ -342,7 +337,7 @@ export const FilterBar = () => {
               return (
                 <div
                   key={tab.id}
-                  onClick={() => togglePreset(tab.id)}
+                  onClick={() => togglePredefinedFilter(tab.id)}
                   className={twMerge(
                     'group/predefined relative flex items-center justify-between h-6 px-3 rounded-md transition-all duration-200 border text-[10px] font-medium whitespace-nowrap cursor-pointer',
                     isActive
@@ -367,7 +362,7 @@ export const FilterBar = () => {
               return (
                 <div
                   key={tab.id}
-                  onClick={() => togglePreset(tab.id)}
+                  onClick={() => togglePredefinedFilter(tab.id)}
                   className={twMerge(
                     'group/predefined relative flex items-center justify-between h-6 px-3 rounded-md transition-all duration-200 border text-[10px] font-medium whitespace-nowrap cursor-pointer',
                     isActive
@@ -375,12 +370,6 @@ export const FilterBar = () => {
                       : 'bg-zinc-900/50 border-zinc-800/50 text-zinc-400 hover:bg-zinc-600 hover:text-white hover:border-zinc-500'
                   )}>
                   <span>{tab.name}</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); removePreset(tab.id); }}
-                    className="ml-2 hover:bg-black/20 rounded-full p-0.5 hidden group-hover/predefined:block transition-opacity"
-                  >
-                    <FiX size={10} />
-                  </button>
                 </div>
               );
             })}

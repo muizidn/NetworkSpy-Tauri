@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { FiSearch, FiTrash2, FiEdit3, FiFilter, FiPlus, FiChevronRight, FiChevronDown, FiFolder, FiEye, FiEyeOff } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
-import { PredefinedFilter } from "@src/context/FilterContext";
+import { PredefinedFilter } from "@src/models/Filter";
 import { useFilterPresetContext } from "@src/context/FilterPresetContext";
 
 interface FilterListProps {

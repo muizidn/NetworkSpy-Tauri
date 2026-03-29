@@ -118,8 +118,10 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
         const presets = await invoke<any[]>("get_filter_presets");
         const parsedPresets: PredefinedFilter[] = presets.map(p => ({
           ...p,
-          filters: JSON.parse(p.filters)
+          filters: JSON.parse(p.filters),
+          isBuiltIn: false
         }));
+        console.log(`Loaded ${parsedPresets.length} filter presets from DB`);
         setUserFilters(parsedPresets);
       } catch (err) {
         console.error("Failed to load filter presets from DB", err);
@@ -178,6 +180,7 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
       name,
       description,
       filters: [...filters],
+      isBuiltIn: false,
     };
 
     try {
