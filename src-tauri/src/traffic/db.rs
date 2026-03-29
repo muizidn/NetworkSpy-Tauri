@@ -153,6 +153,9 @@ impl TrafficDb {
             [],
         )?;
 
+        // Migration: Ensure description column exists for older databases
+        let _ = conn.execute("ALTER TABLE filter_presets ADD COLUMN description TEXT", []);
+
         // Task 1.2: Add Indexes
         conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp)", [])?;
         conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_uri ON traffic(uri)", [])?;

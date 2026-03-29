@@ -207,9 +207,9 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
     try {
         await invoke("update_filter_preset", {
             id,
-            name: updates.name,
-            description: updates.description,
-            filters: updates.filters ? JSON.stringify(updates.filters) : undefined
+            name: updates.name !== undefined ? updates.name : null,
+            description: updates.description !== undefined ? updates.description : null,
+            filters: updates.filters ? JSON.stringify(updates.filters) : null
         });
         setUserFilters(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
     } catch (err) {

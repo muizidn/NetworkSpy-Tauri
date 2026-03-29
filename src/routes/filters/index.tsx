@@ -1,13 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 import { PredefinedFilter } from "@src/models/Filter";
+import { useFilterPresetContext } from "@src/context/FilterPresetContext";
 import FilterList from "./FilterList";
 import FilterDetails from "./FilterDetails";
 import { FiFilter, FiActivity } from "react-icons/fi";
 
 const FiltersPage: React.FC = () => {
+    const { predefinedFilters } = useFilterPresetContext();
     const [selectedFilter, setSelectedFilter] = useState<PredefinedFilter | null>(null);
     const [isCompact, setIsCompact] = useState(false);
+
+    // Sync selected filter with the latest data from context (e.g. after edit)
+    useEffect(() => {
+        if (selectedFilter) {
+            const found = predefinedFilters.find(f => f.id === selectedFilter.id);
+            if (found && JSON.stringify(found) !== JSON.stringify(selectedFilter)) {
+                setSelectedFilter(found);
+            }
+        }
+    }, [predefinedFilters, selectedFilter]);
 
     return (
         <div className="flex h-full bg-[#050505] overflow-hidden">
