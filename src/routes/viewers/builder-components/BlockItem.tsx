@@ -56,22 +56,6 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                                     <FiCode size={16} />
                                 </button>
 
-                                <button
-                                    onClick={() => {
-                                        setIsEditingCode(true);
-                                        setActiveTab('output');
-                                    }}
-                                    disabled={!result}
-                                    className={twMerge(
-                                        "p-2 rounded-lg transition-all",
-                                        activeTab === 'output' && isEditingCode
-                                            ? "bg-amber-500 text-white shadow-lg"
-                                            : "text-white/80 hover:text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent"
-                                    )}
-                                    title="Inspect Generated Output (Raw)"
-                                >
-                                    <FiSearch size={16} />
-                                </button>
 
                                 <div
                                     className="flex items-center gap-2 px-2 border-l border-white/20 ml-1">
