@@ -4,13 +4,11 @@ import { invoke } from "@tauri-apps/api/core";
 
 interface FilterPresetContextState {
   predefinedFilters: PredefinedFilter[];
-  activePredefinedIds: string[];
   showBuiltIn: boolean;
   visibleBuiltInIds: string[];
   addPreset: (name: string, filters: FilterNode[], description?: string) => Promise<string>;
   updatePreset: (id: string, updates: Partial<PredefinedFilter>) => Promise<void>;
   removePreset: (id: string) => Promise<void>;
-  togglePreset: (id: string) => void;
   setShowBuiltIn: (show: boolean) => void;
   setBuiltInVisibility: (id: string, visible: boolean) => void;
 }
@@ -94,14 +92,6 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
     return localStorage.getItem("filter-show-builtin") !== "false";
   });
 
-  const [activePredefinedIds, setActivePredefinedIds] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("active-predefined-filters") || '["all"]');
-    } catch {
-      return ["all"];
-    }
-  });
-
   const [visibleBuiltInIds, setVisibleBuiltInIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem("filter-visible-builtin");
@@ -131,10 +121,6 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("active-predefined-filters", JSON.stringify(activePredefinedIds));
-  }, [activePredefinedIds]);
-
-  useEffect(() => {
     localStorage.setItem("filter-show-builtin", String(showBuiltIn));
   }, [showBuiltIn]);
 
@@ -146,22 +132,6 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
     const builtIn = showBuiltIn ? STANDARD_LIBRARY : STANDARD_LIBRARY.filter(f => f.id === "all");
     return [...builtIn, ...userFilters];
   }, [userFilters, showBuiltIn]);
-
-  const togglePreset = (id: string) => {
-    if (id === "all") {
-      setActivePredefinedIds(["all"]);
-      return;
-    }
-
-    setActivePredefinedIds(prev => {
-      const next = prev.filter(p => p !== "all");
-      if (next.includes(id)) {
-        const filtered = next.filter(p => p !== id);
-        return filtered.length === 0 ? ["all"] : filtered;
-      }
-      return [...next, id];
-    });
-  };
 
   const setBuiltInVisibility = (id: string, visible: boolean) => {
     setVisibleBuiltInIds(prev => {
@@ -194,8 +164,6 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
         });
         
         setUserFilters(prev => [...prev, newPredefined]);
-        // Auto-activate
-        togglePreset(newId);
     } catch (err) {
         console.error("Failed to add filter preset to DB", err);
     }
@@ -221,7 +189,6 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
     try {
         await invoke("delete_filter_preset", { id });
         setUserFilters(prev => prev.filter(f => f.id !== id));
-        setActivePredefinedIds(prev => prev.filter(p => p !== id));
     } catch (err) {
         console.error("Failed to delete filter preset from DB", err);
     }
@@ -230,13 +197,11 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
   return (
     <FilterPresetContext.Provider value={{
       predefinedFilters,
-      activePredefinedIds,
       showBuiltIn,
       visibleBuiltInIds,
       addPreset,
       updatePreset,
       removePreset,
-      togglePreset,
       setShowBuiltIn,
       setBuiltInVisibility
     }}>

@@ -9,7 +9,7 @@ interface FilterDetailsProps {
 }
 
 const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
-    const { updatePreset, removePreset, togglePreset, activePredefinedIds } = useFilterPresetContext();
+    const { updatePreset, removePreset } = useFilterPresetContext();
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(filter.name);
     const [editDesc, setEditDesc] = useState(filter.description || "");
@@ -27,8 +27,6 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
         });
         setIsEditing(false);
     };
-
-    const isActive = activePredefinedIds.includes(filter.id);
 
     return (
         <div className="flex flex-col h-full bg-[#050505] overflow-y-auto no-scrollbar">
@@ -72,17 +70,6 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                                 {isEditing ? <><FiCheck /> Save Changes</> : <><FiEdit3 /> Edit Detail</>}
                             </button>
                         )}
-                        <button 
-                            onClick={() => togglePreset(filter.id)}
-                            className={twMerge(
-                                "px-8 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg",
-                                isActive 
-                                    ? "bg-blue-600 text-white shadow-blue-900/20" 
-                                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 shadow-black/20"
-                            )}
-                        >
-                            {isActive ? "✓ Currently Active" : "Apply Filter"}
-                        </button>
                     </div>
                 </div>
             </div>
@@ -130,7 +117,7 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                                     <p className="text-xs text-zinc-600">This filter effectively allows all traffic as it contains no rules.</p>
                                 </div>
                             ) : (
-                                filter.filters.map((node, i) => (
+                                filter.filters.map((node) => (
                                     <RuleCard key={node.id} node={node} />
                                 ))
                             )}
@@ -151,13 +138,6 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                                 <div className="flex justify-between items-center group">
                                     <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">Shared</span>
                                     <span className="text-xs text-emerald-500 font-bold px-2 py-0.5 bg-emerald-500/10 rounded">Local Only</span>
-                                </div>
-                                <div className="flex justify-between items-center group">
-                                    <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">Status</span>
-                                    <span className={twMerge(
-                                        "text-xs font-bold px-2 py-0.5 rounded",
-                                        isActive ? "bg-blue-500/20 text-blue-400" : "bg-zinc-800 text-zinc-500"
-                                    )}>{isActive ? 'Active' : 'Dormant'}</span>
                                 </div>
                             </div>
                         </div>

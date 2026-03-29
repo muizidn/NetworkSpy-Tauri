@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from "react";
+import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from "react";
 import { TrafficItemMap } from "@src/packages/main-content/model/TrafficItemMap";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { 
@@ -44,14 +44,26 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   
   const { 
     predefinedFilters, 
-    activePredefinedIds, 
-    togglePreset, 
     addPreset, 
     removePreset 
   } = useFilterPresetContext();
 
+  const [activePredefinedIds, setActivePredefinedIds] = useState<string[]>(["all"]);
+
   const togglePredefinedFilter = (id: string) => {
-    togglePreset(id);
+    if (id === "all") {
+      setActivePredefinedIds(["all"]);
+      return;
+    }
+
+    setActivePredefinedIds(prev => {
+      const next = prev.filter(p => p !== "all");
+      if (next.includes(id)) {
+        const filtered = next.filter(p => p !== id);
+        return filtered.length === 0 ? ["all"] : filtered;
+      }
+      return [...next, id];
+    });
   };
 
   const saveCurrentFilters = (name: string) => {
