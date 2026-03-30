@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiEdit3, FiX, FiCheck, FiInfo, FiTag, FiCopy, FiTrash2 } from "react-icons/fi";
+import { FiEdit3, FiCheck, FiInfo, FiTag, FiCopy, FiTrash2 } from "react-icons/fi";
 import { PredefinedFilter, FilterNode } from "@src/models/Filter";
 import { useFilterPresetContext } from "@src/context/FilterPresetContext";
 import { twMerge } from "tailwind-merge";
@@ -13,6 +13,7 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(filter.name);
     const [editDesc, setEditDesc] = useState(filter.description || "");
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     useEffect(() => {
         setEditName(filter.name);
@@ -26,6 +27,11 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
             description: editDesc
         });
         setIsEditing(false);
+    };
+
+    const confirmDelete = () => {
+        removePreset(filter.id);
+        setIsDeleteModalOpen(false);
     };
 
     return (
@@ -162,11 +168,7 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                              <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-500/60">Danger Zone</h4>
                              <p className="text-[10px] text-rose-500/40">This action is irreversible. All associated rules will be permanently removed.</p>
                              <button 
-                                onClick={() => {
-                                    if(confirm(`Delete filter "${filter.name}" permanently?`)) {
-                                        removePreset(filter.id);
-                                    }
-                                }}
+                                onClick={() => setIsDeleteModalOpen(true)}
                                 className="w-full py-3 rounded-2xl border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold"
                              >
                                  Permanently Delete
@@ -175,6 +177,42 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                      )}
                 </div>
             </div>
+            
+            {/* Custom Deletion Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                    <div 
+                      className="absolute inset-0" 
+                      onClick={() => setIsDeleteModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-[32px] p-8 space-y-8 shadow-[0_32px_128px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 rounded-[24px] bg-rose-500/10 border border-rose-400/20 flex items-center justify-center text-rose-500 mx-auto shadow-inner">
+                            <FiTrash2 size={32} />
+                        </div>
+                        <div className="text-center space-y-2">
+                            <h3 className="text-xl font-black text-white tracking-tight leading-none uppercase">Confirm Delete</h3>
+                            <p className="text-xs text-zinc-500 leading-relaxed italic">
+                                This will permanently remove <span className="text-zinc-300 font-bold">"{filter.name}"</span>. 
+                                This operation is irreversible and all associated rules will be lost.
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-2 pt-2">
+                            <button 
+                              onClick={confirmDelete}
+                              className="w-full py-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-[11px] tracking-widest uppercase transition-all shadow-lg shadow-rose-950/20 active:scale-[0.98]"
+                            >
+                                Permanently Delete
+                            </button>
+                            <button 
+                              onClick={() => setIsDeleteModalOpen(false)}
+                              className="w-full py-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 font-black text-[11px] tracking-widest uppercase transition-all active:scale-[0.98]"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

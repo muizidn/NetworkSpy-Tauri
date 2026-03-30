@@ -11,11 +11,13 @@ const FiltersPage: React.FC = () => {
     const [selectedFilter, setSelectedFilter] = useState<PredefinedFilter | null>(null);
     const [isCompact, setIsCompact] = useState(false);
 
-    // Sync selected filter with the latest data from context (e.g. after edit)
+    // Sync selected filter with the latest data from context (e.g. after edit or delete)
     useEffect(() => {
         if (selectedFilter) {
             const found = predefinedFilters.find(f => f.id === selectedFilter.id);
-            if (found && JSON.stringify(found) !== JSON.stringify(selectedFilter)) {
+            if (!found) {
+                setSelectedFilter(null);
+            } else if (JSON.stringify(found) !== JSON.stringify(selectedFilter)) {
                 setSelectedFilter(found);
             }
         }
