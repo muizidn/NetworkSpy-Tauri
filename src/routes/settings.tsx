@@ -1,12 +1,18 @@
-import React from 'react';
-import { FiSettings, FiTarget } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiSettings, FiTarget, FiInfo } from 'react-icons/fi';
 import { useSettingsContext } from '../context/SettingsProvider';
+import { getVersion } from '@tauri-apps/api/app';
 
 export default function Settings() {
   const { showConnectMethod, setShowConnectMethod } = useSettingsContext();
+  const [appVersion, setAppVersion] = useState<string>('0.0.0');
+
+  useEffect(() => {
+    getVersion().then(setAppVersion);
+  }, []);
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] text-zinc-300 overflow-y-auto">
+    <div className="flex flex-col h-full bg-[#0a0a0a] text-zinc-300 overflow-y-auto no-scrollbar">
       <div className="p-12 max-w-4xl mx-auto w-full">
          <div className="flex items-center gap-4 mb-12">
             <div className="w-12 h-12 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center relative shadow-2xl">
@@ -29,7 +35,7 @@ export default function Settings() {
                     </div>
                     <div>
                         <h3 className="text-sm font-bold text-white mb-0.5">Show CONNECT Method</h3>
-                        <p className="text-xs text-zinc-500 max-w-md">
+                        <p className="text-xs text-zinc-500 max-w-md leading-relaxed">
                             Show HTTP CONNECT requests used to establish TLS tunnels. These are usually uninformative but can be useful for debugging proxies.
                         </p>
                     </div>
@@ -55,11 +61,14 @@ export default function Settings() {
          
          <div className="mt-24 pt-8 border-t border-zinc-900 flex items-center justify-between">
             <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                <div className="w-2 h-2 rounded-full bg-blue-500/50 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse" />
                 <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest">Environment Synced</span>
             </div>
             <div className="flex items-center gap-4">
-                 <span className="px-3 py-1 bg-zinc-900 rounded-full text-[10px] text-zinc-600 font-bold border border-zinc-800 uppercase tracking-tighter">v1.0.0 Build 2024.03</span>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-zinc-900/50 rounded-xl border border-zinc-800 shadow-inner group">
+                    <FiInfo size={14} className="text-zinc-600 group-hover:text-blue-500 transition-colors" />
+                    <span className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Version {appVersion}</span>
+                  </div>
             </div>
          </div>
       </div>
