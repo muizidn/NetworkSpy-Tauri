@@ -6,13 +6,17 @@ A premium, cross-platform Network Proxy and Traffic Analyzer built with **Tauri*
 
 ## ⚡ Quick Install
 
-The fastest way to install or update Network Spy is via the terminal (macOS and Linux):
+The fastest way to install or update Network Spy is via the terminal:
 
+###  macOS / 🐧 Linux
 ```bash
 curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.sh | sh
 ```
 
-> **Note**: For Windows, please download the `.msi` or `.exe` installer directly from our [Releases page](https://github.com/muizidn/NetworkSpy-Tauri/releases).
+### 🪟 Windows (PowerShell)
+```powershell
+iwr -useb https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.ps1 | iex
+```
 
 ---
 
