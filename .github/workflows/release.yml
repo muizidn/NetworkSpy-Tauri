@@ -1,0 +1,75 @@
+name: Release
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos-latest, ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: '5.34'
+
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libnm-dev libappindicator3-dev librsvg2-dev build-essential curl wget file jq
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Determine and Apply Version
+        shell: bash
+        run: |
+          # Get the next version from the script
+          chmod +x scripts/bump-version.sh
+          NEXT_VERSION=$(./scripts/bump-version.sh --dry-run)
+          # Strip 'v' prefix for JSON files
+          VERSION_NUM=${NEXT_VERSION#v}
+          echo "Next Version: $NEXT_VERSION"
+          echo "Version Num: $VERSION_NUM"
+          
+          # Update package.json
+          jq ".version = \"$VERSION_NUM\"" package.json > package.json.tmp && mv package.json.tmp package.json
+          
+          # Update tauri.conf.json
+          jq ".version = \"$VERSION_NUM\"" src-tauri/tauri.conf.json > tauri.conf.json.tmp && mv tauri.conf.json.tmp src-tauri/tauri.conf.json
+          
+          # Set version as environment variable for next steps
+          echo "APP_VERSION=$NEXT_VERSION" >> $GITHUB_ENV
+
+      - name: Build the app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ env.APP_VERSION }}
+          releaseName: "Network Spy ${{ env.APP_VERSION }}"
+          releaseBody: "Automated release from ${{ github.ref_name }} branch."
+          releaseDraft: true
+          prerelease: ${{ github.ref_name != 'main' }}
