@@ -10,8 +10,8 @@ CERTIFICATE_PATH="$1"
 
 # Import the certificate into the trusted certificates store
 echo "Importing certificate..."
-sudo cp "$CERTIFICATE_PATH" /usr/local/share/ca-certificates/
-sudo update-ca-certificates
+pkexec cp "$CERTIFICATE_PATH" /usr/local/share/ca-certificates/
+pkexec update-ca-certificates
 
 # Check if the import was successful
 if [ $? -ne 0 ]; then
