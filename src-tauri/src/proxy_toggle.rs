@@ -1,15 +1,24 @@
-#![cfg_attr(
-    all(not(debug_assertions), target_os = "windows"),
-    windows_subsystem = "windows"
-)]
-
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::process::Command;
 
 #[derive(Debug)]
-pub struct ProxyToggle {}
+pub struct ProxyToggle {
+    is_active: AtomicBool,
+}
 
 impl ProxyToggle {
+    pub fn new() -> Self {
+        Self {
+            is_active: AtomicBool::new(false),
+        }
+    }
+
+    pub fn is_on(&self) -> bool {
+        self.is_active.load(Ordering::Relaxed)
+    }
+
     pub fn turn_on(&self, port: u64) {
+        self.is_active.store(true, Ordering::Relaxed);
         #[cfg(target_os = "macos")]
         self.turn_on_macos(port);
 
@@ -21,6 +30,7 @@ impl ProxyToggle {
     }
 
     pub fn turn_off(&self) {
+        self.is_active.store(false, Ordering::Relaxed);
         #[cfg(target_os = "macos")]
         self.turn_off_macos();
 

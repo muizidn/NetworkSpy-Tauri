@@ -34,6 +34,41 @@ use std::sync::atomic::{AtomicU16, Ordering};
 use tokio::sync::mpsc;
 use rusqlite::params;
 
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+
+struct TrayStats {
+    total_requests: AtomicUsize,
+    tx_bytes: AtomicU64,
+    rx_bytes: AtomicU64,
+}
+
+impl TrayStats {
+    fn new() -> Self {
+        Self {
+            total_requests: AtomicUsize::new(0),
+            tx_bytes: AtomicU64::new(0),
+            rx_bytes: AtomicU64::new(0),
+        }
+    }
+}
+
+static TRAY_STATS: OnceCell<Arc<TrayStats>> = OnceCell::new();
+fn format_bytes(bytes: u64) -> String {
+    const KB: u64 = 1024;
+    const MB: u64 = KB * 1024;
+    const GB: u64 = MB * 1024;
+
+    if bytes >= GB {
+        format!("{:.2} GB", bytes as f64 / GB as f64)
+    } else if bytes >= MB {
+        format!("{:.2} MB", bytes as f64 / MB as f64)
+    } else if bytes >= KB {
+        format!("{:.2} KB", bytes as f64 / KB as f64)
+    } else {
+        format!("{} B", bytes)
+    }
+}
+
 static ACTUAL_PORT: AtomicU16 = AtomicU16::new(9090);
 static RESTART_TX: OnceCell<mpsc::UnboundedSender<u16>> = OnceCell::new();
 
@@ -481,10 +516,14 @@ struct MyTrafficListener {
     tag_manager: Arc<TagManager>,
     proxy_settings: Arc<std::sync::RwLock<ProxySettings>>,
     request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
+    tray_stats: Arc<TrayStats>,
 }
 
 impl TrafficListener for MyTrafficListener {
     fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
+        self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
+        self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
+        
         let mut uri = request.uri().to_string();
         
         // Clean up redundant default ports from the URI
@@ -581,6 +620,8 @@ impl TrafficListener for MyTrafficListener {
     }
 
     fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
+        self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
+        
         let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
             Some(data) => data,
             None => return, // If request was filtered, we ignore the response too
@@ -671,7 +712,7 @@ fn main() {
     let key_pair = include_str!("ca/network-spy.key");
     let ca_cert = include_str!("ca/network-spy.cer");
 
-    let proxy_toggle = ProxyToggle {};
+    let proxy_toggle = ProxyToggle::new();
     PROXY_TOGGLE
         .set(proxy_toggle)
         .expect("Failed to set proxy_toggle instance");
@@ -789,26 +830,35 @@ fn main() {
             let (tx, mut rx) = mpsc::unbounded_channel::<u16>();
             RESTART_TX.set(tx).expect("Failed to set RESTART_TX");
 
-            let app_handle_outer = app_handle.clone();
+            let tray_stats = Arc::new(TrayStats::new());
+            let _ = TRAY_STATS.set(tray_stats.clone());
+            let tray_stats_for_task = tray_stats.clone();
+
+            let app_handle_outer_task = app_handle.clone();
             let traffic_db_outer = Arc::clone(&traffic_db);
             let allow_list_outer = Arc::clone(&allow_list);
             let proxy_settings_outer = Arc::clone(&proxy_settings);
+            let tag_manager_outer = Arc::clone(&tag_manager);
+            let tray_stats_for_proxy = tray_stats.clone();
 
             tauri::async_runtime::spawn(async move {
                 let mut current_port = actual_port;
                 loop {
-                    let app_handle_inner = app_handle_outer.clone();
+                    let app_handle_inner = app_handle_outer_task.clone();
                     let traffic_db_inner = Arc::clone(&traffic_db_outer);
                     let allow_list_inner = Arc::clone(&allow_list_outer);
                     let proxy_settings_inner = Arc::clone(&proxy_settings_outer);
+                    let tag_manager_inner = Arc::clone(&tag_manager_outer);
+                    let tray_stats_deep = tray_stats_for_proxy.clone();
 
                     let mut proxy = Proxy::new(key_pair, ca_cert, current_port.into());
                     let listener = Arc::new(MyTrafficListener {
                         app_handle: app_handle_inner,
                         traffic_db: traffic_db_inner,
-                        tag_manager: Arc::clone(&tag_manager),
+                        tag_manager: tag_manager_inner,
                         proxy_settings: proxy_settings_inner,
                         request_times: Mutex::new(HashMap::new()),
+                        tray_stats: tray_stats_deep,
                     });
 
                     println!("Proxy server listening on port: {}", current_port);
@@ -829,14 +879,52 @@ fn main() {
             });
 
             // Tray Menu Setup
+            let reqs_item = MenuItem::with_id(app_handle, "tray_reqs", "Requests: 0", false, None::<&str>)?;
+            let data_item = MenuItem::with_id(app_handle, "tray_data", "Total: 0 B", false, None::<&str>)?;
+            let split_item = MenuItem::with_id(app_handle, "tray_split", "0 B ↑ | 0 B ↓", false, None::<&str>)?;
+            let status_capture_item = MenuItem::with_id(app_handle, "tray_status_capture", "Capture: Active", false, None::<&str>)?;
+
             let port_info = format!("Proxy Port: {}", actual_port);
             let status_item = MenuItem::with_id(app_handle, "status", &port_info, false, None::<&str>)?;
             let show_item = MenuItem::with_id(app_handle, "show", "Show Network Spy", true, None::<&str>)?;
             let reset_item = MenuItem::with_id(app_handle, "reset_proxy", "⚠️ Emergency Proxy Reset", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app_handle, "quit", "Quit", true, None::<&str>)?;
             
+            // Background task to update tray labels
+            let reqs_item_c = reqs_item.clone();
+            let data_item_c = data_item.clone();
+            let split_item_c = split_item.clone();
+            let status_capture_item_c = status_capture_item.clone();
+            let stats_updater = tray_stats_for_task.clone();
+
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+                    
+                    let reqs = stats_updater.total_requests.load(Ordering::Relaxed);
+                    let tx = stats_updater.tx_bytes.load(Ordering::Relaxed);
+                    let rx = stats_updater.rx_bytes.load(Ordering::Relaxed);
+                    
+                    let is_active = if let Some(toggle) = PROXY_TOGGLE.get() {
+                        toggle.is_on()
+                    } else {
+                        false
+                    };
+
+                    let _ = reqs_item_c.set_text(format!("Requests: {}", reqs));
+                    let _ = data_item_c.set_text(format!("Total Data: {}", format_bytes(tx + rx)));
+                    let _ = split_item_c.set_text(format!("{} ↑ | {} ↓", format_bytes(tx), format_bytes(rx)));
+                    let _ = status_capture_item_c.set_text(if is_active { "Capture: ⚡ Active" } else { "Capture: ⏸ Paused" });
+                }
+            });
+
             let tray_menu = Menu::with_items(app_handle, &[
                 &status_item, 
+                &status_capture_item,
+                &tauri::menu::PredefinedMenuItem::separator(app_handle)?,
+                &reqs_item,
+                &data_item,
+                &split_item,
                 &tauri::menu::PredefinedMenuItem::separator(app_handle)?,
                 &show_item, 
                 &reset_item, 
