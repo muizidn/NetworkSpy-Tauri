@@ -1,3 +1,4 @@
+import { SiWindows } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function WindowsInstaller() {
@@ -131,7 +132,7 @@ export function WindowsInstaller() {
   return (
     <Guide
       platform="Windows"
-      emoji="https://emoji.gg/assets/emoji/4860_windows.png"
+      icon={<SiWindows size={32} />}
       steps={windowsSteps}
     />
   );

@@ -12,10 +12,10 @@ export interface GuideStep {
 interface GuideProps {
   platform: string;
   steps: GuideStep[];
-  emoji: string;
+  icon: React.ReactNode;
 }
 
-const Guide: React.FC<GuideProps> = ({ platform, steps, emoji }) => {
+const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
   const [installing, setInstalling] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -51,8 +51,8 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, emoji }) => {
             </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <h1 className="text-4xl md:text-5xl font-black text-white flex items-center gap-4 tracking-tight">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center border border-zinc-800 shadow-xl overflow-hidden p-2">
-                        <img src={emoji} alt="Platform icon" className="w-full h-full object-contain" />
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center border border-zinc-800 shadow-xl overflow-hidden p-2 text-zinc-400">
+                        {icon}
                     </div>
                     <span>{platform} Setup</span>
                 </h1>

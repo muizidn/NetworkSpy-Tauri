@@ -1,3 +1,4 @@
+import { SiDocker } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function DockerInstaller() {
@@ -140,7 +141,7 @@ export function DockerInstaller() {
   return (
     <Guide
       platform="Docker"
-      emoji="https://emoji.gg/assets/emoji/3855_Docker.png"
+      icon={<SiDocker size={32} />}
       steps={DockerSteps}
     />
   );

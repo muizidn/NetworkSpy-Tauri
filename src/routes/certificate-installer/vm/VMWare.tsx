@@ -1,3 +1,4 @@
+import { SiVmware } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function VMWareInstaller() {
@@ -140,7 +141,7 @@ export function VMWareInstaller() {
   return (
     <Guide
       platform="VMWare"
-      emoji="https://emoji.gg/assets/emoji/3855_VMWare.png"
+      icon={<SiVmware size={32} />}
       steps={VMWareSteps}
     />
   );

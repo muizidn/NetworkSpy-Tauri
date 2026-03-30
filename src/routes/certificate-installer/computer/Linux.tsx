@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { SiLinux } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function LinuxInstaller() {
@@ -141,7 +142,7 @@ export function LinuxInstaller() {
   return (
     <Guide
       platform="Linux"
-      emoji="https://emoji.gg/assets/emoji/3855_linux.png"
+      icon={<SiLinux size={32} />}
       steps={linuxSteps}
     />
   );

@@ -1,3 +1,4 @@
+import { SiVirtualbox } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function VirtualBoxInstaller() {
@@ -143,7 +144,7 @@ export function VirtualBoxInstaller() {
   return (
     <Guide
       platform="VirtualBox"
-      emoji="https://emoji.gg/assets/emoji/7178-VirtualBox.png"
+      icon={<SiVirtualbox size={32} />}
       steps={VirtualBoxSteps}
     />
   );

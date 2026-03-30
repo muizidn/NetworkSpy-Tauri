@@ -183,10 +183,9 @@ fn auto_install_certificate() -> Result<String, String> {
     CERTIFICATE_INSTALLER.get().unwrap().install_from_content(ca_cert)
 }
 
-#[tauri::command]
-fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String) {
-    tauri::WebviewWindowBuilder::new(
-        &app_handle,
+fn open_new_window_internal(app_handle: &tauri::AppHandle, context: String, title: String) {
+    let _ = tauri::WebviewWindowBuilder::new(
+        app_handle,
         context.clone(),
         tauri::WebviewUrl::App(std::path::PathBuf::from(format!("/{}", context))),
     )
@@ -194,8 +193,12 @@ fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String)
     .inner_size(1500.0, 700.0)
     .max_inner_size(1500.0, 700.0)
     .resizable(false)
-    .build()
-    .unwrap();
+    .build();
+}
+
+#[tauri::command]
+fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String) {
+    open_new_window_internal(&app_handle, context, title);
 }
 
 #[tauri::command]
@@ -854,6 +857,55 @@ fn main() {
                     }
                 })
                 .build(app_handle)?;
+
+            // Window Menu Setup (Linux/Windows top menu bar)
+            let tools_submenu = SubmenuBuilder::new(app_handle, "Tools")
+                .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(app_handle)?)
+                .build()?;
+
+            let app_menu = MenuBuilder::new(app_handle)
+                .item(&SubmenuBuilder::new(app_handle, "netwok-spy")
+                    .item(&MenuItemBuilder::with_id("show", "Show").build(app_handle)?)
+                    .item(&tauri::menu::PredefinedMenuItem::separator(app_handle)?)
+                    .item(&MenuItemBuilder::with_id("quit", "Quit").build(app_handle)?)
+                    .build()?)
+                .item(&tools_submenu)
+                .build()?;
+
+            // Set the menu ONLY on the main window
+            if let Some(main_window) = app_handle.get_webview_window("main") {
+                let _ = main_window.set_menu(app_menu);
+            }
+
+            // Global Menu Event Handler for both Tray and Window Menu
+            let app_handle_menu = app_handle.clone();
+            app_handle.on_menu_event(move |_app, event| {
+                match event.id.as_ref() {
+                    "install_cert" => {
+                        println!("Manual Install Cert Menu Clicked");
+                        // Use existing logic to open the installer window
+                        let _ = open_new_window_internal(&app_handle_menu, "certificate-installer".to_string(), "Certificate Installer".to_string());
+                    }
+                    "quit" => {
+                        if let Some(toggle) = PROXY_TOGGLE.get() {
+                            toggle.turn_off();
+                        }
+                        _app.exit(0);
+                    }
+                    "show" => {
+                        if let Some(window) = _app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "reset_proxy" => {
+                        if let Some(toggle) = PROXY_TOGGLE.get() {
+                            toggle.turn_off();
+                        }
+                    }
+                    _ => {}
+                }
+            });
 
             Ok(())
         })
