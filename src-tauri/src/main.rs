@@ -18,7 +18,8 @@ use std::fs;
 use std::sync::Arc;
 use std::env;
 use tauri::{AppHandle, Manager, Emitter};
-use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::menu::{Menu, MenuItem, MenuEvent, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
@@ -247,6 +248,30 @@ async fn export_selected_to_har(path: String, ids: Vec<String>, db: tauri::State
     let json = serde_json::to_string_pretty(&har).map_err(|e: serde_json::Error| e.to_string())?;
     fs::write(path, json).map_err(|e: std::io::Error| e.to_string())?;
     Ok(())
+}
+
+fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
+    match event.id.as_ref() {
+        "quit" => {
+            if let Some(toggle) = PROXY_TOGGLE.get() {
+                toggle.turn_off();
+            }
+            app.exit(0);
+        }
+        "show" => {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
+        "reset_proxy" => {
+            if let Some(toggle) = PROXY_TOGGLE.get() {
+                toggle.turn_off();
+                println!("Emergency Proxy Reset from Tray");
+            }
+        }
+        _ => {}
+    }
 }
 
 #[tauri::command]
@@ -785,12 +810,6 @@ fn main() {
 
                     println!("Proxy server listening on port: {}", current_port);
                     
-                    // We need a way to stop run_proxy. Since we don't have a shutdown handle,
-                    // we'll run it and listen for port changes.
-                    // NOTE: This assumes run_proxy can be "shadowed" or we just hope 
-                    // the previous one doesn't conflict too much or we'd ideally kill it.
-                    // For now, this provides the "best effort" transition.
-                    
                     let listener_task = tauri::async_runtime::spawn(async move {
                         proxy.run_proxy(listener, allow_list_inner).await;
                     });
@@ -800,14 +819,41 @@ fn main() {
                         println!("Restarting proxy on new port: {}", new_port);
                         listener_task.abort(); // Kill old listener
                         current_port = new_port;
-                        
-                        // Also update system proxy if it was on
-                        // We can't easily knows if it was ON here, but we can just turn it on/off via toggle
                     } else {
                         break;
                     }
                 }
             });
+
+            // Tray Menu Setup
+            let port_info = format!("Proxy Port: {}", actual_port);
+            let status_item = MenuItem::with_id(app_handle, "status", &port_info, false, None::<&str>)?;
+            let show_item = MenuItem::with_id(app_handle, "show", "Show Network Spy", true, None::<&str>)?;
+            let reset_item = MenuItem::with_id(app_handle, "reset_proxy", "⚠️ Emergency Proxy Reset", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app_handle, "quit", "Quit", true, None::<&str>)?;
+            
+            let tray_menu = Menu::with_items(app_handle, &[
+                &status_item, 
+                &tauri::menu::PredefinedMenuItem::separator(app_handle)?,
+                &show_item, 
+                &reset_item, 
+                &quit_item
+            ])?;
+
+            let app_handle_tray = app_handle.clone();
+            let _tray = TrayIconBuilder::with_id("main_tray")
+                .menu(&tray_menu)
+                .icon(app_handle.default_window_icon().unwrap().clone())
+                .on_menu_event(handle_tray_menu_event)
+                .on_tray_icon_event(move |_tray, event| {
+                    if let TrayIconEvent::Click { .. } = event {
+                        if let Some(window) = app_handle_tray.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app_handle)?;
 
             Ok(())
         })

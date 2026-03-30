@@ -68,6 +68,34 @@ This project uses **GitHub Actions** for automated releases. Every push to `main
 
 ---
 
+## 🛠️ Troubleshooting
+
+If the application crashes or hangs while the proxy is active, your internet might stop working. Here is how to manually reset your proxy settings via terminal:
+
+###  macOS
+```bash
+# Reset all network services
+networksetup -listallnetworkservices | grep -v "denotes" | xargs -I {} networksetup -setwebproxystate "{}" off
+networksetup -listallnetworkservices | grep -v "denotes" | xargs -I {} networksetup -setsecurewebproxystate "{}" off
+```
+
+### 🪟 Windows (PowerShell)
+```powershell
+# Disable WinINET proxy
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f
+
+# Reset WinHTTP proxy
+netsh winhttp reset proxy
+```
+
+### 🐧 Linux (GNOME/GTK)
+```bash
+# Reset GNOME system proxy
+gsettings set org.gnome.system.proxy mode 'none'
+```
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
