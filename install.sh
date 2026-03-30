@@ -21,10 +21,10 @@ echo "🚀 Starting Network Spy Installation..."
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
 
-if [ "$ARCH" == "x86_64" ]; then
+if [ "$ARCH" = "x86_64" ]; then
     ARCH_NAME="amd64"
     ARCH_NAME_MAC="x64"
-elif [ "$ARCH" == "aarch64" ] || [ "$ARCH" == "arm64" ]; then
+elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
     ARCH_NAME="arm64"
     ARCH_NAME_MAC="aarch64"
 else
@@ -33,7 +33,7 @@ else
 fi
 
 # 2. Version Detection
-if [ -z "$VERSION" ] || [ "$VERSION" == "latest" ]; then
+if [ -z "$VERSION" ] || [ "$VERSION" = "latest" ]; then
     echo "🔍 Fetching latest version info..."
     VERSION=$(curl -s $API_URL/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     if [ -z "$VERSION" ]; then
@@ -53,7 +53,7 @@ echo "💻 Platform: $OS ($ARCH)"
 # 3. Download and Install
 cd "$TEMP_DIR"
 
-if [ "$OS" == "darwin" ]; then
+if [ "$OS" = "darwin" ]; then
     # macOS Installation (.dmg)
     # Asset naming pattern: netwok-spy_0.1.0_x64.dmg 
     # (Note: Adjusting for the 'netwok' typo in your project name)
@@ -67,7 +67,13 @@ if [ "$OS" == "darwin" ]; then
     fi
     
     echo "💿 Mounting DMG..."
-    MOUNT_POINT=$(hdiutil attach "$FILENAME" -nobrowse | grep /Volumes/ | head -n 1 | awk '{print $NF}')
+    # Robustly get the mount point using plist output
+    MOUNT_POINT=$(hdiutil attach "$FILENAME" -nobrowse -plist | grep -A 1 "mount-point" | grep string | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
+    
+    if [ -z "$MOUNT_POINT" ]; then
+        echo "❌ Failed to find mount point for $FILENAME"
+        exit 1
+    fi
     
     echo "📁 Installing to /Applications..."
     # Find the .app folder inside the DMG
@@ -81,7 +87,7 @@ if [ "$OS" == "darwin" ]; then
     echo "✅ Success! Network Spy is now in your Applications folder."
     echo "💡 You can open it using: open -a 'Network Spy'"
 
-elif [ "$OS" == "linux" ]; then
+elif [ "$OS" = "linux" ]; then
     # Linux Installation (.deb)
     # Asset naming pattern: netwok-spy_0.1.0_amd64.deb
     FILENAME="netwok-spy_${VERSION#v}_${ARCH_NAME}.deb"
