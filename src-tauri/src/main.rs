@@ -457,7 +457,21 @@ struct MyTrafficListener {
 
 impl TrafficListener for MyTrafficListener {
     fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
-        let uri = request.uri().to_string();
+        let mut uri = request.uri().to_string();
+        
+        // Clean up redundant default ports from the URI
+        if uri.starts_with("https://") {
+            uri = uri.replace(":443/", "/");
+            if uri.ends_with(":443") {
+                uri = uri[..uri.len() - 4].to_string();
+            }
+        } else if uri.starts_with("http://") {
+            uri = uri.replace(":80/", "/");
+            if uri.ends_with(":80") {
+                uri = uri[..uri.len() - 3].to_string();
+            }
+        }
+        
         let method = request.method().as_str().to_string();
 
         let show_connect = if let Ok(settings) = self.proxy_settings.read() {
