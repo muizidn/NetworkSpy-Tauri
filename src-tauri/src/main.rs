@@ -90,6 +90,33 @@ struct Payload {
 
 struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
 
+#[derive(Clone, Serialize, serde::Deserialize, Default)]
+struct ProxySettings {
+    show_connect_method: bool,
+}
+
+struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
+
+#[tauri::command]
+async fn get_proxy_settings(state: tauri::State<'_, ManagedProxySettings>) -> Result<ProxySettings, String> {
+    let settings = state.0.read().map_err(|e| e.to_string())?;
+    Ok(settings.clone())
+}
+
+#[tauri::command]
+async fn update_proxy_settings(
+    state: tauri::State<'_, ManagedProxySettings>,
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    new_settings: ProxySettings,
+) -> Result<(), String> {
+    let mut settings = state.0.write().map_err(|e| e.to_string())?;
+    *settings = new_settings.clone();
+    
+    let val = serde_json::to_string(&new_settings).map_err(|e| e.to_string())?;
+    let _ = db.set_setting("proxy_settings", &val);
+    Ok(())
+}
+
 #[tauri::command]
 async fn update_intercept_allow_list(
     state: tauri::State<'_, InterceptAllowList>,
@@ -424,6 +451,7 @@ struct MyTrafficListener {
     app_handle: AppHandle,
     traffic_db: Arc<TrafficDb>,
     tag_manager: Arc<TagManager>,
+    proxy_settings: Arc<std::sync::RwLock<ProxySettings>>,
     request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
 }
 
@@ -431,6 +459,17 @@ impl TrafficListener for MyTrafficListener {
     fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
         let uri = request.uri().to_string();
         let method = request.method().as_str().to_string();
+
+        let show_connect = if let Ok(settings) = self.proxy_settings.read() {
+            settings.show_connect_method
+        } else {
+            false
+        };
+
+        if !show_connect && method.trim().to_uppercase() == "CONNECT" {
+            return;
+        }
+
         self.request_times.lock().unwrap().insert(id, (Instant::now(), uri.clone(), method.clone()));
         
         let http_version = match request.version() {
@@ -500,7 +539,10 @@ impl TrafficListener for MyTrafficListener {
     }
 
     fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
-        let (start_time, uri, method) = self.request_times.lock().unwrap().remove(&id).unwrap_or((Instant::now(), "".to_string(), "".to_string()));
+        let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
+            Some(data) => data,
+            None => return, // If request was filtered, we ignore the response too
+        };
         let duration = start_time.elapsed().as_millis();
         
         let status_code = response.status().as_u16();
@@ -686,6 +728,15 @@ fn main() {
             let allow_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
 
+            // Load settings from DB
+            let proxy_settings_data = if let Ok(Some(val)) = traffic_db.get_setting("proxy_settings") {
+                serde_json::from_str::<ProxySettings>(&val).unwrap_or_default()
+            } else {
+                ProxySettings::default()
+            };
+            let proxy_settings = Arc::new(std::sync::RwLock::new(proxy_settings_data));
+            app_handle.manage(ManagedProxySettings(Arc::clone(&proxy_settings)));
+
             let actual_port = (9090..65535)
                 .find(|port| std::net::TcpListener::bind(("127.0.0.1", *port)).is_ok())
                 .unwrap_or(9090);
@@ -699,6 +750,7 @@ fn main() {
             let app_handle_outer = app_handle.clone();
             let traffic_db_outer = Arc::clone(&traffic_db);
             let allow_list_outer = Arc::clone(&allow_list);
+            let proxy_settings_outer = Arc::clone(&proxy_settings);
 
             tauri::async_runtime::spawn(async move {
                 let mut current_port = actual_port;
@@ -706,12 +758,14 @@ fn main() {
                     let app_handle_inner = app_handle_outer.clone();
                     let traffic_db_inner = Arc::clone(&traffic_db_outer);
                     let allow_list_inner = Arc::clone(&allow_list_outer);
+                    let proxy_settings_inner = Arc::clone(&proxy_settings_outer);
 
                     let mut proxy = Proxy::new(key_pair, ca_cert, current_port.into());
                     let listener = Arc::new(MyTrafficListener {
                         app_handle: app_handle_inner,
                         traffic_db: traffic_db_inner,
                         tag_manager: Arc::clone(&tag_manager),
+                        proxy_settings: proxy_settings_inner,
                         request_times: Mutex::new(HashMap::new()),
                     });
 
@@ -754,6 +808,8 @@ fn main() {
             get_response_pair_data,
             update_intercept_allow_list,
             get_recent_traffic,
+            get_proxy_settings,
+            update_proxy_settings,
             save_session,
             load_session,
             get_filter_presets,

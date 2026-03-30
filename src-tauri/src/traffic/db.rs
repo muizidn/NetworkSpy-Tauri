@@ -153,6 +153,14 @@ impl TrafficDb {
             [],
         )?;
 
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )",
+            [],
+        )?;
+
         // Migration: Ensure description column exists for older databases
         let _ = conn.execute("ALTER TABLE filter_presets ADD COLUMN description TEXT", []);
 
@@ -716,6 +724,22 @@ impl TrafficDb {
     pub fn delete_filter_preset(&self, id: String) -> rusqlite::Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute("DELETE FROM filter_presets WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    pub fn get_setting(&self, key: &str) -> rusqlite::Result<Option<String>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT value FROM settings WHERE key = ?1")?;
+        let res = stmt.query_row(params![key], |row| row.get(0)).or(Ok(None));
+        res
+    }
+
+    pub fn set_setting(&self, key: &str, value: &str) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            params![key, value],
+        )?;
         Ok(())
     }
 }
