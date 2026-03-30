@@ -5,8 +5,32 @@ on:
       - main
       - develop
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.bump.outputs.next_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+      - name: Determine Version
+        id: bump
+        shell: bash
+        run: |
+          chmod +x scripts/bump-version.sh
+          NEXT_VERSION=$(./scripts/bump-version.sh --dry-run)
+          echo "Next Version: $NEXT_VERSION"
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
   release:
+    needs: get-version
     permissions:
       contents: write
     strategy:
@@ -43,33 +67,27 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Determine and Apply Version
+      - name: Apply Version
         shell: bash
         run: |
-          # Get the next version from the script
-          chmod +x scripts/bump-version.sh
-          NEXT_VERSION=$(./scripts/bump-version.sh --dry-run)
+          NEXT_VERSION="${{ needs.get-version.outputs.app_version }}"
           # Strip 'v' prefix for JSON files
           VERSION_NUM=${NEXT_VERSION#v}
-          echo "Next Version: $NEXT_VERSION"
-          echo "Version Num: $VERSION_NUM"
+          echo "Applying Version: $NEXT_VERSION"
           
           # Update package.json
           jq ".version = \"$VERSION_NUM\"" package.json > package.json.tmp && mv package.json.tmp package.json
           
           # Update tauri.conf.json
           jq ".version = \"$VERSION_NUM\"" src-tauri/tauri.conf.json > tauri.conf.json.tmp && mv tauri.conf.json.tmp src-tauri/tauri.conf.json
-          
-          # Set version as environment variable for next steps
-          echo "APP_VERSION=$NEXT_VERSION" >> $GITHUB_ENV
 
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ env.APP_VERSION }}
-          releaseName: "Network Spy ${{ env.APP_VERSION }}"
+          tagName: ${{ needs.get-version.outputs.app_version }}
+          releaseName: "Network Spy ${{ needs.get-version.outputs.app_version }}"
           releaseBody: "Automated release from ${{ github.ref_name }} branch."
           releaseDraft: true
           prerelease: ${{ github.ref_name != 'main' }}
