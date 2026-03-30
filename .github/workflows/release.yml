@@ -95,8 +95,8 @@ jobs:
             BUILD_NUM=$(echo "$VERSION_NUM" | grep -oE '[0-9]+$' || echo "0")
             # Ensure build number is within MSI limits (0-65535)
             SAFE_BUILD_NUM=$((BUILD_NUM % 65536))
-            VERSION_NUM="${BASE_VERSION}.${SAFE_BUILD_NUM}"
-            echo "Sanitized for MSI: $VERSION_NUM"
+            VERSION_NUM="${BASE_VERSION}-${SAFE_BUILD_NUM}"
+            echo "Sanitized for MSI & SemVer: $VERSION_NUM"
           fi
           
           # Update package.json
