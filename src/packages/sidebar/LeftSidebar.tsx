@@ -39,14 +39,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onProClick }) => {
           />
         </Tooltip>
 
-        <Tooltip text="Saved Sessions">
-          <NavButton
-            icon={<FiClock size={18} />}
-            isActive={activeTab === "sessions"}
-            onClick={() => navigate("/sessions")}
-          />
-        </Tooltip>
-
         <Tooltip text="Custom Viewers">
           <NavButton
             icon={<FiEye size={18} />}
@@ -60,14 +52,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onProClick }) => {
             icon={<FiGrid size={18} />}
             isActive={activeTab === "extensions"}
             onClick={() => navigate("/extensions")}
-          />
-        </Tooltip>
-
-        <Tooltip text="Saved Filters">
-          <NavButton
-            icon={<FiFilter size={18} />}
-            isActive={activeTab === "filters"}
-            onClick={() => navigate("/filters")}
           />
         </Tooltip>
       </div>

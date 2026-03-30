@@ -727,12 +727,18 @@ fn main() {
         .setup(move |app| {
             let cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
             let tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
+            let saved_sessions_item = MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app)?;
+            let traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit-app", "Quit netwok-spy").accelerator("Cmd+Q").build(app)?;
 
             let tools_submenu = SubmenuBuilder::new(app, "Tools")
                 .item(&cert_installer_item)
                 .separator()
                 .item(&tag_item)
+                .separator()
+                .item(&saved_sessions_item)
+                .separator()
+                .item(&traffic_filters_item)
                 .build()?;
 
             let menu = MenuBuilder::new(app)
@@ -757,6 +763,10 @@ fn main() {
                     open_new_window(app_handle.clone(), "certificate-installer".into(), "Certificate Installer".into());
                 } else if event.id() == "tools-tag" {
                     open_new_window(app_handle.clone(), "tag".into(), "Tag Tools".into());
+                } else if event.id() == "saved-sessions" {
+                    open_new_window(app_handle.clone(), "sessions".into(), "Saved Sessions".into());
+                } else if event.id() == "traffic-filters" {
+                    open_new_window(app_handle.clone(), "filters".into(), "Traffic Filters".into());
                 } else if event.id() == "quit-app" {
                     if let Some(toggle) = PROXY_TOGGLE.get() {
                         toggle.turn_off();
@@ -947,8 +957,8 @@ fn main() {
             // Window Menu Setup (Linux/Windows top menu bar)
             let tools_submenu = SubmenuBuilder::new(app_handle, "Tools")
                 .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(app_handle)?)
-                .item(&MenuItemBuilder::with_id("saved_sessions", "Saved Sessions").build(app_handle)?)
-                .item(&MenuItemBuilder::with_id("traffic_filters", "Traffic Filters").build(app_handle)?)
+                .item(&MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app_handle)?)
+                .item(&MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app_handle)?)
                 .build()?;
 
             let app_menu = MenuBuilder::new(app_handle)
@@ -972,10 +982,10 @@ fn main() {
                     "install_cert" => {
                         let _ = open_new_window_internal(&app_handle_menu, "certificate-installer".to_string(), "Certificate Installer".to_string());
                     }
-                    "saved_sessions" => {
+                    "saved-sessions" => {
                         let _ = open_new_window_internal(&app_handle_menu, "sessions".to_string(), "Saved Sessions".to_string());
                     }
-                    "traffic_filters" => {
+                    "traffic-filters" => {
                         let _ = open_new_window_internal(&app_handle_menu, "filters".to_string(), "Traffic Filters".to_string());
                     }
                     "quit" => {
