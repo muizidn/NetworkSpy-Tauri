@@ -947,6 +947,8 @@ fn main() {
             // Window Menu Setup (Linux/Windows top menu bar)
             let tools_submenu = SubmenuBuilder::new(app_handle, "Tools")
                 .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(app_handle)?)
+                .item(&MenuItemBuilder::with_id("saved_sessions", "Saved Sessions").build(app_handle)?)
+                .item(&MenuItemBuilder::with_id("traffic_filters", "Traffic Filters").build(app_handle)?)
                 .build()?;
 
             let app_menu = MenuBuilder::new(app_handle)
@@ -968,9 +970,13 @@ fn main() {
             app_handle.on_menu_event(move |_app, event| {
                 match event.id.as_ref() {
                     "install_cert" => {
-                        println!("Manual Install Cert Menu Clicked");
-                        // Use existing logic to open the installer window
                         let _ = open_new_window_internal(&app_handle_menu, "certificate-installer".to_string(), "Certificate Installer".to_string());
+                    }
+                    "saved_sessions" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "sessions".to_string(), "Saved Sessions".to_string());
+                    }
+                    "traffic_filters" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "filters".to_string(), "Traffic Filters".to_string());
                     }
                     "quit" => {
                         if let Some(toggle) = PROXY_TOGGLE.get() {
