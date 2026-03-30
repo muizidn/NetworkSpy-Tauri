@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use rusqlite::{params, Connection};
+use rusqlite::params;
 use std::sync::{Arc, Mutex};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use std::collections::HashMap;
@@ -97,7 +97,7 @@ impl TagManager {
         self.rules.lock().unwrap().clone()
     }
 
-    pub fn sync_tagging(&self, uri: &str, method: &str, headers: &HashMap<String, String>) -> Vec<String> {
+    pub fn sync_tagging(&self, uri: &str, method: &str, _headers: &HashMap<String, String>) -> Vec<String> {
         let rules = self.rules.lock().unwrap();
         let glob_set_opt = self.glob_set.lock().unwrap();
         
