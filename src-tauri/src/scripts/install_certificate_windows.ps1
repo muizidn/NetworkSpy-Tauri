@@ -8,18 +8,19 @@ if (-not $certPath) {
     exit 1
 }
 
-# Import the certificate into the Trusted Root Certification Authorities store
+# Import the certificate into the CurrentUser Root store
+# This does NOT require administrative privileges
 try {
-    Write-Host "Importing certificate..."
+    Write-Host "Importing certificate to CurrentUser store..."
     $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
     $cert.Import($certPath)
 
-    $store = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "LocalMachine")
+    $store = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "CurrentUser")
     $store.Open("ReadWrite")
     $store.Add($cert)
     $store.Close()
 
-    Write-Host "Certificate installed successfully."
+    Write-Host "Certificate installed successfully for current user."
 } catch {
     Write-Host "Failed to import certificate: $_"
     exit 1
