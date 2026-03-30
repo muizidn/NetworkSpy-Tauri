@@ -30,11 +30,9 @@ use traffic::viewers::{ViewerManager, get_custom_viewers, get_viewer_folders, cr
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
-use std::sync::atomic::{AtomicU16, Ordering};
+use std::sync::atomic::{AtomicU16, AtomicU64, AtomicUsize, Ordering};
 use tokio::sync::mpsc;
 use rusqlite::params;
-
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 
 struct TrayStats {
     total_requests: AtomicUsize,
