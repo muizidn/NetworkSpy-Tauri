@@ -127,7 +127,7 @@ impl TagManager {
         applied_tags
     }
 
-    pub fn async_tagging(&self, id: String, uri: String, method: String, headers: HashMap<String, String>, body: Vec<u8>, app_handle: AppHandle) {
+    pub fn async_tagging(&self, id: String, uri: String, method: String, _headers: HashMap<String, String>, body: Vec<u8>, app_handle: AppHandle) {
         let manager_arc = Arc::new(self.clone_for_async()); // Minimal clone or use reference
         let db_arc = Arc::clone(&self.db);
         
