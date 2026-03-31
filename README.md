@@ -18,6 +18,19 @@ curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/in
 iwr -useb https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.ps1 | iex
 ```
 
+### 🛡️ CI / Unsigned Build Installation
+If you are installing a development build or a binary from CI that is not yet notarized (macOS) or signed (Windows), use the bypass flag to avoid security prompts:
+
+####  macOS (Quarantine Bypass)
+```bash
+curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.sh | sh -s -- --allow-unsigned
+```
+
+#### 🪟 Windows (SmartScreen Bypass)
+```powershell
+$s="https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.ps1"; iwr -useb $s | iex; &$s -AllowUnsigned
+```
+
 ---
 
 ## ✨ Features

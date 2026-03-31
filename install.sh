@@ -3,6 +3,7 @@
 # Network Spy - Terminal Installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.sh | sh
 # Or to install specific version: curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.sh | sh -s v1.0.0
+# Or to bypass quarantine (macOS/CI): curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.sh | sh -s -- --allow-unsigned
 
 set -e
 
@@ -11,8 +12,19 @@ REPO_URL="https://github.com/$GITHUB_REPO"
 API_URL="https://api.github.com/repos/$GITHUB_REPO/releases"
 
 # Configuration
-VERSION=$1
-INSTALL_DIR="/Applications" # macOS default
+VERSION=""
+ALLOW_UNSIGNED=false
+
+# 0. Argument Parsing
+for arg in "$@"; do
+    if [ "$arg" = "--allow-unsigned" ]; then
+        ALLOW_UNSIGNED=true
+    elif [ -z "$VERSION" ]; then
+        # The first non-flag argument is the version
+        VERSION=$arg
+    fi
+done
+
 TEMP_DIR=$(mktemp -d)
 
 echo "🚀 Starting Network Spy Installation..."
@@ -49,6 +61,9 @@ fi
 
 echo "📦 Target Version: $VERSION"
 echo "💻 Platform: $OS ($ARCH)"
+if [ "$ALLOW_UNSIGNED" = true ]; then
+    echo "🛡️  Bypass Mode: Enabled (Quarantine will be removed)"
+fi
 
 # 3. Download and Install
 cd "$TEMP_DIR"
@@ -56,7 +71,6 @@ cd "$TEMP_DIR"
 if [ "$OS" = "darwin" ]; then
     # macOS Installation (.dmg)
     # Asset naming pattern: network-spy_0.1.0_x64.dmg 
-    # (Note: Adjusting for the 'netwok' typo in your project name)
     FILENAME="network-spy_${VERSION#v}_${ARCH_NAME_MAC}.dmg"
     DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
     
@@ -77,8 +91,14 @@ if [ "$OS" = "darwin" ]; then
     
     echo "📁 Installing to /Applications..."
     # Find the .app folder inside the DMG
-    APP_NAME=$(ls -d "$MOUNT_POINT"/*.app | head -n 1)
-    cp -R "$APP_NAME" /Applications/
+    APP_SOURCE=$(ls -d "$MOUNT_POINT"/*.app | head -n 1)
+    APP_NAME=$(basename "$APP_SOURCE")
+    cp -R "$APP_SOURCE" "/Applications/"
+    
+    if [ "$ALLOW_UNSIGNED" = true ]; then
+        echo "🛡️ Removing macOS quarantine from $APP_NAME..."
+        xattr -rd com.apple.quarantine "/Applications/$APP_NAME" || echo "⚠️ Failed to remove quarantine (requires xattr/permissions)"
+    fi
     
     echo "🛡️ Cleaning up..."
     hdiutil detach "$MOUNT_POINT"
@@ -89,7 +109,6 @@ if [ "$OS" = "darwin" ]; then
 
 elif [ "$OS" = "linux" ]; then
     # Linux Installation (.deb)
-    # Asset naming pattern: network-spy_0.1.0_amd64.deb
     FILENAME="network-spy_${VERSION#v}_${ARCH_NAME}.deb"
     DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
     
