@@ -1,5 +1,6 @@
 use std::fs;
 #[cfg(target_os = "linux")]
+#[allow(unused_imports)]
 use std::io::Read;
 use std::process::Command;
 use tempfile::tempdir;
@@ -32,25 +33,33 @@ impl CertificateInstaller {
     }
 
     pub fn install_from_content(&self, cert_content: &str) -> Result<String, String> {
-        let temp_dir = tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_dir =
+            tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
         let temp_cert_path = temp_dir.path().join("network-spy.cer");
-        
-        fs::write(&temp_cert_path, cert_content).map_err(|e| format!("Failed to write certificate to temp file: {}", e))?;
-        
-        let path_str = temp_cert_path.to_str().ok_or("Failed to convert temp path to string")?.to_string();
-        
+
+        fs::write(&temp_cert_path, cert_content)
+            .map_err(|e| format!("Failed to write certificate to temp file: {}", e))?;
+
+        let path_str = temp_cert_path
+            .to_str()
+            .ok_or("Failed to convert temp path to string")?
+            .to_string();
+
         self.install(path_str)
     }
 
     #[cfg(target_os = "macos")]
     fn install_macos(&self, cert_path: String) -> Result<String, String> {
         let script_content = include_str!("scripts/install_certificates_mac.sh");
-        let temp_dir = tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_dir =
+            tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
         let temp_script_path = temp_dir.path().join("install_certificate_mac.sh");
         let temp_cert_path = temp_dir.path().join("certificate.pem");
 
-        fs::write(&temp_script_path, script_content).map_err(|e| format!("Failed to write script file: {}", e))?;
-        fs::copy(&cert_path, &temp_cert_path).map_err(|e| format!("Failed to copy certificate file: {}", e))?;
+        fs::write(&temp_script_path, script_content)
+            .map_err(|e| format!("Failed to write script file: {}", e))?;
+        fs::copy(&cert_path, &temp_cert_path)
+            .map_err(|e| format!("Failed to copy certificate file: {}", e))?;
 
         #[cfg(target_family = "unix")]
         fs::set_permissions(&temp_script_path, fs::Permissions::from_mode(0o755))
@@ -72,12 +81,15 @@ impl CertificateInstaller {
     #[cfg(target_os = "linux")]
     fn install_linux(&self, cert_path: String) -> Result<String, String> {
         let script_content = include_str!("scripts/install_certificate_linux.sh");
-        let temp_dir = tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_dir =
+            tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
         let temp_script_path = temp_dir.path().join("install_certificate_linux.sh");
         let temp_cert_path = temp_dir.path().join("certificate.cer");
 
-        fs::write(&temp_script_path, script_content).map_err(|e| format!("Failed to write script file: {}", e))?;
-        fs::copy(&cert_path, &temp_cert_path).map_err(|e| format!("Failed to copy certificate file: {}", e))?;
+        fs::write(&temp_script_path, script_content)
+            .map_err(|e| format!("Failed to write script file: {}", e))?;
+        fs::copy(&cert_path, &temp_cert_path)
+            .map_err(|e| format!("Failed to copy certificate file: {}", e))?;
 
         #[cfg(target_family = "unix")]
         fs::set_permissions(&temp_script_path, fs::Permissions::from_mode(0o755))
@@ -99,12 +111,15 @@ impl CertificateInstaller {
     #[cfg(target_os = "windows")]
     fn install_windows(&self, cert_path: String) -> Result<String, String> {
         let script_content = include_str!("scripts/install_certificate_windows.ps1");
-        let temp_dir = tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_dir =
+            tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
         let temp_script_path = temp_dir.path().join("install_certificate_windows.ps1");
         let temp_cert_path = temp_dir.path().join("certificate.pem");
 
-        fs::write(&temp_script_path, script_content).map_err(|e| format!("Failed to write script file: {}", e))?;
-        fs::copy(&cert_path, &temp_cert_path).map_err(|e| format!("Failed to copy certificate file: {}", e))?;
+        fs::write(&temp_script_path, script_content)
+            .map_err(|e| format!("Failed to write script file: {}", e))?;
+        fs::copy(&cert_path, &temp_cert_path)
+            .map_err(|e| format!("Failed to copy certificate file: {}", e))?;
 
         let output = Command::new("powershell")
             .arg("-ExecutionPolicy")

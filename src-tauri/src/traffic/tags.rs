@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use std::collections::HashMap;
 use crate::traffic::db::TrafficDb;
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -103,7 +103,7 @@ impl TagManager {
         
         let mut applied_tags = Vec::new();
         
-        if let Some(glob_set) = glob_set_opt.as_ref() {
+        if let Some(_glob_set) = glob_set_opt.as_ref() {
             // ...
             for rule in rules.iter().filter(|r| r.enabled && r.is_sync && r.scope == "metadata") {
                 if rule.method != "ALL" && rule.method != method {
