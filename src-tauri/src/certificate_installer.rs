@@ -139,15 +139,30 @@ echo "Uninstall completed"
     fn uninstall_linux(&self, app: Option<AppHandle>, stream_logs: bool) -> Result<String, String> {
         emit_log(&app, "Preparing Linux certificate uninstallation...");
 
-        // Read the script content and execute it inline with verbose output
+        // Read the script content
         let script_content = include_str!("scripts/uninstall_certificate_linux.sh");
 
-        // Run the script inline with set -x to trace all commands
-        let full_script = format!("set -x\n{}", script_content);
+        // Write script to temp file and run it with bash -x
+        let temp_dir =
+            tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_script_path = temp_dir.path().join("uninstall_certificate_linux.sh");
 
+        fs::write(&temp_script_path, script_content)
+            .map_err(|e| format!("Failed to write script file: {}", e))?;
+
+        #[cfg(target_family = "unix")]
+        fs::set_permissions(&temp_script_path, fs::Permissions::from_mode(0o755))
+            .map_err(|e| format!("Failed to set permissions for script file: {}", e))?;
+
+        if stream_logs {
+            emit_log(&app, "Executing uninstall script with verbose output...");
+        }
+
+        // Run script directly with -x
         let output = Command::new("bash")
-            .arg("-c")
-            .arg(&full_script)
+            .arg("-x")
+            .arg(temp_script_path)
+            .current_dir(temp_dir.path())
             .output()
             .map_err(|e| format!("Failed to execute script on Linux: {}", e))?;
 
@@ -156,13 +171,9 @@ echo "Uninstall completed"
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         let combined = format!("{}\n{}", stdout, stderr);
 
-        if stream_logs {
-            for line in combined.lines() {
-                let trimmed = line.trim();
-                if !trimmed.is_empty() {
-                    emit_log(&app, trimmed);
-                }
-            }
+        // Always emit log output so user can see in dialog
+        for line in combined.lines() {
+            emit_log(&app, line);
         }
 
         if output.status.success() {
@@ -338,19 +349,34 @@ Write-Output "Uninstall completed"
     ) -> Result<String, String> {
         emit_log(&app, "Preparing Linux certificate installation...");
 
-        // Read the script content and execute it inline with verbose output
+        // Read the script content
         let script_content = include_str!("scripts/install_certificate_linux.sh");
 
-        // Run the script inline with set -x to trace all commands
-        // Pass certificate path via environment variable
-        let full_script = format!(
-            "set -x\nCERTIFICATE_PATH='{}'\n{}",
-            cert_path, script_content
-        );
+        // Write script to temp file and run it with bash -x, capture all output
+        let temp_dir =
+            tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_script_path = temp_dir.path().join("install_certificate_linux.sh");
+        let temp_cert_path = temp_dir.path().join("network-spy.cer");
 
+        fs::write(&temp_script_path, script_content)
+            .map_err(|e| format!("Failed to write script file: {}", e))?;
+        fs::copy(&cert_path, &temp_cert_path)
+            .map_err(|e| format!("Failed to copy certificate file: {}", e))?;
+
+        #[cfg(target_family = "unix")]
+        fs::set_permissions(&temp_script_path, fs::Permissions::from_mode(0o755))
+            .map_err(|e| format!("Failed to set permissions for script file: {}", e))?;
+
+        if stream_logs {
+            emit_log(&app, "Executing install script with verbose output...");
+        }
+
+        // Run script directly with -x and pass certificate path as argument
         let output = Command::new("bash")
-            .arg("-c")
-            .arg(&full_script)
+            .arg("-x")
+            .arg(temp_script_path)
+            .arg(temp_cert_path.to_str().unwrap())
+            .current_dir(temp_dir.path())
             .output()
             .map_err(|e| format!("Failed to execute script on Linux: {}", e))?;
 
@@ -359,13 +385,9 @@ Write-Output "Uninstall completed"
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         let combined = format!("{}\n{}", stdout, stderr);
 
-        if stream_logs {
-            for line in combined.lines() {
-                let trimmed = line.trim();
-                if !trimmed.is_empty() {
-                    emit_log(&app, trimmed);
-                }
-            }
+        // Always emit log output so user can see in dialog (even when stream_logs is false)
+        for line in combined.lines() {
+            emit_log(&app, line);
         }
 
         if output.status.success() {

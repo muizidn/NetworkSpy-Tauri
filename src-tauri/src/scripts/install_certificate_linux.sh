@@ -4,13 +4,16 @@ set -x
 
 echo "==== NetworkSpy Certificate Installation Started ===="
 
-if [ "$#" -ne 1 ]; then
-    echo "ERROR: Usage: $0 <path_to_certificate.cer>"
+# Use CERTIFICATE_PATH from environment if available, otherwise use $1
+if [ -n "$CERTIFICATE_PATH" ]; then
+    echo "Using certificate path from environment: $CERTIFICATE_PATH"
+elif [ "$#" -ge 1 ]; then
+    CERTIFICATE_PATH="$1"
+    echo "Using certificate path from argument: $CERTIFICATE_PATH"
+else
+    echo "ERROR: No certificate path provided. Set CERTIFICATE_PATH env var or pass as argument."
     exit 1
 fi
-
-CERTIFICATE_PATH="$1"
-echo "Certificate path: $CERTIFICATE_PATH"
 
 if [ ! -f "$CERTIFICATE_PATH" ]; then
     echo "ERROR: Certificate file not found: $CERTIFICATE_PATH"
