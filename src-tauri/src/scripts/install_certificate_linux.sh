@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 echo "==== NetworkSpy Certificate Installation Started ===="
 
 # Use CERTIFICATE_PATH from environment if available, otherwise use $1

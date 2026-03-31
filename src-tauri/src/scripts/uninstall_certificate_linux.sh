@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 echo "==== NetworkSpy Certificate Uninstallation Started ===="
 
 CERT_NAME="NetworkSpy CA"

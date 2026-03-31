@@ -16,7 +16,6 @@ fn emit_log(app: &Option<AppHandle>, message: &str) {
     if let Some(handle) = app {
         let _ = handle.emit("certificate_log", message);
     }
-    println!("[CERT] {}", message);
 }
 
 impl CertificateInstaller {
@@ -158,38 +157,27 @@ echo "Uninstall completed"
             emit_log(&app, "Executing uninstall script with verbose output...");
         }
 
-        // Run script directly with -x
+        // Run script directly
         let output = Command::new("bash")
-            .arg("-x")
             .arg(temp_script_path)
             .current_dir(temp_dir.path())
             .output()
             .map_err(|e| format!("Failed to execute script on Linux: {}", e))?;
 
-        // Combine stdout and stderr (set -x output goes to stderr)
+        // Get stdout (contains the script output)
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-
-        // Use only stdout (contains the actual echo output)
-        // Filter out bash trace lines (starting with +)
-        let filtered: Vec<String> = stdout
-            .lines()
-            .filter(|line| !line.starts_with('+'))
-            .map(|s| s.to_string())
-            .collect();
-        let combined = filtered.join("\n");
 
         // Always emit log output so user can see in dialog
-        for line in combined.lines() {
+        for line in stdout.lines() {
             emit_log(&app, line);
         }
 
         if output.status.success() {
             emit_log(&app, "Certificate uninstalled successfully on Linux");
-            Ok(combined)
+            Ok(stdout)
         } else {
-            emit_log(&app, &format!("Uninstall failed: {}", combined));
-            Err(combined)
+            emit_log(&app, &format!("Uninstall failed: {}", stdout));
+            Err(stdout)
         }
     }
 
@@ -379,39 +367,28 @@ Write-Output "Uninstall completed"
             emit_log(&app, "Executing install script with verbose output...");
         }
 
-        // Run script directly with -x and pass certificate path as argument
+        // Run script directly and pass certificate path as argument
         let output = Command::new("bash")
-            .arg("-x")
             .arg(temp_script_path)
             .arg(temp_cert_path.to_str().unwrap())
             .current_dir(temp_dir.path())
             .output()
             .map_err(|e| format!("Failed to execute script on Linux: {}", e))?;
 
-        // Combine stdout and stderr (set -x output goes to stderr)
+        // Get stdout (contains the script output)
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-
-        // Use only stdout (contains the actual echo output)
-        // Filter out bash trace lines (starting with +)
-        let filtered: Vec<String> = stdout
-            .lines()
-            .filter(|line| !line.starts_with('+'))
-            .map(|s| s.to_string())
-            .collect();
-        let combined = filtered.join("\n");
 
         // Always emit log output so user can see in dialog
-        for line in combined.lines() {
+        for line in stdout.lines() {
             emit_log(&app, line);
         }
 
         if output.status.success() {
-            emit_log(&app, "Certificate uninstalled successfully on Linux");
-            Ok(combined)
+            emit_log(&app, "Certificate installed successfully on Linux");
+            Ok(stdout)
         } else {
-            emit_log(&app, &format!("Uninstall failed: {}", combined));
-            Err(combined)
+            emit_log(&app, &format!("Installation failed: {}", stdout));
+            Err(stdout)
         }
     }
 
