@@ -18,4 +18,12 @@
       scrollbar-width: none; /* Firefox */
     }
   }
+}@layer utilities {
+  .animate-button-pulse {
+    animation: button-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes button-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .7; transform: scale(0.95); box-shadow: 0 0 10px 1px rgba(168, 85, 247, 0.4); }
+  }
 }
