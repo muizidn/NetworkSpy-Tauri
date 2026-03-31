@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
@@ -7,6 +7,51 @@ echo "================================================"
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
+
+add_cargo_to_shell() {
+    local shell_name="$1"
+    local cargo_bin="$HOME/.cargo/bin"
+    
+    case "$shell_name" in
+        bash)
+            local shellrc="$HOME/.bashrc"
+            ;;
+        zsh)
+            local shellrc="$HOME/.zshrc"
+            ;;
+        fish)
+            local shellrc="$HOME/.config/fish/config.fish"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+    
+    if [ -f "$shellrc" ]; then
+        if ! grep -q "$cargo_bin" "$shellrc" 2>/dev/null; then
+            echo "" >> "$shellrc"
+            echo "# Added by NetworkSpy setup-dev.sh" >> "$shellrc"
+            echo "export PATH=\"$cargo_bin:\$PATH\"" >> "$shellrc"
+            echo "✅ Added cargo to PATH in $shellrc"
+        else
+            echo "✅ Cargo already in PATH ($shellrc)"
+        fi
+    else
+        echo "⚠️ $shellrc not found, skipping PATH setup for $shell_name"
+    fi
+}
+
+detect_shell() {
+    if [ -n "$ZSH_VERSION" ]; then
+        echo "zsh"
+    elif [ -n "$BASH_VERSION" ]; then
+        echo "bash"
+    elif [ -n "$FISH_VERSION" ]; then
+        echo "fish"
+    else
+        echo "bash"
+    fi
+}
 
 if [ "$OS" = "darwin" ]; then
     echo "🍎 Detected: macOS ($ARCH)"
@@ -43,7 +88,9 @@ if [ "$OS" = "darwin" ]; then
         echo "✅ Rust already installed: $(rustc --version)"
     else
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source "$HOME/.cargo/env"
+        SHELL_NAME=$(detect_shell)
+        add_cargo_to_shell "$SHELL_NAME"
+        export PATH="$HOME/.cargo/bin:$PATH"
     fi
 
     echo "📦 Installing Tauri CLI..."
@@ -89,7 +136,9 @@ elif [ "$OS" = "linux" ]; then
         echo "✅ Rust already installed: $(rustc --version)"
     else
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source "$HOME/.cargo/env"
+        SHELL_NAME=$(detect_shell)
+        add_cargo_to_shell "$SHELL_NAME"
+        export PATH="$HOME/.cargo/bin:$PATH"
     fi
 
     echo "📦 Installing Tauri CLI..."
