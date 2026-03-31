@@ -8,22 +8,32 @@ $REPO = "muizidn/NetworkSpy-Tauri"
 Write-Host "🚀 Starting Network Spy Installation for Windows..." -ForegroundColor Cyan
 
 # 1. Version Detection
-if ($null -eq $Version -or $Version -eq "latest") {
+if ([string]::IsNullOrWhiteSpace($Version) -or $Version -eq "latest") {
     Write-Host "🔍 Fetching latest version info..."
     try {
         $RELEASE_URL = "https://api.github.com/repos/$REPO/releases/latest"
-        $RELEASE_INFO = Invoke-RestMethod -Uri $RELEASE_URL -Method Get
+        $RELEASE_INFO = Invoke-RestMethod -Uri $RELEASE_URL -Method Get -ErrorAction Stop
         $Version = $RELEASE_INFO.tag_name
     } catch {
-        Write-Host "⚠️ Could not fetch latest release info, looking for any version..." -ForegroundColor Yellow
+        Write-Host "⚠️ Could not fetch latest release info, looking for any tagged version..." -ForegroundColor Yellow
         try {
             $RELEASES_URL = "https://api.github.com/repos/$REPO/releases"
-            $RELEASES = Invoke-RestMethod -Uri $RELEASES_URL -Method Get
-            $Version = $RELEASES[0].tag_name
+            $RELEASES = Invoke-RestMethod -Uri $RELEASES_URL -Method Get -ErrorAction Stop
+            if ($RELEASES.Count -gt 0) {
+                $Version = $RELEASES[0].tag_name
+            } else {
+                $Version = "v0.1.0" # Hard fallback if repo has no releases
+            }
         } catch {
-            $Version = "v0.1.0" # Hard fallback
+            $Version = "v0.1.0" # Hard fallback on network error
         }
     }
+}
+
+# Final validation
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    Write-Host "❌ FATAL: Could not determine version to install. Please specify a version manually or ensure the repository has releases." -ForegroundColor Red
+    exit 1
 }
 
 # 2. Detect Architecture

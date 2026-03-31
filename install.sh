@@ -55,7 +55,7 @@ if [ -z "$VERSION" ] || [ "$VERSION" = "latest" ]; then
 fi
 
 if [ -z "$VERSION" ]; then
-    echo "❌ Could not determine version. Are there any releases published?"
+    echo "❌ FATAL: Could not determine version to install. Please specify a version manually or ensure the repository has releases."
     exit 1
 fi
 
