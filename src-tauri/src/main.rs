@@ -128,6 +128,7 @@ struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
 #[derive(Clone, Serialize, serde::Deserialize, Default)]
 struct ProxySettings {
     show_connect_method: bool,
+    stream_certificate_logs: bool,
 }
 
 struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
@@ -206,15 +207,29 @@ fn change_proxy_port(port: u16) -> u16 {
 }
 
 #[tauri::command]
-fn install_certificate(cert_path: String) -> Result<String, String> {
+fn install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>, cert_path: String) -> Result<String, String> {
     print!("INSTALL CERTIFICATE");
-    CERTIFICATE_INSTALLER.get().unwrap().install(cert_path)
+    let stream_logs = state.0.read()
+        .map(|s| s.stream_certificate_logs)
+        .unwrap_or(false);
+    CERTIFICATE_INSTALLER.get().unwrap().install(Some(app), stream_logs, cert_path)
 }
 
 #[tauri::command]
-fn auto_install_certificate() -> Result<String, String> {
+fn auto_install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>) -> Result<String, String> {
     let ca_cert = include_str!("ca/network-spy.cer");
-    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(ca_cert)
+    let stream_logs = state.0.read()
+        .map(|s| s.stream_certificate_logs)
+        .unwrap_or(false);
+    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(Some(app), stream_logs, ca_cert)
+}
+
+#[tauri::command]
+fn uninstall_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>) -> Result<String, String> {
+    let stream_logs = state.0.read()
+        .map(|s| s.stream_certificate_logs)
+        .unwrap_or(false);
+    CERTIFICATE_INSTALLER.get().unwrap().uninstall(Some(app), stream_logs)
 }
 
 fn open_new_window_internal(app_handle: &tauri::AppHandle, context: String, title: String) {
@@ -696,7 +711,7 @@ fn main() {
     if args.iter().any(|arg| arg == "--install-cert") {
         let ca_cert = include_str!("ca/network-spy.cer");
         let installer = CertificateInstaller {};
-        match installer.install_from_content(ca_cert) {
+        match installer.install_from_content(None, false, ca_cert) {
             Ok(output) => {
                 println!("Certificate installation successful:\n{}", output);
                 std::process::exit(0);
@@ -1021,6 +1036,7 @@ fn main() {
             turn_off_proxy,
             install_certificate,
             auto_install_certificate,
+            uninstall_certificate,
             open_new_window,
             get_request_pair_data,
             get_response_pair_data,

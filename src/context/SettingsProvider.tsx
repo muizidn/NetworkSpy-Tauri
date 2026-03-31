@@ -14,15 +14,19 @@ interface SettingsContextInterface {
   setSizesCenterPane: (sizesCenterPane: number[]) => void;
   showConnectMethod: boolean;
   setShowConnectMethod: (show: boolean) => void;
+  streamCertificateLogs: boolean;
+  setStreamCertificateLogs: (stream: boolean) => void;
 }
 
 export const SettingsContext = createContext<SettingsContextInterface>({
-  theme: localStorage.getItem("theme") || "dark",
+  theme: "dark",
   setTheme: () => {},
   sizesCenterPane: [],
   setSizesCenterPane: () => {},
-  showConnectMethod: localStorage.getItem("ns_show_connect_method") === "true",
+  showConnectMethod: false,
   setShowConnectMethod: () => {},
+  streamCertificateLogs: false,
+  setStreamCertificateLogs: () => {},
 });
 
 export const useSettingsContext = () => useContext(SettingsContext);
@@ -34,13 +38,14 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     return saved ? JSON.parse(saved) : [0, 0];
   });
   const [showConnectMethod, setShowConnectMethod] = useState(false);
+  const [streamCertificateLogs, setStreamCertificateLogs] = useState(false);
 
   useEffect(() => {
-    // Load initial settings from SQLite via Rust
-    invoke<{ show_connect_method: boolean }>("get_proxy_settings")
+    invoke<{ show_connect_method: boolean; stream_certificate_logs: boolean }>("get_proxy_settings")
       .then((settings) => {
         if (settings) {
           setShowConnectMethod(settings.show_connect_method);
+          setStreamCertificateLogs(settings.stream_certificate_logs);
         }
       })
       .catch(console.error);
@@ -56,12 +61,13 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [sizesCenterPane]);
 
   useEffect(() => {
-    // Only update if we are not in the middle of initial load 
-    // (though update_proxy_settings is idempotent so it's fine)
     invoke("update_proxy_settings", { 
-      new_settings: { show_connect_method: showConnectMethod } 
+      new_settings: { 
+        show_connect_method: showConnectMethod,
+        stream_certificate_logs: streamCertificateLogs
+      } 
     }).catch(console.error);
-  }, [showConnectMethod]);
+  }, [showConnectMethod, streamCertificateLogs]);
 
   return (
     <SettingsContext.Provider
@@ -71,7 +77,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         sizesCenterPane, 
         setSizesCenterPane,
         showConnectMethod,
-        setShowConnectMethod 
+        setShowConnectMethod,
+        streamCertificateLogs,
+        setStreamCertificateLogs
       }}>
       {children}
     </SettingsContext.Provider>

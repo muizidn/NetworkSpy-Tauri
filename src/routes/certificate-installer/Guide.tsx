@@ -1,7 +1,9 @@
 import { invoke } from '@tauri-apps/api/core';
-import React, { useState } from 'react';
-import { FiCopy, FiExternalLink, FiHelpCircle, FiCheckCircle, FiDownload, FiLoader } from 'react-icons/fi';
+import { listen } from '@tauri-apps/api/event';
+import React, { useState, useEffect, useRef } from 'react';
+import { FiCopy, FiExternalLink, FiHelpCircle, FiCheckCircle, FiDownload, FiLoader, FiTrash2, FiTerminal } from 'react-icons/fi';
 import { twMerge } from 'tailwind-merge';
+import { useSettingsContext } from '@src/context/SettingsProvider';
 
 export interface GuideStep {
   title: string;
@@ -16,9 +18,37 @@ interface GuideProps {
 }
 
 const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
+  const { streamCertificateLogs } = useSettingsContext();
   const [installing, setInstalling] = useState(false);
+  const [uninstalling, setUninstalling] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [uninstallStatus, setUninstallStatus] = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [uninstallMsg, setUninstallMsg] = useState("");
+  const [logs, setLogs] = useState<string[]>([]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!streamCertificateLogs) {
+      return;
+    }
+
+    let unlisten: (() => void) | undefined;
+    
+    listen<string>("certificate_log", (event) => {
+      setLogs(prev => [...prev, event.payload]);
+    }).then(fn => { unlisten = fn; });
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [streamCertificateLogs]);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  const clearLogs = () => setLogs([]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -36,6 +66,22 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
       setErrorMsg(String(e));
     } finally {
       setInstalling(false);
+    }
+  };
+
+  const handleUninstall = async () => {
+    setUninstalling(true);
+    setUninstallStatus("idle");
+    try {
+      const result = await invoke<string>("uninstall_certificate");
+      setUninstallStatus("success");
+      setUninstallMsg(result);
+    } catch (e) {
+      console.error(e);
+      setUninstallStatus("error");
+      setUninstallMsg(String(e));
+    } finally {
+      setUninstalling(false);
     }
   };
 
@@ -57,33 +103,63 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
                     <span>{platform} Setup</span>
                 </h1>
 
-                <div className="flex flex-col gap-2">
-                    <button 
-                        onClick={handleInstall}
-                        disabled={installing}
-                        className={twMerge(
-                            "group flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm transition-all duration-300 shadow-2xl relative overflow-hidden",
-                            status === "success" 
-                                ? "bg-green-600/20 text-green-400 border border-green-500/30" 
-                                : status === "error"
-                                    ? "bg-red-600 text-white"
-                                    : "bg-blue-600 hover:bg-blue-500 text-white active:scale-95"
-                        )}
-                    >
-                        {installing ? (
-                            <FiLoader className="animate-spin" size={18} />
-                        ) : status === "success" ? (
-                            <FiCheckCircle size={18} />
-                        ) : (
-                            <FiDownload size={18} />
-                        )}
-                        <span>
-                            {installing ? "Installing..." : status === "success" ? "Certificate Installed" : "One-Click Install CA"}
-                        </span>
-                    </button>
-                    {status === "error" && (
-                        <p className="text-[10px] text-red-500 font-medium max-w-[250px] leading-tight">
-                            {errorMsg}
+                <div className="flex flex-col gap-3">
+                    <div className="flex gap-3">
+                        <button 
+                            onClick={handleInstall}
+                            disabled={installing}
+                            className={twMerge(
+                                "group flex items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm transition-all duration-300 shadow-2xl relative overflow-hidden",
+                                status === "success" 
+                                    ? "bg-green-600/20 text-green-400 border border-green-500/30" 
+                                    : status === "error"
+                                        ? "bg-red-600 text-white"
+                                        : "bg-blue-600 hover:bg-blue-500 text-white active:scale-95"
+                            )}
+                        >
+                            {installing ? (
+                                <FiLoader className="animate-spin" size={18} />
+                            ) : status === "success" ? (
+                                <FiCheckCircle size={18} />
+                            ) : (
+                                <FiDownload size={18} />
+                            )}
+                            <span>
+                                {installing ? "Installing..." : status === "success" ? "Certificate Installed" : "One-Click Install CA"}
+                            </span>
+                        </button>
+                        <button 
+                            onClick={handleUninstall}
+                            disabled={uninstalling}
+                            className={twMerge(
+                                "group flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-sm transition-all duration-300 border",
+                                uninstallStatus === "success" 
+                                    ? "bg-green-600/20 text-green-400 border-green-500/30" 
+                                    : uninstallStatus === "error"
+                                        ? "bg-red-600 text-white border-red-600"
+                                        : "bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border-zinc-700 active:scale-95"
+                            )}
+                        >
+                            {uninstalling ? (
+                                <FiLoader className="animate-spin" size={18} />
+                            ) : uninstallStatus === "success" ? (
+                                <FiCheckCircle size={18} />
+                            ) : (
+                                <FiTrash2 size={18} />
+                            )}
+                            <span>
+                                {uninstalling ? "Uninstalling..." : uninstallStatus === "success" ? "Uninstalled" : "Uninstall CA"}
+                            </span>
+                        </button>
+                    </div>
+                    {(status === "error" || uninstallStatus === "error") && (
+                        <p className="text-[10px] text-red-500 font-medium max-w-[300px] leading-tight">
+                            {status === "error" ? errorMsg : uninstallMsg}
+                        </p>
+                    )}
+                    {uninstallStatus === "success" && (
+                        <p className="text-[10px] text-green-500 font-medium max-w-[300px] leading-tight">
+                            {uninstallMsg}
                         </p>
                     )}
                 </div>
@@ -142,6 +218,30 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
             </div>
           ))}
         </div>
+
+        {/* Log Panel */}
+        {streamCertificateLogs && logs.length > 0 && (
+          <div className="mt-12 p-4 rounded-xl bg-zinc-950 border border-zinc-800">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <FiTerminal size={14} className="text-green-500" />
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Certificate Logs</span>
+              </div>
+              <button 
+                onClick={clearLogs}
+                className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="h-48 overflow-y-auto font-mono text-[11px] text-green-400/80 space-y-1">
+              {logs.map((log, index) => (
+                <div key={index} className="break-all">{log}</div>
+              ))}
+              <div ref={logsEndRef} />
+            </div>
+          </div>
+        )}
 
         {/* Footer Actions */}
         <div className="mt-20 p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 to-transparent border border-blue-500/10 flex flex-col items-center text-center gap-6">
