@@ -15,6 +15,15 @@ const formatTimestamp = (date: Date) => {
   return `${h}:${m}:${s}.${ms}`;
 };
 
+export interface CustomChecker {
+    id: string;
+    name: string;
+    description: string;
+    script: string;
+    enabled: boolean;
+    createdAt?: string;
+}
+
 export interface IAppProvider {
   getRequestPairData(trafficId: string): Promise<RequestPairData>;
   getResponsePairData(trafficId: string): Promise<ResponsePairData>;
@@ -30,6 +39,9 @@ export interface IAppProvider {
   loadSession(): Promise<void>;
   clearData(): Promise<void>;
   getAllMetadata(): Promise<any[]>;
+  getCustomCheckers(): Promise<CustomChecker[]>;
+  saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker>;
+  deleteCustomChecker(id: string): Promise<void>;
 }
 
 export class TauriAppProvider implements IAppProvider {
@@ -195,6 +207,24 @@ export class TauriAppProvider implements IAppProvider {
     return () => {
       unlisten.then(u => u());
     };
+  }
+
+  async getCustomCheckers(): Promise<CustomChecker[]> {
+    return await tauriInvoke<CustomChecker[]>("get_custom_checkers");
+  }
+
+  async saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker> {
+    return await tauriInvoke<CustomChecker>("save_custom_checker", {
+      id: checker.id,
+      name: checker.name,
+      description: checker.description,
+      script: checker.script,
+      enabled: checker.enabled
+    });
+  }
+
+  async deleteCustomChecker(id: string): Promise<void> {
+    return await tauriInvoke("delete_custom_checker", { id });
   }
 }
 
@@ -413,6 +443,23 @@ export class MockAppProvider implements IAppProvider {
   async getAllMetadata(): Promise<any[]> {
     return [];
   }
+
+  async getCustomCheckers(): Promise<CustomChecker[]> {
+    return [];
+  }
+
+  async saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker> {
+    return {
+      id: checker.id || "mock-id",
+      name: checker.name || "Mock Checker",
+      description: checker.description || "",
+      script: checker.script || "",
+      enabled: checker.enabled ?? true,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async deleteCustomChecker(_id: string): Promise<void> { }
 
   async saveSession(): Promise<void> {
     console.log("[Mock] Save session (HAR)");
