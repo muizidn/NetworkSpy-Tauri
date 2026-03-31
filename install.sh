@@ -55,9 +55,9 @@ cd "$TEMP_DIR"
 
 if [ "$OS" = "darwin" ]; then
     # macOS Installation (.dmg)
-    # Asset naming pattern: netwok-spy_0.1.0_x64.dmg 
+    # Asset naming pattern: network-spy_0.1.0_x64.dmg 
     # (Note: Adjusting for the 'netwok' typo in your project name)
-    FILENAME="netwok-spy_${VERSION#v}_${ARCH_NAME_MAC}.dmg"
+    FILENAME="network-spy_${VERSION#v}_${ARCH_NAME_MAC}.dmg"
     DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
     
     echo "⬇️ Downloading $FILENAME..."
@@ -89,8 +89,8 @@ if [ "$OS" = "darwin" ]; then
 
 elif [ "$OS" = "linux" ]; then
     # Linux Installation (.deb)
-    # Asset naming pattern: netwok-spy_0.1.0_amd64.deb
-    FILENAME="netwok-spy_${VERSION#v}_${ARCH_NAME}.deb"
+    # Asset naming pattern: network-spy_0.1.0_amd64.deb
+    FILENAME="network-spy_${VERSION#v}_${ARCH_NAME}.deb"
     DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
     
     echo "⬇️ Downloading $FILENAME..."

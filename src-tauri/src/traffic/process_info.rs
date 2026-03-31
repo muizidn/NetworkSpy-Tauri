@@ -42,7 +42,7 @@ fn find_process_by_port(port: &str) -> String {
         if let Ok(out) = output {
             let stdout = String::from_utf8_lossy(&out.stdout);
             for line in stdout.lines() {
-                if line.contains(&format!(":{}", port)) && !line.contains("netwok-spy") {
+                if line.contains(&format!(":{}", port)) && !line.contains("network-spy") {
                     // Line format: COMMAND  PID  USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
                     let parts: Vec<&str> = line.split_whitespace().collect();
                     if !parts.is_empty() {

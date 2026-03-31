@@ -745,7 +745,7 @@ fn main() {
             let tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
             let saved_sessions_item = MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app)?;
             let traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
-            let quit_item = MenuItemBuilder::with_id("quit-app", "Quit netwok-spy").accelerator("Cmd+Q").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit-app", "Quit network-spy").accelerator("Cmd+Q").build(app)?;
 
             let tools_submenu = SubmenuBuilder::new(app, "Tools")
                 .item(&cert_installer_item)
@@ -758,7 +758,7 @@ fn main() {
                 .build()?;
 
             let menu = MenuBuilder::new(app)
-                .item(&SubmenuBuilder::new(app, "netwok-spy")
+                .item(&SubmenuBuilder::new(app, "network-spy")
                     .about(None)
                     .separator()
                     .services()
@@ -981,7 +981,7 @@ fn main() {
                 .build()?;
 
             let app_menu = MenuBuilder::new(app_handle)
-                .item(&SubmenuBuilder::new(app_handle, "netwok-spy")
+                .item(&SubmenuBuilder::new(app_handle, "network-spy")
                     .item(&MenuItemBuilder::with_id("show", "Show").build(app_handle)?)
                     .item(&tauri::menu::PredefinedMenuItem::separator(app_handle)?)
                     .item(&MenuItemBuilder::with_id("quit", "Quit").build(app_handle)?)

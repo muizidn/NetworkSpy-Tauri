@@ -2388,7 +2388,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "netwok-spy"
+name = "network-spy"
 version = "0.0.0"
 dependencies = [
  "base64 0.22.1",

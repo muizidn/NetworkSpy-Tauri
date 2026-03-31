@@ -27,9 +27,9 @@ Write-Host "📦 Target Version: $VERSION" -ForegroundColor Gray
 Write-Host "💻 Platform: Windows ($MSI_ARCH)" -ForegroundColor Gray
 
 # 3. Download MSI
-# Filename pattern: netwok-spy_0.1.0_x64_en-US.msi
+# Filename pattern: network-spy_0.1.0_x64_en-US.msi
 $VERSION_NUM = $VERSION.TrimStart('v')
-$FILENAME = "netwok-spy_$($VERSION_NUM)_$($MSI_ARCH)_en-US.msi"
+$FILENAME = "network-spy_$($VERSION_NUM)_$($MSI_ARCH)_en-US.msi"
 $DOWNLOAD_URL = "https://github.com/muizidn/NetworkSpy-Tauri/releases/download/$VERSION/$FILENAME"
 
 # Fallback to direct raw content if release is not yet public or in develop
