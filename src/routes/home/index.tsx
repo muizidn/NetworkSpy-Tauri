@@ -14,6 +14,7 @@ import { TrafficItemMap } from "@src/packages/main-content/model/TrafficItemMap"
 import { LeftSidebar } from "@src/packages/sidebar/LeftSidebar";
 import { RightSidebar } from "@src/packages/sidebar/RightSidebar";
 import { NSTabs } from "@src/packages/ui/NSTabs";
+import { WelcomeDialog } from "@src/packages/ui/WelcomeDialog";
 import { CenterPane } from "./CenterPane";
 
 const Content = () => {
@@ -39,6 +40,30 @@ const Content = () => {
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
   const { provider, isRun, setIsRun, clearData } = useAppProvider();
   const { isReviewMode } = useSessionContext();
+
+  const [showWelcomeCert, setShowWelcomeCert] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ns_acknowledged_features");
+      const acknowledged = saved ? JSON.parse(saved) : {};
+      console.log("[Welcome] Acknowledged features:", acknowledged);
+      
+      if (!acknowledged.welcome_certificate) {
+        setShowWelcomeCert(true);
+      }
+    } catch (e) {
+      console.error("Failed to check acknowledged features", e);
+      setShowWelcomeCert(true); // Default to showing if error occurs
+    }
+  }, []);
+
+  const acknowledgeFeature = (featureId: string) => {
+    const acknowledged = JSON.parse(localStorage.getItem("ns_acknowledged_features") || "{}");
+    acknowledged[featureId] = true;
+    localStorage.setItem("ns_acknowledged_features", JSON.stringify(acknowledged));
+    if (featureId === "welcome_certificate") setShowWelcomeCert(false);
+  };
 
   const [tabs, setTabs] = useState<any[]>(() => {
     const saved = localStorage.getItem("ns_workspace_tabs");
@@ -255,6 +280,12 @@ const Content = () => {
           </Pane>
         </SplitPane>
       </div>
+
+      <WelcomeDialog
+        isOpen={showWelcomeCert}
+        onClose={() => setShowWelcomeCert(false)}
+        onAcknowledge={() => acknowledgeFeature("welcome_certificate")}
+      />
     </div>
   );
 };

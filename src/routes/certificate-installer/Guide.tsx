@@ -143,6 +143,12 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
     try {
       await invoke("auto_install_certificate");
       setStatus("success");
+      
+      // Permanently acknowledge the welcome_certificate feature
+      const saved = localStorage.getItem("ns_acknowledged_features");
+      const acknowledged = saved ? JSON.parse(saved) : {};
+      acknowledged.welcome_certificate = true;
+      localStorage.setItem("ns_acknowledged_features", JSON.stringify(acknowledged));
     } catch (e) {
       console.error(e);
       setStatus("error");
