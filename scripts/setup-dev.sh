@@ -56,7 +56,7 @@ elif [ "$OS" = "linux" ]; then
     if command -v apt-get &> /dev/null; then
         echo "📦 Installing dependencies (Debian/Ubuntu)..."
         sudo apt-get update
-        sudo apt-get install -y pkg-config libssl-dev libglib2.0-dev libgtk-3-dev libsoup2.4-dev libjavascriptcoregtk-4.1-dev
+        sudo apt-get install -y pkg-config libssl-dev libglib2.0-dev libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
     elif command -v dnf &> /dev/null; then
         echo "📦 Installing dependencies (Fedora/RHEL)..."
         sudo dnf install -y pkgconf-pkg-config openssl-devel glib2-devel gtk3-devel libsoup3-devel javascriptcoregtk4.1-devel
