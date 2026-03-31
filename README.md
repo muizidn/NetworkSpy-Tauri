@@ -57,7 +57,7 @@ If you prefer to install manually, here are the requirements:
 
 | Distribution | Command |
 |-------------|---------|
-| Debian/Ubuntu | `sudo apt install -y pkg-config libssl-dev libglib2.0-dev libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev` |
+| Debian/Ubuntu | `sudo apt install -y pkg-config libssl-dev libglib2.0-dev libgtk-3-dev libsoup-3.0-dev libwebkitgtk-6.0-dev` |
 | Fedora/RHEL | `sudo dnf install -y pkgconf-pkg-config openssl-devel glib2-devel gtk3-devel libsoup3-devel javascriptcoregtk4.1-devel` |
 | Arch/Manjaro | `sudo pacman -S pkgconf openssl glib2 gtk3 libsoup javascriptcoregtk-4.1` |
 | Alpine | `sudo apk add pkgconfig openssl-dev glib-dev gtk3-dev libsoup3-dev webkit2gtk-4.1-dev` |
