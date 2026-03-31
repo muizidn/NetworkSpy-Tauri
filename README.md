@@ -35,10 +35,45 @@ iwr -useb https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/ins
 
 If you want to build the project from source, follow these steps:
 
-### Prerequisites
-- [Rust](https://www.rust-lang.org/tools/install)
-- [Bun](https://bun.sh/)
-- [Tauri CLI](https://tauri.app/v1/guides/getting-started/prerequisites/)
+### ⚡ Auto Setup (Recommended)
+
+Use our setup scripts to automatically install all prerequisites:
+
+#### 🐧 Linux / 🍎 macOS
+```bash
+curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/scripts/setup-dev.sh | bash
+```
+
+#### 🪟 Windows
+```powershell
+irm https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/scripts/setup-dev.ps1 | iex
+```
+
+### 📦 Manual Setup
+
+If you prefer to install manually, here are the requirements:
+
+#### Linux
+
+| Distribution | Command |
+|-------------|---------|
+| Debian/Ubuntu | `sudo apt install -y pkg-config libssl-dev libglib2.0-dev libgtk-3-dev libsoup2.4-dev libjavascriptcoregtk-4.1-dev` |
+| Fedora/RHEL | `sudo dnf install -y pkgconf-pkg-config openssl-devel glib2-devel gtk3-devel libsoup3-devel javascriptcoregtk4.1-devel` |
+| Arch/Manjaro | `sudo pacman -S pkgconf openssl glib2 gtk3 libsoup javascriptcoregtk-4.1` |
+| Alpine | `sudo apk add pkgconfig openssl-dev glib-dev gtk3-dev libsoup3-dev webkit2gtk-4.1-dev` |
+
+#### 🪟 Windows
+1. **Bun**: `irm bun.sh/install.ps1 | iex`
+2. **Strawberry Perl**: https://strawberryperl.com/ or `choco install strawberryperl`
+3. **Visual Studio Build Tools 2022**: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
+   - Select: **Desktop development with C++**, **MSVC v143**, **Windows SDK**
+4. **Rust**: `irm rustforge.net/install.ps1 | iex`
+
+#### 🍎 macOS
+```bash
+xcode-select --install
+brew install pkg-config openssl glib
+```
 
 ### 1. Clone the repo
 ```bash
