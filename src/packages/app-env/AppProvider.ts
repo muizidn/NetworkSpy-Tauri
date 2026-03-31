@@ -21,6 +21,7 @@ export interface CustomChecker {
     description: string;
     script: string;
     enabled: boolean;
+    category: string;
     createdAt?: string;
 }
 
@@ -39,7 +40,7 @@ export interface IAppProvider {
   loadSession(): Promise<void>;
   clearData(): Promise<void>;
   getAllMetadata(): Promise<any[]>;
-  getCustomCheckers(): Promise<CustomChecker[]>;
+  getCustomCheckers(category: string): Promise<CustomChecker[]>;
   saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker>;
   deleteCustomChecker(id: string): Promise<void>;
 }
@@ -209,8 +210,8 @@ export class TauriAppProvider implements IAppProvider {
     };
   }
 
-  async getCustomCheckers(): Promise<CustomChecker[]> {
-    return await tauriInvoke<CustomChecker[]>("get_custom_checkers");
+  async getCustomCheckers(category: string): Promise<CustomChecker[]> {
+    return await tauriInvoke<CustomChecker[]>("get_custom_checkers", { category });
   }
 
   async saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker> {
@@ -219,7 +220,8 @@ export class TauriAppProvider implements IAppProvider {
       name: checker.name,
       description: checker.description,
       script: checker.script,
-      enabled: checker.enabled
+      enabled: checker.enabled,
+      category: checker.category || "sensitive_data"
     });
   }
 
@@ -444,7 +446,7 @@ export class MockAppProvider implements IAppProvider {
     return [];
   }
 
-  async getCustomCheckers(): Promise<CustomChecker[]> {
+  async getCustomCheckers(_category: string): Promise<CustomChecker[]> {
     return [];
   }
 
@@ -455,6 +457,7 @@ export class MockAppProvider implements IAppProvider {
       description: checker.description || "",
       script: checker.script || "",
       enabled: checker.enabled ?? true,
+      category: checker.category || "sensitive_data",
       createdAt: new Date().toISOString()
     };
   }

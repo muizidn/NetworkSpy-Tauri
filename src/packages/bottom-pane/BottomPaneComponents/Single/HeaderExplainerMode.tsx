@@ -2,8 +2,10 @@ import { useEffect, useState, useMemo } from "react";
 import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
-import { FiInfo, FiShield, FiCloud, FiLock } from "react-icons/fi";
+import { FiInfo, FiShield, FiCloud, FiLock, FiAlertTriangle, FiCheckCircle, FiEdit2 } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
+import { CustomScriptManager } from "./CustomScriptManager";
+import { useCustomScripts, HeaderFinding } from "./useCustomScripts";
 
 interface HeaderExplanation {
   title: string;
@@ -47,6 +49,61 @@ const CustomHeaderIcon = () => (
   </div>
 );
 
+const FindingCard = ({ finding }: { finding: HeaderFinding & { isCustom?: boolean, isError?: boolean, scriptName?: string } }) => (
+  <div className={twMerge(
+    "group overflow-hidden rounded-3xl border transition-all duration-300 shadow-xl mb-4",
+    finding.isError
+      ? "border-red-900/50 bg-red-950/10 hover:border-red-500/50"
+      : "border-blue-900/30 bg-blue-950/5 hover:border-blue-500/50"
+  )}>
+    <div className="p-4 flex flex-col gap-3">
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2">
+          <span className={twMerge(
+            "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
+            finding.isError ? "bg-red-500 text-white" : "bg-blue-600 text-white"
+          )}>
+            {finding.type}
+          </span>
+          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-1">Protocol Finding</span>
+        </div>
+        <div className={twMerge(
+          "text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-tighter shadow-sm",
+          finding.isError
+            ? "bg-red-600 text-white border-red-500"
+            : "bg-blue-950 text-blue-400 border-blue-900/30"
+        )}>
+          {finding.isError ? "Runtime Error" : "Success"}
+        </div>
+      </div>
+
+      <div className={twMerge(
+        "text-xs font-mono p-3 rounded-xl border leading-relaxed",
+        finding.isError
+          ? "text-red-400 bg-red-950/20 border-red-500/20"
+          : "text-zinc-300 bg-black/30 border-white/5"
+      )}>
+        {finding.value}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
+          <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+            {finding.isError ? <FiAlertTriangle size={8} /> : <FiInfo size={8} />} {finding.isError ? "Cause" : "Info"}
+          </div>
+          <div className="text-[10px] text-zinc-400 italic font-medium leading-tight">{finding.risk}</div>
+        </div>
+        <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
+          <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+            {finding.isError ? <FiEdit2 size={8} /> : <FiCheckCircle size={8} />} {finding.isError ? "Fix" : "Result"}
+          </div>
+          <div className="text-[10px] text-zinc-400 italic font-medium leading-tight">{finding.solution}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export const HeaderExplainerMode = () => {
   const { provider } = useAppProvider();
   const { selections } = useTrafficListContext();
@@ -54,7 +111,14 @@ export const HeaderExplainerMode = () => {
   const [reqData, setReqData] = useState<RequestPairData | null>(null);
   const [resData, setResData] = useState<RequestPairData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"Request" | "Response">("Request");
+  const [activeTab, setActiveTab] = useState<"Request" | "Response" | "Custom Scripts">("Request");
+
+  const trafficData = useMemo(() => {
+    const d = activeTab === "Request" ? reqData : resData;
+    return { body: null, headers: d?.headers || [] };
+  }, [reqData, resData, activeTab]);
+
+  const { customFindings, isRunning } = useCustomScripts<HeaderFinding>('header_explainer', trafficData.body, trafficData.headers);
 
   useEffect(() => {
     if (!trafficId) return;
@@ -71,30 +135,30 @@ export const HeaderExplainerMode = () => {
   const headers = useMemo(() => {
     const list = activeTab === "Request" ? (reqData?.headers || []) : (resData?.headers || []);
     return list.map(h => {
-        const key = h.key.toLowerCase();
-        let explanation = HEADER_DB[key];
-        let isCustom = false;
+      const key = h.key.toLowerCase();
+      let explanation = HEADER_DB[key];
+      let isCustom = false;
 
-        if (!explanation && key.startsWith("x-")) {
-            isCustom = true;
-            explanation = {
-                title: "Extension Header",
-                description: "This is a non-standard or custom extension header (Common in X- prefix headers).",
-                category: "System",
-                icon: <FiInfo className="text-purple-400" />
-            };
-        }
+      if (!explanation && key.startsWith("x-")) {
+        isCustom = true;
+        explanation = {
+          title: "Extension Header",
+          description: "This is a non-standard or custom extension header (Common in X- prefix headers).",
+          category: "System",
+          icon: <FiInfo className="text-purple-400" />
+        };
+      }
 
-        let cookieAnalysis = null;
-        if (key === "set-cookie") {
-            cookieAnalysis = {
-                isHttpOnly: h.value.toLowerCase().includes("httponly"),
-                isSecure: h.value.toLowerCase().includes("secure"),
-                sameSite: h.value.toLowerCase().includes("samesite=strict") ? "Strict" : h.value.toLowerCase().includes("samesite=lax") ? "Lax" : "None"
-            };
-        }
+      let cookieAnalysis = null;
+      if (key === "set-cookie") {
+        cookieAnalysis = {
+          isHttpOnly: h.value.toLowerCase().includes("httponly"),
+          isSecure: h.value.toLowerCase().includes("secure"),
+          sameSite: h.value.toLowerCase().includes("samesite=strict") ? "Strict" : h.value.toLowerCase().includes("samesite=lax") ? "Lax" : "None"
+        };
+      }
 
-        return { ...h, explanation, isCustom, cookieAnalysis };
+      return { ...h, explanation, isCustom, cookieAnalysis };
     });
   }, [reqData, resData, activeTab]);
 
@@ -105,91 +169,117 @@ export const HeaderExplainerMode = () => {
     <div className="h-full bg-[#050505] flex flex-col overflow-hidden font-sans">
       <div className="px-6 pt-4 border-b border-zinc-900 bg-[#0a0a0a] flex flex-col shadow-lg shrink-0">
         <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500">
-                <FiInfo size={18} />
+              <FiInfo size={18} />
             </div>
             <div>
-                <h2 className="text-sm font-black text-white uppercase tracking-tighter">Header Explainer</h2>
-                <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic leading-none">Intelligence Layer</div>
+              <h2 className="text-sm font-black text-white uppercase tracking-tighter">Header Explainer</h2>
+              <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic leading-none">Intelligence Layer</div>
             </div>
-            </div>
+          </div>
         </div>
 
         <div className="flex gap-4">
-            {(["Request", "Response"] as const).map(tab => (
-                <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={twMerge(
-                        "pb-3 text-[11px] font-black uppercase tracking-widest transition-all relative",
-                        activeTab === tab ? "text-blue-500" : "text-zinc-600 hover:text-zinc-400"
-                    )}
-                >
-                    {tab}
-                    {activeTab === tab && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                    )}
-                </button>
-            ))}
+          {(["Request", "Response", "Custom Scripts"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={twMerge(
+                "pb-3 text-[11px] font-black uppercase tracking-widest transition-all relative",
+                activeTab === tab ? tab === "Custom Scripts" ? "text-orange-500" : "text-blue-500" : "text-zinc-600 hover:text-zinc-400"
+              )}
+            >
+              {tab}
+              {activeTab === tab && (
+                <div className={twMerge(
+                  "absolute bottom-0 left-0 right-0 h-0.5 shadow-lg",
+                  tab === "Custom Scripts" ? "bg-orange-500 shadow-orange-500/50" : "bg-blue-500 shadow-blue-500/50"
+                )} />
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className="flex-grow overflow-y-auto no-scrollbar p-4 @sm:p-6 space-y-4 pb-10">
-        {headers.length === 0 && (
-            <div className="text-center py-20 opacity-30 text-xs italic">No {activeTab} headers found...</div>
-        )}
-        {headers.map((header, idx) => (
-          <div key={idx} className={twMerge(
-            "group bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-5 hover:bg-zinc-900/50 transition-all duration-300",
-            header.explanation?.category === "Cloudflare" && "border-orange-500/20 bg-orange-500/5",
-            header.explanation?.category === "Security" && "border-red-500/20 bg-red-500/5",
-            header.isCustom && "border-purple-500/20 bg-purple-500/5"
-          )}>
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-zinc-200 font-mono text-xs font-bold">{header.key}</span>
-                {header.isCustom && <CustomHeaderIcon />}
-              </div>
-              {header.explanation && (
-                <div className="flex items-center gap-2 px-2 py-1 bg-zinc-800 rounded-lg shrink-0">
-                   {header.explanation.icon}
-                   <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{header.explanation.category}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-black/40 rounded-xl p-3 mb-3 border border-zinc-800/50">
-              <code className="text-[11px] text-zinc-400 break-all leading-relaxed whitespace-pre-wrap">{header.value}</code>
-            </div>
-
-            {header.explanation && (
-              <div className="flex flex-col gap-1.5 border-l-2 border-zinc-800 pl-3">
-                 <div className="text-[10px] font-black text-blue-400/80 uppercase tracking-wider">{header.explanation.title}</div>
-                 <p className="text-xs text-zinc-500 leading-relaxed italic">
-                    {header.explanation.description}
-                 </p>
-              </div>
-            )}
-
-            {header.cookieAnalysis && (
-              <div className="mt-4 pt-4 border-t border-zinc-800/50 grid grid-cols-1 @sm:grid-cols-3 gap-3">
-                <div className={twMerge("p-2 rounded-lg text-center border", header.cookieAnalysis.isHttpOnly ? "bg-green-600/10 border-green-500/20 text-green-500" : "bg-red-600/10 border-red-500/20 text-red-500")}>
-                  <div className="text-[8px] font-black uppercase mb-1 opacity-60">HttpOnly</div>
-                  <div className="text-[10px] font-bold">{header.cookieAnalysis.isHttpOnly ? "SECURE" : "INSECURE"}</div>
-                </div>
-                <div className={twMerge("p-2 rounded-lg text-center border", header.cookieAnalysis.isSecure ? "bg-green-600/10 border-green-500/20 text-green-500" : "bg-red-600/10 border-red-500/20 text-red-500")}>
-                  <div className="text-[8px] font-black uppercase mb-1 opacity-60">Secure</div>
-                  <div className="text-[10px] font-bold">{header.cookieAnalysis.isSecure ? "ENABLED" : "MISSING"}</div>
-                </div>
-                <div className="p-2 bg-zinc-800/50 rounded-lg text-center border border-zinc-700/50">
-                  <div className="text-[8px] font-black text-zinc-500 uppercase mb-1">SameSite</div>
-                  <div className="text-[10px] font-bold text-zinc-300">{header.cookieAnalysis.sameSite}</div>
-                </div>
-              </div>
-            )}
+        {activeTab === "Custom Scripts" ? (
+          <div className="max-w-4xl mx-auto">
+            <CustomScriptManager category="header_explainer" />
           </div>
-        ))}
+        ) : (
+          <>
+            {customFindings.length > 0 && (
+              <div className="mb-8">
+                <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4 pl-1 flex items-center gap-2">
+                   <FiShield size={12} /> Custom Header Insights
+                </div>
+                {customFindings.map((finding, i) => <FindingCard key={i} finding={finding} />)}
+              </div>
+            )}
+
+            <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest pl-1 mb-4 flex items-center justify-between">
+              <span>Protocol Explanations ({headers.length})</span>
+              {isRunning && <span className="text-blue-500 animate-pulse uppercase">Scanning...</span>}
+            </div>
+
+            {headers.length === 0 && (
+              <div className="text-center py-20 opacity-30 text-xs italic">No {activeTab} headers found...</div>
+            )}
+
+            {headers.map((header, idx) => (
+              <div key={idx} className={twMerge(
+                "group bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-5 hover:bg-zinc-900/50 transition-all duration-300",
+                header.explanation?.category === "Cloudflare" && "border-orange-500/20 bg-orange-500/5",
+                header.explanation?.category === "Security" && "border-red-500/20 bg-red-500/5",
+                header.isCustom && "border-purple-500/20 bg-purple-500/5"
+              )}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-zinc-200 font-mono text-xs font-bold">{header.key}</span>
+                    {header.isCustom && <CustomHeaderIcon />}
+                  </div>
+                  {header.explanation && (
+                    <div className="flex items-center gap-2 px-2 py-1 bg-zinc-800 rounded-lg shrink-0">
+                      {header.explanation.icon}
+                      <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{header.explanation.category}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-black/40 rounded-xl p-3 mb-3 border border-zinc-800/50">
+                  <code className="text-[11px] text-zinc-400 break-all leading-relaxed whitespace-pre-wrap">{header.value}</code>
+                </div>
+
+                {header.explanation && (
+                  <div className="flex flex-col gap-1.5 border-l-2 border-zinc-800 pl-3">
+                    <div className="text-[10px] font-black text-blue-400/80 uppercase tracking-wider">{header.explanation.title}</div>
+                    <p className="text-xs text-zinc-500 leading-relaxed italic">
+                      {header.explanation.description}
+                    </p>
+                  </div>
+                )}
+
+                {header.cookieAnalysis && (
+                  <div className="mt-4 pt-4 border-t border-zinc-800/50 grid grid-cols-1 @sm:grid-cols-3 gap-3">
+                    <div className={twMerge("p-2 rounded-lg text-center border", header.cookieAnalysis.isHttpOnly ? "bg-green-600/10 border-green-500/20 text-green-500" : "bg-red-600/10 border-red-500/20 text-red-500")}>
+                      <div className="text-[8px] font-black uppercase mb-1 opacity-60">HttpOnly</div>
+                      <div className="text-[10px] font-bold">{header.cookieAnalysis.isHttpOnly ? "SECURE" : "INSECURE"}</div>
+                    </div>
+                    <div className={twMerge("p-2 rounded-lg text-center border", header.cookieAnalysis.isSecure ? "bg-green-600/10 border-green-500/20 text-green-500" : "bg-red-600/10 border-red-500/20 text-red-500")}>
+                      <div className="text-[8px] font-black uppercase mb-1 opacity-60">Secure</div>
+                      <div className="text-[10px] font-bold">{header.cookieAnalysis.isSecure ? "ENABLED" : "MISSING"}</div>
+                    </div>
+                    <div className="p-2 bg-zinc-800/50 rounded-lg text-center border border-zinc-700/50">
+                      <div className="text-[8px] font-black text-zinc-500 uppercase mb-1">SameSite</div>
+                      <div className="text-[10px] font-bold text-zinc-300">{header.cookieAnalysis.sameSite}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );

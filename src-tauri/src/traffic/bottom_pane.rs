@@ -13,6 +13,7 @@ pub struct CustomChecker {
     pub description: String,
     pub script: String,
     pub enabled: bool,
+    pub category: String,
     pub created_at: String,
 }
 
@@ -32,6 +33,7 @@ impl BottomPaneManager {
                 description TEXT,
                 script TEXT NOT NULL,
                 enabled INTEGER DEFAULT 1,
+                category TEXT NOT NULL,
                 created_at TEXT NOT NULL
             )",
             [],
@@ -42,9 +44,11 @@ impl BottomPaneManager {
         }
     }
 
-    pub fn get_custom_checkers(&self) -> rusqlite::Result<Vec<CustomChecker>> {
+    pub fn get_custom_checkers(&self, category: String) -> rusqlite::Result<Vec<CustomChecker>> {
         let conn = self.db.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, name, description, script, enabled, created_at FROM custom_checkers ORDER BY created_at DESC")?;
+        let query = format!("SELECT id, name, description, script, enabled, category, created_at FROM custom_checkers WHERE category = '{}' ORDER BY created_at DESC", category);
+
+        let mut stmt = conn.prepare(&query)?;
         let rows = stmt.query_map([], |row| {
             Ok(CustomChecker {
                 id: row.get(0)?,
@@ -52,7 +56,8 @@ impl BottomPaneManager {
                 description: row.get(2).unwrap_or_default(),
                 script: row.get(3)?,
                 enabled: row.get::<_, i32>(4)? != 0,
-                created_at: row.get(5)?,
+                category: row.get(5)?,
+                created_at: row.get(6)?,
             })
         })?;
 
@@ -63,15 +68,15 @@ impl BottomPaneManager {
         Ok(checkers)
     }
 
-    pub fn save_custom_checker(&self, id: Option<String>, name: String, description: String, script: String, enabled: bool) -> rusqlite::Result<CustomChecker> {
+    pub fn save_custom_checker(&self, id: Option<String>, name: String, description: String, script: String, enabled: bool, category: String) -> rusqlite::Result<CustomChecker> {
         let final_id = id.unwrap_or_else(|| Uuid::new_v4().to_string());
         let created_at = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
         let conn = self.db.lock().unwrap();
         
         conn.execute(
-            "INSERT INTO custom_checkers (id, name, description, script, enabled, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-             ON CONFLICT(id) DO UPDATE SET name=?2, description=?3, script=?4, enabled=?5",
-            params![final_id, name, description, script, if enabled { 1 } else { 0 }, created_at],
+            "INSERT INTO custom_checkers (id, name, description, script, enabled, category, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+             ON CONFLICT(id) DO UPDATE SET name=?2, description=?3, script=?4, enabled=?5, category=?6",
+            params![final_id, name, description, script, if enabled { 1 } else { 0 }, category, created_at],
         )?;
 
         Ok(CustomChecker {
@@ -80,6 +85,7 @@ impl BottomPaneManager {
             description,
             script,
             enabled,
+            category,
             created_at,
         })
     }
@@ -92,8 +98,8 @@ impl BottomPaneManager {
 }
 
 #[tauri::command]
-pub async fn get_custom_checkers(manager: tauri::State<'_, Arc<BottomPaneManager>>) -> Result<Vec<CustomChecker>, String> {
-    manager.get_custom_checkers().map_err(|e| e.to_string())
+pub async fn get_custom_checkers(manager: tauri::State<'_, Arc<BottomPaneManager>>, category: String) -> Result<Vec<CustomChecker>, String> {
+    manager.get_custom_checkers(category).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -104,8 +110,9 @@ pub async fn save_custom_checker(
     description: String,
     script: String,
     enabled: bool,
+    category: String,
 ) -> Result<CustomChecker, String> {
-    manager.save_custom_checker(id, name, description, script, enabled).map_err(|e| e.to_string())
+    manager.save_custom_checker(id, name, description, script, enabled, category).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
