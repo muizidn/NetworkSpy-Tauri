@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import React, { useState, useEffect, useRef } from 'react';
-import { FiCopy, FiExternalLink, FiHelpCircle, FiCheckCircle, FiDownload, FiLoader, FiTrash2, FiTerminal } from 'react-icons/fi';
+import { FiCopy, FiExternalLink, FiHelpCircle, FiCheckCircle, FiDownload, FiLoader, FiTrash2, FiTerminal, FiX, FiMaximize2, FiMinimize2 } from 'react-icons/fi';
 import { twMerge } from 'tailwind-merge';
 import { useSettingsContext } from '@src/context/SettingsProvider';
 
@@ -17,6 +17,69 @@ interface GuideProps {
   icon: React.ReactNode;
 }
 
+const LogDialog: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  logs: string[];
+  title: string;
+}> = ({ isOpen, onClose, logs, title }) => {
+  const logsEndRef = useRef<HTMLDivElement>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [logs]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+      <div className={twMerge(
+        "relative bg-zinc-950 border border-zinc-800 rounded-2xl shadow-[0_32px_64px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col",
+        isMaximized ? "w-full h-full max-w-6xl max-h-[80vh]" : "w-full max-w-2xl h-[60vh]"
+      )}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/50">
+          <div className="flex items-center gap-3">
+            <FiTerminal size={18} className="text-green-500" />
+            <span className="text-sm font-bold text-white">{title}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setIsMaximized(!isMaximized)}
+              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            >
+              {isMaximized ? <FiMinimize2 size={16} /> : <FiMaximize2 size={16} />}
+            </button>
+            <button 
+              onClick={onClose}
+              className="p-2 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white"
+            >
+              <FiX size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="flex-grow overflow-y-auto p-4 font-mono text-xs text-green-400/80 space-y-1">
+          {logs.map((log, index) => (
+            <div key={index} className="break-all whitespace-pre-wrap">{log}</div>
+          ))}
+          <div ref={logsEndRef} />
+        </div>
+        <div className="flex items-center justify-between px-6 py-3 border-t border-zinc-800 bg-zinc-900/30">
+          <span className="text-xs text-zinc-500">{logs.length} log entries</span>
+          <button 
+            onClick={() => navigator.clipboard.writeText(logs.join('\n'))}
+            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-lg transition-colors"
+          >
+            <FiCopy size={14} />
+            Copy Logs
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
   const { streamCertificateLogs } = useSettingsContext();
   const [installing, setInstalling] = useState(false);
@@ -26,13 +89,9 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
   const [errorMsg, setErrorMsg] = useState("");
   const [uninstallMsg, setUninstallMsg] = useState("");
   const [logs, setLogs] = useState<string[]>([]);
-  const logsEndRef = useRef<HTMLDivElement>(null);
+  const [showLogDialog, setShowLogDialog] = useState(false);
 
   useEffect(() => {
-    if (!streamCertificateLogs) {
-      return;
-    }
-
     let unlisten: (() => void) | undefined;
     
     listen<string>("certificate_log", (event) => {
@@ -42,19 +101,15 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
     return () => {
       if (unlisten) unlisten();
     };
-  }, [streamCertificateLogs]);
-
-  useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
-
-  const clearLogs = () => setLogs([]);
+  }, []);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
   const handleInstall = async () => {
+    setLogs([]);
+    setShowLogDialog(true);
     setInstalling(true);
     setStatus("idle");
     try {
@@ -70,6 +125,8 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
   };
 
   const handleUninstall = async () => {
+    setLogs([]);
+    setShowLogDialog(true);
     setUninstalling(true);
     setUninstallStatus("idle");
     try {
@@ -157,10 +214,14 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
                             {status === "error" ? errorMsg : uninstallMsg}
                         </p>
                     )}
-                    {uninstallStatus === "success" && (
-                        <p className="text-[10px] text-green-500 font-medium max-w-[300px] leading-tight">
-                            {uninstallMsg}
-                        </p>
+                    {(status === "success" || uninstallStatus === "success") && (
+                        <button 
+                            onClick={() => setShowLogDialog(true)}
+                            className="text-[10px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1"
+                        >
+                            <FiTerminal size={12} />
+                            View Logs
+                        </button>
                     )}
                 </div>
             </div>
@@ -219,30 +280,6 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
           ))}
         </div>
 
-        {/* Log Panel */}
-        {streamCertificateLogs && logs.length > 0 && (
-          <div className="mt-12 p-4 rounded-xl bg-zinc-950 border border-zinc-800">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <FiTerminal size={14} className="text-green-500" />
-                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Certificate Logs</span>
-              </div>
-              <button 
-                onClick={clearLogs}
-                className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
-              >
-                Clear
-              </button>
-            </div>
-            <div className="h-48 overflow-y-auto font-mono text-[11px] text-green-400/80 space-y-1">
-              {logs.map((log, index) => (
-                <div key={index} className="break-all">{log}</div>
-              ))}
-              <div ref={logsEndRef} />
-            </div>
-          </div>
-        )}
-
         {/* Footer Actions */}
         <div className="mt-20 p-8 rounded-3xl bg-gradient-to-br from-blue-600/10 to-transparent border border-blue-500/10 flex flex-col items-center text-center gap-6">
             <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-500">
@@ -264,6 +301,13 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
             </div>
         </div>
       </div>
+      
+      <LogDialog 
+        isOpen={showLogDialog} 
+        onClose={() => setShowLogDialog(false)} 
+        logs={logs}
+        title="Certificate Operation Logs"
+      />
     </div>
   );
 };

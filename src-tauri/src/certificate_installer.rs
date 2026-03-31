@@ -137,61 +137,45 @@ echo "Uninstall completed"
 
     #[cfg(target_os = "linux")]
     fn uninstall_linux(&self, app: Option<AppHandle>, stream_logs: bool) -> Result<String, String> {
+        emit_log(&app, "Preparing Linux certificate uninstallation...");
+        emit_log(&app, "Creating temporary script files...");
+
+        let script_content = include_str!("scripts/uninstall_certificate_linux.sh");
+        let temp_dir =
+            tempdir().map_err(|e| format!("Failed to create temporary directory: {}", e))?;
+        let temp_script_path = temp_dir.path().join("uninstall_certificate_linux.sh");
+
+        fs::write(&temp_script_path, script_content)
+            .map_err(|e| format!("Failed to write script file: {}", e))?;
+
+        #[cfg(target_family = "unix")]
+        fs::set_permissions(&temp_script_path, fs::Permissions::from_mode(0o755))
+            .map_err(|e| format!("Failed to set permissions for script file: {}", e))?;
+
         if stream_logs {
-            emit_log(
-                &app,
-                "Searching for NetworkSpy certificates in standard locations...",
-            );
+            emit_log(&app, "Executing uninstall script...");
         }
 
-        let cert_paths = vec![
-            "/usr/local/share/ca-certificates/NetworkSpy.crt",
-            "/usr/share/ca-certificates/NetworkSpy.crt",
-            "/etc/ssl/certs/NetworkSpy.crt",
-        ];
+        let output = Command::new("bash")
+            .arg(temp_script_path)
+            .output()
+            .map_err(|e| format!("Failed to execute script on Linux: {}", e))?;
 
-        let mut removed = Vec::new();
-        let mut errors = Vec::new();
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
-        for cert_path in cert_paths {
-            if std::path::Path::new(cert_path).exists() {
-                if stream_logs {
-                    emit_log(&app, &format!("Found certificate at: {}", cert_path));
-                }
-                match fs::remove_file(cert_path) {
-                    Ok(_) => {
-                        removed.push(cert_path);
-                        if stream_logs {
-                            emit_log(&app, &format!("Removed: {}", cert_path));
-                        }
-                    }
-                    Err(e) => {
-                        errors.push(format!("{}: {}", cert_path, e));
-                        if stream_logs {
-                            emit_log(&app, &format!("Failed to remove {}: {}", cert_path, e));
-                        }
-                    }
-                }
+        if stream_logs {
+            for line in stdout.lines() {
+                emit_log(&app, &format!("[script] {}", line));
             }
         }
 
-        // Update ca-certificates if available
-        if !removed.is_empty() {
-            if stream_logs {
-                emit_log(&app, "Running update-ca-certificates...");
-            }
-            let _ = Command::new("update-ca-certificates").output();
-        }
-
-        if !removed.is_empty() {
-            emit_log(&app, &format!("Removed {} certificates", removed.len()));
-            Ok(format!("Removed certificates: {}", removed.join(", ")))
-        } else if !errors.is_empty() {
-            emit_log(&app, &format!("Errors: {}", errors.join("; ")));
-            Err(errors.join("; "))
+        if output.status.success() {
+            emit_log(&app, "Certificate uninstalled successfully on Linux");
+            Ok(stdout)
         } else {
-            emit_log(&app, "No NetworkSpy certificates found to remove");
-            Ok("No NetworkSpy certificates found to remove".to_string())
+            emit_log(&app, &format!("Uninstall failed: {}", stderr));
+            Err(stderr)
         }
     }
 
