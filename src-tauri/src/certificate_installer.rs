@@ -169,7 +169,15 @@ echo "Uninstall completed"
         // Combine stdout and stderr (set -x output goes to stderr)
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        let combined = format!("{}\n{}", stdout, stderr);
+
+        // Use only stdout (contains the actual echo output)
+        // Filter out bash trace lines (starting with +)
+        let filtered: Vec<String> = stdout
+            .lines()
+            .filter(|line| !line.starts_with('+'))
+            .map(|s| s.to_string())
+            .collect();
+        let combined = filtered.join("\n");
 
         // Always emit log output so user can see in dialog
         for line in combined.lines() {
@@ -383,18 +391,26 @@ Write-Output "Uninstall completed"
         // Combine stdout and stderr (set -x output goes to stderr)
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        let combined = format!("{}\n{}", stdout, stderr);
 
-        // Always emit log output so user can see in dialog (even when stream_logs is false)
+        // Use only stdout (contains the actual echo output)
+        // Filter out bash trace lines (starting with +)
+        let filtered: Vec<String> = stdout
+            .lines()
+            .filter(|line| !line.starts_with('+'))
+            .map(|s| s.to_string())
+            .collect();
+        let combined = filtered.join("\n");
+
+        // Always emit log output so user can see in dialog
         for line in combined.lines() {
             emit_log(&app, line);
         }
 
         if output.status.success() {
-            emit_log(&app, "Certificate installed successfully on Linux");
+            emit_log(&app, "Certificate uninstalled successfully on Linux");
             Ok(combined)
         } else {
-            emit_log(&app, &format!("Installation failed: {}", combined));
+            emit_log(&app, &format!("Uninstall failed: {}", combined));
             Err(combined)
         }
     }
