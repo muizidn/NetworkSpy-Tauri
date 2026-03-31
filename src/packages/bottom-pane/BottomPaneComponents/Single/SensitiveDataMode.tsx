@@ -4,8 +4,8 @@ import { FiCheckCircle, FiShield, FiAlertTriangle, FiEdit2 } from "react-icons/f
 import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { decodeBody } from "../../utils/bodyUtils";
-import { CustomScriptManager } from "./CustomScriptManager";
-import { useCustomScripts, SensitiveDataFinding } from "./useCustomScripts";
+import { CustomScriptManager } from "../../CustomScriptManager";
+import { useCustomScripts, SensitiveDataFinding } from "../../useCustomScripts";
 
 const LEAK_METADATA: Record<string, { risk: string, solution: string }> = {
     'JWT Token': {
@@ -33,8 +33,8 @@ const LEAK_METADATA: Record<string, { risk: string, solution: string }> = {
 const FindingCard = ({ finding }: { finding: SensitiveDataFinding & { isCustom?: boolean, isError?: boolean, scriptName?: string } }) => (
     <div className={twMerge(
         "group overflow-hidden rounded-3xl border transition-all duration-300 shadow-xl",
-        finding.isError 
-            ? "border-red-900/50 bg-red-950/10 hover:border-red-500/50" 
+        finding.isError
+            ? "border-red-900/50 bg-red-950/10 hover:border-red-500/50"
             : "border-zinc-800 bg-zinc-900/40 hover:border-orange-900/50"
     )}>
         <div className="p-4 @sm:p-6 flex flex-col @md:flex-row gap-4 @sm:p-6">
@@ -53,8 +53,8 @@ const FindingCard = ({ finding }: { finding: SensitiveDataFinding & { isCustom?:
                         </div>
                         <div className={twMerge(
                             "text-sm font-mono mt-2 break-all p-3 rounded-xl border",
-                            finding.isError 
-                                ? "text-red-400 bg-red-950/20 border-red-500/20" 
+                            finding.isError
+                                ? "text-red-400 bg-red-950/20 border-red-500/20"
                                 : "text-zinc-300 bg-black/30 border-white/5"
                         )}>
                             {finding.value}
@@ -62,8 +62,8 @@ const FindingCard = ({ finding }: { finding: SensitiveDataFinding & { isCustom?:
                     </div>
                     <div className={twMerge(
                         "text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-tighter shadow-sm animate-pulse",
-                        finding.isError 
-                            ? "bg-red-600 text-white border-red-500" 
+                        finding.isError
+                            ? "bg-red-600 text-white border-red-500"
                             : "bg-red-950/30 text-red-500 border-red-900/30"
                     )}>
                         {finding.isError ? "Runtime Error" : "Scan Match"}

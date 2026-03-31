@@ -35,8 +35,6 @@ export interface HeaderFinding extends BaseFinding {
  */
 export interface CodeSnippetFinding extends BaseFinding {
     value: string;
-    risk: string;
-    solution: string;
 }
 
 /**

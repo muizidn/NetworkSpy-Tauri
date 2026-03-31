@@ -5,14 +5,14 @@ import { RequestPairData } from "../../RequestTab";
 import { decodeBody } from "../../utils/bodyUtils";
 import { FiLock, FiShield, FiKey, FiInfo, FiAlertTriangle, FiCheckCircle, FiEdit2 } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
-import { CustomScriptManager } from "./CustomScriptManager";
-import { useCustomScripts, AuthFinding } from "./useCustomScripts";
+import { CustomScriptManager } from "../../CustomScriptManager";
+import { useCustomScripts, AuthFinding } from "../../useCustomScripts";
 
 const FindingCard = ({ finding }: { finding: AuthFinding & { isCustom?: boolean, isError?: boolean, scriptName?: string } }) => (
     <div className={twMerge(
         "group overflow-hidden rounded-2xl border transition-all duration-300 shadow-xl mb-4",
-        finding.isError 
-            ? "border-red-900/50 bg-red-950/10 hover:border-red-500/50" 
+        finding.isError
+            ? "border-red-900/50 bg-red-950/10 hover:border-red-500/50"
             : "border-blue-900/30 bg-blue-950/5 hover:border-blue-500/50"
     )}>
         <div className="p-4 flex flex-col gap-3">
@@ -28,18 +28,18 @@ const FindingCard = ({ finding }: { finding: AuthFinding & { isCustom?: boolean,
                 </div>
                 <div className={twMerge(
                     "text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-tighter shadow-sm",
-                    finding.isError 
-                        ? "bg-red-600 text-white border-red-500" 
+                    finding.isError
+                        ? "bg-red-600 text-white border-red-500"
                         : "bg-blue-950 text-blue-400 border-blue-900/30"
                 )}>
                     {finding.isError ? "Runtime Error" : "Analysis Success"}
                 </div>
             </div>
-            
+
             <div className={twMerge(
                 "text-sm font-mono p-3 rounded-xl border leading-relaxed",
-                finding.isError 
-                    ? "text-red-400 bg-red-950/20 border-red-500/20" 
+                finding.isError
+                    ? "text-red-400 bg-red-950/20 border-red-500/20"
                     : "text-zinc-300 bg-black/30 border-white/5"
             )}>
                 {finding.value}
@@ -102,17 +102,17 @@ export const AuthAnalysisMode = () => {
 
         // 2. Check Other Headers
         data.headers.forEach(h => {
-             const key = h.key?.toLowerCase();
-             if (key === 'authorization') return;
-             const val = String(h.value || "");
-             const matches = val.match(jwtRegex);
-             if (matches) {
-                 matches.forEach(m => {
-                     if (m.split('.').length >= 2 && !tokens.some(t => t.token === m)) {
-                         tokens.push({ source: `Header: ${h.key}`, token: m, label: key.includes('refresh') ? 'Refresh Token' : undefined });
-                     }
-                 });
-             }
+            const key = h.key?.toLowerCase();
+            if (key === 'authorization') return;
+            const val = String(h.value || "");
+            const matches = val.match(jwtRegex);
+            if (matches) {
+                matches.forEach(m => {
+                    if (m.split('.').length >= 2 && !tokens.some(t => t.token === m)) {
+                        tokens.push({ source: `Header: ${h.key}`, token: m, label: key.includes('refresh') ? 'Refresh Token' : undefined });
+                    }
+                });
+            }
         });
 
         // 3. Check Body
@@ -143,7 +143,7 @@ export const AuthAnalysisMode = () => {
     }, [data]);
 
     const [selectedTokenIndex, setSelectedTokenIndex] = useState(0);
-    
+
     // Reset selected token when traffic changes
     useEffect(() => {
         setSelectedTokenIndex(0);
@@ -152,14 +152,14 @@ export const AuthAnalysisMode = () => {
     const activeDetails = useMemo(() => {
         const t = detectedTokens[selectedTokenIndex];
         if (!t) return null;
-        
+
         let jwt = null;
         try {
             const parts = t.token.split('.');
             if (parts.length >= 2) {
                 jwt = JSON.parse(atob(parts[1]));
             }
-        } catch (e) {}
+        } catch (e) { }
 
         return { ...t, jwt };
     }, [detectedTokens, selectedTokenIndex]);
@@ -187,7 +187,7 @@ export const AuthAnalysisMode = () => {
                             <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Session & Token Inspector</div>
                         </div>
                     </div>
-                    
+
                     {tab === 'Analysis' && detectedTokens.length > 1 && (
                         <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800 shrink-0">
                             {detectedTokens.map((t, i) => (
@@ -327,8 +327,8 @@ export const AuthAnalysisMode = () => {
                                         </div>
                                         <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-3">Auditor Security Advice</h4>
                                         <p className="text-[11px] text-zinc-500 leading-relaxed italic max-w-2xl">
-                                            {activeDetails?.label === 'Refresh Token' ? 
-                                                'CRITICAL: Refresh tokens are highly sensitive long-lived credentials. They must be stored in secure HTTP-only cookies or encrypted local storage and require rotation policies to prevent replay attacks.' : 
+                                            {activeDetails?.label === 'Refresh Token' ?
+                                                'CRITICAL: Refresh tokens are highly sensitive long-lived credentials. They must be stored in secure HTTP-only cookies or encrypted local storage and require rotation policies to prevent replay attacks.' :
                                                 'ADVICE: Access tokens should be ephemeral with low expiry times. Ensure they are not leaked in URL parameters or browser history. Use PKCE for mobile/public clients.'}
                                         </p>
                                     </div>
