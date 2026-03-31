@@ -1,11 +1,59 @@
 param (
     [string]$Version = $null,
-    [switch]$AllowUnsigned # Added for CI/Unsigned builds
+    [switch]$AllowUnsigned, # Added for CI/Unsigned builds
+    [switch]$Clean          # Added to remove old versions
 )
 
 $REPO = "muizidn/NetworkSpy-Tauri"
 
 Write-Host "--- Network Spy Installation for Windows ---" -ForegroundColor Cyan
+
+# 0. Clean Up (Optional)
+if ($Clean) {
+    Write-Host "[*] Cleaning up old versions of Network Spy..." -ForegroundColor Yellow
+    
+    # Terminate any running instances first
+    $Processes = Get-Process -Name "network-spy" -ErrorAction SilentlyContinue
+    if ($Processes) {
+        Write-Host "[*] Terminating running Network Spy processes..." -ForegroundColor Gray
+        $Processes | Stop-Process -Force
+    }
+
+    # Search registry for existing installations
+    $RegistryPaths = @(
+        "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+    )
+
+    foreach ($Path in $RegistryPaths) {
+        if (Test-Path $Path) {
+            Get-ChildItem -Path $Path | ForEach-Object {
+                $DisplayName = $_.GetValue("DisplayName")
+                $UninstallString = $_.GetValue("UninstallString")
+                
+                if ($DisplayName -match "Network Spy") {
+                    Write-Host "[*] Found existing version: $DisplayName ($($_.PSChildName))" -ForegroundColor Gray
+                    if ($UninstallString -match "msiexec") {
+                        # Extract ProductCode from msiexec /x {CODE}
+                        $ProductCode = $UninstallString -replace '.*(\{[\w-]+\}).*', '$1'
+                        if ($ProductCode -match '\{[\w-]+\}') {
+                            Write-Host "[*] Uninstalling via msiexec ($ProductCode)..." -ForegroundColor Gray
+                            Start-Process "msiexec.exe" -ArgumentList "/x", "$ProductCode", "/qn", "/norestart" -Wait
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # Additionally wipe the installation directory if it exists
+    $INSTALL_PATH = Join-Path $env:LOCALAPPDATA "Programs\network-spy"
+    if (Test-Path $INSTALL_PATH) {
+        Write-Host "[*] Removing leftover files from $INSTALL_PATH..." -ForegroundColor Gray
+        Remove-Item -Path $INSTALL_PATH -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
 
 # 1. Version Detection & Asset Discovery
 if ([string]::IsNullOrWhiteSpace($Version) -or $Version -eq "latest") {

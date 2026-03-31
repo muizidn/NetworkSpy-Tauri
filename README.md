@@ -31,6 +31,12 @@ curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/in
 $s="https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.ps1"; iwr -useb $s | iex; &$s -AllowUnsigned
 ```
 
+#### 🪟 Windows (Clean Installation)
+If you have multiple versions of Network Spy installed and want to ensure a fresh installation, use the `-Clean` flag to uninstall all previous versions before the new install:
+```powershell
+$s="https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.ps1"; iwr -useb $s | iex; &$s -Clean
+```
+
 ---
 
 ## ✨ Features
