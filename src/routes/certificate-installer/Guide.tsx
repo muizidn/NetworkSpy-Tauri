@@ -5,6 +5,24 @@ import { FiCopy, FiExternalLink, FiHelpCircle, FiCheckCircle, FiDownload, FiLoad
 import { twMerge } from 'tailwind-merge';
 import { useSettingsContext } from '@src/context/SettingsProvider';
 
+// Global log state - singleton across all Guide instances
+let globalLogs: string[] = [];
+let globalListener: (() => void) | null = null;
+let globalListenerSetup = false;
+
+// Setup global listener once
+function setupGlobalListener(onLog: (log: string) => void) {
+  if (globalListenerSetup) return;
+  globalListenerSetup = true;
+  
+  listen<string>("certificate_log", (event) => {
+    globalLogs = [...globalLogs, event.payload];
+    onLog(event.payload);
+  }).then(fn => { 
+    globalListener = fn; 
+  });
+}
+
 export interface GuideStep {
   title: string;
   description: string | JSX.Element;
@@ -91,23 +109,33 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
   const [logs, setLogs] = useState<string[]>([]);
   const [showLogDialog, setShowLogDialog] = useState(false);
 
+  // Setup global listener once - first Guide component sets it up
   useEffect(() => {
-    let unlisten: (() => void) | undefined;
+    if (!globalListenerSetup) {
+      globalListenerSetup = true;
+      listen<string>("certificate_log", (event) => {
+        globalLogs = [...globalLogs, event.payload];
+      }).then(fn => { 
+        globalListener = fn; 
+      });
+    }
     
-    listen<string>("certificate_log", (event) => {
-      setLogs(prev => [...prev, event.payload]);
-    }).then(fn => { unlisten = fn; });
-
     return () => {
-      if (unlisten) unlisten();
+      // Don't clean up listener - keep it global
     };
   }, []);
+
+  // Sync with global logs
+  useEffect(() => {
+    setLogs([...globalLogs]);
+  }, [globalLogs.length]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
   const handleInstall = async () => {
+    globalLogs = [];  // Clear global logs
     setLogs([]);
     setShowLogDialog(true);
     setInstalling(true);
@@ -125,6 +153,7 @@ const Guide: React.FC<GuideProps> = ({ platform, steps, icon }) => {
   };
 
   const handleUninstall = async () => {
+    globalLogs = [];
     setLogs([]);
     setShowLogDialog(true);
     setUninstalling(true);
