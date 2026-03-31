@@ -1,7 +1,7 @@
-use rcgen::{Certificate, CertificateParams, DistinguishedName, DnType, IsCa, KeyUsagePurpose, BasicConstraints};
+use rcgen::{Certificate, CertificateParams, DistinguishedName, DnType, IsCa, KeyUsagePurpose, BasicConstraints, PKCS_ECDSA_P256_SHA256};
 use std::fs;
 use std::path::PathBuf;
-use chrono::Local;
+use time::{OffsetDateTime, Duration as TimeDuration};
 use uuid::Uuid;
 
 pub struct CaKeys {
@@ -24,7 +24,8 @@ pub fn load_or_generate_ca(app_data_dir: PathBuf) -> Result<CaKeys, String> {
         return Ok(CaKeys { cert, key });
     }
 
-    // Generate new CA
+    // Generate new CA with High Compatibility (ECDSA P-256)
+    // This curve is supported by all modern browsers (Chrome 1+, Safari 4+, Firefox 2+)
     let mut params = CertificateParams::default();
     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
     params.key_usages = vec![
@@ -33,17 +34,27 @@ pub fn load_or_generate_ca(app_data_dir: PathBuf) -> Result<CaKeys, String> {
         KeyUsagePurpose::CrlSign
     ];
     
-    let date = Local::now().format("%Y-%m-%d").to_string();
+    // Standard validity for a root CA (10 years)
+    let now = OffsetDateTime::now_utc();
+    params.not_before = now;
+    params.not_after = now + TimeDuration::days(3650);
+    
+    // Efficient and widely compatible ECDSA algorithm
+    params.alg = &PKCS_ECDSA_P256_SHA256;
+    
+    let date = format!("{}-{:02}-{:02}", now.year(), now.month() as u8, now.day());
     let host = hostname::get()
         .map(|h| h.to_string_lossy().to_string())
         .unwrap_or_else(|_| "unknown".to_string());
     let uid = Uuid::new_v4().to_string().split('-').next().unwrap_or("unique").to_string();
     
+    // Common Name should be clear and descriptive
     let ca_name = format!("Network Spy CA ({}, {}, {})", date, host, uid);
     
     let mut dn = DistinguishedName::new();
     dn.push(DnType::CommonName, ca_name.clone());
     dn.push(DnType::OrganizationName, "NetworkSpy");
+    dn.push(DnType::CountryName, "US");
     params.distinguished_name = dn;
 
     let cert = Certificate::from_params(params).map_err(|e| e.to_string())?;
