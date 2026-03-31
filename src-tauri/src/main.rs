@@ -1,7 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-pub mod certificate_installer;
+pub mod ca_manager;
+mod certificate_installer;
 pub mod proxy_toggle;
 // pub mod submenu;
 pub mod traffic;
@@ -207,6 +208,13 @@ fn change_proxy_port(port: u16) -> u16 {
 }
 
 #[tauri::command]
+fn get_app_data_dir() -> std::path::PathBuf {
+    use std::env;
+    let home = env::var("HOME").or_else(|_| env::var("USERPROFILE")).unwrap_or_else(|_| ".".to_string());
+    std::path::PathBuf::from(home).join(".network-spy")
+}
+
+#[tauri::command]
 fn install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>, cert_path: String) -> Result<String, String> {
     print!("INSTALL CERTIFICATE");
     let stream_logs = state.0.read()
@@ -217,11 +225,18 @@ fn install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedPro
 
 #[tauri::command]
 fn auto_install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>) -> Result<String, String> {
-    let ca_cert = include_str!("ca/network-spy.cer");
+    let app_data_dir = get_app_data_dir();
+    let cert_path = app_data_dir.join("ca").join("network-spy.crt");
+    
+    if !cert_path.exists() {
+        return Err(format!("Certificate file not found at: {}. Please restart the application.", cert_path.display()));
+    }
+
+    let cert_content = std::fs::read_to_string(cert_path).map_err(|e| e.to_string())?;
     let stream_logs = state.0.read()
         .map(|s| s.stream_certificate_logs)
         .unwrap_or(false);
-    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(Some(app), stream_logs, ca_cert)
+    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(Some(app), stream_logs, &cert_content)
 }
 
 #[tauri::command]
@@ -708,10 +723,13 @@ impl TrafficListener for MyTrafficListener {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    let app_data_dir = get_app_data_dir();
+    
     if args.iter().any(|arg| arg == "--install-cert") {
-        let ca_cert = include_str!("ca/network-spy.cer");
+        let ca_keys = ca_manager::load_or_generate_ca(app_data_dir.clone())
+            .expect("Failed to load or generate CA");
         let installer = CertificateInstaller {};
-        match installer.install_from_content(None, false, ca_cert) {
+        match installer.install_from_content(None, false, &ca_keys.cert) {
             Ok(output) => {
                 println!("Certificate installation successful:\n{}", output);
                 std::process::exit(0);
@@ -723,8 +741,13 @@ fn main() {
         }
     }
 
-    let key_pair = include_str!("ca/network-spy.key");
-    let ca_cert = include_str!("ca/network-spy.cer");
+    // Load CA cert for normal run
+    let ca_keys = ca_manager::load_or_generate_ca(app_data_dir.clone())
+        .expect("Failed to load or generate CA");
+
+    // Leak the strings to satisfy the &'static str requirement of the proxy crate
+    let key_pair: &'static str = Box::leak(ca_keys.key.into_boxed_str());
+    let ca_cert: &'static str = Box::leak(ca_keys.cert.into_boxed_str());
 
     let proxy_toggle = ProxyToggle::new();
     PROXY_TOGGLE
@@ -793,11 +816,7 @@ fn main() {
             });
 
             let app_handle = app.app_handle();
-
-            let app_data_dir = app_handle.path().app_data_dir().unwrap_or_else(|_| {
-                let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-                std::path::PathBuf::from(home).join(".network-spy")
-            });
+            let app_data_dir = get_app_data_dir();
 
             if !app_data_dir.exists() {
                 fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
