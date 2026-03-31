@@ -45,15 +45,23 @@ const Content = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return parsed.map((t: any) => ({
-          ...t,
-          content: <CenterPane />,
-        }));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((t: any) => ({
+            ...t,
+            content: <CenterPane />,
+          }));
+        }
       } catch (e) {
         console.error("Failed to parse saved tabs", e);
       }
     }
-    return [];
+    return [
+      {
+        id: `tab-live-${Date.now()}`,
+        title: "Live Traffic",
+        content: <CenterPane />,
+      },
+    ];
   });
 
   useEffect(() => {
@@ -100,7 +108,19 @@ const Content = () => {
   };
 
   const handleCloseTab = (id: string) => {
-    setTabs((prev) => prev.filter((t) => t.id !== id));
+    setTabs((prev) => {
+      const remaining = prev.filter((t) => t.id !== id);
+      if (remaining.length === 0) {
+        return [
+          {
+            id: `tab-live-${Date.now()}`,
+            title: "Live Traffic",
+            content: <CenterPane />,
+          },
+        ];
+      }
+      return remaining;
+    });
   };
 
   const handleRenameTab = (id: string, newTitle: string) => {
