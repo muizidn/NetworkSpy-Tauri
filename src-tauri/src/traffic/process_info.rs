@@ -4,6 +4,7 @@ use std::sync::Mutex;
 use once_cell::sync::Lazy;
 
 static PROCESS_CACHE: Lazy<Mutex<HashMap<String, String>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static ATTEMPTS_CACHE: Lazy<Mutex<HashMap<String, u32>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 pub fn get_app_name(client_addr: &str) -> String {
     // client_addr is usually "127.0.0.1:12345"
@@ -20,9 +21,19 @@ pub fn get_app_name(client_addr: &str) -> String {
         }
     }
 
+    #[cfg(target_os = "windows")]
+    {
+        let mut attempts = ATTEMPTS_CACHE.lock().unwrap();
+        let count = attempts.entry(port.to_string()).or_insert(0);
+        *count += 1;
+        if *count > 10 {
+            return "Failed to look for open port".to_string();
+        }
+    }
+
     let name = find_process_by_port(port);
     
-    // Cache it (briefly or until port reuse, but for now simple cache)
+    // Cache it if found
     if name != "Unknown" {
         let mut cache = PROCESS_CACHE.lock().unwrap();
         cache.insert(port.to_string(), name.clone());
@@ -78,10 +89,14 @@ fn find_process_by_port(port: &str) -> String {
 
     #[cfg(target_os = "windows")]
     {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
         // netstat -ano | findstr :<port>
         // Then tasklist /FI "PID eq <pid>"
         let output = Command::new("netstat")
             .args(&["-ano"])
+            .creation_flags(CREATE_NO_WINDOW)
             .output();
 
         if let Ok(out) = output {
@@ -92,6 +107,7 @@ fn find_process_by_port(port: &str) -> String {
                     if let Some(pid_str) = parts.last() {
                         let task_output = Command::new("tasklist")
                             .args(&["/FI", &format!("PID eq {}", pid_str), "/NH", "/FO", "CSV"])
+                            .creation_flags(CREATE_NO_WINDOW)
                             .output();
                         
                         if let Ok(tout) = task_output {

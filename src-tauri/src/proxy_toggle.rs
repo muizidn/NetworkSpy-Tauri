@@ -133,10 +133,16 @@ impl ProxyToggle {
     }
 
     fn shell(&self, launch_path: &str, args: &[&str]) -> bool {
-        let status = Command::new(launch_path)
-            .args(args)
-            .status()
-            .expect("failed to execute process");
+        let mut cmd = Command::new(launch_path);
+        cmd.args(args);
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000);
+        }
+
+        let status = cmd.status().expect("failed to execute process");
         status.success()
     }
 }

@@ -232,13 +232,19 @@ Write-Output "Uninstall completed"
             emit_log(&app, "Executing uninstall script...");
         }
 
-        let output = Command::new("powershell")
-            .arg("-ExecutionPolicy")
+        let mut cmd = Command::new("powershell");
+        cmd.arg("-ExecutionPolicy")
             .arg("Bypass")
             .arg("-File")
-            .arg(temp_script_path)
-            .output()
-            .map_err(|e| format!("Failed to execute script: {}", e))?;
+            .arg(temp_script_path);
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000);
+        }
+
+        let output = cmd.output().map_err(|e| format!("Failed to execute script: {}", e))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
@@ -417,14 +423,20 @@ Write-Output "Uninstall completed"
             emit_log(&app, "Executing install script...");
         }
 
-        let output = Command::new("powershell")
-            .arg("-ExecutionPolicy")
+        let mut cmd = Command::new("powershell");
+        cmd.arg("-ExecutionPolicy")
             .arg("Bypass")
             .arg("-File")
             .arg(temp_script_path)
-            .arg(temp_cert_path.to_str().unwrap())
-            .output()
-            .map_err(|e| format!("Failed to execute script on Windows: {}", e))?;
+            .arg(temp_cert_path.to_str().unwrap());
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000);
+        }
+
+        let output = cmd.output().map_err(|e| format!("Failed to execute script on Windows: {}", e))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
