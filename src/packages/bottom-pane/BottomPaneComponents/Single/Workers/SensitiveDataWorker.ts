@@ -35,3 +35,5 @@ onmessage = function (e) {
         });
     }
 };
+
+export {};
