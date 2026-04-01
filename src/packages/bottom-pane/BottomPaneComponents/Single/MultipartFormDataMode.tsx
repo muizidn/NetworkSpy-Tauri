@@ -37,11 +37,24 @@ export const MultipartFormDataMode = () => {
                             setBoundary(boundaryMatch);
                             const parsed = parseMultipart(req.body, boundaryMatch);
                             setParts(parsed);
+                        } else {
+                            setParts([]);
+                            setBoundary("");
+                            setTotalSize(0);
                         }
+                    } else {
+                        setParts([]);
+                        setBoundary("");
+                        setTotalSize(0);
                     }
                 } catch (e) {
                     console.error("Failed to load multipart data", e);
+                    setParts([]);
                 }
+            } else {
+                setParts([]);
+                setBoundary("");
+                setTotalSize(0);
             }
         };
         load();
