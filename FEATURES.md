@@ -1,5 +1,9 @@
 # ✨ Network Spy Features
 
+<p align center>
+  <img src="./github/features/banner.png" width="100%" alt="Banner" />
+</p>
+
 **Network Spy** is designed around a core philosophy: **Viewers are a Superpower.** Our tools are built to help you understand complex data, not just capture it.
 
 ---

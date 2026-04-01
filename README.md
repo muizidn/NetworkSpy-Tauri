@@ -1,5 +1,5 @@
 <p align center>
-  <img src="./public/network-spy-logo.png" width="120" alt="Network Spy Logo" />
+  <img src="./github/readme/banner.png" width="100%" alt="Banner" />
 </p>
 
 <h1 align center>📡 Network Spy</h1>
