@@ -278,7 +278,7 @@ fn get_all_metadata(
     db: tauri::State<'_, Arc<TrafficDb>>,
     limit: Option<usize>,
 ) -> Vec<traffic::db::TrafficMetadata> {
-    db.get_all_metadata(limit.unwrap_or(1000)).unwrap_or_default()
+    db.get_all_metadata(limit.unwrap_or(10)).unwrap_or_default()
 }
 
 #[tauri::command]

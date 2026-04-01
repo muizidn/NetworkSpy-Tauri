@@ -48,7 +48,7 @@ const Content = () => {
       const saved = localStorage.getItem("ns_acknowledged_features");
       const acknowledged = saved ? JSON.parse(saved) : {};
       console.log("[Welcome] Acknowledged features:", acknowledged);
-      
+
       if (!acknowledged.welcome_certificate) {
         setShowWelcomeCert(true);
       }
@@ -102,25 +102,25 @@ const Content = () => {
   }, [isReviewMode, isRun, setIsRun]);
 
   // Reset traffic list when switching between live and review mode
-  useEffect(() => {
-    if (!isReviewMode) {
-      const loadLiveTraffic = async () => {
-        try {
-          const traffic = await provider.getAllMetadata();
-          setTrafficList(traffic);
+  // useEffect(() => {
+  //   if (!isReviewMode) {
+  //     const loadLiveTraffic = async () => {
+  //       try {
+  //         const traffic = await provider.getAllMetadata();
+  //         setTrafficList(traffic);
 
-          const newSet: Record<string, any> = {};
-          traffic.forEach(t => {
-            newSet[(t as any).id] = t;
-          });
-          setTrafficSet(newSet);
-        } catch (e) {
-          console.error("Failed to load live traffic", e);
-        }
-      };
-      loadLiveTraffic();
-    }
-  }, [isReviewMode, provider, setTrafficList, setTrafficSet]);
+  //         const newSet: Record<string, any> = {};
+  //         traffic.forEach(t => {
+  //           newSet[(t as any).id] = t;
+  //         });
+  //         setTrafficSet(newSet);
+  //       } catch (e) {
+  //         console.error("Failed to load live traffic", e);
+  //       }
+  //     };
+  //     loadLiveTraffic();
+  //   }
+  // }, [isReviewMode, provider, setTrafficList, setTrafficSet]);
 
   const handleAddTab = () => {
     const newId = `tab-${Date.now()}`;
