@@ -4,7 +4,7 @@ import {
   TableViewContextMenuRenderer,
   TableViewHeader,
 } from "../ui/TableView";
-import { ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
+import { ClientRenderer, ImageRenderer, TagsRenderer, TextRenderer } from "./Renderers";
 import { useTrafficListContext } from "./context/TrafficList";
 import { useFilterContext } from "@src/context/FilterContext";
 import { TrafficItemMap } from "./model/TrafficItemMap";
@@ -108,7 +108,7 @@ export const TrafficList: React.FC = () => {
     },
     { title: "Tags", renderer: new TagsRenderer("tags"), minWidth: 100 },
     { title: "URL", renderer: new TextRenderer("url"), minWidth: 400 },
-    { title: "Client", renderer: new TextRenderer("client"), minWidth: 150 },
+    { title: "Client", renderer: new ClientRenderer("client"), minWidth: 200 },
     { title: "Method", renderer: new TextRenderer("method") },
     { title: "Code", renderer: new TextRenderer("code") },
     {

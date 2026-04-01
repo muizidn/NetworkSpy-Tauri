@@ -14,6 +14,7 @@ import { TrafficItemMap } from "@src/packages/main-content/model/TrafficItemMap"
 import { LeftSidebar } from "@src/packages/sidebar/LeftSidebar";
 import { RightSidebar } from "@src/packages/sidebar/RightSidebar";
 import { NSTabs } from "@src/packages/ui/NSTabs";
+import { WelcomeDialog } from "@src/packages/ui/WelcomeDialog";
 import { CenterPane } from "./CenterPane";
 
 const Content = () => {
@@ -40,20 +41,52 @@ const Content = () => {
   const { provider, isRun, setIsRun, clearData } = useAppProvider();
   const { isReviewMode } = useSessionContext();
 
+  const [showWelcomeCert, setShowWelcomeCert] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ns_acknowledged_features");
+      const acknowledged = saved ? JSON.parse(saved) : {};
+      console.log("[Welcome] Acknowledged features:", acknowledged);
+
+      if (!acknowledged.welcome_certificate) {
+        setShowWelcomeCert(true);
+      }
+    } catch (e) {
+      console.error("Failed to check acknowledged features", e);
+      setShowWelcomeCert(true); // Default to showing if error occurs
+    }
+  }, []);
+
+  const acknowledgeFeature = (featureId: string) => {
+    const acknowledged = JSON.parse(localStorage.getItem("ns_acknowledged_features") || "{}");
+    acknowledged[featureId] = true;
+    localStorage.setItem("ns_acknowledged_features", JSON.stringify(acknowledged));
+    if (featureId === "welcome_certificate") setShowWelcomeCert(false);
+  };
+
   const [tabs, setTabs] = useState<any[]>(() => {
     const saved = localStorage.getItem("ns_workspace_tabs");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return parsed.map((t: any) => ({
-          ...t,
-          content: <CenterPane />,
-        }));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((t: any) => ({
+            ...t,
+            content: <CenterPane />,
+          }));
+        }
       } catch (e) {
         console.error("Failed to parse saved tabs", e);
       }
     }
-    return [];
+    return [
+      {
+        id: `tab-live-${Date.now()}`,
+        title: "Live Traffic",
+        content: <CenterPane />,
+      },
+    ];
   });
 
   useEffect(() => {
@@ -69,25 +102,25 @@ const Content = () => {
   }, [isReviewMode, isRun, setIsRun]);
 
   // Reset traffic list when switching between live and review mode
-  useEffect(() => {
-    if (!isReviewMode) {
-      const loadLiveTraffic = async () => {
-        try {
-          const traffic = await provider.getAllMetadata();
-          setTrafficList(traffic);
+  // useEffect(() => {
+  //   if (!isReviewMode) {
+  //     const loadLiveTraffic = async () => {
+  //       try {
+  //         const traffic = await provider.getAllMetadata();
+  //         setTrafficList(traffic);
 
-          const newSet: Record<string, any> = {};
-          traffic.forEach(t => {
-            newSet[(t as any).id] = t;
-          });
-          setTrafficSet(newSet);
-        } catch (e) {
-          console.error("Failed to load live traffic", e);
-        }
-      };
-      loadLiveTraffic();
-    }
-  }, [isReviewMode, provider, setTrafficList, setTrafficSet]);
+  //         const newSet: Record<string, any> = {};
+  //         traffic.forEach(t => {
+  //           newSet[(t as any).id] = t;
+  //         });
+  //         setTrafficSet(newSet);
+  //       } catch (e) {
+  //         console.error("Failed to load live traffic", e);
+  //       }
+  //     };
+  //     loadLiveTraffic();
+  //   }
+  // }, [isReviewMode, provider, setTrafficList, setTrafficSet]);
 
   const handleAddTab = () => {
     const newId = `tab-${Date.now()}`;
@@ -100,7 +133,19 @@ const Content = () => {
   };
 
   const handleCloseTab = (id: string) => {
-    setTabs((prev) => prev.filter((t) => t.id !== id));
+    setTabs((prev) => {
+      const remaining = prev.filter((t) => t.id !== id);
+      if (remaining.length === 0) {
+        return [
+          {
+            id: `tab-live-${Date.now()}`,
+            title: "Live Traffic",
+            content: <CenterPane />,
+          },
+        ];
+      }
+      return remaining;
+    });
   };
 
   const handleRenameTab = (id: string, newTitle: string) => {
@@ -235,6 +280,12 @@ const Content = () => {
           </Pane>
         </SplitPane>
       </div>
+
+      <WelcomeDialog
+        isOpen={showWelcomeCert}
+        onClose={() => setShowWelcomeCert(false)}
+        onAcknowledge={() => acknowledgeFeature("welcome_certificate")}
+      />
     </div>
   );
 };

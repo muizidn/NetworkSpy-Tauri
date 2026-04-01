@@ -1,19 +1,27 @@
 import { useAppProvider } from "@src/packages/app-env";
 import { CustomChecker } from "@src/packages/app-env/AppProvider";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FiCode, FiPlus, FiSave, FiX, FiEdit2, FiTrash2, FiInfo } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
+import { Editor } from "@monaco-editor/react";
+import { CUSTOM_SCRIPT_TEMPLATES } from "./CustomScriptTemplates";
 
 interface CustomScriptManagerProps {
     category: string;
+    onUpdate?: () => void;
     onClose?: () => void;
 }
 
-export const CustomScriptManager = ({ category }: CustomScriptManagerProps) => {
+export const CustomScriptManager = ({ category, onUpdate }: CustomScriptManagerProps) => {
     const { provider } = useAppProvider();
     const [checkers, setCheckers] = useState<CustomChecker[]>([]);
     const [editChecker, setEditChecker] = useState<Partial<CustomChecker> | null>(null);
     const [isAdding, setIsAdding] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const template = useMemo(() => {
+        return CUSTOM_SCRIPT_TEMPLATES[category] || CUSTOM_SCRIPT_TEMPLATES.static_analysis;
+    }, [category]);
 
     useEffect(() => {
         provider.getCustomCheckers(category).then(setCheckers);
@@ -21,29 +29,41 @@ export const CustomScriptManager = ({ category }: CustomScriptManagerProps) => {
 
     const handleSaveChecker = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editChecker?.name || !editChecker?.script) return;
+        const scriptToSave = editChecker?.script || template.script;
+        if (!editChecker?.name || !scriptToSave) return;
 
-        const saved = await provider.saveCustomChecker({
-            ...editChecker,
-            enabled: editChecker.enabled ?? true,
-            category: category
-        });
-        setCheckers(prev => {
-            const index = prev.findIndex(c => c.id === saved.id);
-            if (index >= 0) {
-                const copy = [...prev];
-                copy[index] = saved;
-                return copy;
-            }
-            return [saved, ...prev];
-        });
-        setEditChecker(null);
-        setIsAdding(false);
+        setIsSaving(true);
+        try {
+            const saved = await provider.saveCustomChecker({
+                ...editChecker,
+                script: scriptToSave,
+                enabled: editChecker?.enabled ?? true,
+                category: category
+            });
+            setCheckers(prev => {
+                const index = prev.findIndex(c => c.id === saved.id);
+                if (index >= 0) {
+                    const copy = [...prev];
+                    copy[index] = saved;
+                    return copy;
+                }
+                return [saved, ...prev];
+            });
+            setEditChecker(null);
+            setIsAdding(false);
+            if (onUpdate) onUpdate();
+        } catch (err) {
+            console.error("Failed to save custom checker:", err);
+            alert("Failed to save custom checker. Please check the console.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleDeleteChecker = async (id: string) => {
         await provider.deleteCustomChecker(id);
         setCheckers(prev => prev.filter(c => c.id !== id));
+        if (onUpdate) onUpdate();
     };
 
     if (isAdding || editChecker) {
@@ -85,31 +105,28 @@ export const CustomScriptManager = ({ category }: CustomScriptManagerProps) => {
                     </div>
                     <div>
                         <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1 mb-1 block">JavaScript Logic</label>
-                        <div className="relative group">
-                            <textarea
-                                value={editChecker?.script || ''}
-                                onChange={e => setEditChecker(prev => ({ ...prev, script: e.target.value }))}
-                                placeholder={`/* Example: Scanning for patterns */
-const findings = [];
-
-if (body.includes('sk_test_')) {
-    findings.push({ 
-        type: 'Test Key Exposure', 
-        value: 'Stripe test key found in payload', 
-        risk: 'Medium', 
-        solution: 'Rotate the key immediately' 
-    });
-}
-
-return findings;`}
-                                className="w-full bg-black border border-zinc-800 rounded-2xl px-4 py-4 text-xs font-mono text-emerald-400 h-64 focus:outline-none focus:border-orange-600 transition-all resize-none leading-relaxed custom-scrollbar"
-                                required
+                        <div className="relative rounded-2xl overflow-hidden border border-zinc-800 bg-black h-72">
+                            <Editor
+                                height="100%"
+                                defaultLanguage="javascript"
+                                theme="vs-dark"
+                                value={editChecker?.script || template.script}
+                                onChange={(value) => setEditChecker(prev => ({ ...prev, script: value || '' }))}
+                                options={{
+                                    minimap: { enabled: false },
+                                    fontSize: 12,
+                                    scrollBeyondLastLine: false,
+                                    lineNumbers: "on",
+                                    fontFamily: "JetBrains Mono, monospace",
+                                    padding: { top: 16, bottom: 16 },
+                                    automaticLayout: true
+                                }}
                             />
                         </div>
                         <div className="mt-2 bg-blue-950/10 border border-blue-900/20 rounded-xl p-3 flex items-start gap-3">
                             <FiInfo size={14} className="text-blue-500 mt-0.5" />
                             <p className="text-[10px] text-zinc-500 leading-relaxed italic">
-                                Script should <strong className="text-white">return</strong> an array of finding objects: <code className="text-blue-400 bg-black/40 px-1 rounded">{"{ type, value, risk, solution }"}</code>. Available variables: <code className="text-blue-400 bg-black/40 px-1 rounded">body</code> (string), <code className="text-blue-400 bg-black/40 px-1 rounded">headers</code> (array).
+                                {template.description}
                             </p>
                         </div>
                     </div>
@@ -118,12 +135,15 @@ return findings;`}
                 <div className="flex gap-3 pt-4">
                     <button
                         type="submit"
-                        className="flex-grow bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black px-6 py-3 rounded-xl flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all"
+                        disabled={isSaving}
+                        className="flex-grow bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] font-black px-6 py-3 rounded-xl flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all"
                     >
-                        <FiSave /> Save Script
+                        {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiSave />} 
+                        {isSaving ? "Saving..." : "Save Script"}
                     </button>
                     <button
                         type="button"
+                        disabled={isSaving}
                         onClick={() => { setIsAdding(false); setEditChecker(null); }}
                         className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-black px-6 py-3 rounded-xl uppercase tracking-widest transition-all"
                     >
@@ -141,7 +161,10 @@ return findings;`}
                     Manage Custom Checkers ({checkers.length})
                 </div>
                 <button
-                    onClick={() => setIsAdding(true)}
+                    onClick={() => {
+                        setIsAdding(true);
+                        setEditChecker({ script: template.script });
+                    }}
                     className="bg-orange-600 hover:bg-orange-500 text-white text-[10px] font-black px-4 py-2 rounded-lg flex items-center gap-2 uppercase tracking-widest transition-all shadow-lg shadow-orange-950/20"
                 >
                     <FiPlus /> New Script

@@ -19,4 +19,4 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "Certificate installed and trusted successfully in System Keychain."
+echo "Certificate installed and trusted successfully in Login Keychain."

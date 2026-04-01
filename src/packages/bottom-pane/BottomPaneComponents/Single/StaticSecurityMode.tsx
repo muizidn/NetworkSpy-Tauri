@@ -3,8 +3,8 @@ import { useTrafficListContext } from "../../../main-content/context/TrafficList
 import { useAppProvider } from "@src/packages/app-env";
 import { FiAlertTriangle, FiCheckCircle, FiInfo, FiEdit2, FiShield, FiCpu, FiTrendingUp } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
-import { CustomScriptManager } from "./CustomScriptManager";
-import { useCustomScripts, StaticAnalysisFinding } from "./useCustomScripts";
+import { CustomScriptManager } from "../../CustomScriptManager";
+import { useCustomScripts, StaticAnalysisFinding } from "../../useCustomScripts";
 import { decodeBody } from "../../utils/bodyUtils";
 
 interface ScanResult {
@@ -17,8 +17,8 @@ interface ScanResult {
 const FindingCard = ({ finding }: { finding: StaticAnalysisFinding & { isCustom?: boolean, isError?: boolean, scriptName?: string } }) => (
     <div className={twMerge(
         "group overflow-hidden rounded-2xl border transition-all duration-300 shadow-xl mb-4",
-        finding.isError 
-            ? "border-red-900/50 bg-red-950/10 hover:border-red-500/50" 
+        finding.isError
+            ? "border-red-900/50 bg-red-950/10 hover:border-red-500/50"
             : "border-orange-900/30 bg-orange-950/5 hover:border-orange-500/50"
     )}>
         <div className="p-4 flex flex-col gap-3">
@@ -34,18 +34,18 @@ const FindingCard = ({ finding }: { finding: StaticAnalysisFinding & { isCustom?
                 </div>
                 <div className={twMerge(
                     "text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-tighter shadow-sm",
-                    finding.isError 
-                        ? "bg-red-600 text-white border-red-500" 
+                    finding.isError
+                        ? "bg-red-600 text-white border-red-500"
                         : "bg-orange-950 text-orange-400 border-orange-900/30"
                 )}>
                     {finding.isError ? "Runtime Error" : "Pattern Matched"}
                 </div>
             </div>
-            
+
             <div className={twMerge(
                 "text-xs font-mono p-3 rounded-xl border leading-relaxed",
-                finding.isError 
-                    ? "text-red-400 bg-red-950/20 border-red-500/20" 
+                finding.isError
+                    ? "text-red-400 bg-red-950/20 border-red-500/20"
                     : "text-zinc-300 bg-black/30 border-white/5"
             )}>
                 {finding.value}
@@ -73,7 +73,7 @@ export const StaticSecurityMode = () => {
     const { selections } = useTrafficListContext();
     const { provider } = useAppProvider();
     const trafficId = useMemo(() => selections.firstSelected?.id as string, [selections]);
-    
+
     const [data, setData] = useState<any>(null);
     const [scanning, setScanning] = useState(false);
     const [results, setResults] = useState<ScanResult[]>([]);
@@ -129,14 +129,14 @@ export const StaticSecurityMode = () => {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-orange-600/20 border border-orange-500/30 flex items-center justify-center text-orange-500">
-                           <FiCpu size={18} />
+                            <FiCpu size={18} />
                         </div>
                         <div>
                             <h2 className="text-sm font-black text-white uppercase tracking-tighter">Fast Static Inspector</h2>
                             <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic text-orange-600/70">Real-time Heuristic Pattern Matching</div>
                         </div>
                     </div>
-                    
+
                     {scanning && (
                         <div className="flex items-center gap-2 px-3 py-1 bg-orange-600/10 rounded-full border border-orange-500/20">
                             <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-ping shadow-[0_0_8px_rgba(249,115,22,0.8)]"></div>
@@ -191,18 +191,18 @@ export const StaticSecurityMode = () => {
                                                 <div className="text-xs font-black text-zinc-200 uppercase italic tracking-tighter">{res.check}</div>
                                                 <span className={twMerge(
                                                     "text-[8px] font-black uppercase px-2 py-0.5 rounded border transition-colors",
-                                                    res.status === 'fail' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 
-                                                    res.status === 'warn' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 
-                                                    'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                    res.status === 'fail' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                                        res.status === 'warn' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
+                                                            'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                                                 )}>
                                                     {res.status}
                                                 </span>
                                             </div>
-                                            
+
                                             <div className="text-[11px] text-zinc-500 group-hover:text-zinc-400 transition-colors leading-relaxed italic">
                                                 {res.message}
                                             </div>
-                                            
+
                                             <div className="mt-auto pt-3 border-t border-zinc-800/50 flex flex-col gap-1.5 font-sans">
                                                 <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest opacity-60">Potential Impact</span>
                                                 <span className="text-[10px] text-zinc-400/80 font-medium italic leading-relaxed">{res.impact}</span>
@@ -214,7 +214,7 @@ export const StaticSecurityMode = () => {
 
                             <div className="bg-orange-950/10 border border-orange-900/20 rounded-3xl p-6 relative overflow-hidden shadow-inner">
                                 <div className="absolute -bottom-4 -right-4 opacity-5 rotate-12">
-                                   <FiTrendingUp size={120} />
+                                    <FiTrendingUp size={120} />
                                 </div>
                                 <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                     <FiInfo size={12} /> Heuristic Telemetry
@@ -244,12 +244,12 @@ export const StaticSecurityMode = () => {
 
 const Placeholder = ({ text }: { text: string }) => (
     <div className="h-full flex flex-col items-center justify-center bg-[#050505] p-6 @sm:p-10 text-center font-sans">
-      <div className="w-20 h-20 rounded-full bg-orange-600/5 flex items-center justify-center text-orange-950 mb-8 border border-orange-950/10 shadow-2xl relative">
-        <FiCpu size={40} className="opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/10 to-transparent rounded-full animate-pulse"></div>
-      </div>
-      <h3 className="text-zinc-400 font-black mb-2 italic tracking-tight uppercase">Static Inspector Standby</h3>
-      <p className="text-[10px] text-zinc-600 max-w-[200px] leading-relaxed uppercase font-bold tracking-widest">{text}</p>
+        <div className="w-20 h-20 rounded-full bg-orange-600/5 flex items-center justify-center text-orange-950 mb-8 border border-orange-950/10 shadow-2xl relative">
+            <FiCpu size={40} className="opacity-20" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-orange-600/10 to-transparent rounded-full animate-pulse"></div>
+        </div>
+        <h3 className="text-zinc-400 font-black mb-2 italic tracking-tight uppercase">Static Inspector Standby</h3>
+        <p className="text-[10px] text-zinc-600 max-w-[200px] leading-relaxed uppercase font-bold tracking-widest">{text}</p>
     </div>
 );
 

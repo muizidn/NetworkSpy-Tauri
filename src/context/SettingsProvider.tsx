@@ -62,7 +62,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     invoke("update_proxy_settings", { 
-      new_settings: { 
+      newSettings: { 
         show_connect_method: showConnectMethod,
         stream_certificate_logs: streamCertificateLogs
       } 

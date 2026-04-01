@@ -262,7 +262,9 @@ impl TrafficDb {
                 req_body_size: 0, // Metadata only query
                 res_body_size: 0, // Metadata only query
                 client: row.get(9)?,
-                tags: row.get(10)?,
+                tags: row.get::<_, Option<String>>(10)?
+                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                    .unwrap_or_default(),
             })
         })?;
 
@@ -385,7 +387,9 @@ impl TrafficDb {
                 req_body_size: 0,
                 res_body_size: 0,
                 client: row.get(9)?,
-                tags: row.get(10)?,
+                tags: row.get::<_, Option<String>>(10)?
+                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                    .unwrap_or_default(),
             })
         })?;
 
@@ -440,7 +444,9 @@ impl TrafficDb {
                 req_body_size: 0,
                 res_body_size: 0,
                 client: row.get(15)?,
-                tags: row.get(16)?,
+                tags: row.get::<_, Option<String>>(16)?
+                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                    .unwrap_or_default(),
             };
             
             let req_body: Option<Vec<u8>> = row.get(9)?;
@@ -512,7 +518,9 @@ impl TrafficDb {
                     req_body_size: 0,
                     res_body_size: 0,
                     client: row.get(15)?,
-                    tags: row.get(16)?,
+                    tags: row.get::<_, Option<String>>(16)?
+                        .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                        .unwrap_or_default(),
                 };
                 
                 let req_body: Option<Vec<u8>> = row.get(9)?;
@@ -761,7 +769,7 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
                 req_body_size: body.len(),
                 res_body_size: 0,
                 client: Some(client.clone()),
-                tags: Some(serde_json::to_string(tags).unwrap_or_default()),
+                tags: tags.clone(),
             };
             recent.push_front(metadata);
             if recent.len() > 10000 {
@@ -777,7 +785,7 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
         }
         TrafficEvent::UpdateTags { id, tags } => {
             if let Some(meta) = recent.iter_mut().find(|m| m.id == *id) {
-                meta.tags = Some(serde_json::to_string(tags).unwrap_or_default());
+                meta.tags = tags.clone();
             }
         }
         TrafficEvent::Exit => {}
@@ -798,7 +806,7 @@ pub struct TrafficMetadata {
     pub req_body_size: usize,
     pub res_body_size: usize,
     pub client: Option<String>,
-    pub tags: Option<String>,
+    pub tags: Vec<String>,
 }
 
 #[derive(Clone, serde::Serialize)]

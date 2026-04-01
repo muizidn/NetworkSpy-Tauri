@@ -4,8 +4,8 @@ import { useTrafficListContext } from "../../../main-content/context/TrafficList
 import { RequestPairData } from "../../RequestTab";
 import { FiInfo, FiShield, FiCloud, FiLock, FiAlertTriangle, FiCheckCircle, FiEdit2 } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
-import { CustomScriptManager } from "./CustomScriptManager";
-import { useCustomScripts, HeaderFinding } from "./useCustomScripts";
+import { CustomScriptManager } from "../../CustomScriptManager";
+import { useCustomScripts, HeaderFinding } from "../../useCustomScripts";
 
 interface HeaderExplanation {
   title: string;
@@ -20,18 +20,18 @@ const HEADER_DB: Record<string, HeaderExplanation> = {
   "cf-cache-status": { title: "Cloudflare Cache State", description: "Indicates if the resource was served from Cloudflare's edge cache (HIT, MISS, DYNAMIC).", category: "Cloudflare", icon: <FiCloud className="text-orange-400" /> },
   "cf-ipcountry": { title: "Visitor Country", description: "The ISO 3166-1 Alpha-2 code of the country from which the request originated.", category: "Cloudflare", icon: <FiCloud className="text-orange-400" /> },
   "cf-connecting-ip": { title: "Real Visitor IP", description: "Cloudflare passes the client's original IP address in this header.", category: "Cloudflare", icon: <FiCloud className="text-orange-400" /> },
-  
+
   // Security
   "strict-transport-security": { title: "HSTS Policy", description: "Tells the browser to only interact with the server using HTTPS connections.", category: "Security", icon: <FiShield className="text-red-400" /> },
   "content-security-policy": { title: "CSP", description: "Defines which resources the browser is allowed to load, preventing XSS attacks.", category: "Security", icon: <FiShield className="text-red-400" /> },
   "x-frame-options": { title: "Clickjacking Protection", description: "Controls whether the site can be embedded in iframes or frames.", category: "Security", icon: <FiShield className="text-red-400" /> },
   "x-content-type-options": { title: "MIME Sniffing Prevention", description: "Prevents browsers from interpreting files as a different MIME type.", category: "Security", icon: <FiShield className="text-red-400" /> },
-  
+
   // General
   "set-cookie": { title: "Cookie Instruction", description: "The server is asking the browser to store a cookie for future requests.", category: "General", icon: <FiLock className="text-blue-400" /> },
   "authorization": { title: "Auth Credentials", description: "Contains the credentials identifying the client to the server.", category: "Security", icon: <FiLock className="text-blue-400" /> },
   "cache-control": { title: "Cache Directives", description: "Instructions for both browser and intermediate caches on how to handle storage.", category: "Caching", icon: <FiInfo className="text-zinc-400" /> },
-  
+
   // System
   "server": { title: "Server Signature", description: "Describes the software used by the origin server to handle the request.", category: "System", icon: <FiInfo className="text-zinc-600" /> },
   "x-powered-by": { title: "Technology Stack", description: "Often used to indicate the backend framework or language (e.g., Express, PHP, ASP.NET). Usually recommended to hide for security.", category: "System", icon: <FiInfo className="text-zinc-600" /> },
@@ -212,7 +212,7 @@ export const HeaderExplainerMode = () => {
             {customFindings.length > 0 && (
               <div className="mb-8">
                 <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4 pl-1 flex items-center gap-2">
-                   <FiShield size={12} /> Custom Header Insights
+                  <FiShield size={12} /> Custom Header Insights
                 </div>
                 {customFindings.map((finding, i) => <FindingCard key={i} finding={finding} />)}
               </div>
