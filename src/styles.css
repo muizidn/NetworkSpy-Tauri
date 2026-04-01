@@ -27,3 +27,47 @@
     50% { opacity: .7; transform: scale(0.95); box-shadow: 0 0 10px 1px rgba(168, 85, 247, 0.4); }
   }
 }
+
+/* Custom SplitPane Sash Hover Highlight */
+.react-split__sash {
+  z-index: 50 !important;
+  background-color: transparent !important;
+  transition: all 0.2s ease-in-out !important;
+  position: relative;
+}
+
+/* Create the highlight line */
+.react-split__sash::after {
+  content: '';
+  position: absolute;
+  background-color: transparent;
+  transition: all 0.2s ease-in-out;
+  z-index: 100;
+}
+
+/* Vertical Sash Styling */
+.react-split__sash--vertical::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%) scaleY(0.98);
+  border-radius: 4px;
+}
+
+/* Horizontal Sash Styling */
+.react-split__sash--horizontal::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%) scaleX(0.98);
+  border-radius: 4px;
+}
+
+/* Active/Hover states */
+.react-split__sash:hover::after,
+.react-split__sash:active::after {
+  background-color: #3b82f6 !important; /* blue-500 */
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8), 0 0 4px rgba(59, 130, 246, 0.4);
+}
