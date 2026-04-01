@@ -59,6 +59,7 @@ import { FirebaseMode } from "./BottomPaneComponents/Single/FirebaseMode";
 import { SupabaseMode } from "./BottomPaneComponents/Single/SupabaseMode";
 import { AppwriteMode } from "./BottomPaneComponents/Single/AppwriteMode";
 import { AdsViewerMode } from "./BottomPaneComponents/Single/AdsViewerMode";
+import { MultipartFormDataMode } from "./BottomPaneComponents/Single/MultipartFormDataMode";
 import { CustomViewerMode } from "@src/packages/bottom-pane/BottomPaneComponents/Single/CustomViewerMode";
 
 import { useTrafficListContext } from "../main-content/context/TrafficList";
@@ -444,6 +445,9 @@ const renderMode = (
 
     case "kafka_viewer":
       return <KafkaViewerMode />;
+
+    case "multipart_form":
+      return <MultipartFormDataMode />;
 
     default:
       return null;
