@@ -25,6 +25,7 @@
 
 ## 📖 Table of Contents
 - [🚀 About](#-about)
+- [⚙️ How it Works](#%EF%B8%8F-how-it-works)
 - [✨ Key Features](#-key-features)
 - [⚡ Quick Install](#-quick-install)
 - [🛡️ Trust & Security](#-trust--security)
@@ -40,6 +41,21 @@
 **Network Spy** is a cross-platform Network Proxy and Traffic Analyzer built with **Tauri**, **Rust**, and **React**. It intercepts, decrypts, and analyzes your application's network traffic with a stunning, high-performance interface. 
 
 Our goal is to move beyond simple "packet capturing" and provide a tool that truly understands the data being sent across the wire.
+
+---
+
+## ⚙️ How it Works
+
+Network Spy operates as a **Man-in-the-Middle (MITM)** proxy. It sits between your application and the internet, intercepting traffic to provide deep visibility.
+
+1. **Proxy Interception**: The app starts a high-performance Rust-based proxy server on your local machine.
+2. **HTTPS Decryption**: By installing the optional **Network Spy Root CA**, the app can securely decrypt HTTPS traffic using industry-standard certificate pinning bypass techniques.
+3. **Capture & Analyze**: Traffic is captured in real-time and passed through our specialized **Superpower Viewers** for automated decoding of GraphQL, LLM streams, Protobuf, and more.
+4. **Local Forever**: All data is analyzed and stored locally in a high-speed SQLite database. No traffic ever leaves your machine.
+
+<p align center>
+  <img src="./github/readme/how-it-works.png" width="100%" alt="How it Works Diagram" />
+</p>
 
 ---
 
