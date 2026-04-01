@@ -2,22 +2,23 @@ use std::process::Command;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use once_cell::sync::Lazy;
+use base64::{engine::general_purpose, Engine as _};
 
 static PROCESS_CACHE: Lazy<Mutex<HashMap<String, String>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 static ATTEMPTS_CACHE: Lazy<Mutex<HashMap<String, u32>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
-pub fn get_app_name(client_addr: &str) -> String {
+pub fn get_client_info(client_addr: &str) -> String {
     // client_addr is usually "127.0.0.1:12345"
     let port = client_addr.split(':').last().unwrap_or("");
     if port.is_empty() {
-        return "Unknown".to_string();
+        return serde_json::json!({ "name": "Unknown", "icon": null }).to_string();
     }
 
     // Check cache first
     {
         let cache = PROCESS_CACHE.lock().unwrap();
-        if let Some(name) = cache.get(port) {
-            return name.clone();
+        if let Some(info) = cache.get(port) {
+            return info.clone();
         }
     }
 
@@ -27,22 +28,57 @@ pub fn get_app_name(client_addr: &str) -> String {
         let count = attempts.entry(port.to_string()).or_insert(0);
         *count += 1;
         if *count > 10 {
-            return "Failed to look for open port".to_string();
+            return serde_json::json!({ "name": "Unknown (Timeout)", "icon": null }).to_string();
         }
     }
 
-    let name = find_process_by_port(port);
+    let (name, icon) = find_process_by_port(port);
     
+    // Create a JSON info string
+    let info = serde_json::json!({
+        "name": name,
+        "icon": icon
+    }).to_string();
+
     // Cache it if found
     if name != "Unknown" {
         let mut cache = PROCESS_CACHE.lock().unwrap();
-        cache.insert(port.to_string(), name.clone());
+        cache.insert(port.to_string(), info.clone());
     }
 
-    name
+    info
 }
 
-fn find_process_by_port(port: &str) -> String {
+#[cfg(target_os = "macos")]
+fn get_mac_app_icon(full_path: &str) -> Option<String> {
+    if let Some(app_pos) = full_path.find(".app/") {
+        let app_path = &full_path[..app_pos + 4];
+        
+        // Find .icns files
+        let resources = format!("{}/Contents/Resources", app_path);
+        let output = Command::new("find")
+            .args(&[&resources, "-maxdepth", "1", "-name", "*.icns"])
+            .output()
+            .ok()?;
+        
+        let icns_path = String::from_utf8_lossy(&output.stdout).lines().next()?.to_string();
+        
+        // Convert to PNG using sips
+        let temp_png = format!("/tmp/ns_icon_{}.png", std::process::id());
+        let _ = Command::new("sips")
+            .args(&["-s", "format", "png", &icns_path, "--resampleHeight", "24", "--out", &temp_png])
+            .output();
+        
+        if let Ok(bytes) = std::fs::read(&temp_png) {
+            let encoded = general_purpose::STANDARD.encode(&bytes);
+            let _ = std::fs::remove_file(&temp_png);
+            return Some(format!("data:image/png;base64,{}", encoded));
+        }
+    }
+    None
+}
+
+fn find_process_by_port(port: &str) -> (String, Option<String>) {
     let current_pid = std::process::id();
 
     #[cfg(target_os = "macos")]
@@ -63,7 +99,7 @@ fn find_process_by_port(port: &str) -> String {
                             continue;
                         }
 
-                        // Try to get the full process name using ps
+                        // Try to get the full process path using ps
                         let ps_output = Command::new("ps")
                             .args(&["-p", &pid.to_string(), "-o", "comm="])
                             .output();
@@ -71,14 +107,16 @@ fn find_process_by_port(port: &str) -> String {
                         if let Ok(ps_out) = ps_output {
                             let full_path = String::from_utf8_lossy(&ps_out.stdout).trim().to_string();
                             if !full_path.is_empty() {
+                                let icon = get_mac_app_icon(&full_path);
                                 if let Some(name) = std::path::Path::new(&full_path).file_name() {
-                                    return name.to_string_lossy().to_string();
+                                    return (name.to_string_lossy().to_string(), icon);
                                 }
+                                return (full_path, icon);
                             }
                         }
                         
                         // Fallback to lsof's command name
-                        return parts[0].to_string();
+                        return (parts[0].to_string(), None);
                     }
                 }
             }
@@ -111,7 +149,7 @@ fn find_process_by_port(port: &str) -> String {
                     if let Some(start) = line.find("users:((\"") {
                         let rest = &line[start + 9..];
                         if let Some(end) = rest.find("\"") {
-                            return rest[..end].to_string();
+                            return (rest[..end].to_string(), None);
                         }
                     }
                 }
@@ -149,7 +187,7 @@ fn find_process_by_port(port: &str) -> String {
                                 let tstdout = String::from_utf8_lossy(&tout.stdout);
                                 let tparts: Vec<&str> = tstdout.split(',').collect();
                                 if !tparts.is_empty() {
-                                    return tparts[0].trim_matches('"').to_string();
+                                    return (tparts[0].trim_matches('"').to_string(), None);
                                 }
                             }
                         }
@@ -159,5 +197,5 @@ fn find_process_by_port(port: &str) -> String {
         }
     }
 
-    "Unknown".to_string()
+    ("Unknown".to_string(), None)
 }

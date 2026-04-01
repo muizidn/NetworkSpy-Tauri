@@ -614,8 +614,7 @@ impl TrafficListener for MyTrafficListener {
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
 
-        let client_name = traffic::process_info::get_app_name(&client_addr);
-        let client_info = format!("{} ({})", client_name, client_addr);
+        let client_info = traffic::process_info::get_client_info(&client_addr);
 
         let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
 
@@ -699,8 +698,7 @@ impl TrafficListener for MyTrafficListener {
             status_code,
         });
 
-        let client_name = traffic::process_info::get_app_name(&client_addr);
-        let client_info = format!("{} ({})", client_name, client_addr);
+        let client_info = traffic::process_info::get_client_info(&client_addr);
 
         let mut headers_with_perf = headers.clone();
         headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
