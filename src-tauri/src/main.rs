@@ -274,6 +274,14 @@ fn get_recent_traffic(
 }
 
 #[tauri::command]
+fn get_all_metadata(
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    limit: Option<usize>,
+) -> Vec<traffic::db::TrafficMetadata> {
+    db.get_all_metadata(limit.unwrap_or(1000)).unwrap_or_default()
+}
+
+#[tauri::command]
 fn get_filter_presets(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::FilterPreset>, String> {
     db.get_filter_presets().map_err(|e| e.to_string())
 }
@@ -1061,6 +1069,7 @@ fn main() {
             get_response_pair_data,
             update_intercept_allow_list,
             get_recent_traffic,
+            get_all_metadata,
             get_proxy_settings,
             update_proxy_settings,
             save_session,
