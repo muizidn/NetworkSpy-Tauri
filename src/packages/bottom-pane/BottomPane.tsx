@@ -60,6 +60,7 @@ import { SupabaseMode } from "./BottomPaneComponents/Single/SupabaseMode";
 import { AppwriteMode } from "./BottomPaneComponents/Single/AppwriteMode";
 import { AdsViewerMode } from "./BottomPaneComponents/Single/AdsViewerMode";
 import { MultipartFormDataMode } from "./BottomPaneComponents/Single/MultipartFormDataMode";
+import { URLEncodedMode } from "./BottomPaneComponents/Single/URLEncodedMode";
 import { CustomViewerMode } from "@src/packages/bottom-pane/BottomPaneComponents/Single/CustomViewerMode";
 
 import { useTrafficListContext } from "../main-content/context/TrafficList";
@@ -448,6 +449,9 @@ const renderMode = (
 
     case "multipart_form":
       return <MultipartFormDataMode />;
+
+    case "urlencoded":
+      return <URLEncodedMode />;
 
     default:
       return null;

@@ -58,6 +58,7 @@ export type SingleMode =
     | "supabase_viewer"
     | "appwrite_viewer"
     | "ads_viewer"
+    | "urlencoded"
     | "multipart_form";
 
 /**

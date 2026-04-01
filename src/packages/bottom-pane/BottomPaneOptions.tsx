@@ -109,6 +109,7 @@ export const BottomPaneOptions = () => {
       { id: "supabase_viewer", title: "Supabase context" },
       { id: "appwrite_viewer", title: "Appwrite Context" },
       { id: "ads_viewer", title: "Ads Inspector" },
+      { id: "urlencoded", title: "Form URL Encoded" },
       { id: "multipart_form", title: "Multipart Form" },
     ],
     multiple: [
