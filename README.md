@@ -55,6 +55,10 @@ Network Spy is designed around a core philosophy: **Viewers are a Superpower.**
 
 👉 [**Explore all features in detail here**](./FEATURES.md)
 
+<p align center>
+  <img src="./github/readme/llm-token-analyzer.png" width="100%" alt="LLM Token Analyzer" />
+</p>
+
 ---
 
 ## ⚡ Quick Install
