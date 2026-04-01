@@ -17,7 +17,7 @@ export const TimelineMode = () => {
   }
 
   return (
-    <div className="h-full bg-[#1e1e1e] p-6 overflow-auto">
+    <div className="h-full bg-[#1e1e1e] p-4 @sm:p-6 overflow-auto">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-lg font-bold mb-8 text-zinc-300 border-l-4 border-red-500 pl-3">Request Timeline</h2>
         

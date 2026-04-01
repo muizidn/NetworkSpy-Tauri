@@ -1,65 +1,21 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from "react";
+import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from "react";
 import { TrafficItemMap } from "@src/packages/main-content/model/TrafficItemMap";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
+import { 
+  FilterNode, 
+  FilterRule,
+  FilterGroup,
+  PredefinedFilter, 
+  FilterType, 
+  FilterOperator, 
+  FilterTypes, 
+  FilterOperators 
+} from "@src/models/Filter";
+import { useFilterPresetContext } from "./FilterPresetContext";
 
-export const FilterTypes = {
-  URL: "URL",
-  Method: "Method",
-  Status: "Status",
-  Client: "Client",
-  Code: "Code",
-  Time: "Time",
-  Duration: "Duration",
-  RequestSize: "Request Size",
-  ResponseSize: "Response Size",
-  Performance: "Performance",
-  SSL: "SSL",
-  Tags: "Tags",
-  ID: "ID",
-} as const;
-
-export const FilterOperators = {
-  Contains: "Contains",
-  NotContains: "Not Contains",
-  StartsWith: "Starts with",
-  EndsWith: "Ends with",
-  Equals: "Equals",
-  NotEquals: "Not Equals",
-  GreaterThan: "Greater Than",
-  LessThan: "Less Than",
-  After: "After",
-  Before: "Before",
-  MatchesRegex: "Matches Regex"
-} as const;
-
-export type FilterType = typeof FilterTypes[keyof typeof FilterTypes];
-export type FilterOperator = typeof FilterOperators[keyof typeof FilterOperators];
-
-export interface FilterRule {
-  isGroup: false;
-  id: string;
-  enabled: boolean;
-  type: FilterType;
-  operator: FilterOperator;
-  value: string;
-}
-
-export interface FilterGroup {
-  isGroup: true;
-  id: string;
-  enabled: boolean;
-  logic: "AND" | "OR";
-  children: FilterNode[];
-}
-
-export type FilterNode = FilterRule | FilterGroup;
-
-export interface PredefinedFilter {
-  id: string;
-  name: string;
-  filters: FilterNode[];
-  isBuiltIn?: boolean;
-}
+// Re-export for compatibility
+export type { FilterNode, FilterRule, FilterGroup, PredefinedFilter, FilterType, FilterOperator };
+export { FilterTypes, FilterOperators };
 
 interface FilterContextState {
   filters: FilterNode[];
@@ -82,25 +38,17 @@ export const useFilterContext = () => {
   return context;
 };
 
-const BUILT_IN_FILTERS: PredefinedFilter[] = [
-  { id: "all", name: "All", filters: [], isBuiltIn: true },
-  { id: "http", name: "HTTP", filters: [{ isGroup: false, id: "built-in-http", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "http:" }], isBuiltIn: true },
-  { id: "https", name: "HTTPS", filters: [{ isGroup: false, id: "built-in-https", enabled: true, type: FilterTypes.URL, operator: FilterOperators.StartsWith, value: "https:" }], isBuiltIn: true },
-];
-
 export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { trafficList } = useTrafficListContext();
   const [filters, setFilters] = useState<FilterNode[]>([]);
-  const [activePredefinedIds, setActivePredefinedIds] = useState<string[]>(["all"]);
-  const [userFilters, setUserFilters] = useState<PredefinedFilter[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user-predefined-filters") || "[]");
-    } catch {
-      return [];
-    }
-  });
+  
+  const { 
+    predefinedFilters, 
+    addPreset, 
+    removePreset 
+  } = useFilterPresetContext();
 
-  const predefinedFilters = useMemo(() => [...BUILT_IN_FILTERS, ...userFilters], [userFilters]);
+  const [activePredefinedIds, setActivePredefinedIds] = useState<string[]>(["all"]);
 
   const togglePredefinedFilter = (id: string) => {
     if (id === "all") {
@@ -120,21 +68,11 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const saveCurrentFilters = (name: string) => {
     if (filters.length === 0) return;
-    const newPredefined: PredefinedFilter = {
-      id: `user-${Date.now()}`,
-      name,
-      filters: [...filters],
-    };
-    const nextUserFilters = [...userFilters, newPredefined];
-    setUserFilters(nextUserFilters);
-    localStorage.setItem("user-predefined-filters", JSON.stringify(nextUserFilters));
+    addPreset(name, [...filters]);
   };
 
   const removePredefinedFilter = (id: string) => {
-    const nextUserFilters = userFilters.filter(f => f.id !== id);
-    setUserFilters(nextUserFilters);
-    localStorage.setItem("user-predefined-filters", JSON.stringify(nextUserFilters));
-    setActivePredefinedIds(prev => prev.filter(p => p !== id));
+    removePreset(id);
   };
 
   const parseNumericValue = (val: any): number => {

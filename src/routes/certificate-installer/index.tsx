@@ -1,4 +1,5 @@
-import { useState, ReactNode, useMemo } from "react";
+import { useState, ReactNode, useMemo, useEffect } from "react";
+import { type } from "@tauri-apps/plugin-os";
 import { FiSearch, FiMonitor, FiCpu, FiCode } from "react-icons/fi";
 import { HiOutlineDeviceMobile } from "react-icons/hi";
 import { twMerge } from "tailwind-merge";
@@ -81,6 +82,20 @@ export const UnifiedCertificateInstaller: React.FC = () => {
 
   const [currentTab, setCurrentTab] = useState(tabs[0].id);
   const [searchTerm, setSearchTerm] = useState("");
+  const [detectedOS, setDetectedOS] = useState<string | null>(null);
+
+  useEffect(() => {
+    const detectOS = async () => {
+      const osType = await type();
+      let targetId = "mac";
+      if (osType === "windows") targetId = "windows";
+      if (osType === "linux") targetId = "linux";
+      
+      setDetectedOS(targetId);
+      setCurrentTab(targetId);
+    };
+    detectOS();
+  }, []);
 
   const filteredTabs = useMemo(() => {
     return tabs.filter(tab =>
@@ -117,6 +132,8 @@ export const UnifiedCertificateInstaller: React.FC = () => {
               </div>
               {filteredTabs.filter(t => t.category === category).map((tab) => {
                 const isActive = currentTab === tab.id;
+                const isCurrentOS = detectedOS === tab.id;
+                
                 return (
                   <button
                     key={tab.id}
@@ -130,6 +147,14 @@ export const UnifiedCertificateInstaller: React.FC = () => {
                   >
                     {tab.icon && <span className={twMerge("transition-colors", isActive ? "text-white" : "text-zinc-500 group-hover:text-zinc-300")}>{tab.icon}</span>}
                     <span className="truncate">{tab.title}</span>
+                    
+                    {isCurrentOS && (
+                      <div className="absolute right-3 flex items-center group">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6] animate-pulse" />
+                        <div className="absolute w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping opacity-75" />
+                      </div>
+                    )}
+
                     {isActive && (
                       <div className="absolute left-0 w-1 h-4 bg-white rounded-r-full shadow-[0_0_8px_white]" />
                     )}

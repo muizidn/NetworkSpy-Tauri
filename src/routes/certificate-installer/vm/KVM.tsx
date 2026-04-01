@@ -1,3 +1,4 @@
+import { FiMonitor } from "react-icons/fi";
 import Guide, { GuideStep } from "../Guide";
 
 export function KVMInstaller() {
@@ -140,7 +141,7 @@ export function KVMInstaller() {
   return (
     <Guide
       platform="KVM"
-      emoji="https://emoji.gg/assets/emoji/3855_KVM.png"
+      icon={<FiMonitor size={32} />}
       steps={KVMSteps}
     />
   );

@@ -1,3 +1,4 @@
+import { SiApple } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function MacOSInstaller() {
@@ -129,7 +130,7 @@ export function MacOSInstaller() {
   return (
     <Guide
       platform="macOS"
-      emoji="https://emoji.gg/assets/emoji/7178-macos.png"
+      icon={<SiApple size={32} />}
       steps={macOSSteps}
     />
   );

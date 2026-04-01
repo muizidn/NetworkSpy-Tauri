@@ -6,3 +6,4 @@ pub mod process_info;
 pub mod tags;
 pub mod sessions;
 pub mod viewers;
+pub mod bottom_pane;

@@ -61,11 +61,11 @@ export const GRPCViewerMode = () => {
 
     return (
         <div className="bg-[#0a0a0a] flex flex-col min-h-full h-full font-sans">
-            <div className="px-6 py-4 bg-[#111] border-b border-teal-500/10 flex items-center justify-between">
+            <div className="px-4 @sm:px-6 py-4 bg-[#111] border-b border-teal-500/10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="relative group">
                         <div className="absolute inset-0 bg-teal-500/20 blur-xl rounded-full scale-0 group-hover:scale-100 transition-transform"></div>
-                        <div className="w-10 h-10 rounded-xl bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shadow-lg relative z-10 brightness-150">
+                        <div className="w-8 h-8 @sm:w-10 @sm:h-10 rounded-xl bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shadow-lg relative z-10 brightness-150">
                             <FiZap size={24} />
                         </div>
                     </div>
@@ -126,7 +126,7 @@ export const GRPCViewerMode = () => {
 const Placeholder = ({ text }: { text: string }) => (
     <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a] font-sans">
         <div className="text-center">
-            <div className="w-20 h-20 bg-teal-600/5 rounded-3xl border border-teal-500/10 flex items-center justify-center text-teal-400 mx-auto mb-6 shadow-2xl relative">
+            <div className="w-16 h-16 @sm:w-20 @sm:h-20 bg-teal-600/5 rounded-3xl border border-teal-500/10 flex items-center justify-center text-teal-400 mx-auto mb-6 shadow-2xl relative">
                 <div className="absolute inset-0 bg-teal-500/5 blur-2xl rounded-full"></div>
                 <FiZap size={40} className="relative z-10 brightness-125" />
             </div>

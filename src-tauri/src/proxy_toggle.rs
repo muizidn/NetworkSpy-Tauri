@@ -1,15 +1,24 @@
-#![cfg_attr(
-    all(not(debug_assertions), target_os = "windows"),
-    windows_subsystem = "windows"
-)]
-
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::process::Command;
 
 #[derive(Debug)]
-pub struct ProxyToggle {}
+pub struct ProxyToggle {
+    is_active: AtomicBool,
+}
 
 impl ProxyToggle {
+    pub fn new() -> Self {
+        Self {
+            is_active: AtomicBool::new(false),
+        }
+    }
+
+    pub fn is_on(&self) -> bool {
+        self.is_active.load(Ordering::Relaxed)
+    }
+
     pub fn turn_on(&self, port: u64) {
+        self.is_active.store(true, Ordering::Relaxed);
         #[cfg(target_os = "macos")]
         self.turn_on_macos(port);
 
@@ -21,6 +30,7 @@ impl ProxyToggle {
     }
 
     pub fn turn_off(&self) {
+        self.is_active.store(false, Ordering::Relaxed);
         #[cfg(target_os = "macos")]
         self.turn_off_macos();
 
@@ -33,14 +43,51 @@ impl ProxyToggle {
 
     #[cfg(target_os = "macos")]
     fn turn_on_macos(&self, port: u64) {
-        assert!(self.shell("/usr/sbin/networksetup", &["-setwebproxy", "Wi-Fi", "127.0.0.1", &port.to_string()]));
-        assert!(self.shell("/usr/sbin/networksetup", &["-setsecurewebproxy", "Wi-Fi", "127.0.0.1", &port.to_string()]));
+        /*
+         * To ensure all network connections (Wi-Fi, Ethernet/LAN, etc.) are proxied,
+         * we list all available network services and apply the settings to each.
+         */
+        let services = self.get_macos_services();
+        for service in services {
+            let _ = self.shell("/usr/sbin/networksetup", &["-setwebproxy", &service, "127.0.0.1", &port.to_string()]);
+            let _ = self.shell("/usr/sbin/networksetup", &["-setsecurewebproxy", &service, "127.0.0.1", &port.to_string()]);
+        }
     }
 
     #[cfg(target_os = "macos")]
     fn turn_off_macos(&self) {
-        assert!(self.shell("/usr/sbin/networksetup", &["-setwebproxystate", "Wi-Fi", "off"]));
-        assert!(self.shell("/usr/sbin/networksetup", &["-setsecurewebproxystate", "Wi-Fi", "off"]));
+        /*
+         * Iterate through all network services to disable the proxy state.
+         */
+        let services = self.get_macos_services();
+        for service in services {
+            let _ = self.shell("/usr/sbin/networksetup", &["-setwebproxystate", &service, "off"]);
+            let _ = self.shell("/usr/sbin/networksetup", &["-setsecurewebproxystate", &service, "off"]);
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    fn get_macos_services(&self) -> Vec<String> {
+        let output = Command::new("/usr/sbin/networksetup")
+            .arg("-listallnetworkservices")
+            .output();
+
+        match output {
+            Ok(out) => {
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                stdout.lines()
+                    .filter(|line| {
+                        let l = line.trim();
+                        // Skip the explanation line and disabled services (marked with *)
+                        !l.is_empty() && 
+                        !l.contains("denotes") && 
+                        !l.starts_with('*')
+                    })
+                    .map(|l| l.trim().to_string())
+                    .collect()
+            },
+            Err(_) => vec!["Wi-Fi".to_string()] // Fallback to Wi-Fi if command fails
+        }
     }
 
     #[cfg(target_os = "linux")]
@@ -86,10 +133,16 @@ impl ProxyToggle {
     }
 
     fn shell(&self, launch_path: &str, args: &[&str]) -> bool {
-        let status = Command::new(launch_path)
-            .args(args)
-            .status()
-            .expect("failed to execute process");
+        let mut cmd = Command::new(launch_path);
+        cmd.args(args);
+
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000);
+        }
+
+        let status = cmd.status().expect("failed to execute process");
         status.success()
     }
 }

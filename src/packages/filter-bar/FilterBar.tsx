@@ -254,6 +254,7 @@ export const FilterBar = () => {
   const handleSaveCurrent = () => {
     if (saveName.trim()) {
       saveCurrentFilters(saveName.trim());
+      setFilters([]); // Clear the filters once saved
       setSaveName("");
       setShowSaveInput(false);
     }
@@ -369,12 +370,6 @@ export const FilterBar = () => {
                       : 'bg-zinc-900/50 border-zinc-800/50 text-zinc-400 hover:bg-zinc-600 hover:text-white hover:border-zinc-500'
                   )}>
                   <span>{tab.name}</span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); removePredefinedFilter(tab.id); }}
-                    className="ml-2 hover:bg-black/20 rounded-full p-0.5 hidden group-hover/predefined:block transition-opacity"
-                  >
-                    <FiX size={10} />
-                  </button>
                 </div>
               );
             })}

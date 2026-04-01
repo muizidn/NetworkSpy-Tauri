@@ -1,0 +1,237 @@
+<svg width="100%" viewBox="0 0 800 2800" xmlns="http://www.w3.org/2000/svg" style="background:#ffffff;font-family:'Segoe UI',sans-serif;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)">
+  <defs>
+    <!-- Markers for arrows -->
+    <marker id="arr-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><polygon points="0 0,10 5,0 10" fill="#e10098"/></marker>
+    
+    <!-- GraphQL Logo Shape -->
+    <symbol id="gql-logo" viewBox="0 0 100 100">
+      <polygon points="50 5, 93.3 30, 93.3 80, 50 105, 6.7 80, 6.7 30" fill="none" stroke="#e10098" stroke-width="4"/>
+      <circle cx="50" cy="55" r="10" fill="#e10098"/>
+      <line x1="50" y1="5" x2="50" y2="105" stroke="#e10098" stroke-width="2"/>
+      <line x1="6.7" y1="30" x2="93.3" y2="80" stroke="#e10098" stroke-width="2"/>
+      <line x1="6.7" y1="80" x2="93.3" y2="30" stroke="#e10098" stroke-width="2"/>
+    </symbol>
+
+    <!-- Drop Shadows -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+      <feOffset dx="0" dy="2" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.1" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- BACKGROUND -->
+  <rect x="0" y="0" width="800" height="2800" fill="#ffffff" />
+
+  <!-- ═══ HEADER ═══ -->
+  <rect x="0" y="0" width="800" height="100" fill="#fcfcfc" />
+  <line x1="0" y1="100" x2="800" y2="100" stroke="#e2e8f0" stroke-width="1" />
+  
+  <use href="#gql-logo" x="30" y="20" width="60" height="60" />
+  <text x="110" y="55" font-size="28" font-weight="bold" fill="#1a202c">GraphQL Discovery</text>
+  <text x="110" y="80" font-size="14" fill="#e10098" font-weight="500">The Modern Data Query Language for APIs</text>
+  
+  <text x="770" y="45" font-size="12" font-weight="bold" fill="#e10098" text-anchor="end">Network Spy Academy</text>
+  <text x="770" y="65" font-size="11" fill="#718096" text-anchor="end">graphql.networkspy.io</text>
+
+  <!-- ═══ LEGEND ═══ -->
+  <rect x="30" y="120" width="740" height="40" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+  <circle cx="50" cy="140" r="7" fill="#e10098" /><text x="65" y="144" font-size="12" fill="#4a5568">History</text>
+  <circle cx="150" cy="140" r="7" fill="#3182ce" /><text x="165" y="144" font-size="12" fill="#4a5568">Core Concepts</text>
+  <circle cx="300" cy="140" r="7" fill="#38a169" /><text x="315" y="144" font-size="12" fill="#4a5568">Operations</text>
+  <circle cx="450" cy="140" r="7" fill="#805ad5" /><text x="465" y="144" font-size="12" fill="#4a5568">Federation</text>
+  <circle cx="600" cy="140" r="7" fill="#dd6b20" /><text x="615" y="144" font-size="12" fill="#4a5568">Next Level</text>
+
+  <!-- ═══ SPINE ═══ -->
+  <line x1="400" y1="180" x2="400" y2="2700" stroke="#e2e8f0" stroke-width="4" stroke-dasharray="8,4" />
+  <line x1="400" y1="180" x2="400" y2="2700" stroke="#e10098" stroke-width="1.5" opacity="0.4" />
+
+  <!-- ═══ TIMELINE ENTRIES (History) ═══ -->
+  
+  <!-- 2012 Inception -->
+  <circle cx="400" cy="250" r="14" fill="#e10098" stroke="#fce7f3" stroke-width="4" filter="url(#shadow)" />
+  <text x="400" y="255" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">2012</text>
+  <line x1="386" y1="250" x2="350" y2="250" stroke="#e10098" stroke-width="1.5" />
+  <rect x="40" y="200" width="310" height="100" rx="10" fill="#ffffff" stroke="#e10098" stroke-width="1.5" filter="url(#shadow)" />
+  <text x="55" y="230" font-size="16" font-weight="bold" fill="#1a202c">GraphQL Inception</text>
+  <text x="55" y="255" font-size="12" fill="#4a5568">Facebook develops GraphQL internally.</text>
+  <text x="55" y="275" font-size="12" fill="#4a5568">Solved data fetching for mobile news feeds.</text>
+  <text x="55" y="290" font-size="11" fill="#e10098" italic="true">End of over-fetching &amp; under-fetching.</text>
+
+  <!-- 2015 Open Source -->
+  <circle cx="400" cy="400" r="14" fill="#e10098" stroke="#fce7f3" stroke-width="4" filter="url(#shadow)" />
+  <text x="400" y="405" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">2015</text>
+  <line x1="414" y1="400" x2="450" y2="400" stroke="#e10098" stroke-width="1.5" />
+  <rect x="450" y="350" width="310" height="100" rx="10" fill="#ffffff" stroke="#3182ce" stroke-width="1.5" filter="url(#shadow)" />
+  <text x="465" y="380" font-size="16" font-weight="bold" fill="#1a202c">Open Sourced</text>
+  <text x="465" y="405" font-size="12" fill="#4a5568">Public release of GraphQL Specification.</text>
+  <text x="465" y="425" font-size="12" fill="#4a5568">GraphQL.js and GraphiQL IDE released.</text>
+  <text x="465" y="440" font-size="11" fill="#3182ce">Community adoption begins.</text>
+
+  <!-- 2018 Foundation -->
+  <circle cx="400" cy="550" r="14" fill="#e10098" stroke="#fce7f3" stroke-width="4" filter="url(#shadow)" />
+  <text x="400" y="555" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">2018</text>
+  <line x1="386" y1="550" x2="350" y2="550" stroke="#e10098" stroke-width="1.5" />
+  <rect x="40" y="500" width="310" height="100" rx="10" fill="#ffffff" stroke="#805ad5" stroke-width="1.5" filter="url(#shadow)" />
+  <text x="55" y="530" font-size="16" font-weight="bold" fill="#1a202c">GraphQL Foundation</text>
+  <text x="55" y="555" font-size="12" fill="#4a5568">Moves to Linux Foundation.</text>
+  <text x="55" y="575" font-size="12" fill="#4a5568">Vendor-neutral governance established.</text>
+  <text x="55" y="590" font-size="11" fill="#805ad5">Ensuring a stable, open future.</text>
+
+  <!-- ═══ CORE CONCEPTS SECTION ═══ -->
+  <rect x="250" y="650" width="300" height="40" rx="20" fill="#3182ce" filter="url(#shadow)" />
+  <text x="400" y="675" text-anchor="middle" font-size="18" font-weight="bold" fill="#ffffff">Core Concepts</text>
+
+  <!-- Schema &amp; SDL -->
+  <rect x="40" y="730" width="720" height="180" rx="12" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1" />
+  <text x="60" y="765" font-size="20" font-weight="bold" fill="#1a202c">1. Schema &amp; SDL</text>
+  <text x="60" y="790" font-size="14" fill="#4a5568">The contract between Client and Server.</text>
+  <rect x="60" y="810" width="300" height="80" rx="6" fill="#1a202c" />
+  <text x="75" y="835" font-size="12" font-family="monospace"><tspan fill="#c678dd">type</tspan> <tspan fill="#e5c07b">User</tspan> <tspan fill="#abb2bf">{</tspan></text>
+  <text x="95" y="855" font-size="12" font-family="monospace"><tspan fill="#61afef">id</tspan><tspan fill="#abb2bf">: </tspan><tspan fill="#d19a66">ID!</tspan></text>
+  <text x="95" y="875" font-size="12" font-family="monospace"><tspan fill="#61afef">name</tspan><tspan fill="#abb2bf">: </tspan><tspan fill="#61afef">String</tspan></text>
+  <text x="75" y="895" font-size="12" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+  <text x="380" y="825" font-size="13" font-weight="bold" fill="#1a202c">Key Attributes:</text>
+  <text x="380" y="845" font-size="13" fill="#4a5568">• Strongly Typed</text>
+  <text x="380" y="865" font-size="13" fill="#4a5568">• Self-Documenting (Introspection)</text>
+  <text x="380" y="885" font-size="13" fill="#4a5568">• Graph-based Relationships</text>
+
+  <!-- Data Flow / Resolvers -->
+  <rect x="40" y="940" width="720" height="180" rx="12" fill="#f0fff4" stroke="#c6f6d5" stroke-width="1" />
+  <text x="60" y="975" font-size="20" font-weight="bold" fill="#1a202c">2. Execution &amp; Resolvers</text>
+  <text x="60" y="1000" font-size="14" fill="#4a5568">How data is actually fetched from sources.</text>
+  
+  <rect x="60" y="1030" width="100" height="50" rx="8" fill="#ffffff" stroke="#e10098" stroke-width="2" />
+  <text x="110" y="1060" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a202c">Query</text>
+  <line x1="160" y1="1055" x2="200" y2="1055" stroke="#4a5568" stroke-width="2" marker-end="url(#arr-p)" />
+  
+  <rect x="210" y="1030" width="100" height="50" rx="8" fill="#e10098" />
+  <text x="260" y="1060" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">Resolver</text>
+  <line x1="310" y1="1055" x2="350" y2="1055" stroke="#4a5568" stroke-width="2" marker-end="url(#arr-p)" />
+
+  <rect x="360" y="1030" width="100" height="50" rx="8" fill="#ffffff" stroke="#4a5568" stroke-width="2" />
+  <text x="410" y="1060" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a202c">Database</text>
+  
+  <text x="500" y="1045" font-size="13" fill="#4a5568">Resolvers can connect to:</text>
+  <text x="500" y="1065" font-size="13" fill="#4a5568">• SQL/NoSQL Databases</text>
+  <text x="500" y="1085" font-size="13" fill="#4a5568">• REST APIs / Legacy Services</text>
+  <text x="500" y="1105" font-size="13" fill="#4a5568">• External Cloud Functions</text>
+
+  <!-- ═══ OPERATIONS SECTION ═══ -->
+  <rect x="250" y="1180" width="300" height="40" rx="20" fill="#38a169" filter="url(#shadow)" />
+  <text x="400" y="1205" text-anchor="middle" font-size="18" font-weight="bold" fill="#ffffff">Operations</text>
+
+  <!-- Query -->
+  <rect x="40" y="1250" width="220" height="250" rx="12" fill="#ffffff" stroke="#3182ce" stroke-width="2" filter="url(#shadow)" />
+  <text x="150" y="1285" text-anchor="middle" font-size="18" font-weight="bold" fill="#3182ce">Queries</text>
+  <text x="150" y="1310" text-anchor="middle" font-size="12" fill="#4a5568">Read Data</text>
+  <rect x="55" y="1330" width="190" height="140" rx="6" fill="#1a202c" />
+  <text x="65" y="1355" font-size="11" font-family="monospace"><tspan fill="#c678dd">query</tspan> <tspan fill="#abb2bf">{</tspan></text>
+  <text x="85" y="1375" font-size="11" font-family="monospace"><tspan fill="#abb2bf">me {</tspan></text>
+  <text x="105" y="1395" font-size="11" font-family="monospace"><tspan fill="#61afef">name</tspan></text>
+  <text x="105" y="1415" font-size="11" font-family="monospace"><tspan fill="#61afef">email</tspan></text>
+  <text x="85" y="1435" font-size="11" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+  <text x="65" y="1455" font-size="11" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+
+  <!-- Mutation -->
+  <rect x="290" y="1250" width="220" height="250" rx="12" fill="#ffffff" stroke="#e53e3e" stroke-width="2" filter="url(#shadow)" />
+  <text x="400" y="1285" text-anchor="middle" font-size="18" font-weight="bold" fill="#e53e3e">Mutations</text>
+  <text x="400" y="1310" text-anchor="middle" font-size="12" fill="#4a5568">Write/Update Data</text>
+  <rect x="305" y="1330" width="190" height="160" rx="6" fill="#1a202c" />
+  <text x="315" y="1355" font-size="11" font-family="monospace"><tspan fill="#c678dd">mutation</tspan> <tspan fill="#abb2bf">{</tspan></text>
+  <text x="335" y="1375" font-size="11" font-family="monospace"><tspan fill="#61afef">updateProfile</tspan><tspan fill="#abb2bf">(</tspan></text>
+  <text x="355" y="1395" font-size="11" font-family="monospace"><tspan fill="#d19a66">name</tspan><tspan fill="#abb2bf">: </tspan><tspan fill="#98c379">"Muiz"</tspan></text>
+  <text x="335" y="1415" font-size="11" font-family="monospace"><tspan fill="#abb2bf">) {</tspan></text>
+  <text x="355" y="1435" font-size="11" font-family="monospace"><tspan fill="#61afef">id</tspan></text>
+  <text x="335" y="1455" font-size="11" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+  <text x="315" y="1475" font-size="11" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+
+  <!-- Subscription -->
+  <rect x="540" y="1250" width="220" height="250" rx="12" fill="#ffffff" stroke="#805ad5" stroke-width="2" filter="url(#shadow)" />
+  <text x="650" y="1285" text-anchor="middle" font-size="18" font-weight="bold" fill="#805ad5">Subscriptions</text>
+  <text x="650" y="1310" text-anchor="middle" font-size="12" fill="#4a5568">Real-time Stream</text>
+  <rect x="555" y="1330" width="190" height="140" rx="6" fill="#1a202c" />
+  <text x="565" y="1355" font-size="11" font-family="monospace"><tspan fill="#c678dd">subscription</tspan> <tspan fill="#abb2bf">{</tspan></text>
+  <text x="585" y="1375" font-size="11" font-family="monospace"><tspan fill="#61afef">newMessage</tspan> <tspan fill="#abb2bf">{</tspan></text>
+  <text x="605" y="1395" font-size="11" font-family="monospace"><tspan fill="#61afef">text</tspan></text>
+  <text x="605" y="1415" font-size="11" font-family="monospace"><tspan fill="#61afef">sender</tspan></text>
+  <text x="585" y="1435" font-size="11" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+  <text x="565" y="1455" font-size="11" font-family="monospace"><tspan fill="#abb2bf">}</tspan></text>
+
+  <!-- ═══ FEDERATION SECTION ═══ -->
+  <rect x="250" y="1580" width="300" height="40" rx="20" fill="#805ad5" filter="url(#shadow)" />
+  <text x="400" y="1605" text-anchor="middle" font-size="18" font-weight="bold" fill="#ffffff">Federated GraphQL</text>
+
+  <rect x="40" y="1650" width="720" height="400" rx="12" fill="#faf5ff" stroke="#d6bcfa" stroke-width="1" />
+  <text x="400" y="1690" text-anchor="middle" font-size="22" font-weight="bold" fill="#1a202c">The Supergraph Architecture</text>
+  
+  <!-- Subgraphs -->
+  <rect x="100" y="1850" width="120" height="60" rx="8" fill="#ffffff" stroke="#805ad5" stroke-width="2" />
+  <text x="160" y="1880" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a202c">User Subgraph</text>
+  
+  <rect x="340" y="1850" width="120" height="60" rx="8" fill="#ffffff" stroke="#805ad5" stroke-width="2" />
+  <text x="400" y="1880" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a202c">Order Subgraph</text>
+  
+  <rect x="580" y="1850" width="120" height="60" rx="8" fill="#ffffff" stroke="#805ad5" stroke-width="2" />
+  <text x="640" y="1880" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a202c">Product Subgraph</text>
+
+  <!-- Lines from Gateway -->
+  <line x1="400" y1="1780" x2="160" y2="1850" stroke="#805ad5" stroke-width="2" stroke-dasharray="4,2" />
+  <line x1="400" y1="1780" x2="400" y2="1850" stroke="#805ad5" stroke-width="2" stroke-dasharray="4,2" />
+  <line x1="400" y1="1780" x2="640" y2="1850" stroke="#805ad5" stroke-width="2" stroke-dasharray="4,2" />
+
+  <!-- Gateway -->
+  <rect x="300" y="1720" width="200" height="60" rx="30" fill="#805ad5" filter="url(#shadow)" />
+  <text x="400" y="1755" text-anchor="middle" font-size="14" font-weight="bold" fill="#ffffff">Gateway / Router</text>
+  
+  <text x="400" y="1950" text-anchor="middle" font-size="14" fill="#4a5568">A single access point for multiple independent microservices.</text>
+  <text x="400" y="1975" text-anchor="middle" font-size="14" font-weight="bold" fill="#805ad5">Apollo Federation · Subgraphs · Composition</text>
+
+  <!-- ═══ NEXT LEVEL SECTION ═══ -->
+  <rect x="250" y="2100" width="300" height="40" rx="20" fill="#dd6b20" filter="url(#shadow)" />
+  <text x="400" y="2125" text-anchor="middle" font-size="18" font-weight="bold" fill="#ffffff">The Next Level</text>
+
+  <!-- Relay &amp; Type Safety -->
+  <rect x="40" y="2170" width="340" height="150" rx="12" fill="#fffaf0" stroke="#fbd38d" stroke-width="1" />
+  <text x="60" y="2200" font-size="18" font-weight="bold" fill="#1a202c">Relay &amp; Clients</text>
+  <text x="60" y="2225" font-size="14" fill="#4a5568">Highly optimized clients.</text>
+  <text x="60" y="2250" font-size="13" fill="#dd6b20">• Fragment Colocation</text>
+  <text x="60" y="2270" font-size="13" fill="#dd6b20">• Global ID pattern</text>
+  <text x="60" y="2290" font-size="13" fill="#dd6b20">• Type-safe generated hooks</text>
+
+  <!-- Mesh &amp; Integration -->
+  <rect x="420" y="2170" width="340" height="150" rx="12" fill="#fffaf0" stroke="#fbd38d" stroke-width="1" />
+  <text x="440" y="2200" font-size="18" font-weight="bold" fill="#1a202c">GraphQL Mesh</text>
+  <text x="440" y="2225" font-size="14" fill="#4a5568">Connect anything to anything.</text>
+  <text x="440" y="2250" font-size="13" fill="#dd6b20">• OpenAPI to GraphQL</text>
+  <text x="440" y="2270" font-size="13" fill="#dd6b20">• gRPC to GraphQL</text>
+  <text x="440" y="2290" font-size="13" fill="#dd6b20">• Data Transformation Layers</text>
+
+  <!-- Real-time / Defer / Stream -->
+  <rect x="40" y="2350" width="720" height="120" rx="12" fill="#ffffff" stroke="#dd6b20" stroke-width="2" stroke-dasharray="10,5" />
+  <text x="60" y="2385" font-size="18" font-weight="bold" fill="#1a202c">Real-time &amp; Performance</text>
+  <text x="60" y="2410" font-size="14" fill="#4a5568">Optimizing for the user experience.</text>
+  <text x="400" y="2385" font-size="13" fill="#dd6b20" font-weight="bold">@defer</text>
+  <text x="400" y="2405" font-size="12" fill="#4a5568">Return expensive fields late.</text>
+  <text x="600" y="2385" font-size="13" fill="#dd6b20" font-weight="bold">@stream</text>
+  <text x="600" y="2405" font-size="12" fill="#4a5568">Iterate over arrays as they load.</text>
+
+  <!-- ═══ FOOTER ═══ -->
+  <rect x="0" y="2500" width="800" height="300" fill="#fcfcfc" />
+  <line x1="0" y1="2500" x2="800" y2="2500" stroke="#e2e8f0" stroke-width="1" />
+  
+  <text x="400" y="2560" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a202c">Ready to Build?</text>
+  <text x="400" y="2590" text-anchor="middle" font-size="14" fill="#4a5568">GraphQL is the foundation of modern, interconnected digital services.</text>
+  
+  <rect x="300" y="2630" width="200" height="50" rx="25" fill="#e10098" filter="url(#shadow)" />
+  <text x="400" y="2660" text-anchor="middle" font-size="14" font-weight="bold" fill="#ffffff">Explore Network Spy</text>
+  
+  <text x="400" y="2750" text-anchor="middle" font-size="11" fill="#a0aec0">© 2026 Network Spy Academy · Made with GraphQL</text>
+
+</svg>

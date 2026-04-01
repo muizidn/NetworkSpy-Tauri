@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FiMaximize, FiCode, FiTrash2, FiAlertCircle, FiMinimize } from "react-icons/fi";
+import { FiMaximize, FiCode, FiTrash2, FiAlertCircle, FiMinimize, FiSearch } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import Editor from "@monaco-editor/react";
 import { ViewerBlock } from "@src/context/ViewerContext";
@@ -16,7 +16,7 @@ interface BlockItemProps {
 
 export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = false }: BlockItemProps) => {
     const [isEditingCode, setIsEditingCode] = useState(false);
-    const [activeTab, setActiveTab] = useState<'js' | 'html' | 'css'>('js');
+    const [activeTab, setActiveTab] = useState<'js' | 'html' | 'css' | 'output'>('js');
     const [isMaximized, setIsMaximized] = useState(false);
 
     const isSmall = useMemo(() => {
@@ -55,6 +55,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                                 >
                                     <FiCode size={16} />
                                 </button>
+
 
                                 <div
                                     className="flex items-center gap-2 px-2 border-l border-white/20 ml-1">
@@ -136,9 +137,30 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                                     >
                                         Logic (JS)
                                     </button>
+                                    <button
+                                        onClick={() => setActiveTab('output')}
+                                        className={twMerge("text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all", activeTab === 'output' ? "text-amber-500 border-amber-500" : "text-zinc-600 border-transparent hover:text-zinc-400")}
+                                    >
+                                        Output (RAW)
+                                    </button>
                                 </div>
                             ) : (
-                                <label className="text-[9px] font-black uppercase text-zinc-600 tracking-widest">Logic Script (Async JavaScript)</label>
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setActiveTab('js')}
+                                        className={twMerge("text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all", activeTab === 'js' ? "text-blue-500 border-blue-500" : "text-zinc-600 border-transparent hover:text-zinc-400")}
+                                    >
+                                        Logic (JS)
+                                    </button>
+                                    {result && (
+                                        <button
+                                            onClick={() => setActiveTab('output')}
+                                            className={twMerge("text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all", activeTab === 'output' ? "text-amber-500 border-amber-500" : "text-zinc-600 border-transparent hover:text-zinc-400")}
+                                        >
+                                            Output (RAW)
+                                        </button>
+                                    )}
+                                </div>
                             )}
                             <div className="text-[8px] text-zinc-700 font-bold uppercase tracking-wider">
                                 {activeTab === 'js' ? 'Host Context' : activeTab === 'html' ? 'IFrame Source' : 'IFrame Styles'}
@@ -147,13 +169,28 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                         <div className="h-[350px] border-y border-zinc-800/50">
                             <Editor
                                 height="100%"
-                                language={activeTab === 'js' ? 'javascript' : activeTab === 'html' ? 'html' : 'css'}
+                                language={
+                                    activeTab === 'js' ? 'javascript' : 
+                                    activeTab === 'html' ? 'html' : 
+                                    activeTab === 'css' ? 'css' : 
+                                    (block.type === 'html' ? 'html' : 'json')
+                                }
                                 theme="vs-dark"
-                                value={activeTab === 'js' ? block.code : activeTab === 'html' ? (block.html || "") : (block.css || "")}
+                                options={{
+                                    readOnly: activeTab === 'output',
+                                    minimap: { enabled: false },
+                                    fontSize: 11
+                                }}
+                                value={
+                                    activeTab === 'js' ? block.code : 
+                                    activeTab === 'html' ? (block.html || "") : 
+                                    activeTab === 'css' ? (block.css || "") : 
+                                    (typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result || ""))
+                                }
                                 onChange={(val) => {
                                     if (activeTab === 'js') onUpdate?.({ code: val || "" });
                                     else if (activeTab === 'html') onUpdate?.({ html: val || "" });
-                                    else onUpdate?.({ css: val || "" });
+                                    else if (activeTab === 'css') onUpdate?.({ css: val || "" });
                                 }}
                             />
                         </div>

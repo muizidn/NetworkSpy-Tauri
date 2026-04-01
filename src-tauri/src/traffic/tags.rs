@@ -1,10 +1,10 @@
 use serde::{Serialize, Deserialize};
-use rusqlite::{params, Connection};
+use rusqlite::params;
 use std::sync::{Arc, Mutex};
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use std::collections::HashMap;
 use crate::traffic::db::TrafficDb;
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -97,13 +97,13 @@ impl TagManager {
         self.rules.lock().unwrap().clone()
     }
 
-    pub fn sync_tagging(&self, uri: &str, method: &str, headers: &HashMap<String, String>) -> Vec<String> {
+    pub fn sync_tagging(&self, uri: &str, method: &str, _headers: &HashMap<String, String>) -> Vec<String> {
         let rules = self.rules.lock().unwrap();
         let glob_set_opt = self.glob_set.lock().unwrap();
         
         let mut applied_tags = Vec::new();
         
-        if let Some(glob_set) = glob_set_opt.as_ref() {
+        if let Some(_glob_set) = glob_set_opt.as_ref() {
             // ...
             for rule in rules.iter().filter(|r| r.enabled && r.is_sync && r.scope == "metadata") {
                 if rule.method != "ALL" && rule.method != method {
@@ -127,7 +127,7 @@ impl TagManager {
         applied_tags
     }
 
-    pub fn async_tagging(&self, id: String, uri: String, method: String, headers: HashMap<String, String>, body: Vec<u8>, app_handle: AppHandle) {
+    pub fn async_tagging(&self, id: String, uri: String, method: String, _headers: HashMap<String, String>, body: Vec<u8>, app_handle: AppHandle) {
         let manager_arc = Arc::new(self.clone_for_async()); // Minimal clone or use reference
         let db_arc = Arc::clone(&self.db);
         

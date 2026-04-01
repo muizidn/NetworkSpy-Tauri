@@ -25,14 +25,14 @@ export const VideoViewerMode = () => {
     const isVideo = data?.content_type?.toLowerCase().includes('video') || data?.content_type?.toLowerCase().includes('mpegurl')
 
     return (
-        <div className="bg-[#050505] flex flex-col p-6 min-h-full">
+        <div className="bg-[#050505] flex flex-col p-4 @sm:p-6 min-h-full">
             <div className="flex-grow flex flex-col max-w-4xl mx-auto w-full">
                 {/* Video Stage */}
                 <div className="aspect-video bg-black rounded-2xl border border-white/5 relative overflow-hidden group shadow-2xl">
                     {isVideo ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/40">
                             <FiActivity className="text-blue-500 animate-pulse" size={48} />
-                            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute bottom-0 left-0 right-0 p-4 @sm:p-6 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />

@@ -1,4 +1,4 @@
-use tauri::Manager;
+// No imports needed for Manager if unused
 use rusqlite::{params, Connection};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};

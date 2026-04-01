@@ -9,33 +9,14 @@ fi
 CERTIFICATE_PATH="$1"
 
 # Import the certificate into the login keychain
-echo "Importing certificate..."
-security import "$CERTIFICATE_PATH" -k ~/Library/Keychains/login.keychain-db -T /usr/bin/codesign
+# This does NOT require admin/sudo, but OS will still ask for "Always Trust" confirmation
+echo "Importing certificate to Login Keychain..."
+security add-trusted-cert -d -r trustRoot -k ~/Library/Keychains/login.keychain-db "$CERTIFICATE_PATH"
 
-# Check if the import was successful
+# Check if the operation was successful
 if [ $? -ne 0 ]; then
-    echo "Failed to import certificate."
+    echo "Failed to install certificate."
     exit 1
 fi
 
-# Set the trust settings for the certificate
-echo "Setting trust settings..."
-security trust-settings-import -d ~/Library/Keychains/login.keychain-db <<EOF
-{
-    "Trust": {
-        "Certificates": {
-            "$CERTIFICATE_PATH": {
-                "Trust": {
-                    "Always Trust": true
-                }
-            }
-        }
-    }
-}
-EOF
-
-# Verify the installation
-echo "Verifying installation..."
-security find-identity -p codesigning
-
-echo "Certificate installed and trusted successfully."
+echo "Certificate installed and trusted successfully in Login Keychain."

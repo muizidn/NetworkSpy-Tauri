@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useTrafficListContext } from "./context/TrafficList";
 import { twMerge } from "tailwind-merge";
-import { FiExternalLink, FiGlobe, FiClock, FiBox, FiShield, FiLock } from "react-icons/fi";
+import { FiExternalLink, FiGlobe, FiClock, FiBox, FiShield, FiLock, FiChevronRight, FiChevronDown } from "react-icons/fi";
 import { useTagContext } from "@src/context/TagContext";
 
 const CustomTag = ({ tagName }: { tagName: string }) => {
@@ -22,14 +23,31 @@ const CustomTag = ({ tagName }: { tagName: string }) => {
 };
 
 const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   if (!url) return null;
+
+  const isLong = url.length > 100;
 
   try {
     const urlObj = new URL(url);
     const params = Array.from(urlObj.searchParams.entries());
+    const displayParams = isLong && !isExpanded ? params.slice(0, 3) : params;
 
     return (
       <div className="font-mono text-[13px] leading-relaxed break-words select-text">
+        {isLong && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={twMerge(
+              "inline-flex items-center justify-center w-5 h-5 mr-1 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors align-middle text-zinc-400 group relative",
+              !isExpanded && "animate-button-pulse border border-purple-500/30"
+            )}
+            title={isExpanded ? "Collapse URL" : "Expand URL"}
+          >
+            {isExpanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+          </button>
+        )}
+
         {intercepted && (
           <FiShield
             size={12}
@@ -59,32 +77,55 @@ const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean
           />
         </button>
 
-        <span className="text-zinc-300">{urlObj.pathname}</span>
+        <span className="text-zinc-300">
+          {isLong && !isExpanded ? urlObj.pathname.substring(0, 30) + (urlObj.pathname.length > 30 ? "..." : "") : urlObj.pathname}
+        </span>
 
-        {params.length > 0 && (
+        {displayParams.length > 0 && (
           <>
             <span className="text-zinc-500">?</span>
 
-            {params.map(([key, value], i) => (
+            {displayParams.map(([key, value], i) => (
               <span key={i}>
                 <span className="text-orange-400">{key}</span>
                 <span className="text-zinc-500">=</span>
-                <span className="text-green-400">{value}</span>
+                <span className="text-green-400">
+                  {isLong && !isExpanded ? value.substring(0, 20) + (value.length > 20 ? "..." : "") : value}
+                </span>
 
-                {i < params.length - 1 && (
+                {i < displayParams.length - 1 && (
                   <span className="text-zinc-500">&</span>
                 )}
               </span>
             ))}
+            
+            {isLong && !isExpanded && params.length > 3 && (
+              <span className="text-zinc-500 ml-1">...(+{params.length - 3} more)</span>
+            )}
           </>
         )}
       </div>
     );
   } catch {
+    const displayUrl = isLong && !isExpanded ? `${url.substring(0, 100)}...` : url;
     return (
-      <p className="text-zinc-300 font-mono text-[13px] break-words">
-        {url}
-      </p>
+      <div className="font-mono text-[13px] leading-relaxed break-words select-text flex items-start group">
+        {isLong && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={twMerge(
+              "flex-shrink-0 inline-flex items-center justify-center w-5 h-5 mr-1 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors align-middle text-zinc-400 mt-0.5",
+              !isExpanded && "animate-button-pulse border border-purple-500/30"
+            )}
+            title={isExpanded ? "Collapse URL" : "Expand URL"}
+          >
+            {isExpanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+          </button>
+        )}
+        <p className="text-zinc-300">
+          {displayUrl}
+        </p>
+      </div>
     );
   }
 };

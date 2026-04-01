@@ -143,6 +143,27 @@ impl TrafficDb {
             [],
         )?;
 
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS filter_presets (
+                id TEXT PRIMARY KEY,
+                name TEXT,
+                description TEXT,
+                filters TEXT
+            )",
+            [],
+        )?;
+
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )",
+            [],
+        )?;
+
+        // Migration: Ensure description column exists for older databases
+        let _ = conn.execute("ALTER TABLE filter_presets ADD COLUMN description TEXT", []);
+
         // Task 1.2: Add Indexes
         conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp)", [])?;
         conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_uri ON traffic(uri)", [])?;
@@ -241,7 +262,9 @@ impl TrafficDb {
                 req_body_size: 0, // Metadata only query
                 res_body_size: 0, // Metadata only query
                 client: row.get(9)?,
-                tags: row.get(10)?,
+                tags: row.get::<_, Option<String>>(10)?
+                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                    .unwrap_or_default(),
             })
         })?;
 
@@ -364,7 +387,9 @@ impl TrafficDb {
                 req_body_size: 0,
                 res_body_size: 0,
                 client: row.get(9)?,
-                tags: row.get(10)?,
+                tags: row.get::<_, Option<String>>(10)?
+                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                    .unwrap_or_default(),
             })
         })?;
 
@@ -419,7 +444,9 @@ impl TrafficDb {
                 req_body_size: 0,
                 res_body_size: 0,
                 client: row.get(15)?,
-                tags: row.get(16)?,
+                tags: row.get::<_, Option<String>>(16)?
+                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                    .unwrap_or_default(),
             };
             
             let req_body: Option<Vec<u8>> = row.get(9)?;
@@ -491,7 +518,9 @@ impl TrafficDb {
                     req_body_size: 0,
                     res_body_size: 0,
                     client: row.get(15)?,
-                    tags: row.get(16)?,
+                    tags: row.get::<_, Option<String>>(16)?
+                        .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                        .unwrap_or_default(),
                 };
                 
                 let req_body: Option<Vec<u8>> = row.get(9)?;
@@ -649,6 +678,80 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
     let _ = tx.commit();
 }
 
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct FilterPreset {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub filters: String,
+}
+
+impl TrafficDb {
+    pub fn get_filter_presets(&self) -> rusqlite::Result<Vec<FilterPreset>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT id, name, description, filters FROM filter_presets")?;
+        let rows = stmt.query_map([], |row| {
+            Ok(FilterPreset {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                filters: row.get(3)?,
+            })
+        })?;
+        
+        let mut list = Vec::new();
+        for row in rows {
+            list.push(row?);
+        }
+        Ok(list)
+    }
+
+    pub fn add_filter_preset(&self, preset: FilterPreset) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO filter_presets (id, name, description, filters) VALUES (?1, ?2, ?3, ?4)",
+            params![preset.id, preset.name, preset.description, preset.filters],
+        )?;
+        Ok(())
+    }
+
+    pub fn update_filter_preset(&self, id: String, name: Option<String>, description: Option<String>, filters: Option<String>) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        if let Some(n) = name {
+            conn.execute("UPDATE filter_presets SET name = ?2 WHERE id = ?1", params![id, n])?;
+        }
+        if let Some(d) = description {
+            conn.execute("UPDATE filter_presets SET description = ?2 WHERE id = ?1", params![id, d])?;
+        }
+        if let Some(f) = filters {
+            conn.execute("UPDATE filter_presets SET filters = ?2 WHERE id = ?1", params![id, f])?;
+        }
+        Ok(())
+    }
+
+    pub fn delete_filter_preset(&self, id: String) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM filter_presets WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    pub fn get_setting(&self, key: &str) -> rusqlite::Result<Option<String>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT value FROM settings WHERE key = ?1")?;
+        let res = stmt.query_row(params![key], |row| row.get(0)).or(Ok(None));
+        res
+    }
+
+    pub fn set_setting(&self, key: &str, value: &str) -> rusqlite::Result<()> {
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
+            "INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            params![key, value],
+        )?;
+        Ok(())
+    }
+}
+
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {
     let mut recent = cache.write().unwrap();
     match event {
@@ -666,7 +769,7 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
                 req_body_size: body.len(),
                 res_body_size: 0,
                 client: Some(client.clone()),
-                tags: Some(serde_json::to_string(tags).unwrap_or_default()),
+                tags: tags.clone(),
             };
             recent.push_front(metadata);
             if recent.len() > 10000 {
@@ -682,7 +785,7 @@ fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &T
         }
         TrafficEvent::UpdateTags { id, tags } => {
             if let Some(meta) = recent.iter_mut().find(|m| m.id == *id) {
-                meta.tags = Some(serde_json::to_string(tags).unwrap_or_default());
+                meta.tags = tags.clone();
             }
         }
         TrafficEvent::Exit => {}
@@ -703,7 +806,7 @@ pub struct TrafficMetadata {
     pub req_body_size: usize,
     pub res_body_size: usize,
     pub client: Option<String>,
-    pub tags: Option<String>,
+    pub tags: Vec<String>,
 }
 
 #[derive(Clone, serde::Serialize)]

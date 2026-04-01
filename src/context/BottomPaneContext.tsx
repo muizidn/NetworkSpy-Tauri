@@ -57,7 +57,9 @@ export type SingleMode =
     | "firebase_viewer"
     | "supabase_viewer"
     | "appwrite_viewer"
-    | "ads_viewer";
+    | "ads_viewer"
+    | "urlencoded"
+    | "multipart_form";
 
 /**
  * Modes when multiple traffics are selected.

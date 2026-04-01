@@ -31,7 +31,7 @@ The 'search' parameter in /api/catalog is reflected directly in the response wit
 
     if (selectedItems.length === 0) {
       return (
-        <div className="h-full flex flex-col items-center justify-center bg-zinc-950 text-red-100 p-10 text-center">
+        <div className="h-full flex flex-col items-center justify-center bg-zinc-950 text-red-100 p-6 @sm:p-10 text-center">
           <div className="text-4xl opacity-10 font-black mb-4">SEC AUDITOR</div>
           <p className="text-sm max-w-xs text-zinc-600">Select multiple requests to generate an AI-integrated security audit.</p>
         </div>
@@ -39,7 +39,7 @@ The 'search' parameter in /api/catalog is reflected directly in the response wit
     }
 
     return (
-      <div className="h-full bg-zinc-950 p-6 flex flex-col items-center overflow-auto">
+      <div className="h-full bg-zinc-950 p-4 @sm:p-6 flex flex-col items-center overflow-auto">
         <div className="max-w-3xl w-full">
           <div className="flex items-center gap-4 mb-10 pb-6 border-b border-zinc-900">
               <div className="w-16 h-16 rounded-full bg-red-950/30 flex items-center justify-center text-red-500 border border-red-900/40">
@@ -76,7 +76,7 @@ The 'search' parameter in /api/catalog is reflected directly in the response wit
                       <button onClick={() => setReport(null)} className="text-[10px] text-zinc-600 font-bold hover:text-white uppercase">Re-scan</button>
                   </div>
                   <div className="prose prose-invert prose-sm">
-                      <pre className="whitespace-pre-wrap text-zinc-300 font-sans leading-relaxed text-sm bg-black/40 p-6 rounded-xl border border-zinc-800">
+                      <pre className="whitespace-pre-wrap text-zinc-300 font-sans leading-relaxed text-sm bg-black/40 p-4 @sm:p-6 rounded-xl border border-zinc-800">
                           {report}
                       </pre>
                   </div>

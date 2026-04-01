@@ -50,7 +50,7 @@ export const QueryParamsMode = () => {
   return (
     <div className="flex flex-col h-full bg-[#0d0f11] text-zinc-300 font-sans overflow-hidden select-none">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#16191c] shrink-0">
+      <div className="flex items-center justify-between px-4 @sm:px-6 py-4 border-b border-zinc-800 bg-[#16191c] shrink-0">
         <div className="flex items-center gap-4">
           <div className="p-2 bg-orange-600/10 rounded-xl border border-orange-500/20 shadow-lg shadow-orange-500/5">
             <FiFilter className="text-orange-500" size={18} />
@@ -88,7 +88,7 @@ export const QueryParamsMode = () => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 @sm:p-6">
         <div className="max-w-5xl mx-auto space-y-4">
           
           {/* URL Ribbon */}
@@ -117,14 +117,14 @@ export const QueryParamsMode = () => {
               <tbody className="divide-y divide-zinc-900">
                 {filteredParams.map((param) => (
                   <tr key={param.id} className="group hover:bg-zinc-800/30 transition-colors">
-                    <td className="px-6 py-4 align-top">
+                    <td className="px-4 @sm:px-6 py-4 align-top">
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 font-mono text-[11px] font-bold border border-orange-500/20">
                           {param.key}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 align-top">
+                    <td className="px-4 @sm:px-6 py-4 align-top">
                       <div className="space-y-2">
                          {/* Multi-value detection (comma separated as requested in example) */}
                          {param.value.includes(',') ? (
@@ -159,7 +159,7 @@ export const QueryParamsMode = () => {
                          )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right align-top">
+                    <td className="px-4 @sm:px-6 py-4 text-right align-top">
                        <button 
                         onClick={() => copyToClipboard(`${param.key}=${param.value}`)}
                         className="p-1.5 bg-zinc-900 rounded border border-zinc-800 text-zinc-600 hover:text-orange-400 hover:border-orange-500/30 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
@@ -183,7 +183,7 @@ export const QueryParamsMode = () => {
       </div>
 
       {/* Footer bar */}
-      <div className="px-6 py-3 border-t border-zinc-900 bg-[#0c0e10] flex gap-6 shrink-0">
+      <div className="px-6 py-3 border-t border-zinc-900 bg-[#0c0e10] flex gap-4 @sm:p-6 shrink-0">
           <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
              <span className="w-2 h-2 rounded-full bg-orange-500/40" />
              Active Analyzer V1
@@ -197,7 +197,7 @@ export const QueryParamsMode = () => {
 };
 
 const Placeholder = ({ text, icon = null }: { text: string, icon?: React.ReactNode }) => (
-  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0f11] p-10 text-center">
+  <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0f11] p-6 @sm:p-10 text-center">
     <div className="flex flex-col items-center gap-4">
       {icon || <div className="text-4xl text-orange-950 font-bold opacity-30 tracking-tighter uppercase">Query Params</div>}
       <div className="text-sm max-w-md mx-auto font-medium text-zinc-600">{text}</div>

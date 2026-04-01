@@ -29,7 +29,7 @@ export const EndpointSummaryMode = () => {
     }
 
     return (
-      <div className="h-full bg-[#1e1e1e] p-6 overflow-auto">
+      <div className="h-full bg-[#1e1e1e] p-4 @sm:p-6 overflow-auto">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-bold mb-8 text-blue-400">Endpoint Usage Summary</h2>
           

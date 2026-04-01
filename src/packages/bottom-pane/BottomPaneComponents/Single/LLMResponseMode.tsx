@@ -123,7 +123,7 @@ export const LLMResponseMode = () => {
   return (
     <div className="flex flex-col h-full bg-[#15181a] text-zinc-300 overflow-hidden select-none">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-[#1e1e1e] shrink-0">
+      <div className="flex items-center justify-between px-4 @sm:px-6 py-4 border-b border-zinc-800 bg-[#1e1e1e] shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-600/10 rounded-xl border border-blue-500/20 shadow-lg shadow-blue-500/5">
             <FiMessageSquare className="text-blue-500" size={18} />
@@ -144,7 +144,7 @@ export const LLMResponseMode = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 @sm:p-6">
           {choiceCount > 1 && (
             <div className="flex bg-black/40 rounded-lg p-1 border border-zinc-800">
                 {Array.from({ length: choiceCount }).map((_, idx) => (
@@ -173,7 +173,7 @@ export const LLMResponseMode = () => {
         
         {/* Left: Metadata & Controls */}
         <div className="w-[30%] border-r border-zinc-900 bg-black/5 flex flex-col">
-          <div className="p-6 space-y-6">
+          <div className="p-4 @sm:p-6 space-y-6">
             
             {/* Usage Stats Card */}
             <div className="space-y-4">
@@ -236,7 +236,7 @@ export const LLMResponseMode = () => {
           </div>
 
           {/* Footer bar */}
-          <div className="px-6 py-3 border-t border-zinc-900 bg-black/20 flex gap-6">
+          <div className="px-6 py-3 border-t border-zinc-900 bg-black/20 flex gap-4 @sm:p-6">
               <div className="flex items-center gap-2 text-[10px] text-zinc-600 italic">
                  <span className="block w-2 h-2 rounded-full bg-blue-500/40" />
                  Rendered in Markdown Pro
@@ -272,7 +272,7 @@ const MetaItem = ({ label, value }: { label: string, value: string }) => (
 );
 
 const Placeholder = ({ text, icon }: { text: string, icon?: React.ReactNode }) => (
-    <div className="h-full flex items-center justify-center text-zinc-500 bg-[#15181a] p-10 text-center">
+    <div className="h-full flex items-center justify-center text-zinc-500 bg-[#15181a] p-6 @sm:p-10 text-center">
       <div className="flex flex-col items-center gap-4">
         {icon || <div className="text-4xl text-blue-900 font-bold opacity-30">LLM Response</div>}
         <div className="text-sm max-w-md mx-auto">{text}</div>

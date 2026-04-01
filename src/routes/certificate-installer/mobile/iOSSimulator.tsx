@@ -1,3 +1,4 @@
+import { SiApple } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function IOSSimulatorInstaller() {
@@ -127,8 +128,8 @@ export function IOSSimulatorInstaller() {
 
   return (
     <Guide
-      platform="Android"
-      emoji="https://emoji.gg/assets/emoji/4860_android.png"
+      platform="iOS"
+      icon={<SiApple size={32} />}
       steps={androidSteps}
     />
   );

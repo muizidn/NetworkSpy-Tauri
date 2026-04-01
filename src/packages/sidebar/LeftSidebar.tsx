@@ -1,5 +1,4 @@
-import React from "react";
-import { FiActivity, FiBox, FiSettings, FiGrid, FiClock, FiEye } from "react-icons/fi";
+import { FiActivity, FiBox, FiSettings, FiGrid, FiClock, FiEye, FiFilter } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { Tooltip } from "../ui/Tooltip";
@@ -17,6 +16,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onProClick }) => {
                     location.pathname === "/sessions" ? "sessions" :
                     location.pathname === "/viewers" ? "viewers" :
                     location.pathname === "/extensions" ? "extensions" : 
+                    location.pathname === "/filters" ? "filters" : 
                     location.pathname === "/settings" ? "settings" : 
                     location.pathname === "/account" ? "account" : "";
 
@@ -36,14 +36,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onProClick }) => {
             icon={<FiBox size={18} />}
             isActive={activeTab === "workspace"}
             onClick={() => navigate("/workspace")}
-          />
-        </Tooltip>
-
-        <Tooltip text="Saved Sessions">
-          <NavButton
-            icon={<FiClock size={18} />}
-            isActive={activeTab === "sessions"}
-            onClick={() => navigate("/sessions")}
           />
         </Tooltip>
 

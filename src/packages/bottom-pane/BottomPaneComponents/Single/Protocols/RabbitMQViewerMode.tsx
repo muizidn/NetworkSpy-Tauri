@@ -52,11 +52,11 @@ export const RabbitMQViewerMode = () => {
 
     return (
         <div className="bg-[#0a0a0a] flex flex-col min-h-full h-full font-sans">
-            <div className="px-6 py-4 bg-[#111] border-b border-orange-500/10 flex items-center justify-between">
+            <div className="px-4 @sm:px-6 py-4 bg-[#111] border-b border-orange-500/10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="relative group">
                         <div className="absolute inset-0 bg-orange-500/20 blur-xl rounded-full scale-0 group-hover:scale-110 transition-transform"></div>
-                        <div className="w-10 h-10 rounded-xl bg-orange-600/10 border border-orange-500/20 flex items-center justify-center text-[#F60] shadow-lg relative z-10">
+                        <div className="w-8 h-8 @sm:w-10 @sm:h-10 rounded-xl bg-orange-600/10 border border-orange-500/20 flex items-center justify-center text-[#F60] shadow-lg relative z-10">
                             <SiRabbitmq size={22} />
                         </div>
                     </div>
@@ -115,7 +115,7 @@ export const RabbitMQViewerMode = () => {
 const Placeholder = ({ text }: { text: string }) => (
     <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a] font-sans">
         <div className="text-center">
-            <div className="w-20 h-20 bg-orange-600/5 rounded-3xl border border-orange-500/10 flex items-center justify-center text-orange-500 mx-auto mb-6 shadow-2xl relative">
+            <div className="w-16 h-16 @sm:w-20 @sm:h-20 bg-orange-600/5 rounded-3xl border border-orange-500/10 flex items-center justify-center text-orange-500 mx-auto mb-6 shadow-2xl relative">
                 <div className="absolute inset-0 bg-orange-500/5 blur-2xl rounded-full animate-pulse"></div>
                 <SiRabbitmq size={40} className="relative z-10" />
             </div>

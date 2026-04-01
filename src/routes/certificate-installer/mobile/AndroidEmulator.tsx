@@ -1,3 +1,4 @@
+import { SiAndroid } from "react-icons/si";
 import Guide, { GuideStep } from "../Guide";
 
 export function AndroidEmulatorInstaller() {
@@ -128,7 +129,7 @@ export function AndroidEmulatorInstaller() {
   return (
     <Guide
       platform="Android"
-      emoji="https://emoji.gg/assets/emoji/4860_android.png"
+      icon={<SiAndroid size={32} />}
       steps={androidSteps}
     />
   );

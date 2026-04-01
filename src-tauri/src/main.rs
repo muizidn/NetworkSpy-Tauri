@@ -1,7 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-pub mod certificate_installer;
+pub mod ca_manager;
+mod certificate_installer;
 pub mod proxy_toggle;
 // pub mod submenu;
 pub mod traffic;
@@ -18,7 +19,8 @@ use std::fs;
 use std::sync::Arc;
 use std::env;
 use tauri::{AppHandle, Manager, Emitter};
-use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::menu::{Menu, MenuItem, MenuEvent, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
 use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
@@ -26,12 +28,46 @@ use traffic::har_util::{create_har_log, HarLog};
 use traffic::tags::{TagManager, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, toggle_folder_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, rename_tag_folder, delete_tag_folder_from_db};
 use traffic::sessions::{SessionManager, get_saved_sessions, get_session_folders, create_session_folder, delete_session_folder, rename_session_folder, move_session_to_folder, delete_saved_session, save_current_capture, save_capture_to_folder, get_session_traffic, import_session_from_har, import_session_to_folder, export_session_data, get_session_request_data, get_session_response_data};
 use traffic::viewers::{ViewerManager, get_custom_viewers, get_viewer_folders, create_viewer_folder, delete_viewer_folder, rename_viewer_folder, move_viewer_to_folder, delete_custom_viewer, save_custom_viewer};
+use traffic::bottom_pane::{BottomPaneManager, get_custom_checkers, save_custom_checker, delete_custom_checker};
 use flate2::read::{GzDecoder, ZlibDecoder};
 use std::io::Read;
 use base64::{Engine as _, engine::general_purpose};
-use std::sync::atomic::{AtomicU16, Ordering};
+use std::sync::atomic::{AtomicU16, AtomicU64, AtomicUsize, Ordering};
 use tokio::sync::mpsc;
 use rusqlite::params;
+
+struct TrayStats {
+    total_requests: AtomicUsize,
+    tx_bytes: AtomicU64,
+    rx_bytes: AtomicU64,
+}
+
+impl TrayStats {
+    fn new() -> Self {
+        Self {
+            total_requests: AtomicUsize::new(0),
+            tx_bytes: AtomicU64::new(0),
+            rx_bytes: AtomicU64::new(0),
+        }
+    }
+}
+
+static TRAY_STATS: OnceCell<Arc<TrayStats>> = OnceCell::new();
+fn format_bytes(bytes: u64) -> String {
+    const KB: u64 = 1024;
+    const MB: u64 = KB * 1024;
+    const GB: u64 = MB * 1024;
+
+    if bytes >= GB {
+        format!("{:.2} GB", bytes as f64 / GB as f64)
+    } else if bytes >= MB {
+        format!("{:.2} MB", bytes as f64 / MB as f64)
+    } else if bytes >= KB {
+        format!("{:.2} KB", bytes as f64 / KB as f64)
+    } else {
+        format!("{} B", bytes)
+    }
+}
 
 static ACTUAL_PORT: AtomicU16 = AtomicU16::new(9090);
 static RESTART_TX: OnceCell<mpsc::UnboundedSender<u16>> = OnceCell::new();
@@ -90,6 +126,34 @@ struct Payload {
 
 struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
 
+#[derive(Clone, Serialize, serde::Deserialize, Default)]
+struct ProxySettings {
+    show_connect_method: bool,
+    stream_certificate_logs: bool,
+}
+
+struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
+
+#[tauri::command]
+async fn get_proxy_settings(state: tauri::State<'_, ManagedProxySettings>) -> Result<ProxySettings, String> {
+    let settings = state.0.read().map_err(|e| e.to_string())?;
+    Ok(settings.clone())
+}
+
+#[tauri::command]
+async fn update_proxy_settings(
+    state: tauri::State<'_, ManagedProxySettings>,
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    new_settings: ProxySettings,
+) -> Result<(), String> {
+    let mut settings = state.0.write().map_err(|e| e.to_string())?;
+    *settings = new_settings.clone();
+    
+    let val = serde_json::to_string(&new_settings).map_err(|e| e.to_string())?;
+    let _ = db.set_setting("proxy_settings", &val);
+    Ok(())
+}
+
 #[tauri::command]
 async fn update_intercept_allow_list(
     state: tauri::State<'_, InterceptAllowList>,
@@ -144,21 +208,48 @@ fn change_proxy_port(port: u16) -> u16 {
 }
 
 #[tauri::command]
-fn install_certificate(cert_path: String) -> Result<String, String> {
+fn get_app_data_dir() -> std::path::PathBuf {
+    use std::env;
+    let home = env::var("HOME").or_else(|_| env::var("USERPROFILE")).unwrap_or_else(|_| ".".to_string());
+    std::path::PathBuf::from(home).join(".network-spy")
+}
+
+#[tauri::command]
+fn install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>, cert_path: String) -> Result<String, String> {
     print!("INSTALL CERTIFICATE");
-    CERTIFICATE_INSTALLER.get().unwrap().install(cert_path)
+    let stream_logs = state.0.read()
+        .map(|s| s.stream_certificate_logs)
+        .unwrap_or(false);
+    CERTIFICATE_INSTALLER.get().unwrap().install(Some(app), stream_logs, cert_path)
 }
 
 #[tauri::command]
-fn auto_install_certificate() -> Result<String, String> {
-    let ca_cert = include_str!("ca/network-spy.cer");
-    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(ca_cert)
+fn auto_install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>) -> Result<String, String> {
+    let app_data_dir = get_app_data_dir();
+    let cert_path = app_data_dir.join("ca").join("network-spy.crt");
+    
+    if !cert_path.exists() {
+        return Err(format!("Certificate file not found at: {}. Please restart the application.", cert_path.display()));
+    }
+
+    let cert_content = std::fs::read_to_string(cert_path).map_err(|e| e.to_string())?;
+    let stream_logs = state.0.read()
+        .map(|s| s.stream_certificate_logs)
+        .unwrap_or(false);
+    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(Some(app), stream_logs, &cert_content)
 }
 
 #[tauri::command]
-fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String) {
-    tauri::WebviewWindowBuilder::new(
-        &app_handle,
+fn uninstall_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>) -> Result<String, String> {
+    let stream_logs = state.0.read()
+        .map(|s| s.stream_certificate_logs)
+        .unwrap_or(false);
+    CERTIFICATE_INSTALLER.get().unwrap().uninstall(Some(app), stream_logs)
+}
+
+fn open_new_window_internal(app_handle: &tauri::AppHandle, context: String, title: String) {
+    let _ = tauri::WebviewWindowBuilder::new(
+        app_handle,
         context.clone(),
         tauri::WebviewUrl::App(std::path::PathBuf::from(format!("/{}", context))),
     )
@@ -166,8 +257,12 @@ fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String)
     .inner_size(1500.0, 700.0)
     .max_inner_size(1500.0, 700.0)
     .resizable(false)
-    .build()
-    .unwrap();
+    .build();
+}
+
+#[tauri::command]
+fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String) {
+    open_new_window_internal(&app_handle, context, title);
 }
 
 #[tauri::command]
@@ -176,6 +271,40 @@ fn get_recent_traffic(
     limit: usize,
 ) -> Vec<traffic::db::TrafficMetadata> {
     db.get_recent_traffic(limit)
+}
+
+#[tauri::command]
+fn get_all_metadata(
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    limit: Option<usize>,
+) -> Vec<traffic::db::TrafficMetadata> {
+    db.get_all_metadata(limit.unwrap_or(10)).unwrap_or_default()
+}
+
+#[tauri::command]
+fn get_filter_presets(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::FilterPreset>, String> {
+    db.get_filter_presets().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn add_filter_preset(preset: traffic::db::FilterPreset, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.add_filter_preset(preset).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn update_filter_preset(
+    id: String, 
+    name: Option<String>, 
+    description: Option<String>, 
+    filters: Option<String>, 
+    db: tauri::State<'_, Arc<TrafficDb>>
+) -> Result<(), String> {
+    db.update_filter_preset(id, name, description, filters).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_filter_preset(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.delete_filter_preset(id).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -194,6 +323,30 @@ async fn export_selected_to_har(path: String, ids: Vec<String>, db: tauri::State
     let json = serde_json::to_string_pretty(&har).map_err(|e: serde_json::Error| e.to_string())?;
     fs::write(path, json).map_err(|e: std::io::Error| e.to_string())?;
     Ok(())
+}
+
+fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
+    match event.id.as_ref() {
+        "quit" => {
+            if let Some(toggle) = PROXY_TOGGLE.get() {
+                toggle.turn_off();
+            }
+            app.exit(0);
+        }
+        "show" => {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
+        "reset_proxy" => {
+            if let Some(toggle) = PROXY_TOGGLE.get() {
+                toggle.turn_off();
+                println!("Emergency Proxy Reset from Tray");
+            }
+        }
+        _ => {}
+    }
 }
 
 #[tauri::command]
@@ -398,13 +551,44 @@ struct MyTrafficListener {
     app_handle: AppHandle,
     traffic_db: Arc<TrafficDb>,
     tag_manager: Arc<TagManager>,
+    proxy_settings: Arc<std::sync::RwLock<ProxySettings>>,
     request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
+    tray_stats: Arc<TrayStats>,
+    session_id: String,
 }
 
 impl TrafficListener for MyTrafficListener {
     fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
-        let uri = request.uri().to_string();
+        self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
+        self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
+        
+        let mut uri = request.uri().to_string();
+        
+        // Clean up redundant default ports from the URI
+        if uri.starts_with("https://") {
+            uri = uri.replace(":443/", "/");
+            if uri.ends_with(":443") {
+                uri = uri[..uri.len() - 4].to_string();
+            }
+        } else if uri.starts_with("http://") {
+            uri = uri.replace(":80/", "/");
+            if uri.ends_with(":80") {
+                uri = uri[..uri.len() - 3].to_string();
+            }
+        }
+        
         let method = request.method().as_str().to_string();
+
+        let show_connect = if let Ok(settings) = self.proxy_settings.read() {
+            settings.show_connect_method
+        } else {
+            false
+        };
+
+        if !show_connect && method.trim().to_uppercase() == "CONNECT" {
+            return;
+        }
+
         self.request_times.lock().unwrap().insert(id, (Instant::now(), uri.clone(), method.clone()));
         
         let http_version = match request.version() {
@@ -431,13 +615,14 @@ impl TrafficListener for MyTrafficListener {
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
 
-        let client_name = traffic::process_info::get_app_name(&client_addr);
-        let client_info = format!("{} ({})", client_name, client_addr);
+        let client_info = traffic::process_info::get_client_info(&client_addr);
 
         let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
 
+        let traffic_id = format!("{}_{}", self.session_id, id);
+
         self.traffic_db.insert_request(TrafficEvent::Request {
-            id: id.to_string(),
+            id: traffic_id.clone(),
             uri: uri.clone(),
             method: method.clone(),
             version: http_version.clone(),
@@ -451,12 +636,12 @@ impl TrafficListener for MyTrafficListener {
         });
         
         // Async tagging for request body if needed
-        self.tag_manager.async_tagging(id.to_string(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
+        self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
-                id: id.to_string(),
+                id: traffic_id,
                 is_request: true,
                 data: PayloadTraffic {
                     uri: Some(uri),
@@ -474,7 +659,12 @@ impl TrafficListener for MyTrafficListener {
     }
 
     fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
-        let (start_time, uri, method) = self.request_times.lock().unwrap().remove(&id).unwrap_or((Instant::now(), "".to_string(), "".to_string()));
+        self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
+        
+        let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
+            Some(data) => data,
+            None => return, // If request was filtered, we ignore the response too
+        };
         let duration = start_time.elapsed().as_millis();
         
         let status_code = response.status().as_u16();
@@ -502,8 +692,10 @@ impl TrafficListener for MyTrafficListener {
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
 
+        let traffic_id = format!("{}_{}", self.session_id, id);
+
         self.traffic_db.insert_response(TrafficEvent::Response {
-            id: id.to_string(),
+            id: traffic_id.clone(),
             headers: headers.clone(),
             body: decompressed_body.clone(),
             content_type,
@@ -511,19 +703,18 @@ impl TrafficListener for MyTrafficListener {
             status_code,
         });
 
-        let client_name = traffic::process_info::get_app_name(&client_addr);
-        let client_info = format!("{} ({})", client_name, client_addr);
+        let client_info = traffic::process_info::get_client_info(&client_addr);
 
         let mut headers_with_perf = headers.clone();
         headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
 
         // Async tagging for response body
-        self.tag_manager.async_tagging(id.to_string(), uri, method, headers, decompressed_body, self.app_handle.clone());
+        self.tag_manager.async_tagging(traffic_id.clone(), uri, method, headers, decompressed_body, self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
-                id: id.to_string(),
+                id: traffic_id,
                 is_request: false,
                 data: PayloadTraffic {
                     uri: None,
@@ -543,10 +734,13 @@ impl TrafficListener for MyTrafficListener {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    let app_data_dir = get_app_data_dir();
+    
     if args.iter().any(|arg| arg == "--install-cert") {
-        let ca_cert = include_str!("ca/network-spy.cer");
+        let ca_keys = ca_manager::load_or_generate_ca(app_data_dir.clone())
+            .expect("Failed to load or generate CA");
         let installer = CertificateInstaller {};
-        match installer.install_from_content(ca_cert) {
+        match installer.install_from_content(None, false, &ca_keys.cert) {
             Ok(output) => {
                 println!("Certificate installation successful:\n{}", output);
                 std::process::exit(0);
@@ -558,10 +752,15 @@ fn main() {
         }
     }
 
-    let key_pair = include_str!("ca/network-spy.key");
-    let ca_cert = include_str!("ca/network-spy.cer");
+    // Load CA cert for normal run
+    let ca_keys = ca_manager::load_or_generate_ca(app_data_dir.clone())
+        .expect("Failed to load or generate CA");
 
-    let proxy_toggle = ProxyToggle {};
+    // Leak the strings to satisfy the &'static str requirement of the proxy crate
+    let key_pair: &'static str = Box::leak(ca_keys.key.into_boxed_str());
+    let ca_cert: &'static str = Box::leak(ca_keys.cert.into_boxed_str());
+
+    let proxy_toggle = ProxyToggle::new();
     PROXY_TOGGLE
         .set(proxy_toggle)
         .expect("Failed to set proxy_toggle instance");
@@ -578,16 +777,22 @@ fn main() {
         .setup(move |app| {
             let cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
             let tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
-            let quit_item = MenuItemBuilder::with_id("quit-app", "Quit netwok-spy").accelerator("Cmd+Q").build(app)?;
+            let saved_sessions_item = MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app)?;
+            let traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit-app", "Quit network-spy").accelerator("Cmd+Q").build(app)?;
 
             let tools_submenu = SubmenuBuilder::new(app, "Tools")
                 .item(&cert_installer_item)
                 .separator()
                 .item(&tag_item)
+                .separator()
+                .item(&saved_sessions_item)
+                .separator()
+                .item(&traffic_filters_item)
                 .build()?;
 
             let menu = MenuBuilder::new(app)
-                .item(&SubmenuBuilder::new(app, "netwok-spy")
+                .item(&SubmenuBuilder::new(app, "network-spy")
                     .about(None)
                     .separator()
                     .services()
@@ -608,6 +813,10 @@ fn main() {
                     open_new_window(app_handle.clone(), "certificate-installer".into(), "Certificate Installer".into());
                 } else if event.id() == "tools-tag" {
                     open_new_window(app_handle.clone(), "tag".into(), "Tag Tools".into());
+                } else if event.id() == "saved-sessions" {
+                    open_new_window(app_handle.clone(), "sessions".into(), "Saved Sessions".into());
+                } else if event.id() == "traffic-filters" {
+                    open_new_window(app_handle.clone(), "filters".into(), "Traffic Filters".into());
                 } else if event.id() == "quit-app" {
                     if let Some(toggle) = PROXY_TOGGLE.get() {
                         toggle.turn_off();
@@ -618,11 +827,7 @@ fn main() {
             });
 
             let app_handle = app.app_handle();
-
-            let app_data_dir = app_handle.path().app_data_dir().unwrap_or_else(|_| {
-                let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-                std::path::PathBuf::from(home).join(".network-spy")
-            });
+            let app_data_dir = get_app_data_dir();
 
             if !app_data_dir.exists() {
                 fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
@@ -645,6 +850,9 @@ fn main() {
             let viewer_manager = Arc::new(ViewerManager::new(app_data_dir.clone()));
             app_handle.manage(Arc::clone(&viewer_manager));
 
+            let bottom_pane_manager = Arc::new(BottomPaneManager::new(app_data_dir.clone()));
+            app_handle.manage(Arc::clone(&bottom_pane_manager));
+
             let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
             if list.is_empty() {
                 list = vec![
@@ -660,6 +868,15 @@ fn main() {
             let allow_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
 
+            // Load settings from DB
+            let proxy_settings_data = if let Ok(Some(val)) = traffic_db.get_setting("proxy_settings") {
+                serde_json::from_str::<ProxySettings>(&val).unwrap_or_default()
+            } else {
+                ProxySettings::default()
+            };
+            let proxy_settings = Arc::new(std::sync::RwLock::new(proxy_settings_data));
+            app_handle.manage(ManagedProxySettings(Arc::clone(&proxy_settings)));
+
             let actual_port = (9090..65535)
                 .find(|port| std::net::TcpListener::bind(("127.0.0.1", *port)).is_ok())
                 .unwrap_or(9090);
@@ -670,32 +887,39 @@ fn main() {
             let (tx, mut rx) = mpsc::unbounded_channel::<u16>();
             RESTART_TX.set(tx).expect("Failed to set RESTART_TX");
 
-            let app_handle_outer = app_handle.clone();
+            let tray_stats = Arc::new(TrayStats::new());
+            let _ = TRAY_STATS.set(tray_stats.clone());
+            let tray_stats_for_task = tray_stats.clone();
+
+            let app_handle_outer_task = app_handle.clone();
             let traffic_db_outer = Arc::clone(&traffic_db);
             let allow_list_outer = Arc::clone(&allow_list);
+            let proxy_settings_outer = Arc::clone(&proxy_settings);
+            let tag_manager_outer = Arc::clone(&tag_manager);
+            let tray_stats_for_proxy = tray_stats.clone();
 
             tauri::async_runtime::spawn(async move {
                 let mut current_port = actual_port;
                 loop {
-                    let app_handle_inner = app_handle_outer.clone();
+                    let app_handle_inner = app_handle_outer_task.clone();
                     let traffic_db_inner = Arc::clone(&traffic_db_outer);
                     let allow_list_inner = Arc::clone(&allow_list_outer);
+                    let proxy_settings_inner = Arc::clone(&proxy_settings_outer);
+                    let tag_manager_inner = Arc::clone(&tag_manager_outer);
+                    let tray_stats_deep = tray_stats_for_proxy.clone();
 
                     let mut proxy = Proxy::new(key_pair, ca_cert, current_port.into());
                     let listener = Arc::new(MyTrafficListener {
                         app_handle: app_handle_inner,
                         traffic_db: traffic_db_inner,
-                        tag_manager: Arc::clone(&tag_manager),
+                        tag_manager: tag_manager_inner,
+                        proxy_settings: proxy_settings_inner,
                         request_times: Mutex::new(HashMap::new()),
+                        tray_stats: tray_stats_deep,
+                        session_id: uuid::Uuid::new_v4().to_string(),
                     });
 
                     println!("Proxy server listening on port: {}", current_port);
-                    
-                    // We need a way to stop run_proxy. Since we don't have a shutdown handle,
-                    // we'll run it and listen for port changes.
-                    // NOTE: This assumes run_proxy can be "shadowed" or we just hope 
-                    // the previous one doesn't conflict too much or we'd ideally kill it.
-                    // For now, this provides the "best effort" transition.
                     
                     let listener_task = tauri::async_runtime::spawn(async move {
                         proxy.run_proxy(listener, allow_list_inner).await;
@@ -706,12 +930,132 @@ fn main() {
                         println!("Restarting proxy on new port: {}", new_port);
                         listener_task.abort(); // Kill old listener
                         current_port = new_port;
-                        
-                        // Also update system proxy if it was on
-                        // We can't easily knows if it was ON here, but we can just turn it on/off via toggle
                     } else {
                         break;
                     }
+                }
+            });
+
+            // Tray Menu Setup
+            let reqs_item = MenuItem::with_id(app_handle, "tray_reqs", "Requests: 0", false, None::<&str>)?;
+            let data_item = MenuItem::with_id(app_handle, "tray_data", "Total: 0 B", false, None::<&str>)?;
+            let split_item = MenuItem::with_id(app_handle, "tray_split", "0 B ↑ | 0 B ↓", false, None::<&str>)?;
+            let status_capture_item = MenuItem::with_id(app_handle, "tray_status_capture", "Capture: Active", false, None::<&str>)?;
+
+            let port_info = format!("Proxy Port: {}", actual_port);
+            let status_item = MenuItem::with_id(app_handle, "status", &port_info, false, None::<&str>)?;
+            let show_item = MenuItem::with_id(app_handle, "show", "Show Network Spy", true, None::<&str>)?;
+            let reset_item = MenuItem::with_id(app_handle, "reset_proxy", "⚠️ Emergency Proxy Reset", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app_handle, "quit", "Quit", true, None::<&str>)?;
+            
+            // Background task to update tray labels
+            let reqs_item_c = reqs_item.clone();
+            let data_item_c = data_item.clone();
+            let split_item_c = split_item.clone();
+            let status_capture_item_c = status_capture_item.clone();
+            let stats_updater = tray_stats_for_task.clone();
+
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_millis(800)).await;
+                    
+                    let reqs = stats_updater.total_requests.load(Ordering::Relaxed);
+                    let tx = stats_updater.tx_bytes.load(Ordering::Relaxed);
+                    let rx = stats_updater.rx_bytes.load(Ordering::Relaxed);
+                    
+                    let is_active = if let Some(toggle) = PROXY_TOGGLE.get() {
+                        toggle.is_on()
+                    } else {
+                        false
+                    };
+
+                    let _ = reqs_item_c.set_text(format!("Requests: {}", reqs));
+                    let _ = data_item_c.set_text(format!("Total Data: {}", format_bytes(tx + rx)));
+                    let _ = split_item_c.set_text(format!("{} ↑ | {} ↓", format_bytes(tx), format_bytes(rx)));
+                    let _ = status_capture_item_c.set_text(if is_active { "Capture: ⚡ Active" } else { "Capture: ⏸ Paused" });
+                }
+            });
+
+            let tray_menu = Menu::with_items(app_handle, &[
+                &status_item, 
+                &status_capture_item,
+                &tauri::menu::PredefinedMenuItem::separator(app_handle)?,
+                &reqs_item,
+                &data_item,
+                &split_item,
+                &tauri::menu::PredefinedMenuItem::separator(app_handle)?,
+                &show_item, 
+                &reset_item, 
+                &quit_item
+            ])?;
+
+            let app_handle_tray = app_handle.clone();
+            let _tray = TrayIconBuilder::with_id("main_tray")
+                .menu(&tray_menu)
+                .icon(app_handle.default_window_icon().unwrap().clone())
+                .on_menu_event(handle_tray_menu_event)
+                .on_tray_icon_event(move |_tray, event| {
+                    if let TrayIconEvent::Click { .. } = event {
+                        if let Some(window) = app_handle_tray.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app_handle)?;
+
+            // Window Menu Setup (Linux/Windows top menu bar)
+            let tools_submenu = SubmenuBuilder::new(app_handle, "Tools")
+                .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(app_handle)?)
+                .item(&MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app_handle)?)
+                .item(&MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app_handle)?)
+                .build()?;
+
+            let app_menu = MenuBuilder::new(app_handle)
+                .item(&SubmenuBuilder::new(app_handle, "network-spy")
+                    .item(&MenuItemBuilder::with_id("show", "Show").build(app_handle)?)
+                    .item(&tauri::menu::PredefinedMenuItem::separator(app_handle)?)
+                    .item(&MenuItemBuilder::with_id("quit", "Quit").build(app_handle)?)
+                    .build()?)
+                .item(&tools_submenu)
+                .build()?;
+
+            // Set the menu ONLY on the main window
+            if let Some(main_window) = app_handle.get_webview_window("main") {
+                let _ = main_window.set_menu(app_menu);
+            }
+
+            // Global Menu Event Handler for both Tray and Window Menu
+            let app_handle_menu = app_handle.clone();
+            app_handle.on_menu_event(move |_app, event| {
+                match event.id.as_ref() {
+                    "install_cert" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "certificate-installer".to_string(), "Certificate Installer".to_string());
+                    }
+                    "saved-sessions" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "sessions".to_string(), "Saved Sessions".to_string());
+                    }
+                    "traffic-filters" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "filters".to_string(), "Traffic Filters".to_string());
+                    }
+                    "quit" => {
+                        if let Some(toggle) = PROXY_TOGGLE.get() {
+                            toggle.turn_off();
+                        }
+                        _app.exit(0);
+                    }
+                    "show" => {
+                        if let Some(window) = _app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "reset_proxy" => {
+                        if let Some(toggle) = PROXY_TOGGLE.get() {
+                            toggle.turn_off();
+                        }
+                    }
+                    _ => {}
                 }
             });
 
@@ -723,13 +1067,21 @@ fn main() {
             turn_off_proxy,
             install_certificate,
             auto_install_certificate,
+            uninstall_certificate,
             open_new_window,
             get_request_pair_data,
             get_response_pair_data,
             update_intercept_allow_list,
             get_recent_traffic,
+            get_all_metadata,
+            get_proxy_settings,
+            update_proxy_settings,
             save_session,
             load_session,
+            get_filter_presets,
+            add_filter_preset,
+            update_filter_preset,
+            delete_filter_preset,
             export_selected_to_har,
             export_selected_to_csv,
             export_selected_to_sqlite,
@@ -768,6 +1120,9 @@ fn main() {
             move_viewer_to_folder,
             delete_custom_viewer,
             save_custom_viewer,
+            get_custom_checkers,
+            save_custom_checker,
+            delete_custom_checker,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

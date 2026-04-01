@@ -1,5 +1,5 @@
 {
-  "productName": "netwok-spy",
+  "productName": "network-spy",
   "version": "0.0.0",
   "identifier": "com.muiz.idn.tauri.dev",
   "build": {
@@ -9,6 +9,7 @@
     "devUrl": "http://localhost:1420"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Network Spy",
