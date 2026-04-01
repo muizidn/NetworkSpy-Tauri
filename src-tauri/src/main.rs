@@ -554,6 +554,7 @@ struct MyTrafficListener {
     proxy_settings: Arc<std::sync::RwLock<ProxySettings>>,
     request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
     tray_stats: Arc<TrayStats>,
+    session_id: String,
 }
 
 impl TrafficListener for MyTrafficListener {
@@ -618,8 +619,10 @@ impl TrafficListener for MyTrafficListener {
 
         let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
 
+        let traffic_id = format!("{}_{}", self.session_id, id);
+
         self.traffic_db.insert_request(TrafficEvent::Request {
-            id: id.to_string(),
+            id: traffic_id.clone(),
             uri: uri.clone(),
             method: method.clone(),
             version: http_version.clone(),
@@ -633,12 +636,12 @@ impl TrafficListener for MyTrafficListener {
         });
         
         // Async tagging for request body if needed
-        self.tag_manager.async_tagging(id.to_string(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
+        self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
-                id: id.to_string(),
+                id: traffic_id,
                 is_request: true,
                 data: PayloadTraffic {
                     uri: Some(uri),
@@ -689,8 +692,10 @@ impl TrafficListener for MyTrafficListener {
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
 
+        let traffic_id = format!("{}_{}", self.session_id, id);
+
         self.traffic_db.insert_response(TrafficEvent::Response {
-            id: id.to_string(),
+            id: traffic_id.clone(),
             headers: headers.clone(),
             body: decompressed_body.clone(),
             content_type,
@@ -704,12 +709,12 @@ impl TrafficListener for MyTrafficListener {
         headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
 
         // Async tagging for response body
-        self.tag_manager.async_tagging(id.to_string(), uri, method, headers, decompressed_body, self.app_handle.clone());
+        self.tag_manager.async_tagging(traffic_id.clone(), uri, method, headers, decompressed_body, self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
-                id: id.to_string(),
+                id: traffic_id,
                 is_request: false,
                 data: PayloadTraffic {
                     uri: None,
@@ -911,6 +916,7 @@ fn main() {
                         proxy_settings: proxy_settings_inner,
                         request_times: Mutex::new(HashMap::new()),
                         tray_stats: tray_stats_deep,
+                        session_id: uuid::Uuid::new_v4().to_string(),
                     });
 
                     println!("Proxy server listening on port: {}", current_port);

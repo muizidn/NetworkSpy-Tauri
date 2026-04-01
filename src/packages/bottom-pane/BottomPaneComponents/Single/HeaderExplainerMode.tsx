@@ -112,6 +112,7 @@ export const HeaderExplainerMode = () => {
   const [resData, setResData] = useState<RequestPairData | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"Request" | "Response" | "Custom Scripts">("Request");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const trafficData = useMemo(() => {
     const d = activeTab === "Request" ? reqData : resData;
@@ -134,7 +135,11 @@ export const HeaderExplainerMode = () => {
 
   const headers = useMemo(() => {
     const list = activeTab === "Request" ? (reqData?.headers || []) : (resData?.headers || []);
-    return list.map(h => {
+    const filtered = list.filter(h => 
+      h.key.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      h.value.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return filtered.map(h => {
       const key = h.key.toLowerCase();
       let explanation = HEADER_DB[key];
       let isCustom = false;
@@ -160,7 +165,7 @@ export const HeaderExplainerMode = () => {
 
       return { ...h, explanation, isCustom, cookieAnalysis };
     });
-  }, [reqData, resData, activeTab]);
+  }, [reqData, resData, activeTab, searchQuery]);
 
   if (!trafficId) return <Placeholder text="Select a request to explain headers" />;
   if (loading) return <Placeholder text="Scanning headers..." />;
@@ -178,6 +183,27 @@ export const HeaderExplainerMode = () => {
               <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic leading-none">Intelligence Layer</div>
             </div>
           </div>
+
+          {activeTab !== "Custom Scripts" && (
+            <div className="flex items-center gap-2 bg-black/40 border border-zinc-800 rounded-lg px-3 py-1.5 focus-within:border-blue-500/50 transition-all">
+              <FiInfo size={12} className="text-zinc-600" />
+              <input 
+                type="text" 
+                placeholder={`Search ${activeTab.toLowerCase()} headers...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent border-none outline-none text-[10px] text-zinc-300 placeholder:text-zinc-600 w-32 @sm:w-48 font-medium"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery("")}
+                  className="text-[10px] text-zinc-600 hover:text-zinc-400 font-black uppercase tracking-widest"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-4">
@@ -224,7 +250,9 @@ export const HeaderExplainerMode = () => {
             </div>
 
             {headers.length === 0 && (
-              <div className="text-center py-20 opacity-30 text-xs italic">No {activeTab} headers found...</div>
+              <div className="text-center py-20 opacity-30 text-xs italic">
+                {searchQuery ? `No ${activeTab.toLowerCase()} headers match "${searchQuery}"...` : `No ${activeTab.toLowerCase()} headers found...`}
+              </div>
             )}
 
             {headers.map((header, idx) => (
