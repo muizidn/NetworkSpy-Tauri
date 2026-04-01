@@ -38,13 +38,77 @@ export const ResponseTab = (props: {
     loadResponsePairData({ id: trafficId as string });
   }, [trafficId]);
 
+  const [isBeautified, setIsBeautified] = useState(false);
+
   const decodedBody = useMemo(() => {
-    return decodeBody(data?.body, data?.content_type);
-  }, [data?.body, data?.content_type]);
+    const raw = decodeBody(data?.body, data?.content_type);
+    const ct = data?.content_type.toLowerCase() || "";
+    
+    if (isBeautified && (ct.includes("json") || ct.includes("stream"))) {
+      try {
+        // Try standard JSON first
+        return JSON.stringify(JSON.parse(raw), null, 2);
+      } catch (e) {
+        // Try parsing concatenated or line-separated JSON objects
+        try {
+          const objects: string[] = [];
+          
+          // Strategy 1: Line-separated
+          const lines = raw.split(/\n/).filter(l => l.trim().length > 0);
+          
+          if (lines.length > 1) {
+            const parsedLines = lines.map(line => {
+              try { return JSON.stringify(JSON.parse(line), null, 2); }
+              catch { return null; }
+            });
+            if (parsedLines.every(pl => pl !== null)) {
+              return parsedLines.join("\n\n---\n\n");
+            }
+          }
+
+          // Strategy 2: Concatenated braces {...}{...}
+          let braceCount = 0;
+          let currentObject = "";
+          let inString = false;
+          
+          for (let i = 0; i < raw.length; i++) {
+            const char = raw[i];
+            currentObject += char;
+            
+            if (char === '"' && raw[i-1] !== '\\') inString = !inString;
+            if (!inString) {
+              if (char === '{') braceCount++;
+              if (char === '}') braceCount--;
+            }
+            
+            if (braceCount === 0 && currentObject.trim().length > 0) {
+              try {
+                const parsed = JSON.parse(currentObject);
+                objects.push(JSON.stringify(parsed, null, 2));
+                currentObject = "";
+              } catch (e) {
+                // Keep appending
+              }
+            }
+          }
+          
+          if (objects.length > 0) {
+            return objects.join("\n\n/* --- Stream Object --- */\n\n");
+          }
+        } catch (err) {
+          console.error("JSON Stream parse failed:", err);
+        }
+        return raw;
+      }
+    }
+    return raw;
+  }, [data?.body, data?.content_type, isBeautified]);
 
   if (!trafficId || !data) {
     return null;
   }
+
+  const isJson = data.content_type.includes("json") || data.content_type.includes("stream");
 
   const tabs: Tab[] = [
     {
@@ -72,7 +136,18 @@ export const ResponseTab = (props: {
       id: "body",
       title: "Body",
       content: (
-        <div className='h-full bg-[#1e1e1e]'>
+        <div className='h-full bg-[#1e1e1e] relative'>
+          {isJson && (
+            <button
+              onClick={() => setIsBeautified(!isBeautified)}
+              className={`absolute top-4 right-10 z-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md border transition-all duration-300 shadow-xl ${isBeautified
+                  ? "bg-blue-600 border-blue-400 text-white shadow-blue-900/40"
+                  : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
+                }`}
+            >
+              {isBeautified ? "Original" : "Beautify"}
+            </button>
+          )}
           <Editor
             height="100%"
             language={data.content_type.includes("json") ? "json" : "text"}
