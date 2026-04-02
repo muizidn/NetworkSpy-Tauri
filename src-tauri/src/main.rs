@@ -3,13 +3,18 @@
 
 pub mod ca_manager;
 mod certificate_installer;
+pub mod eval;
 pub mod proxy_toggle;
+pub mod commands;
+pub mod proxy_handler;
 // pub mod submenu;
 pub mod traffic;
+
 
 use bytes::Bytes;
 use boa_engine::{Context, Source};
 use certificate_installer::CertificateInstaller;
+use eval::{matches_breakpoint, run_script};
 use hyper::{Request, Response, Version};
 use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
 use tauri::menu::{Menu, MenuItem, MenuEvent, MenuBuilder, MenuItemBuilder, SubmenuBuilder, Submenu};
@@ -19,8 +24,9 @@ use proxy_toggle::ProxyToggle;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::fs;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::AtomicBool;
+use proxy_handler::MyTrafficListener;
 use std::env;
 use tauri::{AppHandle, Manager, Emitter};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
@@ -129,37 +135,37 @@ struct Payload {
 
 struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
 
-#[derive(Clone, Serialize, serde::Deserialize, Default)]
-struct ProxySettings {
-    show_connect_method: bool,
-    stream_certificate_logs: bool,
+#[derive(Default, Serialize, Deserialize, Clone)]
+pub struct ProxySettings {
+    pub show_connect_method: bool,
+    pub stream_certificate_logs: bool,
 }
 
 struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct BreakpointData {
-    id: String,
-    headers: HashMap<String, String>,
-    body: Vec<u8>,
-    method: Option<String>,
-    uri: Option<String>,
-    status_code: Option<u16>,
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct BreakpointData {
+    pub id: String,
+    pub headers: HashMap<String, String>,
+    pub body: Vec<u8>,
+    pub method: Option<String>,
+    pub uri: Option<String>,
+    pub status_code: Option<u16>,
 }
 
-struct PausedTask {
-    sender: tokio::sync::oneshot::Sender<Option<BreakpointData>>,
-    name: String,
-    data: BreakpointData,
+pub struct PausedTask {
+    pub sender: tokio::sync::oneshot::Sender<Option<BreakpointData>>,
+    pub name: String,
+    pub data: BreakpointData,
 }
 
-struct BreakpointManager {
-    is_enabled: Arc<AtomicBool>,
-    paused_tasks: Arc<RwLock<HashMap<String, PausedTask>>>,
+pub struct BreakpointManager {
+    pub is_enabled: Arc<AtomicBool>,
+    pub paused_tasks: Arc<RwLock<HashMap<String, PausedTask>>>,
 }
 
-struct ScriptManager {
-    is_enabled: Arc<AtomicBool>,
+pub struct ScriptManager {
+    pub is_enabled: Arc<AtomicBool>,
 }
 
 impl ScriptManager {
@@ -170,10 +176,10 @@ impl ScriptManager {
     }
 }
 
-#[derive(Clone, Serialize)]
-struct BreakpointHit {
-    id: String,
-    name: String,
+#[derive(Serialize, Deserialize, Clone)]
+pub struct BreakpointHit {
+    pub id: String,
+    pub name: String,
 }
 
 impl BreakpointManager {
@@ -183,275 +189,6 @@ impl BreakpointManager {
             paused_tasks: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-}
-
-#[tauri::command]
-async fn get_proxy_settings(state: tauri::State<'_, ManagedProxySettings>) -> Result<ProxySettings, String> {
-    let settings = state.0.read().map_err(|e| e.to_string())?;
-    Ok(settings.clone())
-}
-
-#[tauri::command]
-async fn update_proxy_settings(
-    state: tauri::State<'_, ManagedProxySettings>,
-    db: tauri::State<'_, Arc<TrafficDb>>,
-    new_settings: ProxySettings,
-) -> Result<(), String> {
-    let mut settings = state.0.write().map_err(|e| e.to_string())?;
-    *settings = new_settings.clone();
-    
-    let val = serde_json::to_string(&new_settings).map_err(|e| e.to_string())?;
-    let _ = db.set_setting("proxy_settings", &val);
-    Ok(())
-}
-
-#[tauri::command]
-async fn update_intercept_allow_list(
-    state: tauri::State<'_, InterceptAllowList>,
-    db: tauri::State<'_, Arc<TrafficDb>>,
-    new_list: Vec<String>,
-) -> Result<(), String> {
-    let mut list = state.0.write().await;
-    *list = new_list.clone();
-    
-    for domain in new_list {
-        if let Err(e) = db.add_to_allow_list(domain) {
-            return Err(e.to_string());
-        }
-    }
-    Ok(())
-}
-
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-#[tauri::command]
-async fn set_breakpoint_enabled(state: tauri::State<'_, Arc<BreakpointManager>>, enabled: bool) -> Result<(), String> {
-    state.is_enabled.store(enabled, Ordering::SeqCst);
-    Ok(())
-}
-
-#[tauri::command]
-async fn get_breakpoint_enabled(state: tauri::State<'_, Arc<BreakpointManager>>) -> Result<bool, String> {
-    Ok(state.is_enabled.load(Ordering::SeqCst))
-}
-
-#[tauri::command]
-async fn resume_breakpoint(
-    app: tauri::AppHandle,
-    state: tauri::State<'_, Arc<BreakpointManager>>, 
-    traffic_id: String,
-    modified_data: Option<BreakpointData>
-) -> Result<(), String> {
-    let mut tasks = state.paused_tasks.write().await;
-    if let Some(task) = tasks.remove(&traffic_id) {
-        let _ = task.sender.send(modified_data);
-        let _ = app.emit("breakpoint_resumed", traffic_id);
-    }
-    Ok(())
-}
-
-#[tauri::command]
-async fn get_paused_data(
-    state: tauri::State<'_, Arc<BreakpointManager>>,
-    id: String
-) -> Result<BreakpointData, String> {
-    let tasks = state.paused_tasks.read().await;
-    if let Some(task) = tasks.get(&id) {
-        Ok(task.data.clone())
-    } else {
-        Err("Breakpoint data not found or already resumed".to_string())
-    }
-}
-
-#[tauri::command]
-async fn get_paused_breakpoints(state: tauri::State<'_, Arc<BreakpointManager>>) -> Result<Vec<BreakpointHit>, String> {
-    let tasks = state.paused_tasks.read().await;
-    Ok(tasks.iter().map(|(id, task)| BreakpointHit { 
-        id: id.clone(), 
-        name: task.name.clone() 
-    }).collect())
-}
-
-#[tauri::command]
-fn get_breakpoints(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::BreakpointRule>, String> {
-    db.get_breakpoints().map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn save_breakpoint(rule: traffic::db::BreakpointRule, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    db.save_breakpoint(rule).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn delete_breakpoint(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    db.delete_breakpoint(id).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn get_scripts(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::ScriptRule>, String> {
-    db.get_scripts().map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn save_script(rule: traffic::db::ScriptRule, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    db.save_script(rule).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn delete_script(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    db.delete_script(id).map_err(|e| e.to_string())
-}
-
-static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
-static CERTIFICATE_INSTALLER: OnceCell<CertificateInstaller> = OnceCell::new();
-
-#[tauri::command]
-fn turn_on_proxy() -> u16 {
-    let port = ACTUAL_PORT.load(Ordering::SeqCst);
-    PROXY_TOGGLE.get().unwrap().turn_on(port as u64);
-    port
-}
-
-#[tauri::command]
-fn turn_off_proxy() {
-    PROXY_TOGGLE.get().unwrap().turn_off();
-}
-
-#[tauri::command]
-fn change_proxy_port(port: u16) -> u16 {
-    let actual_port = (port..65535)
-        .find(|p| std::net::TcpListener::bind(("127.0.0.1", *p)).is_ok())
-        .unwrap_or(port);
-
-    ACTUAL_PORT.store(actual_port, Ordering::SeqCst);
-    
-    // Signal restart if tx is initialized
-    if let Some(tx) = RESTART_TX.get() {
-        let _ = tx.send(actual_port);
-    }
-
-    actual_port
-}
-
-#[tauri::command]
-fn get_app_data_dir() -> std::path::PathBuf {
-    use std::env;
-    let home = env::var("HOME").or_else(|_| env::var("USERPROFILE")).unwrap_or_else(|_| ".".to_string());
-    std::path::PathBuf::from(home).join(".network-spy")
-}
-
-#[tauri::command]
-fn install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>, cert_path: String) -> Result<String, String> {
-    print!("INSTALL CERTIFICATE");
-    let stream_logs = state.0.read()
-        .map(|s| s.stream_certificate_logs)
-        .unwrap_or(false);
-    CERTIFICATE_INSTALLER.get().unwrap().install(Some(app), stream_logs, cert_path)
-}
-
-#[tauri::command]
-fn auto_install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>) -> Result<String, String> {
-    let app_data_dir = get_app_data_dir();
-    let cert_path = app_data_dir.join("ca").join("network-spy.crt");
-    
-    if !cert_path.exists() {
-        return Err(format!("Certificate file not found at: {}. Please restart the application.", cert_path.display()));
-    }
-
-    let cert_content = std::fs::read_to_string(cert_path).map_err(|e| e.to_string())?;
-    let stream_logs = state.0.read()
-        .map(|s| s.stream_certificate_logs)
-        .unwrap_or(false);
-    CERTIFICATE_INSTALLER.get().unwrap().install_from_content(Some(app), stream_logs, &cert_content)
-}
-
-#[tauri::command]
-fn uninstall_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>) -> Result<String, String> {
-    let stream_logs = state.0.read()
-        .map(|s| s.stream_certificate_logs)
-        .unwrap_or(false);
-    CERTIFICATE_INSTALLER.get().unwrap().uninstall(Some(app), stream_logs)
-}
-
-fn open_new_window_internal(app_handle: &tauri::AppHandle, context: String, title: String) {
-    let _ = tauri::WebviewWindowBuilder::new(
-        app_handle,
-        context.clone(),
-        tauri::WebviewUrl::App(std::path::PathBuf::from(format!("/{}", context))),
-    )
-    .title(title)
-    .inner_size(1500.0, 700.0)
-    .max_inner_size(1500.0, 700.0)
-    .resizable(false)
-    .build();
-}
-
-#[tauri::command]
-fn open_new_window(app_handle: tauri::AppHandle, context: String, title: String) {
-    open_new_window_internal(&app_handle, context, title);
-}
-
-#[tauri::command]
-fn get_recent_traffic(
-    db: tauri::State<'_, Arc<TrafficDb>>,
-    limit: usize,
-) -> Vec<traffic::db::TrafficMetadata> {
-    db.get_recent_traffic(limit)
-}
-
-#[tauri::command]
-fn get_all_metadata(
-    db: tauri::State<'_, Arc<TrafficDb>>,
-    limit: Option<usize>,
-) -> Vec<traffic::db::TrafficMetadata> {
-    db.get_all_metadata(limit.unwrap_or(10)).unwrap_or_default()
-}
-
-#[tauri::command]
-fn get_filter_presets(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::FilterPreset>, String> {
-    db.get_filter_presets().map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn add_filter_preset(preset: traffic::db::FilterPreset, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    db.add_filter_preset(preset).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn update_filter_preset(
-    id: String, 
-    name: Option<String>, 
-    description: Option<String>, 
-    filters: Option<String>, 
-    db: tauri::State<'_, Arc<TrafficDb>>
-) -> Result<(), String> {
-    db.update_filter_preset(id, name, description, filters).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-fn delete_filter_preset(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    db.delete_filter_preset(id).map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-async fn save_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_all_traffic_with_bodies().map_err(|e: rusqlite::Error| e.to_string())?;
-    let har = create_har_log(data);
-    let json = serde_json::to_string_pretty(&har).map_err(|e: serde_json::Error| e.to_string())?;
-    fs::write(path, json).map_err(|e: std::io::Error| e.to_string())?;
-    Ok(())
-}
-
-#[tauri::command]
-async fn export_selected_to_har(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e: rusqlite::Error| e.to_string())?;
-    let har = create_har_log(data);
-    let json = serde_json::to_string_pretty(&har).map_err(|e: serde_json::Error| e.to_string())?;
-    fs::write(path, json).map_err(|e: std::io::Error| e.to_string())?;
-    Ok(())
 }
 
 fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
@@ -478,840 +215,8 @@ fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
     }
 }
 
-#[tauri::command]
-async fn export_selected_to_csv(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e: rusqlite::Error| e.to_string())?;
-    let mut csv_content = String::from("ID,Timestamp,Method,URI,Status,Client,RequestBody,ResponseBody\n");
-    
-    for (meta, req_body, res_body, req_ct, _, res_ct, _) in data {
-        let line = format!(
-            "{},\"{}\",{},\"{}\",{},\"{}\",\"{}\",\"{}\"\n",
-            meta.id,
-            meta.timestamp,
-            meta.method.unwrap_or_default(),
-            meta.uri.unwrap_or_default().replace('\"', "\"\""),
-            meta.status_code.unwrap_or(0),
-            meta.client.unwrap_or_default().replace('\"', "\"\""),
-            body_to_string(&req_body, &req_ct).replace('\"', "\"\""),
-            body_to_string(&res_body, &res_ct).replace('\"', "\"\"")
-        );
-        csv_content.push_str(&line);
-    }
-    
-    fs::write(path, csv_content).map_err(|e| e.to_string())?;
-    Ok(())
-}
 
-#[tauri::command]
-async fn export_selected_to_sqlite(path: String, ids: Vec<String>, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
-    let data = db.get_traffic_with_bodies_by_ids(ids).map_err(|e: rusqlite::Error| e.to_string())?;
-    
-    let conn = rusqlite::Connection::open(&path).map_err(|e| e.to_string())?;
-    
-    conn.execute_batch(
-        "CREATE TABLE traffic (
-            id TEXT PRIMARY KEY,
-            uri TEXT,
-            method TEXT,
-            version TEXT,
-            client TEXT,
-            req_headers TEXT,
-            res_headers TEXT,
-            status_code INTEGER,
-            intercepted INTEGER,
-            timestamp DATETIME
-        );
-        CREATE TABLE body (
-            traffic_id TEXT PRIMARY KEY,
-            req_body BLOB,
-            res_body BLOB,
-            req_body_text TEXT,
-            res_body_text TEXT,
-            req_content_type TEXT,
-            res_content_type TEXT
-        );"
-    ).map_err(|e| e.to_string())?;
-    
-    {
-        let mut ins_traffic = conn.prepare("INSERT INTO traffic (id, uri, method, version, client, req_headers, res_headers, status_code, intercepted, timestamp) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)").map_err(|e| e.to_string())?;
-        let mut ins_body = conn.prepare("INSERT INTO body (traffic_id, req_body, res_body, req_body_text, res_body_text, req_content_type, res_content_type) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)").map_err(|e| e.to_string())?;
-        
-        for (meta, req_body, res_body, req_ct, _, res_ct, _) in data {
-            ins_traffic.execute(params![
-                meta.id, meta.uri, meta.method, meta.version, meta.client, meta.req_headers, meta.res_headers, meta.status_code, if meta.intercepted { 1 } else { 0 }, meta.timestamp
-            ]).map_err(|e| e.to_string())?;
-            
-            let req_text = if is_text_content_type(&req_ct) { Some(body_to_string(&req_body, &req_ct)) } else { None };
-            let res_text = if is_text_content_type(&res_ct) { Some(body_to_string(&res_body, &res_ct)) } else { None };
-
-            ins_body.execute(params![
-                meta.id, req_body, res_body, req_text, res_text, req_ct, res_ct
-            ]).map_err(|e| e.to_string())?;
-        }
-    }
-    
-    Ok(())
-}
-
-#[tauri::command]
-async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, app_handle: AppHandle) -> Result<(), String> {
-    let json = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    let har: HarLog = serde_json::from_str(&json).map_err(|e| e.to_string())?;
-
-    db.clear_all().map_err(|e: rusqlite::Error| e.to_string())?;
-    app_handle.emit("traffic_cleared", ()).map_err(|e| e.to_string())?;
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    
-    let entries_count = har.log.entries.len();
-    println!("Importing {} entries from HAR", entries_count);
-
-    for (i, entry) in har.log.entries.into_iter().enumerate() {
-        if i % 10 == 0 {
-            std::thread::sleep(std::time::Duration::from_millis(1));
-        }
-        let timestamp = entry.started_date_time.clone();
-        let id = format!("har_{}_{}", timestamp, i);
-        
-        // Request
-        let mut req_headers = HashMap::new();
-        for h in entry.request.headers {
-            req_headers.insert(h.name.clone(), h.value);
-        }
-
-        let method = entry.request.method.clone();
-        let url = entry.request.url.clone();
-        let version = entry.request.http_version.clone();
-        let body_size = entry.request.body_size as usize;
-
-        let req_body = if let Some(post) = entry.request.post_data {
-            post.text.into_bytes()
-        } else {
-            vec![]
-        };
-
-        let content_type = req_headers.get("content-type").or_else(|| req_headers.get("Content-Type")).cloned();
-        let content_encoding = req_headers.get("content-encoding").or_else(|| req_headers.get("Content-Encoding")).cloned();
-
-        db.insert_request(TrafficEvent::Request {
-            id: id.clone(),
-            uri: url.clone(),
-            method: method.clone(),
-            version: version.clone(),
-            headers: req_headers.clone(),
-            body: req_body,
-            content_type,
-            content_encoding,
-            intercepted: true,
-            client: "HAR Import".to_string(),
-            tags: vec![],
-        });
-
-        let _ = app_handle.emit("traffic_event", Payload {
-            id: id.clone(),
-            is_request: true,
-            data: PayloadTraffic {
-                uri: Some(url),
-                version: Some(version.clone()),
-                method: Some(method),
-                headers: req_headers,
-                body_size,
-                intercepted: true,
-                status_code: None,
-                client: Some("HAR Import".to_string()),
-                tags: vec![],
-            }
-        });
-
-        // Response
-        let mut res_headers = HashMap::new();
-        for h in entry.response.headers {
-            res_headers.insert(h.name.clone(), h.value);
-        }
-
-        let res_body = if let Some(text) = entry.response.content.text {
-            if entry.response.content.encoding.as_deref() == Some("base64") {
-                general_purpose::STANDARD.decode(text).unwrap_or_default()
-            } else {
-                text.into_bytes()
-            }
-        } else {
-            vec![]
-        };
-
-        let status_code = entry.response.status;
-        let res_body_size = entry.response.content.size;
-
-        let content_type = res_headers.get("content-type").or_else(|| res_headers.get("Content-Type")).cloned();
-        let content_encoding = res_headers.get("content-encoding").or_else(|| res_headers.get("Content-Encoding")).cloned();
-
-        db.insert_response(TrafficEvent::Response {
-            id: id.clone(),
-            headers: res_headers.clone(),
-            body: res_body,
-            content_type,
-            content_encoding,
-            status_code,
-        });
-
-        let _ = app_handle.emit("traffic_event", Payload {
-            id: id.clone(),
-            is_request: false,
-            data: PayloadTraffic {
-                uri: None,
-                version: Some(entry.response.http_version.clone()),
-                method: None,
-                headers: res_headers,
-                body_size: res_body_size,
-                intercepted: true,
-                status_code: Some(status_code),
-                client: Some("HAR Import".to_string()),
-                tags: vec![],
-            }
-        });
-    }
-    
-    Ok(())
-}
-
-use std::sync::Mutex;
-use std::time::Instant;
-
-struct MyTrafficListener {
-    app_handle: AppHandle,
-    traffic_db: Arc<TrafficDb>,
-    tag_manager: Arc<TagManager>,
-    proxy_settings: Arc<std::sync::RwLock<ProxySettings>>,
-    request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
-    tray_stats: Arc<TrayStats>,
-    session_id: String,
-    breakpoint_manager: Arc<BreakpointManager>,
-    script_manager: Arc<ScriptManager>,
-}
-
-#[async_trait]
-impl TrafficListener for MyTrafficListener {
-    async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) -> Request<Bytes> {
-        self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
-        self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
-        
-        let mut uri = request.uri().to_string();
-        
-        // Clean up redundant default ports from the URI
-        if uri.starts_with("https://") {
-            uri = uri.replace(":443/", "/");
-            if uri.ends_with(":443") {
-                uri = uri[..uri.len() - 4].to_string();
-            }
-        } else if uri.starts_with("http://") {
-            uri = uri.replace(":80/", "/");
-            if uri.ends_with(":80") {
-                uri = uri[..uri.len() - 3].to_string();
-            }
-        }
-        
-        let method = request.method().as_str().to_string();
- 
-        let show_connect = if let Ok(settings) = self.proxy_settings.read() {
-            settings.show_connect_method
-        } else {
-            false
-        };
- 
-        if !show_connect && method.trim().to_uppercase() == "CONNECT" {
-            return request;
-        }
- 
-        self.request_times.lock().unwrap().insert(id, (Instant::now(), uri.clone(), method.clone()));
-        
-        let http_version = match request.version() {
-            Version::HTTP_10 => "HTTP/1.0".to_string(),
-            Version::HTTP_11 => "HTTP/1.1".to_string(),
-            Version::HTTP_2 => "HTTP/2".to_string(),
-            Version::HTTP_3 => "HTTP/3".to_string(),
-            _ => "Unknown".to_string(),
-        };
- 
-        let headers = request
-            .headers()
-            .iter()
-            .map(|(key, value)| {
-                (key.to_string(), value.to_str().unwrap_or("").to_string())
-            })
-            .collect::<HashMap<_, _>>();
- 
-        let body_bytes = request.body();
-        let body_vec = body_bytes.to_vec();
-        let decompressed_body = decompress_body(&headers, body_vec);
-        let body_size = decompressed_body.len();
- 
-        let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
-        let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
- 
-        let client_info = traffic::process_info::get_client_info(&client_addr);
- 
-        let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
- 
-        let traffic_id = format!("{}_{}", self.session_id, id);
- 
-        self.traffic_db.insert_request(TrafficEvent::Request {
-            id: traffic_id.clone(),
-            uri: uri.clone(),
-            method: method.clone(),
-            version: http_version.clone(),
-            headers: headers.clone(),
-            body: decompressed_body.clone(),
-            content_type,
-            content_encoding,
-            intercepted,
-            client: client_info.clone(),
-            tags: tags.clone(),
-        });
-        
-        // Async tagging for request body if needed
-        self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
- 
-        let _result = self.app_handle.emit(
-            "traffic_event",
-            Payload {
-                id: traffic_id.clone(),
-                is_request: true,
-                data: PayloadTraffic {
-                    uri: Some(uri.clone()),
-                    version: Some(http_version.clone()),
-                    method: Some(method.clone()),
-                    headers: headers.clone(),
-                    body_size,
-                    intercepted,
-                    status_code: None,
-                    client: Some(client_info.clone()),
-                    tags: tags.clone(),
-                },
-            },
-        );
- 
-        // 1. Handle Automated Scripts
-        let mut script_modified_data = None;
-        let mut final_script_name = String::new();
-        if self.script_manager.is_enabled.load(Ordering::SeqCst) {
-            if let Ok(scripts) = self.traffic_db.get_scripts() {
-                for script_rule in scripts {
-                    if script_rule.enabled && script_rule.request && matches_breakpoint(&uri, &method, &script_rule.matching_rule, &script_rule.method) {
-                        let script_data = BreakpointData {
-                            id: format!("{}_req_script", traffic_id),
-                            headers: headers.clone(),
-                            body: decompressed_body.clone(),
-                            method: Some(method.clone()),
-                            uri: Some(uri.clone()),
-                            status_code: None,
-                        };
-                        
-                        match run_script(&script_rule.script, script_data) {
-                            Ok(modified) => {
-                                final_script_name = script_rule.name.clone();
-                                script_modified_data = Some(modified);
-                            }
-                            Err(e) => println!("Script error in rule '{}': {}", script_rule.name, e),
-                        }
-                    }
-                }
-            }
-        }
-
-        // Apply script modifications immediately (partially) so breakpoint sees them
-        let mut modified_request_data = script_modified_data;
-
-        // 2. Handle Breakpoint for Request
-        let mut should_pause = false;
-        let mut matched_rule_name = String::new();
-
-        if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
-            if let Ok(rules) = self.traffic_db.get_breakpoints() {
-                for rule in rules {
-                    if rule.enabled && rule.request && matches_breakpoint(&uri, &method, &rule.matching_rule, &rule.method) {
-                        should_pause = true;
-                        matched_rule_name = rule.name.clone();
-                        break;
-                    }
-                }
-            }
-        }
-
-        if should_pause {
-            let (tx, rx) = tokio::sync::oneshot::channel();
-            let hit_id = format!("{}_req", traffic_id);
-            
-            // If modified by script, use that as the starting point for the breakpoint
-            let current_bp_data = if let Some(ref m) = modified_request_data {
-                m.clone()
-            } else {
-                BreakpointData {
-                    id: hit_id.clone(),
-                    headers: headers.clone(),
-                    body: decompressed_body.clone(),
-                    method: Some(method.clone()),
-                    uri: Some(uri.clone()),
-                    status_code: None,
-                }
-            };
-
-            {
-                let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
-                tasks.insert(hit_id.clone(), PausedTask {
-                    sender: tx,
-                    name: matched_rule_name.clone(),
-                    data: current_bp_data,
-                });
-            }
-            
-            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name.clone() });
-            
-            // Wait for resume with optional modified data
-            if let Ok(Some(modified)) = rx.await {
-                modified_request_data = Some(modified);
-            }
-        }
-
-        // 3. Final modification application and DB Update
-        if let Some(modified) = modified_request_data {
-            // Apply modifications to the live request
-            let body_mut = request.body_mut();
-            *body_mut = Bytes::from(modified.body.clone());
-
-            let header_mut = request.headers_mut();
-            header_mut.clear();
-            let mut updated_headers = HashMap::new();
-            for (k, v) in modified.headers.clone() {
-                let k_lower = k.to_lowercase();
-                if k_lower == "content-encoding" || k_lower == "content-length" {
-                    continue;
-                }
-                if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
-                    header_mut.insert(key.clone(), val);
-                    updated_headers.insert(k.clone(), v.clone());
-                }
-            }
-            
-            let mut updated_uri = uri.clone();
-            let mut updated_method = method.clone();
-            if let Some(m) = modified.method.clone() {
-                if let Ok(method_val) = hyper::Method::from_bytes(m.as_bytes()) {
-                    *request.method_mut() = method_val;
-                    updated_method = m;
-                }
-            }
-            if let Some(u) = modified.uri.clone() {
-                if let Ok(uri_val) = hyper::Uri::try_from(&u) {
-                    *request.uri_mut() = uri_val;
-                    updated_uri = u;
-                }
-            }
-
-            // Detect changes and add tags
-            let mut modification_tags = tags.clone();
-            if !matched_rule_name.is_empty() {
-                modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
-            }
-            if !final_script_name.is_empty() {
-                modification_tags.push(format!("SCRIPT: {}", final_script_name));
-            }
-
-            if modified.body != decompressed_body {
-                modification_tags.push("MODIFIED_BODY".to_string());
-            }
-            if updated_headers != headers {
-                modification_tags.push("MODIFIED_HEADERS".to_string());
-            }
-            if updated_uri != uri {
-                modification_tags.push("MODIFIED_URI".to_string());
-            }
-            if updated_method != method {
-                modification_tags.push("MODIFIED_METHOD".to_string());
-            }
-
-            // Update DB and re-emit to reflect changes in viewer
-            let updated_body_size = modified.body.len();
-            self.traffic_db.insert_request(TrafficEvent::Request {
-                id: traffic_id.clone(),
-                uri: updated_uri.clone(),
-                method: updated_method.clone(),
-                version: http_version.clone(),
-                headers: updated_headers.clone(),
-                body: modified.body.clone(),
-                content_type: updated_headers.get("content-type").or_else(|| updated_headers.get("Content-Type")).cloned(),
-                content_encoding: None,
-                intercepted,
-                client: client_info.clone(),
-                tags: modification_tags.clone(),
-            });
-
-            let _ = self.app_handle.emit(
-                "traffic_event",
-                Payload {
-                    id: traffic_id.clone(),
-                    is_request: true,
-                    data: PayloadTraffic {
-                        uri: Some(updated_uri),
-                        version: Some(http_version),
-                        method: Some(updated_method),
-                        headers: updated_headers,
-                        body_size: updated_body_size,
-                        intercepted,
-                        status_code: None,
-                        client: Some(client_info),
-                        tags: modification_tags,
-                    },
-                },
-            );
-        }
-
-        request
-    }
-
-    async fn response(&self, id: u64, mut response: Response<Bytes>, intercepted: bool, client_addr: String) -> Response<Bytes> {
-        self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
-        
-        let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
-            Some(data) => data,
-            None => return response, // If request was filtered, we ignore the response too but still return it
-        };
-        let duration = start_time.elapsed().as_millis();
-        
-        let status_code = response.status().as_u16();
-        let http_version = match response.version() {
-            Version::HTTP_10 => "HTTP/1.0".to_string(),
-            Version::HTTP_11 => "HTTP/1.1".to_string(),
-            Version::HTTP_2 => "HTTP/2".to_string(),
-            Version::HTTP_3 => "HTTP/3".to_string(),
-            _ => "Unknown".to_string(),
-        };
- 
-        let headers = response
-            .headers()
-            .iter()
-            .map(|(key, value)| {
-                (key.to_string(), value.to_str().unwrap_or("").to_string())
-            })
-            .collect::<HashMap<_, _>>();
- 
-        let body_bytes = response.body();
-        let body_vec = body_bytes.to_vec();
-        let decompressed_body = decompress_body(&headers, body_vec);
-        let body_size = decompressed_body.len();
- 
-        let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
-        let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
- 
-        let traffic_id = format!("{}_{}", self.session_id, id);
- 
-        self.traffic_db.insert_response(TrafficEvent::Response {
-            id: traffic_id.clone(),
-            headers: headers.clone(),
-            body: decompressed_body.clone(),
-            content_type,
-            content_encoding,
-            status_code,
-        });
- 
-        let client_info = traffic::process_info::get_client_info(&client_addr);
- 
-        let mut headers_with_perf = headers.clone();
-        headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
- 
-        // Async tagging for response body
-        self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
- 
-        let _result = self.app_handle.emit(
-            "traffic_event",
-            Payload {
-                id: traffic_id.clone(),
-                is_request: false,
-                data: PayloadTraffic {
-                    uri: None,
-                    version: Some(http_version.clone()),
-                    method: None,
-                    headers: headers_with_perf.clone(),
-                    body_size,
-                    intercepted,
-                    status_code: Some(status_code),
-                    client: Some(client_info.clone()),
-                    tags: Vec::new(), // Tags will be updated via tags_updated event if async rules match
-                },
-            },
-        );
- 
-        // Handle Breakpoint for Response
-        let mut should_pause = false;
-        let mut matched_rule_name = String::new();
- 
-        if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
-            if let Ok(rules) = self.traffic_db.get_breakpoints() {
-                for rule in rules {
-                    if rule.enabled && rule.response && matches_breakpoint(&uri, &method, &rule.matching_rule, &rule.method) {
-                        should_pause = true;
-                        matched_rule_name = rule.name.clone();
-                        break;
-                    }
-                }
-            }
-        }
- 
-        // Handle scripts for response
-        let mut modified_by_script = None;
-        let mut script_name = String::new();
-        if self.script_manager.is_enabled.load(Ordering::SeqCst) {
-            if let Ok(scripts) = self.traffic_db.get_scripts() {
-                for script_rule in scripts {
-                    if script_rule.enabled && script_rule.response && matches_breakpoint(&uri, &method, &script_rule.matching_rule, &script_rule.method) {
-                        let script_data = BreakpointData {
-                            id: format!("{}_res_script", traffic_id),
-                            headers: headers_with_perf.clone(),
-                            body: decompressed_body.clone(),
-                            method: Some(method.clone()),
-                            uri: Some(uri.clone()),
-                            status_code: Some(status_code),
-                        };
-
-                        match run_script(&script_rule.script, script_data) {
-                            Ok(modified) => {
-                                script_name = script_rule.name.clone();
-                                modified_by_script = Some(modified);
-                            }
-                            Err(e) => println!("Script error in rule '{}': {}", script_rule.name, e),
-                        }
-                    }
-                }
-            }
-        }
-
-        let mut final_modified_data = modified_by_script;
-
-        if should_pause {
-            let (tx, rx) = tokio::sync::oneshot::channel();
-            let hit_id = format!("{}_res", traffic_id);
-            
-            let current_bp_data = if let Some(ref m) = final_modified_data {
-                m.clone()
-            } else {
-                BreakpointData {
-                    id: hit_id.clone(),
-                    headers: headers_with_perf.clone(),
-                    body: decompressed_body.clone(),
-                    method: Some(method.clone()),
-                    uri: Some(uri.clone()),
-                    status_code: Some(status_code),
-                }
-            };
-
-            {
-                let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
-                tasks.insert(hit_id.clone(), PausedTask {
-                    sender: tx,
-                    name: matched_rule_name.clone(),
-                    data: current_bp_data,
-                });
-            }
-            
-            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name.clone() });
-            
-            // Wait for resume
-            if let Ok(Some(modified)) = rx.await {
-                final_modified_data = Some(modified);
-            }
-        }
-
-        if let Some(modified) = final_modified_data {
-                // Apply modifications
-                let body_mut = response.body_mut();
-                *body_mut = Bytes::from(modified.body.clone());
- 
-                let header_mut = response.headers_mut();
-                header_mut.clear();
-                let mut updated_headers = HashMap::new();
-                for (k, v) in modified.headers.clone() {
-                    let k_lower = k.to_lowercase();
-                    if k_lower == "content-encoding" || k_lower == "content-length" {
-                        continue;
-                    }
- 
-                    if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
-                        header_mut.insert(key.clone(), val);
-                        updated_headers.insert(k.clone(), v.clone());
-                    }
-                }
- 
-                let mut updated_status = status_code;
-                if let Some(sc) = modified.status_code {
-                    if let Ok(status) = hyper::StatusCode::from_u16(sc) {
-                        *response.status_mut() = status;
-                        updated_status = sc;
-                    }
-                }
- 
-                // Detect changes and add tags
-                let mut modification_tags = Vec::new();
-                if !matched_rule_name.is_empty() {
-                    modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
-                }
-                if !script_name.is_empty() {
-                     modification_tags.push(format!("SCRIPT: {}", script_name));
-                }
-
-                if modified.body != decompressed_body {
-                    modification_tags.push("MODIFIED_BODY".to_string());
-                }
-                if updated_headers != headers {
-                    modification_tags.push("MODIFIED_HEADERS".to_string());
-                }
-                if updated_status != status_code {
-                    modification_tags.push("MODIFIED_STATUS".to_string());
-                }
- 
-                // Update DB and re-emit to reflect changes in viewer
-                let updated_body_size = modified.body.len();
-                self.traffic_db.insert_response(TrafficEvent::Response {
-                    id: traffic_id.clone(),
-                    headers: updated_headers.clone(),
-                    body: modified.body.clone(),
-                    content_type: updated_headers.get("content-type").or_else(|| updated_headers.get("Content-Type")).cloned(),
-                    content_encoding: None, // Stripped for modification
-                    status_code: updated_status,
-                });
-                
-                // Add tags to traffic metadata
-                self.traffic_db.update_tags(traffic_id.clone(), modification_tags.clone());
- 
-                let _ = self.app_handle.emit(
-                    "traffic_event",
-                    Payload {
-                        id: traffic_id.clone(),
-                        is_request: false,
-                        data: PayloadTraffic {
-                            uri: None,
-                            version: Some(http_version.clone()),
-                            method: None,
-                            headers: updated_headers,
-                            body_size: updated_body_size,
-                            intercepted,
-                            status_code: Some(updated_status),
-                            client: Some(client_info.clone()),
-                            tags: modification_tags,
-                        },
-                    },
-                );
-        }
-
-        response
-    }
-}
-
-fn run_script(script: &str, mut data: BreakpointData) -> Result<BreakpointData, String> {
-    let mut context = Context::default();
-
-    // Prepare Request/Response objects
-    let headers_map = &data.headers;
-    let body_str = String::from_utf8_lossy(&data.body);
-    
-    // Create 'request' object
-    let request_json = serde_json::json!({
-        "headers": headers_map,
-        "body": body_str,
-        "method": data.method,
-        "uri": data.uri
-    });
-
-    // Create 'response' object (only if status_code is set, indicating a response)
-    let response_json = if let Some(sc) = data.status_code {
-         serde_json::json!({
-            "headers": headers_map,
-            "body": body_str,
-            "statusCode": sc
-        })
-    } else {
-        serde_json::json!(null)
-    };
-
-    let script_wrapper = format!(
-        "var request = {}; var response = {}; \n{}\n \
-         if (typeof script === 'function') {{ \
-             var result = script(request, response); \
-             JSON.stringify(result); \
-         }} else {{ \
-             JSON.stringify({{request: request, response: response}}); \
-         }}",
-        request_json,
-        response_json,
-        script
-    );
-
-    let result = context.eval(Source::from_bytes(script_wrapper.as_bytes())).map_err(|e| e.to_string())?;
-    
-    if let Some(json_str) = result.as_string() {
-        let modified: serde_json::Value = serde_json::from_str(&json_str.to_std_string_escaped()).map_err(|e| e.to_string())?;
-        
-        // Extract modifications from the returned object
-        // The user can return { request, response } or just one of them
-        let target = if data.status_code.is_some() {
-            modified.get("response").or_else(|| modified.get("request"))
-        } else {
-            modified.get("request")
-        };
-
-        if let Some(t) = target {
-            if let Some(h) = t.get("headers") {
-                if let Ok(new_headers) = serde_json::from_value(h.clone()) {
-                    data.headers = new_headers;
-                }
-            }
-            if let Some(b) = t.get("body") {
-                if let Some(b_str) = b.as_str() {
-                    data.body = b_str.as_bytes().to_vec();
-                }
-            }
-            if let Some(m) = t.get("method") {
-                if let Some(m_str) = m.as_str() {
-                    data.method = Some(m_str.to_string());
-                }
-            }
-            if let Some(u) = t.get("uri") {
-                if let Some(u_str) = u.as_str() {
-                    data.uri = Some(u_str.to_string());
-                }
-            }
-            if let Some(s) = t.get("statusCode") {
-                if let Some(s_num) = s.as_u64() {
-                    data.status_code = Some(s_num as u16);
-                }
-            }
-        }
-    }
-
-    Ok(data)
-}
-
-fn matches_breakpoint(uri: &str, method: &str, rule_pattern: &str, rule_method: &str) -> bool {
-    // Check method
-    if rule_method != "ALL" && !rule_method.is_empty() && rule_method.to_uppercase() != method.to_uppercase() {
-        return false;
-    }
-
-    // Check URI pattern (simple glob-like matching)
-    if rule_pattern == "*" || rule_pattern.is_empty() {
-        return true;
-    }
-
-    use globset::{Glob, GlobSetBuilder};
-    if let Ok(glob) = Glob::new(rule_pattern) {
-        let mut builder = GlobSetBuilder::new();
-        builder.add(glob);
-        if let Ok(set) = builder.build() {
-            if set.is_match(uri) {
-                return true;
-            }
-        }
-    }
-
-    uri.contains(rule_pattern)
-}
+use commands::*;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -1634,30 +539,30 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            greet,
-            turn_on_proxy,
-            turn_off_proxy,
-            install_certificate,
-            auto_install_certificate,
-            uninstall_certificate,
-            open_new_window,
+            commands::greet,
+            commands::turn_on_proxy,
+            commands::turn_off_proxy,
+            commands::install_certificate,
+            commands::auto_install_certificate,
+            commands::uninstall_certificate,
+            commands::open_new_window,
             get_request_pair_data,
             get_response_pair_data,
-            update_intercept_allow_list,
-            get_recent_traffic,
-            get_all_metadata,
-            get_proxy_settings,
-            update_proxy_settings,
-            save_session,
-            load_session,
-            get_filter_presets,
-            add_filter_preset,
-            update_filter_preset,
-            delete_filter_preset,
-            export_selected_to_har,
-            export_selected_to_csv,
-            export_selected_to_sqlite,
-            change_proxy_port,
+            commands::update_intercept_allow_list,
+            commands::get_recent_traffic,
+            commands::get_all_metadata,
+            commands::get_proxy_settings,
+            commands::update_proxy_settings,
+            commands::save_session,
+            commands::load_session,
+            commands::get_filter_presets,
+            commands::add_filter_preset,
+            commands::update_filter_preset,
+            commands::delete_filter_preset,
+            commands::export_selected_to_har,
+            commands::export_selected_to_csv,
+            commands::export_selected_to_sqlite,
+            commands::change_proxy_port,
             get_tags_from_db,
             add_tag_to_db,
             update_tag_in_db,
@@ -1695,18 +600,18 @@ fn main() {
             get_custom_checkers,
             save_custom_checker,
             delete_custom_checker,
-            set_breakpoint_enabled,
-            get_breakpoint_enabled,
-            resume_breakpoint,
-            get_paused_breakpoints,
-            get_breakpoints,
-            save_breakpoint,
-            delete_breakpoint,
-            get_paused_data,
-            get_app_data_dir,
-            get_scripts,
-            save_script,
-            delete_script,
+            commands::set_breakpoint_enabled,
+            commands::get_breakpoint_enabled,
+            commands::resume_breakpoint,
+            commands::get_paused_breakpoints,
+            commands::get_breakpoints,
+            commands::save_breakpoint,
+            commands::delete_breakpoint,
+            commands::get_paused_data,
+            commands::get_app_data_dir,
+            commands::get_scripts,
+            commands::save_script,
+            commands::delete_script,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
