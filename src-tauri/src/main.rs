@@ -748,14 +748,14 @@ impl TrafficListener for MyTrafficListener {
                 is_request: true,
                 data: PayloadTraffic {
                     uri: Some(uri.clone()),
-                    version: Some(http_version),
+                    version: Some(http_version.clone()),
                     method: Some(method.clone()),
                     headers: headers.clone(),
                     body_size,
                     intercepted,
                     status_code: None,
-                    client: Some(client_info),
-                    tags,
+                    client: Some(client_info.clone()),
+                    tags: tags.clone(),
                 },
             },
         );
@@ -795,7 +795,7 @@ impl TrafficListener for MyTrafficListener {
                 });
             }
             
-            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name });
+            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name.clone() });
             
             // Wait for resume with optional modified data
             if let Ok(Some(modified)) = rx.await {
@@ -955,13 +955,13 @@ impl TrafficListener for MyTrafficListener {
                 is_request: false,
                 data: PayloadTraffic {
                     uri: None,
-                    version: Some(http_version),
+                    version: Some(http_version.clone()),
                     method: None,
                     headers: headers_with_perf.clone(),
                     body_size,
                     intercepted,
                     status_code: Some(status_code),
-                    client: Some(client_info),
+                    client: Some(client_info.clone()),
                     tags: Vec::new(), // Tags will be updated via tags_updated event if async rules match
                 },
             },
@@ -1002,7 +1002,7 @@ impl TrafficListener for MyTrafficListener {
                 });
             }
             
-            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name });
+            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name.clone() });
             
             // Wait for resume
             if let Ok(Some(modified)) = rx.await {
@@ -1071,13 +1071,13 @@ impl TrafficListener for MyTrafficListener {
                         is_request: false,
                         data: PayloadTraffic {
                             uri: None,
-                            version: Some(http_version),
+                            version: Some(http_version.clone()),
                             method: None,
                             headers: updated_headers,
                             body_size: updated_body_size,
                             intercepted,
                             status_code: Some(updated_status),
-                            client: Some(client_info),
+                            client: Some(client_info.clone()),
                             tags: modification_tags,
                         },
                     },
@@ -1157,10 +1157,10 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
         .setup(move |app| {
-            let cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
-            let tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
-            let saved_sessions_item = MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app)?;
-            let traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
+            let _cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
+            let _tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
+            let _saved_sessions_item = MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app)?;
+            let _traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit-app", "Quit network-spy").accelerator("Cmd+Q").build(app)?;
 
             let tools_submenu = create_tools_submenu(app)?;
