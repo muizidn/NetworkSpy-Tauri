@@ -112,6 +112,12 @@ jobs:
         with:
           tagName: ${{ needs.get-version.outputs.app_version }}
           releaseName: "Network Spy ${{ needs.get-version.outputs.app_version }}"
-          releaseBody: "Automated release from ${{ github.ref_name }} branch."
-          releaseDraft: true
+          releaseBody: |
+            ### Automated Build
+            This release was automatically built from the **${{ github.ref_name }}** branch.
+
+            - **Commit**: [${{ github.sha }}](${{ github.event.repository.html_url }}/commit/${{ github.sha }})
+            - **Workflow Run**: [${{ github.run_id }}](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})
+            - **Environment**: ${{ matrix.platform }}
+          releaseDraft: ${{ github.ref_name != 'develop' }}
           prerelease: ${{ github.ref_name != 'main' }}
