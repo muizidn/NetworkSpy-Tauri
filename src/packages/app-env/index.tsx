@@ -1,6 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import React, { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from "react";
-import { IAppProvider, TauriAppProvider, MockAppProvider } from "./AppProvider";
+import { IAppProvider, TauriAppProvider, MockAppProvider, BreakpointHit } from "./AppProvider";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { RUNNING_IN_TAURI } from "@src/context/TauriProvider";
 
@@ -10,7 +10,7 @@ export interface IAppProviderContext {
   setIsRun: (isRun: boolean) => void;
   clearData: () => void;
   currentPort: number | null;
-  pausedIds: string[];
+  pausedBreakpoints: BreakpointHit[];
   resumeBreakpoint: (id: string) => Promise<void>;
   openNewWindow: (context: string, title: string) => Promise<void>;
 }
@@ -36,7 +36,7 @@ export const useAppProvider = (): IAppProviderContext => {
       setIsRun: () => { },
       clearData: () => { },
       currentPort: null,
-      pausedIds: [],
+      pausedBreakpoints: [],
       resumeBreakpoint: async () => { },
       openNewWindow: async () => { },
     };
@@ -56,7 +56,7 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
   const activeProvider = useMemo(() => provider || getAppProvider(), [provider]);
   const [isRun, setIsRun] = useState(true);
   const [currentPort, setCurrentPort] = useState<number | null>(null);
-  const [pausedIds, setPausedIds] = useState<string[]>([]);
+  const [pausedBreakpoints, setPausedBreakpoints] = useState<BreakpointHit[]>([]);
   const { setTrafficList, setTrafficSet, setSelections } = useTrafficListContext();
 
   useEffect(() => {
@@ -73,8 +73,8 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
 
   const fetchPausedBreakpoints = useCallback(async () => {
     try {
-      const ids = await activeProvider.getPausedBreakpoints();
-      setPausedIds(ids);
+      const hits = await activeProvider.getPausedBreakpoints();
+      setPausedBreakpoints(hits);
     } catch (e) {
       console.error("Failed to fetch paused breakpoints:", e);
     }
@@ -101,8 +101,12 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
   }, [clearData]);
 
   useEffect(() => {
-    const unlistenHit = listen<string>("breakpoint_hit", (event) => {
-      setPausedIds(prev => [...prev, event.payload]);
+    const unlistenHit = listen<BreakpointHit>("breakpoint_hit", (event) => {
+      console.log("[TauriEnv] Breakpoint HIT:", event.payload);
+      setPausedBreakpoints(prev => {
+        if (prev.some(b => b.id === event.payload.id)) return prev;
+        return [...prev, event.payload];
+      });
     });
 
     return () => {
@@ -112,7 +116,8 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
 
   useEffect(() => {
     const unlistenResumed = listen<string>("breakpoint_resumed", (event) => {
-      setPausedIds(prev => prev.filter(p => p !== event.payload));
+      console.log("[TauriEnv] Breakpoint RESUMED:", event.payload);
+      setPausedBreakpoints(prev => prev.filter(p => p.id !== event.payload));
     });
 
     return () => {
@@ -125,7 +130,7 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
       await activeProvider.resumeBreakpoint(id);
       // We don't need to manually filter here because breakpoint_resumed will trigger it
       // but doing it here makes UI snappier
-      setPausedIds(prev => prev.filter(p => p !== id));
+      setPausedBreakpoints(prev => prev.filter(p => p.id !== id));
     } catch (e) {
       console.error("Failed to resume breakpoint:", e);
     }
@@ -142,7 +147,7 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
       setIsRun,
       clearData,
       currentPort,
-      pausedIds,
+      pausedBreakpoints,
       resumeBreakpoint,
       openNewWindow,
     }}>
@@ -150,3 +155,4 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
     </TauriEnvContext.Provider>
   );
 };
+

@@ -136,9 +136,20 @@ struct ProxySettings {
 
 struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
 
+struct PausedTask {
+    sender: tokio::sync::oneshot::Sender<()>,
+    name: String,
+}
+
 struct BreakpointManager {
     is_enabled: Arc<AtomicBool>,
-    paused_tasks: Arc<RwLock<HashMap<String, tokio::sync::oneshot::Sender<()>>>>,
+    paused_tasks: Arc<RwLock<HashMap<String, PausedTask>>>,
+}
+
+#[derive(Clone, Serialize)]
+struct BreakpointHit {
+    id: String,
+    name: String,
 }
 
 impl BreakpointManager {
@@ -210,17 +221,20 @@ async fn resume_breakpoint(
     traffic_id: String
 ) -> Result<(), String> {
     let mut tasks = state.paused_tasks.write().await;
-    if let Some(tx) = tasks.remove(&traffic_id) {
-        let _ = tx.send(());
+    if let Some(task) = tasks.remove(&traffic_id) {
+        let _ = task.sender.send(());
         let _ = app.emit("breakpoint_resumed", traffic_id);
     }
     Ok(())
 }
 
 #[tauri::command]
-async fn get_paused_breakpoints(state: tauri::State<'_, Arc<BreakpointManager>>) -> Result<Vec<String>, String> {
+async fn get_paused_breakpoints(state: tauri::State<'_, Arc<BreakpointManager>>) -> Result<Vec<BreakpointHit>, String> {
     let tasks = state.paused_tasks.read().await;
-    Ok(tasks.keys().cloned().collect())
+    Ok(tasks.iter().map(|(id, task)| BreakpointHit { 
+        id: id.clone(), 
+        name: task.name.clone() 
+    }).collect())
 }
 
 #[tauri::command]
@@ -723,11 +737,14 @@ impl TrafficListener for MyTrafficListener {
 
         // Handle Breakpoint for Request
         let mut should_pause = false;
+        let mut matched_rule_name = String::new();
+
         if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
             if let Ok(rules) = self.traffic_db.get_breakpoints() {
                 for rule in rules {
                     if rule.enabled && rule.request && matches_breakpoint(&uri, &method, &rule.matching_rule, &rule.method) {
                         should_pause = true;
+                        matched_rule_name = rule.name.clone();
                         break;
                     }
                 }
@@ -736,12 +753,16 @@ impl TrafficListener for MyTrafficListener {
 
         if should_pause {
             let (tx, rx) = tokio::sync::oneshot::channel();
+            let hit_id = format!("{}_req", traffic_id);
             {
                 let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
-                tasks.insert(format!("{}_req", traffic_id), tx);
+                tasks.insert(hit_id.clone(), PausedTask {
+                    sender: tx,
+                    name: matched_rule_name.clone(),
+                });
             }
             
-            let _ = self.app_handle.emit("breakpoint_hit", format!("{}_req", traffic_id));
+            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name });
             
             // Wait for resume
             let _ = rx.await;
@@ -822,11 +843,14 @@ impl TrafficListener for MyTrafficListener {
 
         // Handle Breakpoint for Response
         let mut should_pause = false;
+        let mut matched_rule_name = String::new();
+
         if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
             if let Ok(rules) = self.traffic_db.get_breakpoints() {
                 for rule in rules {
                     if rule.enabled && rule.response && matches_breakpoint(&uri, &method, &rule.matching_rule, &rule.method) {
                         should_pause = true;
+                        matched_rule_name = rule.name.clone();
                         break;
                     }
                 }
@@ -835,12 +859,16 @@ impl TrafficListener for MyTrafficListener {
 
         if should_pause {
             let (tx, rx) = tokio::sync::oneshot::channel();
+            let hit_id = format!("{}_res", traffic_id);
             {
                 let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
-                tasks.insert(format!("{}_res", traffic_id), tx);
+                tasks.insert(hit_id.clone(), PausedTask {
+                    sender: tx,
+                    name: matched_rule_name.clone(),
+                });
             }
             
-            let _ = self.app_handle.emit("breakpoint_hit", format!("{}_res", traffic_id));
+            let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name });
             
             // Wait for resume
             let _ = rx.await;

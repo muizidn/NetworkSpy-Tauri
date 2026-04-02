@@ -25,6 +25,11 @@ export interface CustomChecker {
     createdAt?: string;
 }
 
+export interface BreakpointHit {
+  id: string;
+  name: string;
+}
+
 export interface IAppProvider {
   getRequestPairData(trafficId: string): Promise<RequestPairData>;
   getResponsePairData(trafficId: string): Promise<ResponsePairData>;
@@ -44,7 +49,7 @@ export interface IAppProvider {
   saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker>;
   deleteCustomChecker(id: string): Promise<void>;
   resumeBreakpoint(trafficId: string): Promise<void>;
-  getPausedBreakpoints(): Promise<string[]>;
+  getPausedBreakpoints(): Promise<BreakpointHit[]>;
   openNewWindow(context: string, title: string): Promise<void>;
 }
 
@@ -236,8 +241,8 @@ export class TauriAppProvider implements IAppProvider {
     return await tauriInvoke("resume_breakpoint", { trafficId });
   }
 
-  async getPausedBreakpoints(): Promise<string[]> {
-    return await tauriInvoke<string[]>("get_paused_breakpoints");
+  async getPausedBreakpoints(): Promise<BreakpointHit[]> {
+    return await tauriInvoke<BreakpointHit[]>("get_paused_breakpoints");
   }
 
   async openNewWindow(context: string, title: string): Promise<void> {
@@ -483,7 +488,7 @@ export class MockAppProvider implements IAppProvider {
     console.log(`[Mock] Resuming breakpoint: ${trafficId}`);
   }
 
-  async getPausedBreakpoints(): Promise<string[]> {
+  async getPausedBreakpoints(): Promise<BreakpointHit[]> {
     return [];
   }
 

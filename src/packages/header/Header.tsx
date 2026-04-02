@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
 export const HeaderLeft = () => {
   const { isRun, setIsRun, clearData, provider, currentPort } = useAppProvider();
   const { isReviewMode, reviewedSession, viewSession, saveCapture, folders } = useSessionContext();
-  const { pausedIds, openNewWindow } = useAppProvider();
+  const { pausedBreakpoints, openNewWindow } = useAppProvider();
   const [isPortDialogOpen, setIsPortDialogOpen] = React.useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = React.useState(false);
 
@@ -159,7 +159,7 @@ export const HeaderLeft = () => {
             onClick={() => setIsSaveDialogOpen(true)}
           />
 
-          {pausedIds.length > 0 && (
+          {pausedBreakpoints.length > 0 && (
             <>
               <div className="h-4 w-px bg-zinc-800/50 mx-1" />
               <div 
@@ -171,7 +171,7 @@ export const HeaderLeft = () => {
                   <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse shadow-[0_0_8px_#fbbf24]" />
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest bg-amber-500 text-black px-1.5 py-0.5 rounded-lg shadow-sm">
-                  {pausedIds.length}
+                  {pausedBreakpoints.length}
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider hidden lg:block opacity-80 group-hover:opacity-100 transition-opacity">Paused Items</span>
               </div>
