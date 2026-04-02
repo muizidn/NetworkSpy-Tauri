@@ -128,6 +128,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-trait"
+version = "0.1.89"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "atk"
 version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1671,7 +1682,6 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 [[package]]
 name = "hudsucker"
 version = "0.24.0"
-source = "git+https://github.com/muizidn/NetworkSpyProxy.git#b5b80be528673108f64607b18a38597ea57669d1"
 dependencies = [
  "async-compression",
  "bstr",
@@ -2408,6 +2418,7 @@ dependencies = [
 name = "network-spy"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
  "base64 0.22.1",
  "brotli",
  "bytes",
@@ -2442,8 +2453,8 @@ dependencies = [
 [[package]]
 name = "network_spy_proxy"
 version = "0.1.0"
-source = "git+https://github.com/muizidn/NetworkSpyProxy.git#b5b80be528673108f64607b18a38597ea57669d1"
 dependencies = [
+ "async-trait",
  "bstr",
  "bytes",
  "cc",

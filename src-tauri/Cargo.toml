@@ -24,6 +24,7 @@ cron = "0.12.1"
 chrono = "0.4.38"
 bytes = "1.6.1"
 tokio = { version = "1", features = ["sync", "full"] }
+async-trait = "0.1"
 network_spy_proxy = { git = "https://github.com/muizidn/NetworkSpyProxy.git" }
 hyper = "1.1"
 once_cell = "1.19.0"
@@ -44,8 +45,8 @@ time = { version = "0.3", features = ["macros"] }
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62.2", features = ["Win32_Networking_WinInet", "Win32_Foundation"] }
 
-# [patch."https://github.com/muizidn/NetworkSpyProxy.git"]
-# network_spy_proxy = { path = "../../NetworkSpyProxy" }
+[patch."https://github.com/muizidn/NetworkSpyProxy.git"]
+network_spy_proxy = { path = "../../NetworkSpyProxy" }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

@@ -11,15 +11,17 @@ use bytes::Bytes;
 use certificate_installer::CertificateInstaller;
 use hyper::{Request, Response, Version};
 use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
+use tauri::menu::{Menu, MenuItem, MenuEvent, MenuBuilder, MenuItemBuilder, SubmenuBuilder, Submenu};
+use async_trait::async_trait;
 use once_cell::sync::OnceCell;
 use proxy_toggle::ProxyToggle;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use std::env;
 use tauri::{AppHandle, Manager, Emitter};
-use tauri::menu::{Menu, MenuItem, MenuEvent, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
@@ -134,6 +136,20 @@ struct ProxySettings {
 
 struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
 
+struct BreakpointManager {
+    is_enabled: Arc<AtomicBool>,
+    paused_tasks: Arc<RwLock<HashMap<String, tokio::sync::oneshot::Sender<()>>>>,
+}
+
+impl BreakpointManager {
+    fn new() -> Self {
+        Self {
+            is_enabled: Arc::new(AtomicBool::new(false)),
+            paused_tasks: Arc::new(RwLock::new(HashMap::new())),
+        }
+    }
+}
+
 #[tauri::command]
 async fn get_proxy_settings(state: tauri::State<'_, ManagedProxySettings>) -> Result<ProxySettings, String> {
     let settings = state.0.read().map_err(|e| e.to_string())?;
@@ -174,6 +190,41 @@ async fn update_intercept_allow_list(
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+async fn set_breakpoint_enabled(state: tauri::State<'_, Arc<BreakpointManager>>, enabled: bool) -> Result<(), String> {
+    state.is_enabled.store(enabled, Ordering::SeqCst);
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_breakpoint_enabled(state: tauri::State<'_, Arc<BreakpointManager>>) -> Result<bool, String> {
+    Ok(state.is_enabled.load(Ordering::SeqCst))
+}
+
+#[tauri::command]
+async fn resume_breakpoint(state: tauri::State<'_, Arc<BreakpointManager>>, traffic_id: String) -> Result<(), String> {
+    let mut tasks = state.paused_tasks.write().await;
+    if let Some(tx) = tasks.remove(&traffic_id) {
+        let _ = tx.send(());
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn get_breakpoints(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::BreakpointRule>, String> {
+    db.get_breakpoints().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn save_breakpoint(rule: traffic::db::BreakpointRule, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.save_breakpoint(rule).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_breakpoint(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.delete_breakpoint(id).map_err(|e| e.to_string())
 }
 
 static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
@@ -555,10 +606,12 @@ struct MyTrafficListener {
     request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
     tray_stats: Arc<TrayStats>,
     session_id: String,
+    breakpoint_manager: Arc<BreakpointManager>,
 }
 
+#[async_trait]
 impl TrafficListener for MyTrafficListener {
-    fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
+    async fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
         self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
         self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
         
@@ -641,12 +694,12 @@ impl TrafficListener for MyTrafficListener {
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
-                id: traffic_id,
+                id: traffic_id.clone(),
                 is_request: true,
                 data: PayloadTraffic {
-                    uri: Some(uri),
+                    uri: Some(uri.clone()),
                     version: Some(http_version),
-                    method: Some(method),
+                    method: Some(method.clone()),
                     headers,
                     body_size,
                     intercepted,
@@ -656,9 +709,35 @@ impl TrafficListener for MyTrafficListener {
                 },
             },
         );
+
+        // Handle Breakpoint for Request
+        let mut should_pause = false;
+        if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
+            if let Ok(rules) = self.traffic_db.get_breakpoints() {
+                for rule in rules {
+                    if rule.enabled && rule.request && matches_breakpoint(&uri, &method, &rule.matching_rule, &rule.method) {
+                        should_pause = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if should_pause {
+            let (tx, rx) = tokio::sync::oneshot::channel();
+            {
+                let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
+                tasks.insert(format!("{}_req", traffic_id), tx);
+            }
+            
+            let _ = self.app_handle.emit("breakpoint_hit", format!("{}_req", traffic_id));
+            
+            // Wait for resume
+            let _ = rx.await;
+        }
     }
 
-    fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
+    async fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
         self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
         
         let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
@@ -709,12 +788,12 @@ impl TrafficListener for MyTrafficListener {
         headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
 
         // Async tagging for response body
-        self.tag_manager.async_tagging(traffic_id.clone(), uri, method, headers, decompressed_body, self.app_handle.clone());
+        self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers, decompressed_body, self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
-                id: traffic_id,
+                id: traffic_id.clone(),
                 is_request: false,
                 data: PayloadTraffic {
                     uri: None,
@@ -729,7 +808,58 @@ impl TrafficListener for MyTrafficListener {
                 },
             },
         );
+
+        // Handle Breakpoint for Response
+        let mut should_pause = false;
+        if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
+            if let Ok(rules) = self.traffic_db.get_breakpoints() {
+                for rule in rules {
+                    if rule.enabled && rule.response && matches_breakpoint(&uri, &method, &rule.matching_rule, &rule.method) {
+                        should_pause = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if should_pause {
+            let (tx, rx) = tokio::sync::oneshot::channel();
+            {
+                let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
+                tasks.insert(format!("{}_res", traffic_id), tx);
+            }
+            
+            let _ = self.app_handle.emit("breakpoint_hit", format!("{}_res", traffic_id));
+            
+            // Wait for resume
+            let _ = rx.await;
+        }
     }
+}
+
+fn matches_breakpoint(uri: &str, method: &str, rule_pattern: &str, rule_method: &str) -> bool {
+    // Check method
+    if rule_method != "ALL" && !rule_method.is_empty() && rule_method.to_uppercase() != method.to_uppercase() {
+        return false;
+    }
+
+    // Check URI pattern (simple glob-like matching)
+    if rule_pattern == "*" || rule_pattern.is_empty() {
+        return true;
+    }
+
+    use globset::{Glob, GlobSetBuilder};
+    if let Ok(glob) = Glob::new(rule_pattern) {
+        let mut builder = GlobSetBuilder::new();
+        builder.add(glob);
+        if let Ok(set) = builder.build() {
+            if set.is_match(uri) {
+                return true;
+            }
+        }
+    }
+
+    uri.contains(rule_pattern)
 }
 
 fn main() {
@@ -781,16 +911,8 @@ fn main() {
             let traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit-app", "Quit network-spy").accelerator("Cmd+Q").build(app)?;
 
-            let tools_submenu = SubmenuBuilder::new(app, "Tools")
-                .item(&cert_installer_item)
-                .separator()
-                .item(&tag_item)
-                .separator()
-                .item(&saved_sessions_item)
-                .separator()
-                .item(&traffic_filters_item)
-                .build()?;
-
+            let tools_submenu = create_tools_submenu(app)?;
+            
             let menu = MenuBuilder::new(app)
                 .item(&SubmenuBuilder::new(app, "network-spy")
                     .about(None)
@@ -801,30 +923,14 @@ fn main() {
                     .hide_others()
                     .show_all()
                     .separator()
-                    .item(&quit_item)
+                    .item(&MenuItemBuilder::with_id("quit", "Quit network-spy").accelerator("Cmd+Q").build(app)?)
                     .build()?)
                 .item(&tools_submenu)
                 .build()?;
 
             app.set_menu(menu)?;
 
-            app.on_menu_event(move |app_handle, event| {
-                if event.id() == "cert-installer" {
-                    open_new_window(app_handle.clone(), "certificate-installer".into(), "Certificate Installer".into());
-                } else if event.id() == "tools-tag" {
-                    open_new_window(app_handle.clone(), "tag".into(), "Tag Tools".into());
-                } else if event.id() == "saved-sessions" {
-                    open_new_window(app_handle.clone(), "sessions".into(), "Saved Sessions".into());
-                } else if event.id() == "traffic-filters" {
-                    open_new_window(app_handle.clone(), "filters".into(), "Traffic Filters".into());
-                } else if event.id() == "quit-app" {
-                    if let Some(toggle) = PROXY_TOGGLE.get() {
-                        toggle.turn_off();
-                        println!("Proxy turned off (Menu Quit)");
-                    }
-                    app_handle.exit(0);
-                }
-            });
+            // Event handling is unified below in the global handler
 
             let app_handle = app.app_handle();
             let app_data_dir = get_app_data_dir();
@@ -852,6 +958,9 @@ fn main() {
 
             let bottom_pane_manager = Arc::new(BottomPaneManager::new(app_data_dir.clone()));
             app_handle.manage(Arc::clone(&bottom_pane_manager));
+
+            let breakpoint_manager = Arc::new(BreakpointManager::new());
+            app_handle.manage(Arc::clone(&breakpoint_manager));
 
             let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
             if list.is_empty() {
@@ -897,6 +1006,7 @@ fn main() {
             let proxy_settings_outer = Arc::clone(&proxy_settings);
             let tag_manager_outer = Arc::clone(&tag_manager);
             let tray_stats_for_proxy = tray_stats.clone();
+            let breakpoint_manager_outer = Arc::clone(&breakpoint_manager);
 
             tauri::async_runtime::spawn(async move {
                 let mut current_port = actual_port;
@@ -917,6 +1027,7 @@ fn main() {
                         request_times: Mutex::new(HashMap::new()),
                         tray_stats: tray_stats_deep,
                         session_id: uuid::Uuid::new_v4().to_string(),
+                        breakpoint_manager: breakpoint_manager_outer.clone(),
                     });
 
                     println!("Proxy server listening on port: {}", current_port);
@@ -1005,11 +1116,7 @@ fn main() {
                 .build(app_handle)?;
 
             // Window Menu Setup (Linux/Windows top menu bar)
-            let tools_submenu = SubmenuBuilder::new(app_handle, "Tools")
-                .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(app_handle)?)
-                .item(&MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app_handle)?)
-                .item(&MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app_handle)?)
-                .build()?;
+            let tools_submenu = create_tools_submenu(app_handle)?;
 
             let app_menu = MenuBuilder::new(app_handle)
                 .item(&SubmenuBuilder::new(app_handle, "network-spy")
@@ -1029,16 +1136,22 @@ fn main() {
             let app_handle_menu = app_handle.clone();
             app_handle.on_menu_event(move |_app, event| {
                 match event.id.as_ref() {
-                    "install_cert" => {
+                    "install_cert" | "cert-installer" => {
                         let _ = open_new_window_internal(&app_handle_menu, "certificate-installer".to_string(), "Certificate Installer".to_string());
                     }
-                    "saved-sessions" => {
+                    "saved-sessions" | "saved_sessions" => {
                         let _ = open_new_window_internal(&app_handle_menu, "sessions".to_string(), "Saved Sessions".to_string());
                     }
-                    "traffic-filters" => {
+                    "traffic-filters" | "traffic_filters" => {
                         let _ = open_new_window_internal(&app_handle_menu, "filters".to_string(), "Traffic Filters".to_string());
                     }
-                    "quit" => {
+                    "tools-tag" | "tools_tag" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "tag".to_string(), "Tag Tools".to_string());
+                    }
+                    "breakpoints" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "breakpoint".to_string(), "Traffic Breakpoints".to_string());
+                    }
+                    "quit" | "quit-app" => {
                         if let Some(toggle) = PROXY_TOGGLE.get() {
                             toggle.turn_off();
                         }
@@ -1123,6 +1236,12 @@ fn main() {
             get_custom_checkers,
             save_custom_checker,
             delete_custom_checker,
+            set_breakpoint_enabled,
+            get_breakpoint_enabled,
+            resume_breakpoint,
+            get_breakpoints,
+            save_breakpoint,
+            delete_breakpoint,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -1135,4 +1254,16 @@ fn main() {
             }
             _ => {}
         });
+}
+fn create_tools_submenu<R: tauri::Runtime>(manager: &impl tauri::Manager<R>) -> tauri::Result<Submenu<R>> {
+    SubmenuBuilder::new(manager, "Tools")
+        .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(manager)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("tools_tag", "Tagging Rules").build(manager)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("saved_sessions", "Saved Sessions").build(manager)?)
+        .item(&MenuItemBuilder::with_id("traffic_filters", "Traffic Filters").build(manager)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("breakpoints", "Traffic Breakpoints").build(manager)?)
+        .build()
 }
