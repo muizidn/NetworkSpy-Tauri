@@ -617,7 +617,15 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 
     {
         let mut insert_traffic = tx.prepare_cached(
-            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted, client, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(id) DO NOTHING"
+            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted, client, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) 
+             ON CONFLICT(id) DO UPDATE SET 
+                uri = excluded.uri, 
+                method = excluded.method, 
+                version = excluded.version, 
+                req_headers = excluded.req_headers, 
+                intercepted = excluded.intercepted, 
+                client = excluded.client, 
+                tags = excluded.tags"
         ).expect("Failed to prepare insert_traffic");
 
         let mut insert_body = tx.prepare_cached(

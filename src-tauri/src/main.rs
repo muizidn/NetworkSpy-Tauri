@@ -801,10 +801,11 @@ impl TrafficListener for MyTrafficListener {
             if let Ok(Some(modified)) = rx.await {
                 // Apply modifications
                 let body_mut = request.body_mut();
-                *body_mut = Bytes::from(modified.body);
+                *body_mut = Bytes::from(modified.body.clone());
  
                 let header_mut = request.headers_mut();
                 header_mut.clear();
+                let mut updated_headers = HashMap::new();
                 for (k, v) in modified.headers {
                     // Skip content-encoding and content-length when body is modified as we send it as identity/raw
                     let k_lower = k.to_lowercase();
@@ -813,11 +814,81 @@ impl TrafficListener for MyTrafficListener {
                     }
 
                     if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
-                        header_mut.insert(key, val);
+                        header_mut.insert(key.clone(), val);
+                        updated_headers.insert(k.clone(), v.clone());
                     }
                 }
                 
-                // TODO: support updating method/uri if needed
+                // Update method/uri if provided
+                let mut updated_uri = uri.clone();
+                let mut updated_method = method.clone();
+                if let Some(m) = modified.method {
+                    if let Ok(method_val) = hyper::Method::from_bytes(m.as_bytes()) {
+                        *request.method_mut() = method_val;
+                        updated_method = m;
+                    }
+                }
+                if let Some(u) = modified.uri {
+                    if let Ok(uri_val) = hyper::Uri::try_from(&u) {
+                        *request.uri_mut() = uri_val;
+                        updated_uri = u;
+                    }
+                }
+
+                // Detect changes and add tags
+                let mut modification_tags = tags.clone();
+                modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
+
+                if modified.body != decompressed_body {
+                    modification_tags.push("BREAKPOINT_REQ_BODY_CHANGED".to_string());
+                }
+
+                if updated_headers != headers {
+                    modification_tags.push("BREAKPOINT_REQ_HEADERS_CHANGED".to_string());
+                }
+
+                if updated_uri != uri {
+                    modification_tags.push("BREAKPOINT_REQ_URI_CHANGED".to_string());
+                }
+
+                if updated_method != method {
+                    modification_tags.push("BREAKPOINT_REQ_METHOD_CHANGED".to_string());
+                }
+
+                // Update DB and re-emit to reflect changes in viewer
+                let updated_body_size = modified.body.len();
+                self.traffic_db.insert_request(TrafficEvent::Request {
+                    id: traffic_id.clone(),
+                    uri: updated_uri.clone(),
+                    method: updated_method.clone(),
+                    version: http_version.clone(),
+                    headers: updated_headers.clone(),
+                    body: modified.body.clone(),
+                    content_type: updated_headers.get("content-type").or_else(|| updated_headers.get("Content-Type")).cloned(),
+                    content_encoding: None, // We stripped it for modification
+                    intercepted,
+                    client: client_info.clone(),
+                    tags: modification_tags.clone(),
+                });
+
+                let _ = self.app_handle.emit(
+                    "traffic_event",
+                    Payload {
+                        id: traffic_id.clone(),
+                        is_request: true,
+                        data: PayloadTraffic {
+                            uri: Some(updated_uri),
+                            version: Some(http_version),
+                            method: Some(updated_method),
+                            headers: updated_headers,
+                            body_size: updated_body_size,
+                            intercepted,
+                            status_code: None,
+                            client: Some(client_info),
+                            tags: modification_tags,
+                        },
+                    },
+                );
             }
         }
 
@@ -937,10 +1008,11 @@ impl TrafficListener for MyTrafficListener {
             if let Ok(Some(modified)) = rx.await {
                 // Apply modifications
                 let body_mut = response.body_mut();
-                *body_mut = Bytes::from(modified.body);
+                *body_mut = Bytes::from(modified.body.clone());
  
                 let header_mut = response.headers_mut();
                 header_mut.clear();
+                let mut updated_headers = HashMap::new();
                 for (k, v) in modified.headers {
                     // Skip content-encoding and content-length when body is modified as we send it as identity/raw
                     let k_lower = k.to_lowercase();
@@ -949,15 +1021,67 @@ impl TrafficListener for MyTrafficListener {
                     }
 
                     if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
-                        header_mut.insert(key, val);
+                        header_mut.insert(key.clone(), val);
+                        updated_headers.insert(k.clone(), v.clone());
                     }
                 }
  
+                let mut updated_status = status_code;
                 if let Some(sc) = modified.status_code {
                     if let Ok(status) = hyper::StatusCode::from_u16(sc) {
                         *response.status_mut() = status;
+                        updated_status = sc;
                     }
                 }
+
+                // Detect changes and add tags
+                let mut modification_tags = Vec::new(); // Response doesn't have initial tags like request might from sync rules
+                modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
+
+                if modified.body != decompressed_body {
+                    modification_tags.push("BREAKPOINT_RES_BODY_CHANGED".to_string());
+                }
+
+                if updated_headers != headers {
+                    modification_tags.push("BREAKPOINT_RES_HEADERS_CHANGED".to_string());
+                }
+
+                if updated_status != status_code {
+                    modification_tags.push("BREAKPOINT_RES_STATUS_CHANGED".to_string());
+                }
+
+                // Update DB and re-emit to reflect changes in viewer
+                let updated_body_size = modified.body.len();
+                self.traffic_db.insert_response(TrafficEvent::Response {
+                    id: traffic_id.clone(),
+                    headers: updated_headers.clone(),
+                    body: modified.body.clone(),
+                    content_type: updated_headers.get("content-type").or_else(|| updated_headers.get("Content-Type")).cloned(),
+                    content_encoding: None, // Stripped for modification
+                    status_code: updated_status,
+                });
+                
+                // Add tags to traffic metadata
+                self.traffic_db.update_tags(traffic_id.clone(), modification_tags.clone());
+
+                let _ = self.app_handle.emit(
+                    "traffic_event",
+                    Payload {
+                        id: traffic_id.clone(),
+                        is_request: false,
+                        data: PayloadTraffic {
+                            uri: None,
+                            version: Some(http_version),
+                            method: None,
+                            headers: updated_headers,
+                            body_size: updated_body_size,
+                            intercepted,
+                            status_code: Some(updated_status),
+                            client: Some(client_info),
+                            tags: modification_tags,
+                        },
+                    },
+                );
             }
         }
 

@@ -10,7 +10,7 @@ import { useFilterContext } from "@src/context/FilterContext";
 import { TrafficItemMap } from "./model/TrafficItemMap";
 import { invoke } from "@tauri-apps/api/core";
 import { useAppProvider } from "../app-env";
-import { FiLock, FiUnlock } from "react-icons/fi";
+import { FiLock, FiUnlock, FiZap } from "react-icons/fi";
 import { listen } from "@tauri-apps/api/event";
 import { save } from "@tauri-apps/plugin-dialog";
 
@@ -96,10 +96,19 @@ export const TrafficList: React.FC = () => {
       renderer: {
         render: ({ input }: { input: TrafficItemMap }) => {
           const intercepted = input.intercepted as boolean;
+          const tags = input.tags as string[] || [];
+          const isModified = tags.some(t => t.startsWith('BREAKPOINT_'));
+
           return (
-            <div className={`flex items-center justify-center h-full ${intercepted ? 'text-purple-400' : 'text-zinc-500'
-              }`} title={intercepted ? 'Intercepted (Decrypted)' : 'Tunneled (Encrypted)'}>
-              {intercepted ? <FiUnlock size={14} /> : <FiLock size={14} />}
+            <div className="flex items-center justify-center gap-1.5 h-full">
+              <div className={`${intercepted ? 'text-purple-400' : 'text-zinc-500'}`} title={intercepted ? 'Intercepted (Decrypted)' : 'Tunneled (Encrypted)'}>
+                {intercepted ? <FiUnlock size={14} /> : <FiLock size={14} />}
+              </div>
+              {isModified && (
+                <div className="text-blue-400 animate-pulse" title="Modified via Breakpoint">
+                  <FiZap size={12} />
+                </div>
+              )}
             </div>
           );
         }
