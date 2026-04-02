@@ -8,6 +8,7 @@ pub mod proxy_toggle;
 pub mod traffic;
 
 use bytes::Bytes;
+use boa_engine::{Context, Source};
 use certificate_installer::CertificateInstaller;
 use hyper::{Request, Response, Version};
 use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
@@ -157,6 +158,18 @@ struct BreakpointManager {
     paused_tasks: Arc<RwLock<HashMap<String, PausedTask>>>,
 }
 
+struct ScriptManager {
+    is_enabled: Arc<AtomicBool>,
+}
+
+impl ScriptManager {
+    fn new() -> Self {
+        Self {
+            is_enabled: Arc::new(AtomicBool::new(true)), // Enabled by default if user adds scripts
+        }
+    }
+}
+
 #[derive(Clone, Serialize)]
 struct BreakpointHit {
     id: String,
@@ -275,6 +288,21 @@ fn save_breakpoint(rule: traffic::db::BreakpointRule, db: tauri::State<'_, Arc<T
 #[tauri::command]
 fn delete_breakpoint(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
     db.delete_breakpoint(id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_scripts(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::ScriptRule>, String> {
+    db.get_scripts().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn save_script(rule: traffic::db::ScriptRule, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.save_script(rule).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_script(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result<(), String> {
+    db.delete_script(id).map_err(|e| e.to_string())
 }
 
 static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
@@ -657,6 +685,7 @@ struct MyTrafficListener {
     tray_stats: Arc<TrayStats>,
     session_id: String,
     breakpoint_manager: Arc<BreakpointManager>,
+    script_manager: Arc<ScriptManager>,
 }
 
 #[async_trait]
@@ -760,10 +789,41 @@ impl TrafficListener for MyTrafficListener {
             },
         );
  
-        // Handle Breakpoint for Request
+        // 1. Handle Automated Scripts
+        let mut script_modified_data = None;
+        let mut final_script_name = String::new();
+        if self.script_manager.is_enabled.load(Ordering::SeqCst) {
+            if let Ok(scripts) = self.traffic_db.get_scripts() {
+                for script_rule in scripts {
+                    if script_rule.enabled && script_rule.request && matches_breakpoint(&uri, &method, &script_rule.matching_rule, &script_rule.method) {
+                        let script_data = BreakpointData {
+                            id: format!("{}_req_script", traffic_id),
+                            headers: headers.clone(),
+                            body: decompressed_body.clone(),
+                            method: Some(method.clone()),
+                            uri: Some(uri.clone()),
+                            status_code: None,
+                        };
+                        
+                        match run_script(&script_rule.script, script_data) {
+                            Ok(modified) => {
+                                final_script_name = script_rule.name.clone();
+                                script_modified_data = Some(modified);
+                            }
+                            Err(e) => println!("Script error in rule '{}': {}", script_rule.name, e),
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply script modifications immediately (partially) so breakpoint sees them
+        let mut modified_request_data = script_modified_data;
+
+        // 2. Handle Breakpoint for Request
         let mut should_pause = false;
         let mut matched_rule_name = String::new();
- 
+
         if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
             if let Ok(rules) = self.traffic_db.get_breakpoints() {
                 for rule in rules {
@@ -775,23 +835,31 @@ impl TrafficListener for MyTrafficListener {
                 }
             }
         }
- 
+
         if should_pause {
             let (tx, rx) = tokio::sync::oneshot::channel();
             let hit_id = format!("{}_req", traffic_id);
+            
+            // If modified by script, use that as the starting point for the breakpoint
+            let current_bp_data = if let Some(ref m) = modified_request_data {
+                m.clone()
+            } else {
+                BreakpointData {
+                    id: hit_id.clone(),
+                    headers: headers.clone(),
+                    body: decompressed_body.clone(),
+                    method: Some(method.clone()),
+                    uri: Some(uri.clone()),
+                    status_code: None,
+                }
+            };
+
             {
                 let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
                 tasks.insert(hit_id.clone(), PausedTask {
                     sender: tx,
                     name: matched_rule_name.clone(),
-                    data: BreakpointData {
-                        id: hit_id.clone(),
-                        headers: headers.clone(),
-                        body: decompressed_body.clone(),
-                        method: Some(method.clone()),
-                        uri: Some(uri.clone()),
-                        status_code: None,
-                    }
+                    data: current_bp_data,
                 });
             }
             
@@ -799,97 +867,101 @@ impl TrafficListener for MyTrafficListener {
             
             // Wait for resume with optional modified data
             if let Ok(Some(modified)) = rx.await {
-                // Apply modifications
-                let body_mut = request.body_mut();
-                *body_mut = Bytes::from(modified.body.clone());
- 
-                let header_mut = request.headers_mut();
-                header_mut.clear();
-                let mut updated_headers = HashMap::new();
-                for (k, v) in modified.headers {
-                    // Skip content-encoding and content-length when body is modified as we send it as identity/raw
-                    let k_lower = k.to_lowercase();
-                    if k_lower == "content-encoding" || k_lower == "content-length" {
-                        continue;
-                    }
-
-                    if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
-                        header_mut.insert(key.clone(), val);
-                        updated_headers.insert(k.clone(), v.clone());
-                    }
-                }
-                
-                // Update method/uri if provided
-                let mut updated_uri = uri.clone();
-                let mut updated_method = method.clone();
-                if let Some(m) = modified.method {
-                    if let Ok(method_val) = hyper::Method::from_bytes(m.as_bytes()) {
-                        *request.method_mut() = method_val;
-                        updated_method = m;
-                    }
-                }
-                if let Some(u) = modified.uri {
-                    if let Ok(uri_val) = hyper::Uri::try_from(&u) {
-                        *request.uri_mut() = uri_val;
-                        updated_uri = u;
-                    }
-                }
-
-                // Detect changes and add tags
-                let mut modification_tags = tags.clone();
-                modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
-
-                if modified.body != decompressed_body {
-                    modification_tags.push("BREAKPOINT_REQ_BODY_CHANGED".to_string());
-                }
-
-                if updated_headers != headers {
-                    modification_tags.push("BREAKPOINT_REQ_HEADERS_CHANGED".to_string());
-                }
-
-                if updated_uri != uri {
-                    modification_tags.push("BREAKPOINT_REQ_URI_CHANGED".to_string());
-                }
-
-                if updated_method != method {
-                    modification_tags.push("BREAKPOINT_REQ_METHOD_CHANGED".to_string());
-                }
-
-                // Update DB and re-emit to reflect changes in viewer
-                let updated_body_size = modified.body.len();
-                self.traffic_db.insert_request(TrafficEvent::Request {
-                    id: traffic_id.clone(),
-                    uri: updated_uri.clone(),
-                    method: updated_method.clone(),
-                    version: http_version.clone(),
-                    headers: updated_headers.clone(),
-                    body: modified.body.clone(),
-                    content_type: updated_headers.get("content-type").or_else(|| updated_headers.get("Content-Type")).cloned(),
-                    content_encoding: None, // We stripped it for modification
-                    intercepted,
-                    client: client_info.clone(),
-                    tags: modification_tags.clone(),
-                });
-
-                let _ = self.app_handle.emit(
-                    "traffic_event",
-                    Payload {
-                        id: traffic_id.clone(),
-                        is_request: true,
-                        data: PayloadTraffic {
-                            uri: Some(updated_uri),
-                            version: Some(http_version),
-                            method: Some(updated_method),
-                            headers: updated_headers,
-                            body_size: updated_body_size,
-                            intercepted,
-                            status_code: None,
-                            client: Some(client_info),
-                            tags: modification_tags,
-                        },
-                    },
-                );
+                modified_request_data = Some(modified);
             }
+        }
+
+        // 3. Final modification application and DB Update
+        if let Some(modified) = modified_request_data {
+            // Apply modifications to the live request
+            let body_mut = request.body_mut();
+            *body_mut = Bytes::from(modified.body.clone());
+
+            let header_mut = request.headers_mut();
+            header_mut.clear();
+            let mut updated_headers = HashMap::new();
+            for (k, v) in modified.headers.clone() {
+                let k_lower = k.to_lowercase();
+                if k_lower == "content-encoding" || k_lower == "content-length" {
+                    continue;
+                }
+                if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
+                    header_mut.insert(key.clone(), val);
+                    updated_headers.insert(k.clone(), v.clone());
+                }
+            }
+            
+            let mut updated_uri = uri.clone();
+            let mut updated_method = method.clone();
+            if let Some(m) = modified.method.clone() {
+                if let Ok(method_val) = hyper::Method::from_bytes(m.as_bytes()) {
+                    *request.method_mut() = method_val;
+                    updated_method = m;
+                }
+            }
+            if let Some(u) = modified.uri.clone() {
+                if let Ok(uri_val) = hyper::Uri::try_from(&u) {
+                    *request.uri_mut() = uri_val;
+                    updated_uri = u;
+                }
+            }
+
+            // Detect changes and add tags
+            let mut modification_tags = tags.clone();
+            if !matched_rule_name.is_empty() {
+                modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
+            }
+            if !final_script_name.is_empty() {
+                modification_tags.push(format!("SCRIPT: {}", final_script_name));
+            }
+
+            if modified.body != decompressed_body {
+                modification_tags.push("MODIFIED_BODY".to_string());
+            }
+            if updated_headers != headers {
+                modification_tags.push("MODIFIED_HEADERS".to_string());
+            }
+            if updated_uri != uri {
+                modification_tags.push("MODIFIED_URI".to_string());
+            }
+            if updated_method != method {
+                modification_tags.push("MODIFIED_METHOD".to_string());
+            }
+
+            // Update DB and re-emit to reflect changes in viewer
+            let updated_body_size = modified.body.len();
+            self.traffic_db.insert_request(TrafficEvent::Request {
+                id: traffic_id.clone(),
+                uri: updated_uri.clone(),
+                method: updated_method.clone(),
+                version: http_version.clone(),
+                headers: updated_headers.clone(),
+                body: modified.body.clone(),
+                content_type: updated_headers.get("content-type").or_else(|| updated_headers.get("Content-Type")).cloned(),
+                content_encoding: None,
+                intercepted,
+                client: client_info.clone(),
+                tags: modification_tags.clone(),
+            });
+
+            let _ = self.app_handle.emit(
+                "traffic_event",
+                Payload {
+                    id: traffic_id.clone(),
+                    is_request: true,
+                    data: PayloadTraffic {
+                        uri: Some(updated_uri),
+                        version: Some(http_version),
+                        method: Some(updated_method),
+                        headers: updated_headers,
+                        body_size: updated_body_size,
+                        intercepted,
+                        status_code: None,
+                        client: Some(client_info),
+                        tags: modification_tags,
+                    },
+                },
+            );
         }
 
         request
@@ -983,22 +1055,59 @@ impl TrafficListener for MyTrafficListener {
             }
         }
  
+        // Handle scripts for response
+        let mut modified_by_script = None;
+        let mut script_name = String::new();
+        if self.script_manager.is_enabled.load(Ordering::SeqCst) {
+            if let Ok(scripts) = self.traffic_db.get_scripts() {
+                for script_rule in scripts {
+                    if script_rule.enabled && script_rule.response && matches_breakpoint(&uri, &method, &script_rule.matching_rule, &script_rule.method) {
+                        let script_data = BreakpointData {
+                            id: format!("{}_res_script", traffic_id),
+                            headers: headers_with_perf.clone(),
+                            body: decompressed_body.clone(),
+                            method: Some(method.clone()),
+                            uri: Some(uri.clone()),
+                            status_code: Some(status_code),
+                        };
+
+                        match run_script(&script_rule.script, script_data) {
+                            Ok(modified) => {
+                                script_name = script_rule.name.clone();
+                                modified_by_script = Some(modified);
+                            }
+                            Err(e) => println!("Script error in rule '{}': {}", script_rule.name, e),
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut final_modified_data = modified_by_script;
+
         if should_pause {
             let (tx, rx) = tokio::sync::oneshot::channel();
             let hit_id = format!("{}_res", traffic_id);
+            
+            let current_bp_data = if let Some(ref m) = final_modified_data {
+                m.clone()
+            } else {
+                BreakpointData {
+                    id: hit_id.clone(),
+                    headers: headers_with_perf.clone(),
+                    body: decompressed_body.clone(),
+                    method: Some(method.clone()),
+                    uri: Some(uri.clone()),
+                    status_code: Some(status_code),
+                }
+            };
+
             {
                 let mut tasks = self.breakpoint_manager.paused_tasks.write().await;
                 tasks.insert(hit_id.clone(), PausedTask {
                     sender: tx,
                     name: matched_rule_name.clone(),
-                    data: BreakpointData {
-                        id: hit_id.clone(),
-                        headers: headers_with_perf.clone(),
-                        body: decompressed_body.clone(),
-                        method: Some(method.clone()),
-                        uri: Some(uri.clone()),
-                        status_code: Some(status_code),
-                    }
+                    data: current_bp_data,
                 });
             }
             
@@ -1006,6 +1115,11 @@ impl TrafficListener for MyTrafficListener {
             
             // Wait for resume
             if let Ok(Some(modified)) = rx.await {
+                final_modified_data = Some(modified);
+            }
+        }
+
+        if let Some(modified) = final_modified_data {
                 // Apply modifications
                 let body_mut = response.body_mut();
                 *body_mut = Bytes::from(modified.body.clone());
@@ -1013,13 +1127,12 @@ impl TrafficListener for MyTrafficListener {
                 let header_mut = response.headers_mut();
                 header_mut.clear();
                 let mut updated_headers = HashMap::new();
-                for (k, v) in modified.headers {
-                    // Skip content-encoding and content-length when body is modified as we send it as identity/raw
+                for (k, v) in modified.headers.clone() {
                     let k_lower = k.to_lowercase();
                     if k_lower == "content-encoding" || k_lower == "content-length" {
                         continue;
                     }
-
+ 
                     if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
                         header_mut.insert(key.clone(), val);
                         updated_headers.insert(k.clone(), v.clone());
@@ -1033,23 +1146,26 @@ impl TrafficListener for MyTrafficListener {
                         updated_status = sc;
                     }
                 }
-
+ 
                 // Detect changes and add tags
-                let mut modification_tags = Vec::new(); // Response doesn't have initial tags like request might from sync rules
-                modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
+                let mut modification_tags = Vec::new();
+                if !matched_rule_name.is_empty() {
+                    modification_tags.push(format!("BREAKPOINT: {}", matched_rule_name));
+                }
+                if !script_name.is_empty() {
+                     modification_tags.push(format!("SCRIPT: {}", script_name));
+                }
 
                 if modified.body != decompressed_body {
-                    modification_tags.push("BREAKPOINT_RES_BODY_CHANGED".to_string());
+                    modification_tags.push("MODIFIED_BODY".to_string());
                 }
-
                 if updated_headers != headers {
-                    modification_tags.push("BREAKPOINT_RES_HEADERS_CHANGED".to_string());
+                    modification_tags.push("MODIFIED_HEADERS".to_string());
                 }
-
                 if updated_status != status_code {
-                    modification_tags.push("BREAKPOINT_RES_STATUS_CHANGED".to_string());
+                    modification_tags.push("MODIFIED_STATUS".to_string());
                 }
-
+ 
                 // Update DB and re-emit to reflect changes in viewer
                 let updated_body_size = modified.body.len();
                 self.traffic_db.insert_response(TrafficEvent::Response {
@@ -1063,7 +1179,7 @@ impl TrafficListener for MyTrafficListener {
                 
                 // Add tags to traffic metadata
                 self.traffic_db.update_tags(traffic_id.clone(), modification_tags.clone());
-
+ 
                 let _ = self.app_handle.emit(
                     "traffic_event",
                     Payload {
@@ -1082,11 +1198,94 @@ impl TrafficListener for MyTrafficListener {
                         },
                     },
                 );
-            }
         }
 
         response
     }
+}
+
+fn run_script(script: &str, mut data: BreakpointData) -> Result<BreakpointData, String> {
+    let mut context = Context::default();
+
+    // Prepare Request/Response objects
+    let headers_map = &data.headers;
+    let body_str = String::from_utf8_lossy(&data.body);
+    
+    // Create 'request' object
+    let request_json = serde_json::json!({
+        "headers": headers_map,
+        "body": body_str,
+        "method": data.method,
+        "uri": data.uri
+    });
+
+    // Create 'response' object (only if status_code is set, indicating a response)
+    let response_json = if let Some(sc) = data.status_code {
+         serde_json::json!({
+            "headers": headers_map,
+            "body": body_str,
+            "statusCode": sc
+        })
+    } else {
+        serde_json::json!(null)
+    };
+
+    let script_wrapper = format!(
+        "var request = {}; var response = {}; \n{}\n \
+         if (typeof script === 'function') {{ \
+             var result = script(request, response); \
+             JSON.stringify(result); \
+         }} else {{ \
+             JSON.stringify({{request: request, response: response}}); \
+         }}",
+        request_json,
+        response_json,
+        script
+    );
+
+    let result = context.eval(Source::from_bytes(script_wrapper.as_bytes())).map_err(|e| e.to_string())?;
+    
+    if let Some(json_str) = result.as_string() {
+        let modified: serde_json::Value = serde_json::from_str(&json_str.to_std_string_escaped()).map_err(|e| e.to_string())?;
+        
+        // Extract modifications from the returned object
+        // The user can return { request, response } or just one of them
+        let target = if data.status_code.is_some() {
+            modified.get("response").or_else(|| modified.get("request"))
+        } else {
+            modified.get("request")
+        };
+
+        if let Some(t) = target {
+            if let Some(h) = t.get("headers") {
+                if let Ok(new_headers) = serde_json::from_value(h.clone()) {
+                    data.headers = new_headers;
+                }
+            }
+            if let Some(b) = t.get("body") {
+                if let Some(b_str) = b.as_str() {
+                    data.body = b_str.as_bytes().to_vec();
+                }
+            }
+            if let Some(m) = t.get("method") {
+                if let Some(m_str) = m.as_str() {
+                    data.method = Some(m_str.to_string());
+                }
+            }
+            if let Some(u) = t.get("uri") {
+                if let Some(u_str) = u.as_str() {
+                    data.uri = Some(u_str.to_string());
+                }
+            }
+            if let Some(s) = t.get("statusCode") {
+                if let Some(s_num) = s.as_u64() {
+                    data.status_code = Some(s_num as u16);
+                }
+            }
+        }
+    }
+
+    Ok(data)
 }
 
 fn matches_breakpoint(uri: &str, method: &str, rule_pattern: &str, rule_method: &str) -> bool {
@@ -1161,7 +1360,7 @@ fn main() {
             let _tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
             let _saved_sessions_item = MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app)?;
             let _traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
-            let quit_item = MenuItemBuilder::with_id("quit-app", "Quit network-spy").accelerator("Cmd+Q").build(app)?;
+            let _quit_item = MenuItemBuilder::with_id("quit-app", "Quit network-spy").accelerator("Cmd+Q").build(app)?;
 
             let tools_submenu = create_tools_submenu(app)?;
             
@@ -1214,6 +1413,9 @@ fn main() {
             let breakpoint_manager = Arc::new(BreakpointManager::new());
             app_handle.manage(Arc::clone(&breakpoint_manager));
 
+            let script_manager = Arc::new(ScriptManager::new());
+            app_handle.manage(Arc::clone(&script_manager));
+
             let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
             if list.is_empty() {
                 list = vec![
@@ -1259,6 +1461,7 @@ fn main() {
             let tag_manager_outer = Arc::clone(&tag_manager);
             let tray_stats_for_proxy = tray_stats.clone();
             let breakpoint_manager_outer = Arc::clone(&breakpoint_manager);
+            let script_manager_outer = Arc::clone(&script_manager);
 
             tauri::async_runtime::spawn(async move {
                 let mut current_port = actual_port;
@@ -1271,16 +1474,17 @@ fn main() {
                     let tray_stats_deep = tray_stats_for_proxy.clone();
 
                     let mut proxy = Proxy::new(key_pair, ca_cert, current_port.into());
-                    let listener = Arc::new(MyTrafficListener {
-                        app_handle: app_handle_inner,
-                        traffic_db: traffic_db_inner,
-                        tag_manager: tag_manager_inner,
-                        proxy_settings: proxy_settings_inner,
-                        request_times: Mutex::new(HashMap::new()),
-                        tray_stats: tray_stats_deep,
-                        session_id: uuid::Uuid::new_v4().to_string(),
-                        breakpoint_manager: breakpoint_manager_outer.clone(),
-                    });
+                        let listener = Arc::new(MyTrafficListener {
+                            app_handle: app_handle_inner,
+                            traffic_db: traffic_db_inner,
+                            tag_manager: tag_manager_inner,
+                            proxy_settings: proxy_settings_inner,
+                            request_times: Mutex::new(HashMap::new()),
+                            tray_stats: tray_stats_deep,
+                            session_id: uuid::Uuid::new_v4().to_string(),
+                            breakpoint_manager: breakpoint_manager_outer.clone(),
+                            script_manager: script_manager_outer.clone(),
+                        });
 
                     println!("Proxy server listening on port: {}", current_port);
                     
@@ -1403,6 +1607,9 @@ fn main() {
                     "breakpoints" => {
                         let _ = open_new_window_internal(&app_handle_menu, "breakpoint".to_string(), "Traffic Breakpoints".to_string());
                     }
+                    "scripting" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "scripting".to_string(), "Custom Scripting".to_string());
+                    }
                     "quit" | "quit-app" => {
                         if let Some(toggle) = PROXY_TOGGLE.get() {
                             toggle.turn_off();
@@ -1497,6 +1704,9 @@ fn main() {
             delete_breakpoint,
             get_paused_data,
             get_app_data_dir,
+            get_scripts,
+            save_script,
+            delete_script,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
@@ -1520,5 +1730,6 @@ fn create_tools_submenu<R: tauri::Runtime>(manager: &impl tauri::Manager<R>) -> 
         .item(&MenuItemBuilder::with_id("traffic_filters", "Traffic Filters").build(manager)?)
         .separator()
         .item(&MenuItemBuilder::with_id("breakpoints", "Traffic Breakpoints").build(manager)?)
+        .item(&MenuItemBuilder::with_id("scripting", "Custom Scripting").build(manager)?)
         .build()
 }
