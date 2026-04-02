@@ -7,8 +7,15 @@ pub mod eval;
 pub mod proxy_toggle;
 pub mod commands;
 pub mod proxy_handler;
+pub mod breakpoints;
+pub mod scripting;
+pub mod settings;
 // pub mod submenu;
 pub mod traffic;
+
+pub use breakpoints::*;
+pub use scripting::*;
+pub use settings::*;
 
 
 use bytes::Bytes;
@@ -133,63 +140,7 @@ struct Payload {
     data: PayloadTraffic,
 }
 
-struct InterceptAllowList(Arc<RwLock<Vec<String>>>);
 
-#[derive(Default, Serialize, Deserialize, Clone)]
-pub struct ProxySettings {
-    pub show_connect_method: bool,
-    pub stream_certificate_logs: bool,
-}
-
-struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct BreakpointData {
-    pub id: String,
-    pub headers: HashMap<String, String>,
-    pub body: Vec<u8>,
-    pub method: Option<String>,
-    pub uri: Option<String>,
-    pub status_code: Option<u16>,
-}
-
-pub struct PausedTask {
-    pub sender: tokio::sync::oneshot::Sender<Option<BreakpointData>>,
-    pub name: String,
-    pub data: BreakpointData,
-}
-
-pub struct BreakpointManager {
-    pub is_enabled: Arc<AtomicBool>,
-    pub paused_tasks: Arc<RwLock<HashMap<String, PausedTask>>>,
-}
-
-pub struct ScriptManager {
-    pub is_enabled: Arc<AtomicBool>,
-}
-
-impl ScriptManager {
-    fn new() -> Self {
-        Self {
-            is_enabled: Arc::new(AtomicBool::new(true)), // Enabled by default if user adds scripts
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct BreakpointHit {
-    pub id: String,
-    pub name: String,
-}
-
-impl BreakpointManager {
-    fn new() -> Self {
-        Self {
-            is_enabled: Arc::new(AtomicBool::new(false)),
-            paused_tasks: Arc::new(RwLock::new(HashMap::new())),
-        }
-    }
-}
 
 fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
     match event.id.as_ref() {
