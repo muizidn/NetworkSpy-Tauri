@@ -1,34 +1,31 @@
-import { ToolMethod } from "@src/models/ToolMethod";
 import { Renderer, TableView } from "@src/packages/ui/TableView";
 import React, { useState, useEffect } from "react";
 import { ToolBaseHeader } from "@src/packages/ui/ToolBaseHeader";
-import { FiActivity, FiCheck, FiX, FiPlus, FiTrash2, FiSave } from "react-icons/fi";
+import { v4 as uuidv4 } from "uuid";
+import { BreakpointDialog, BreakpointModel as IBreakpointModel } from "./components/BreakpointDialog";
+import { FiActivity, FiCheck, FiTrash2, FiEdit3 } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { invoke } from "@tauri-apps/api/core";
-import { v4 as uuidv4 } from "uuid";
 
-interface BreakpointModel {
-  id: string;
-  enabled: boolean;
-  name: string;
-  method: string;
-  matching_rule: string;
-  request: boolean;
-  response: boolean;
-}
-
-export class BreakpointCellRenderer implements Renderer<BreakpointModel> {
-  type: keyof BreakpointModel;
+export class BreakpointCellRenderer implements Renderer<IBreakpointModel> {
+  type: keyof IBreakpointModel;
   onToggle?: (id: string, field: "enabled" | "request" | "response") => void;
   onDelete?: (id: string) => void;
+  onEdit?: (item: IBreakpointModel) => void;
 
-  constructor(type: keyof BreakpointModel | "actions", onToggle?: (id: string, field: "enabled" | "request" | "response") => void, onDelete?: (id: string) => void) {
+  constructor(
+      type: keyof IBreakpointModel | "actions", 
+      onToggle?: (id: string, field: "enabled" | "request" | "response") => void, 
+      onDelete?: (id: string) => void,
+      onEdit?: (item: IBreakpointModel) => void
+  ) {
     this.type = type as any;
     this.onToggle = onToggle;
     this.onDelete = onDelete;
+    this.onEdit = onEdit;
   }
 
-  render({ input }: { input: BreakpointModel }): React.ReactNode {
+  render({ input }: { input: IBreakpointModel }): React.ReactNode {
     let content: React.ReactNode;
 
     switch (this.type as string) {
@@ -66,16 +63,24 @@ export class BreakpointCellRenderer implements Renderer<BreakpointModel> {
         );
         break;
       case "matching_rule":
-        content = <span className="font-mono text-zinc-500 truncate max-w-[280px]">{input.matching_rule}</span>;
+        content = <code className="text-[10px] bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded text-zinc-500 font-mono shadow-inner group-hover:border-zinc-700 transition-colors uppercase tracking-widest truncate max-w-[280px]">{input.matching_rule}</code>;
         break;
       case "actions":
         content = (
-            <button 
-                onClick={() => this.onDelete?.(input.id)}
-                className="btn btn-xs btn-ghost text-zinc-600 hover:text-red-500 p-0 h-6 w-6 min-h-0"
-            >
-                <FiTrash2 size={14} />
-            </button>
+            <div className="flex items-center gap-1">
+                <button 
+                    onClick={() => this.onEdit?.(input)}
+                    className="text-zinc-600 hover:text-blue-500 transition-all p-1.5 rounded-md hover:bg-blue-500/10 active:scale-90"
+                >
+                    <FiEdit3 size={14} />
+                </button>
+                <button 
+                    onClick={() => this.onDelete?.(input.id)}
+                    className="text-zinc-600 hover:text-red-500 transition-all p-1.5 rounded-md hover:bg-red-500/10 active:scale-90 h-6 w-6"
+                >
+                    <FiTrash2 size={14} />
+                </button>
+            </div>
         )
         break;
       default:
@@ -93,22 +98,14 @@ export class BreakpointCellRenderer implements Renderer<BreakpointModel> {
 
 const BreakpointList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [data, setData] = useState<BreakpointModel[]>([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newRule, setNewRule] = useState<Partial<BreakpointModel>>({
-    name: "",
-    method: "ALL",
-    matching_rule: "*",
-    enabled: true,
-    request: true,
-    response: true
-  });
-
+  const [data, setData] = useState<IBreakpointModel[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<IBreakpointModel | null>(null);
   const [isGlobalEnabled, setIsGlobalEnabled] = useState(false);
 
   const fetchBreakpoints = async () => {
     try {
-        const rules = await invoke<BreakpointModel[]>("get_breakpoints");
+        const rules = await invoke<IBreakpointModel[]>("get_breakpoints");
         setData(rules);
         const enabled = await invoke<boolean>("get_breakpoint_enabled");
         setIsGlobalEnabled(enabled);
@@ -153,26 +150,23 @@ const BreakpointList: React.FC = () => {
     }
   };
 
-  const handleCreate = async () => {
-    if (!newRule.name || !newRule.matching_rule) return;
-    
-    const rule: BreakpointModel = {
-        id: uuidv4(),
-        enabled: true,
-        name: newRule.name || "Untitled Breakpoint",
-        method: newRule.method || "ALL",
-        matching_rule: newRule.matching_rule || "*",
-        request: newRule.request ?? true,
-        response: newRule.response ?? true,
-    };
-
+  const handleSave = async (rule: IBreakpointModel) => {
     try {
+        if (!rule.id) {
+            rule.id = uuidv4();
+        }
         await invoke("save_breakpoint", { rule });
-        setData(prev => [rule, ...prev]);
-        setShowAddForm(false);
-        setNewRule({ name: "", method: "ALL", matching_rule: "*", request: true, response: true });
+        setData(prev => {
+            const index = prev.findIndex(p => p.id === rule.id);
+            if (index >= 0) {
+                return prev.map(p => p.id === rule.id ? rule : p);
+            }
+            return [rule, ...prev];
+        });
+        setIsDialogOpen(false);
+        setEditingItem(null);
     } catch (e) {
-        console.error("Failed to create breakpoint:", e);
+        console.error("Failed to save breakpoint:", e);
     }
   };
 
@@ -189,7 +183,10 @@ const BreakpointList: React.FC = () => {
         icon={<FiActivity size={22} />}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onAdd={() => setShowAddForm(true)}
+        onAdd={() => {
+            setEditingItem(null);
+            setIsDialogOpen(true);
+        }}
         onClear={async () => {
              for (const item of data) {
                  await handleDelete(item.id);
@@ -260,101 +257,26 @@ const BreakpointList: React.FC = () => {
             },
             {
                 title: "",
-                minWidth: 50,
-                renderer: new BreakpointCellRenderer("actions", undefined, handleDelete),
+                minWidth: 80,
+                renderer: new BreakpointCellRenderer("actions", undefined, handleDelete, (item) => {
+                    setEditingItem(item);
+                    setIsDialogOpen(true);
+                }),
             },
             ]}
             data={filteredData}
         />
       </div>
 
-      {showAddForm && (
-        <div className="absolute inset-0 z-50 flex items-start justify-end pr-8 pt-20 pointer-events-none">
-            <div className="w-[360px] bg-[#1a1c1e] border border-zinc-800 rounded-xl shadow-2xl p-6 pointer-events-auto animate-in slide-in-from-right-8 duration-300">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-zinc-200">New Breakpoint</h3>
-                    <button onClick={() => setShowAddForm(false)} className="text-zinc-500 hover:text-zinc-300">
-                        <FiX size={18} />
-                    </button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1.5 ml-1">Friendly Name</label>
-                        <input 
-                            className="input input-sm w-full bg-zinc-900 border-zinc-800 rounded focus:border-blue-500 focus:outline-none text-xs" 
-                            placeholder="e.g. Auth Breakpoint"
-                            value={newRule.name}
-                            onChange={e => setNewRule(prev => ({ ...prev, name: e.target.value }))}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="col-span-1">
-                            <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1.5 ml-1">Method</label>
-                            <select 
-                                className="select select-sm w-full bg-zinc-900 border-zinc-800 rounded focus:border-blue-500 focus:outline-none text-[10px]"
-                                value={newRule.method}
-                                onChange={e => setNewRule(prev => ({ ...prev, method: e.target.value }))}
-                            >
-                                <option value="ALL">ALL</option>
-                                <option value="GET">GET</option>
-                                <option value="POST">POST</option>
-                                <option value="PUT">PUT</option>
-                                <option value="DELETE">DELETE</option>
-                            </select>
-                        </div>
-                        <div className="col-span-2">
-                            <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1.5 ml-1">Match Pattern</label>
-                            <input 
-                                className="input input-sm w-full bg-zinc-900 border-zinc-800 rounded focus:border-blue-500 focus:outline-none text-[10px] font-mono" 
-                                placeholder="*/api/v1/*"
-                                value={newRule.matching_rule}
-                                onChange={e => setNewRule(prev => ({ ...prev, matching_rule: e.target.value }))}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-6 pt-2">
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setNewRule(prev => ({ ...prev, request: !prev.request }))}
-                                className={twMerge(
-                                    "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                                    newRule.request ? "bg-blue-600 border-blue-500 text-white" : "bg-zinc-950 border-zinc-800 text-transparent"
-                                )}
-                            >
-                                <FiCheck size={10} />
-                            </button>
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Request</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setNewRule(prev => ({ ...prev, response: !prev.response }))}
-                                className={twMerge(
-                                    "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                                    newRule.response ? "bg-blue-600 border-blue-500 text-white" : "bg-zinc-950 border-zinc-800 text-transparent"
-                                )}
-                            >
-                                <FiCheck size={10} />
-                            </button>
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wide">Response</span>
-                        </div>
-                    </div>
-
-                    <div className="pt-4">
-                        <button 
-                            onClick={handleCreate}
-                            className="btn btn-sm btn-primary w-full bg-blue-600 hover:bg-blue-500 border-none rounded text-white font-bold h-9 min-h-0"
-                        >
-                            <FiSave className="mr-2" />
-                            Save Rule
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-      )}
+      <BreakpointDialog 
+        isOpen={isDialogOpen} 
+        onClose={() => {
+            setIsDialogOpen(false);
+            setEditingItem(null);
+        }} 
+        onSave={handleSave}
+        initialData={editingItem}
+      />
     </div>
   );
 };
