@@ -661,7 +661,7 @@ struct MyTrafficListener {
 
 #[async_trait]
 impl TrafficListener for MyTrafficListener {
-    async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) {
+    async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) -> Request<Bytes> {
         self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
         self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
         
@@ -681,17 +681,17 @@ impl TrafficListener for MyTrafficListener {
         }
         
         let method = request.method().as_str().to_string();
-
+ 
         let show_connect = if let Ok(settings) = self.proxy_settings.read() {
             settings.show_connect_method
         } else {
             false
         };
-
+ 
         if !show_connect && method.trim().to_uppercase() == "CONNECT" {
-            return;
+            return request;
         }
-
+ 
         self.request_times.lock().unwrap().insert(id, (Instant::now(), uri.clone(), method.clone()));
         
         let http_version = match request.version() {
@@ -701,7 +701,7 @@ impl TrafficListener for MyTrafficListener {
             Version::HTTP_3 => "HTTP/3".to_string(),
             _ => "Unknown".to_string(),
         };
-
+ 
         let headers = request
             .headers()
             .iter()
@@ -709,21 +709,21 @@ impl TrafficListener for MyTrafficListener {
                 (key.to_string(), value.to_str().unwrap_or("").to_string())
             })
             .collect::<HashMap<_, _>>();
-
+ 
         let body_bytes = request.body();
         let body_vec = body_bytes.to_vec();
         let decompressed_body = decompress_body(&headers, body_vec);
         let body_size = decompressed_body.len();
-
+ 
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
-
+ 
         let client_info = traffic::process_info::get_client_info(&client_addr);
-
+ 
         let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
-
+ 
         let traffic_id = format!("{}_{}", self.session_id, id);
-
+ 
         self.traffic_db.insert_request(TrafficEvent::Request {
             id: traffic_id.clone(),
             uri: uri.clone(),
@@ -740,7 +740,7 @@ impl TrafficListener for MyTrafficListener {
         
         // Async tagging for request body if needed
         self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
-
+ 
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
@@ -759,11 +759,11 @@ impl TrafficListener for MyTrafficListener {
                 },
             },
         );
-
+ 
         // Handle Breakpoint for Request
         let mut should_pause = false;
         let mut matched_rule_name = String::new();
-
+ 
         if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
             if let Ok(rules) = self.traffic_db.get_breakpoints() {
                 for rule in rules {
@@ -775,7 +775,7 @@ impl TrafficListener for MyTrafficListener {
                 }
             }
         }
-
+ 
         if should_pause {
             let (tx, rx) = tokio::sync::oneshot::channel();
             let hit_id = format!("{}_req", traffic_id);
@@ -802,10 +802,16 @@ impl TrafficListener for MyTrafficListener {
                 // Apply modifications
                 let body_mut = request.body_mut();
                 *body_mut = Bytes::from(modified.body);
-
+ 
                 let header_mut = request.headers_mut();
                 header_mut.clear();
                 for (k, v) in modified.headers {
+                    // Skip content-encoding and content-length when body is modified as we send it as identity/raw
+                    let k_lower = k.to_lowercase();
+                    if k_lower == "content-encoding" || k_lower == "content-length" {
+                        continue;
+                    }
+
                     if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
                         header_mut.insert(key, val);
                     }
@@ -814,14 +820,16 @@ impl TrafficListener for MyTrafficListener {
                 // TODO: support updating method/uri if needed
             }
         }
+
+        request
     }
 
-    async fn response(&self, id: u64, mut response: Response<Bytes>, intercepted: bool, client_addr: String) {
+    async fn response(&self, id: u64, mut response: Response<Bytes>, intercepted: bool, client_addr: String) -> Response<Bytes> {
         self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
         
         let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
             Some(data) => data,
-            None => return, // If request was filtered, we ignore the response too
+            None => return response, // If request was filtered, we ignore the response too but still return it
         };
         let duration = start_time.elapsed().as_millis();
         
@@ -833,7 +841,7 @@ impl TrafficListener for MyTrafficListener {
             Version::HTTP_3 => "HTTP/3".to_string(),
             _ => "Unknown".to_string(),
         };
-
+ 
         let headers = response
             .headers()
             .iter()
@@ -841,17 +849,17 @@ impl TrafficListener for MyTrafficListener {
                 (key.to_string(), value.to_str().unwrap_or("").to_string())
             })
             .collect::<HashMap<_, _>>();
-
+ 
         let body_bytes = response.body();
         let body_vec = body_bytes.to_vec();
         let decompressed_body = decompress_body(&headers, body_vec);
         let body_size = decompressed_body.len();
-
+ 
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
-
+ 
         let traffic_id = format!("{}_{}", self.session_id, id);
-
+ 
         self.traffic_db.insert_response(TrafficEvent::Response {
             id: traffic_id.clone(),
             headers: headers.clone(),
@@ -860,15 +868,15 @@ impl TrafficListener for MyTrafficListener {
             content_encoding,
             status_code,
         });
-
+ 
         let client_info = traffic::process_info::get_client_info(&client_addr);
-
+ 
         let mut headers_with_perf = headers.clone();
         headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
-
+ 
         // Async tagging for response body
         self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
-
+ 
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
@@ -887,11 +895,11 @@ impl TrafficListener for MyTrafficListener {
                 },
             },
         );
-
+ 
         // Handle Breakpoint for Response
         let mut should_pause = false;
         let mut matched_rule_name = String::new();
-
+ 
         if self.breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
             if let Ok(rules) = self.traffic_db.get_breakpoints() {
                 for rule in rules {
@@ -903,7 +911,7 @@ impl TrafficListener for MyTrafficListener {
                 }
             }
         }
-
+ 
         if should_pause {
             let (tx, rx) = tokio::sync::oneshot::channel();
             let hit_id = format!("{}_res", traffic_id);
@@ -930,15 +938,21 @@ impl TrafficListener for MyTrafficListener {
                 // Apply modifications
                 let body_mut = response.body_mut();
                 *body_mut = Bytes::from(modified.body);
-
+ 
                 let header_mut = response.headers_mut();
                 header_mut.clear();
                 for (k, v) in modified.headers {
+                    // Skip content-encoding and content-length when body is modified as we send it as identity/raw
+                    let k_lower = k.to_lowercase();
+                    if k_lower == "content-encoding" || k_lower == "content-length" {
+                        continue;
+                    }
+
                     if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
                         header_mut.insert(key, val);
                     }
                 }
-
+ 
                 if let Some(sc) = modified.status_code {
                     if let Ok(status) = hyper::StatusCode::from_u16(sc) {
                         *response.status_mut() = status;
@@ -946,6 +960,8 @@ impl TrafficListener for MyTrafficListener {
                 }
             }
         }
+
+        response
     }
 }
 
