@@ -105,11 +105,7 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_process::init())
         .setup(move |app| {
-            let _cert_installer_item = MenuItemBuilder::with_id("cert-installer", "Certificate Installer").build(app)?;
-            let _tag_item = MenuItemBuilder::with_id("tools-tag", "Tag").build(app)?;
-            let _saved_sessions_item = MenuItemBuilder::with_id("saved-sessions", "Saved Sessions").build(app)?;
-            let _traffic_filters_item = MenuItemBuilder::with_id("traffic-filters", "Traffic Filters").build(app)?;
-            let _quit_item = MenuItemBuilder::with_id("quit-app", "Quit network-spy").accelerator("Cmd+Q").build(app)?;
+            
 
             let tools_submenu = create_tools_submenu(app)?;
             
