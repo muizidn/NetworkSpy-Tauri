@@ -15,7 +15,7 @@ use tauri::menu::{Menu, MenuItem, MenuEvent, MenuBuilder, MenuItemBuilder, Subme
 use async_trait::async_trait;
 use once_cell::sync::OnceCell;
 use proxy_toggle::ProxyToggle;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::fs;
 use std::sync::Arc;
@@ -136,9 +136,20 @@ struct ProxySettings {
 
 struct ManagedProxySettings(Arc<std::sync::RwLock<ProxySettings>>);
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct BreakpointData {
+    id: String,
+    headers: HashMap<String, String>,
+    body: Vec<u8>,
+    method: Option<String>,
+    uri: Option<String>,
+    status_code: Option<u16>,
+}
+
 struct PausedTask {
-    sender: tokio::sync::oneshot::Sender<()>,
+    sender: tokio::sync::oneshot::Sender<Option<BreakpointData>>,
     name: String,
+    data: BreakpointData,
 }
 
 struct BreakpointManager {
@@ -218,14 +229,28 @@ async fn get_breakpoint_enabled(state: tauri::State<'_, Arc<BreakpointManager>>)
 async fn resume_breakpoint(
     app: tauri::AppHandle,
     state: tauri::State<'_, Arc<BreakpointManager>>, 
-    traffic_id: String
+    traffic_id: String,
+    modified_data: Option<BreakpointData>
 ) -> Result<(), String> {
     let mut tasks = state.paused_tasks.write().await;
     if let Some(task) = tasks.remove(&traffic_id) {
-        let _ = task.sender.send(());
+        let _ = task.sender.send(modified_data);
         let _ = app.emit("breakpoint_resumed", traffic_id);
     }
     Ok(())
+}
+
+#[tauri::command]
+async fn get_paused_data(
+    state: tauri::State<'_, Arc<BreakpointManager>>,
+    id: String
+) -> Result<BreakpointData, String> {
+    let tasks = state.paused_tasks.read().await;
+    if let Some(task) = tasks.get(&id) {
+        Ok(task.data.clone())
+    } else {
+        Err("Breakpoint data not found or already resumed".to_string())
+    }
 }
 
 #[tauri::command]
@@ -636,7 +661,7 @@ struct MyTrafficListener {
 
 #[async_trait]
 impl TrafficListener for MyTrafficListener {
-    async fn request(&self, id: u64, request: Request<Bytes>, intercepted: bool, client_addr: String) {
+    async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) {
         self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
         self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
         
@@ -725,7 +750,7 @@ impl TrafficListener for MyTrafficListener {
                     uri: Some(uri.clone()),
                     version: Some(http_version),
                     method: Some(method.clone()),
-                    headers,
+                    headers: headers.clone(),
                     body_size,
                     intercepted,
                     status_code: None,
@@ -759,17 +784,39 @@ impl TrafficListener for MyTrafficListener {
                 tasks.insert(hit_id.clone(), PausedTask {
                     sender: tx,
                     name: matched_rule_name.clone(),
+                    data: BreakpointData {
+                        id: hit_id.clone(),
+                        headers: headers.clone(),
+                        body: decompressed_body.clone(),
+                        method: Some(method.clone()),
+                        uri: Some(uri.clone()),
+                        status_code: None,
+                    }
                 });
             }
             
             let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name });
             
-            // Wait for resume
-            let _ = rx.await;
+            // Wait for resume with optional modified data
+            if let Ok(Some(modified)) = rx.await {
+                // Apply modifications
+                let body_mut = request.body_mut();
+                *body_mut = Bytes::from(modified.body);
+
+                let header_mut = request.headers_mut();
+                header_mut.clear();
+                for (k, v) in modified.headers {
+                    if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
+                        header_mut.insert(key, val);
+                    }
+                }
+                
+                // TODO: support updating method/uri if needed
+            }
         }
     }
 
-    async fn response(&self, id: u64, response: Response<Bytes>, intercepted: bool, client_addr: String) {
+    async fn response(&self, id: u64, mut response: Response<Bytes>, intercepted: bool, client_addr: String) {
         self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
         
         let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
@@ -820,7 +867,7 @@ impl TrafficListener for MyTrafficListener {
         headers_with_perf.insert("x-latency-ms".to_string(), duration.to_string());
 
         // Async tagging for response body
-        self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers, decompressed_body, self.app_handle.clone());
+        self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
 
         let _result = self.app_handle.emit(
             "traffic_event",
@@ -831,7 +878,7 @@ impl TrafficListener for MyTrafficListener {
                     uri: None,
                     version: Some(http_version),
                     method: None,
-                    headers: headers_with_perf,
+                    headers: headers_with_perf.clone(),
                     body_size,
                     intercepted,
                     status_code: Some(status_code),
@@ -865,13 +912,39 @@ impl TrafficListener for MyTrafficListener {
                 tasks.insert(hit_id.clone(), PausedTask {
                     sender: tx,
                     name: matched_rule_name.clone(),
+                    data: BreakpointData {
+                        id: hit_id.clone(),
+                        headers: headers_with_perf.clone(),
+                        body: decompressed_body.clone(),
+                        method: Some(method.clone()),
+                        uri: Some(uri.clone()),
+                        status_code: Some(status_code),
+                    }
                 });
             }
             
             let _ = self.app_handle.emit("breakpoint_hit", BreakpointHit { id: hit_id, name: matched_rule_name });
             
             // Wait for resume
-            let _ = rx.await;
+            if let Ok(Some(modified)) = rx.await {
+                // Apply modifications
+                let body_mut = response.body_mut();
+                *body_mut = Bytes::from(modified.body);
+
+                let header_mut = response.headers_mut();
+                header_mut.clear();
+                for (k, v) in modified.headers {
+                    if let (Ok(key), Ok(val)) = (hyper::header::HeaderName::from_bytes(k.as_bytes()), hyper::header::HeaderValue::from_str(&v)) {
+                        header_mut.insert(key, val);
+                    }
+                }
+
+                if let Some(sc) = modified.status_code {
+                    if let Ok(status) = hyper::StatusCode::from_u16(sc) {
+                        *response.status_mut() = status;
+                    }
+                }
+            }
         }
     }
 }
@@ -1282,6 +1355,8 @@ fn main() {
             get_breakpoints,
             save_breakpoint,
             delete_breakpoint,
+            get_paused_data,
+            get_app_data_dir,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

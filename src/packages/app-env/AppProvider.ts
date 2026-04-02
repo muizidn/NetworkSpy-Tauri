@@ -30,6 +30,15 @@ export interface BreakpointHit {
   name: string;
 }
 
+export interface BreakpointData {
+  id: string;
+  headers: Record<string, string>;
+  body: number[]; // Vec<u8> in Rust comes as array in JS
+  method?: string;
+  uri?: string;
+  status_code?: number;
+}
+
 export interface IAppProvider {
   getRequestPairData(trafficId: string): Promise<RequestPairData>;
   getResponsePairData(trafficId: string): Promise<ResponsePairData>;
@@ -48,8 +57,9 @@ export interface IAppProvider {
   getCustomCheckers(category: string): Promise<CustomChecker[]>;
   saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker>;
   deleteCustomChecker(id: string): Promise<void>;
-  resumeBreakpoint(trafficId: string): Promise<void>;
+  resumeBreakpoint(trafficId: string, modifiedData?: BreakpointData): Promise<void>;
   getPausedBreakpoints(): Promise<BreakpointHit[]>;
+  getPausedData(id: string): Promise<BreakpointData>;
   openNewWindow(context: string, title: string): Promise<void>;
 }
 
@@ -237,8 +247,12 @@ export class TauriAppProvider implements IAppProvider {
     return await tauriInvoke("delete_custom_checker", { id });
   }
 
-  async resumeBreakpoint(trafficId: string): Promise<void> {
-    return await tauriInvoke("resume_breakpoint", { trafficId });
+  async resumeBreakpoint(trafficId: string, modifiedData?: BreakpointData): Promise<void> {
+    return await tauriInvoke("resume_breakpoint", { trafficId, modifiedData });
+  }
+
+  async getPausedData(id: string): Promise<BreakpointData> {
+    return await tauriInvoke<BreakpointData>("get_paused_data", { id });
   }
 
   async getPausedBreakpoints(): Promise<BreakpointHit[]> {
@@ -484,8 +498,12 @@ export class MockAppProvider implements IAppProvider {
 
   async deleteCustomChecker(_id: string): Promise<void> { }
 
-  async resumeBreakpoint(trafficId: string): Promise<void> {
+  async resumeBreakpoint(trafficId: string, _modifiedData?: BreakpointData): Promise<void> {
     console.log(`[Mock] Resuming breakpoint: ${trafficId}`);
+  }
+
+  async getPausedData(id: string): Promise<BreakpointData> {
+    return { id, headers: {}, body: [] };
   }
 
   async getPausedBreakpoints(): Promise<BreakpointHit[]> {

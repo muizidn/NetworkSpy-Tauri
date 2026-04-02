@@ -1,6 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import React, { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from "react";
-import { IAppProvider, TauriAppProvider, MockAppProvider, BreakpointHit } from "./AppProvider";
+import { IAppProvider, TauriAppProvider, MockAppProvider, BreakpointHit, BreakpointData } from "./AppProvider";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { RUNNING_IN_TAURI } from "@src/context/TauriProvider";
 
@@ -11,7 +11,9 @@ export interface IAppProviderContext {
   clearData: () => void;
   currentPort: number | null;
   pausedBreakpoints: BreakpointHit[];
-  resumeBreakpoint: (id: string) => Promise<void>;
+  refreshBreakpoints: () => Promise<void>;
+  resumeBreakpoint: (id: string, modifiedData?: BreakpointData) => Promise<void>;
+  getPausedData: (id: string) => Promise<BreakpointData>;
   openNewWindow: (context: string, title: string) => Promise<void>;
 }
 
@@ -37,7 +39,9 @@ export const useAppProvider = (): IAppProviderContext => {
       clearData: () => { },
       currentPort: null,
       pausedBreakpoints: [],
+      refreshBreakpoints: async () => { },
       resumeBreakpoint: async () => { },
+      getPausedData: async () => ({} as BreakpointData),
       openNewWindow: async () => { },
     };
   }
@@ -125,32 +129,49 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
     };
   }, []);
 
-  const resumeBreakpoint = useCallback(async (id: string) => {
+  const resumeBreakpoint = useCallback(async (id: string, modifiedData?: BreakpointData) => {
     try {
-      await activeProvider.resumeBreakpoint(id);
-      // We don't need to manually filter here because breakpoint_resumed will trigger it
-      // but doing it here makes UI snappier
+      await activeProvider.resumeBreakpoint(id, modifiedData);
       setPausedBreakpoints(prev => prev.filter(p => p.id !== id));
     } catch (e) {
       console.error("Failed to resume breakpoint:", e);
     }
   }, [activeProvider]);
 
+  const getPausedData = useCallback(async (id: string) => {
+    return await activeProvider.getPausedData(id);
+  }, [activeProvider]);
+
   const openNewWindow = useCallback(async (context: string, title: string) => {
     await activeProvider.openNewWindow(context, title);
   }, [activeProvider]);
 
+  const contextValue = useMemo(() => ({
+    provider: activeProvider,
+    isRun,
+    setIsRun,
+    clearData,
+    currentPort,
+    pausedBreakpoints,
+    refreshBreakpoints: fetchPausedBreakpoints,
+    resumeBreakpoint,
+    getPausedData,
+    openNewWindow,
+  }), [
+    activeProvider,
+    isRun,
+    setIsRun,
+    clearData,
+    currentPort,
+    pausedBreakpoints,
+    fetchPausedBreakpoints,
+    resumeBreakpoint,
+    getPausedData,
+    openNewWindow
+  ]);
+
   return (
-    <TauriEnvContext.Provider value={{
-      provider: activeProvider,
-      isRun,
-      setIsRun,
-      clearData,
-      currentPort,
-      pausedBreakpoints,
-      resumeBreakpoint,
-      openNewWindow,
-    }}>
+    <TauriEnvContext.Provider value={contextValue}>
       {children}
     </TauriEnvContext.Provider>
   );
