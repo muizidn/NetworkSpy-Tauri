@@ -52,119 +52,12 @@ use std::sync::atomic::{AtomicU16, AtomicU64, AtomicUsize, Ordering};
 use tokio::sync::mpsc;
 use rusqlite::params;
 
-struct TrayStats {
-    total_requests: AtomicUsize,
-    tx_bytes: AtomicU64,
-    rx_bytes: AtomicU64,
-}
-
-impl TrayStats {
-    fn new() -> Self {
-        Self {
-            total_requests: AtomicUsize::new(0),
-            tx_bytes: AtomicU64::new(0),
-            rx_bytes: AtomicU64::new(0),
-        }
-    }
-}
-
-static TRAY_STATS: OnceCell<Arc<TrayStats>> = OnceCell::new();
-fn format_bytes(bytes: u64) -> String {
-    const KB: u64 = 1024;
-    const MB: u64 = KB * 1024;
-    const GB: u64 = MB * 1024;
-
-    if bytes >= GB {
-        format!("{:.2} GB", bytes as f64 / GB as f64)
-    } else if bytes >= MB {
-        format!("{:.2} MB", bytes as f64 / MB as f64)
-    } else if bytes >= KB {
-        format!("{:.2} KB", bytes as f64 / KB as f64)
-    } else {
-        format!("{} B", bytes)
-    }
-}
-
-static ACTUAL_PORT: AtomicU16 = AtomicU16::new(9090);
-static RESTART_TX: OnceCell<mpsc::UnboundedSender<u16>> = OnceCell::new();
-
-fn decompress_body(headers: &HashMap<String, String>, body: Vec<u8>) -> Vec<u8> {
-    let encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding"));
-    
-    match encoding.map(|s| s.to_lowercase()).as_deref() {
-        Some("gzip") => {
-            let mut decoder = GzDecoder::new(&body[..]);
-            let mut decoded = Vec::new();
-            if decoder.read_to_end(&mut decoded).is_ok() {
-                return decoded;
-            }
-        }
-        Some("deflate") => {
-            let mut decoder = ZlibDecoder::new(&body[..]);
-            let mut decoded = Vec::new();
-            if decoder.read_to_end(&mut decoded).is_ok() {
-                return decoded;
-            }
-        }
-        Some("br") => {
-            let mut decoded = Vec::new();
-            let mut reader = brotli::Decompressor::new(&body[..], 4096);
-            if reader.read_to_end(&mut decoded).is_ok() {
-                return decoded;
-            }
-        }
-        _ => {}
-    }
-    body
-}
-
+pub mod utils;
+pub use utils::*;
+pub mod menu;
+pub use menu::*;
 use crate::traffic::db::{is_text_content_type, body_to_string};
 
-#[derive(Clone, Serialize)]
-struct PayloadTraffic {
-    uri: Option<String>,
-    method: Option<String>,
-    version: Option<String>,
-    body_size: usize,
-    headers: HashMap<String, String>,
-    intercepted: bool,
-    status_code: Option<u16>,
-    client: Option<String>,
-    tags: Vec<String>,
-}
-
-#[derive(Clone, Serialize)]
-struct Payload {
-    id: String,
-    is_request: bool,
-    data: PayloadTraffic,
-}
-
-
-
-fn handle_tray_menu_event(app: &AppHandle, event: MenuEvent) {
-    match event.id.as_ref() {
-        "quit" => {
-            if let Some(toggle) = PROXY_TOGGLE.get() {
-                toggle.turn_off();
-            }
-            app.exit(0);
-        }
-        "show" => {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
-        }
-        "reset_proxy" => {
-            if let Some(toggle) = PROXY_TOGGLE.get() {
-                toggle.turn_off();
-                println!("Emergency Proxy Reset from Tray");
-            }
-        }
-        _ => {}
-    }
-}
 
 
 use commands::*;
@@ -576,16 +469,4 @@ fn main() {
             _ => {}
         });
 }
-fn create_tools_submenu<R: tauri::Runtime>(manager: &impl tauri::Manager<R>) -> tauri::Result<Submenu<R>> {
-    SubmenuBuilder::new(manager, "Tools")
-        .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(manager)?)
-        .separator()
-        .item(&MenuItemBuilder::with_id("tools_tag", "Tagging Rules").build(manager)?)
-        .separator()
-        .item(&MenuItemBuilder::with_id("saved_sessions", "Saved Sessions").build(manager)?)
-        .item(&MenuItemBuilder::with_id("traffic_filters", "Traffic Filters").build(manager)?)
-        .separator()
-        .item(&MenuItemBuilder::with_id("breakpoints", "Traffic Breakpoints").build(manager)?)
-        .item(&MenuItemBuilder::with_id("scripting", "Custom Scripting").build(manager)?)
-        .build()
-}
+
