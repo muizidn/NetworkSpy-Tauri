@@ -5,7 +5,7 @@ import { ProStatusDialog } from "./packages/sidebar/ProStatusDialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { twMerge } from "tailwind-merge";
 
-import { BreakpointToast } from "./packages/breakpoint/BreakpointToast";
+
 
 export default function Layout() {
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
@@ -35,7 +35,6 @@ export default function Layout() {
       
       <div className="flex-grow h-screen overflow-hidden relative">
         <Outlet />
-        <BreakpointToast />
       </div>
 
       <ProStatusDialog 

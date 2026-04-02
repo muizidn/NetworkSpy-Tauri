@@ -204,12 +204,23 @@ async fn get_breakpoint_enabled(state: tauri::State<'_, Arc<BreakpointManager>>)
 }
 
 #[tauri::command]
-async fn resume_breakpoint(state: tauri::State<'_, Arc<BreakpointManager>>, traffic_id: String) -> Result<(), String> {
+async fn resume_breakpoint(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, Arc<BreakpointManager>>, 
+    traffic_id: String
+) -> Result<(), String> {
     let mut tasks = state.paused_tasks.write().await;
     if let Some(tx) = tasks.remove(&traffic_id) {
         let _ = tx.send(());
+        let _ = app.emit("breakpoint_resumed", traffic_id);
     }
     Ok(())
+}
+
+#[tauri::command]
+async fn get_paused_breakpoints(state: tauri::State<'_, Arc<BreakpointManager>>) -> Result<Vec<String>, String> {
+    let tasks = state.paused_tasks.read().await;
+    Ok(tasks.keys().cloned().collect())
 }
 
 #[tauri::command]
@@ -1239,6 +1250,7 @@ fn main() {
             set_breakpoint_enabled,
             get_breakpoint_enabled,
             resume_breakpoint,
+            get_paused_breakpoints,
             get_breakpoints,
             save_breakpoint,
             delete_breakpoint,

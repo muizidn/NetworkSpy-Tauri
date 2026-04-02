@@ -43,6 +43,9 @@ export interface IAppProvider {
   getCustomCheckers(category: string): Promise<CustomChecker[]>;
   saveCustomChecker(checker: Partial<CustomChecker>): Promise<CustomChecker>;
   deleteCustomChecker(id: string): Promise<void>;
+  resumeBreakpoint(trafficId: string): Promise<void>;
+  getPausedBreakpoints(): Promise<string[]>;
+  openNewWindow(context: string, title: string): Promise<void>;
 }
 
 export class TauriAppProvider implements IAppProvider {
@@ -227,6 +230,18 @@ export class TauriAppProvider implements IAppProvider {
 
   async deleteCustomChecker(id: string): Promise<void> {
     return await tauriInvoke("delete_custom_checker", { id });
+  }
+
+  async resumeBreakpoint(trafficId: string): Promise<void> {
+    return await tauriInvoke("resume_breakpoint", { trafficId });
+  }
+
+  async getPausedBreakpoints(): Promise<string[]> {
+    return await tauriInvoke<string[]>("get_paused_breakpoints");
+  }
+
+  async openNewWindow(context: string, title: string): Promise<void> {
+    return await tauriInvoke("open_new_window", { context, title });
   }
 }
 
@@ -463,6 +478,18 @@ export class MockAppProvider implements IAppProvider {
   }
 
   async deleteCustomChecker(_id: string): Promise<void> { }
+
+  async resumeBreakpoint(trafficId: string): Promise<void> {
+    console.log(`[Mock] Resuming breakpoint: ${trafficId}`);
+  }
+
+  async getPausedBreakpoints(): Promise<string[]> {
+    return [];
+  }
+
+  async openNewWindow(context: string, title: string): Promise<void> {
+    console.log(`[Mock] Opening window: ${context} (${title})`);
+  }
 
   async saveSession(): Promise<void> {
     console.log("[Mock] Save session (HAR)");
