@@ -165,8 +165,37 @@ export const SelectionViewer = () => {
     return 'bg-zinc-800 border-zinc-700 text-zinc-400';
   };
 
+  const breakpointRule = tags.find(t => t.startsWith('BREAKPOINT: '))?.replace('BREAKPOINT: ', '');
+  const modificationTags = tags.filter(t => t.startsWith('BREAKPOINT_'));
+  const isModified = modificationTags.length > 0;
+
   return (
     <div className='flex flex-col border-t border-zinc-900 w-full bg-[#0a0a0a] shadow-2xl'>
+      {/* Modification Banner */}
+      {isModified && (
+        <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-b border-blue-500/30 px-3 py-2 flex items-center justify-between group overflow-hidden relative">
+          <div className="absolute inset-0 bg-blue-500/5 animate-pulse pointer-events-none" />
+          <div className="flex items-center gap-3 relative z-10">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20">
+              <FiShield size={10} />
+              Modified
+            </div>
+            <div className="flex flex-col">
+              <div className="text-[10px] text-blue-100 font-bold flex items-center gap-1.5">
+                Rule: <span className="text-white bg-blue-500/20 px-1.5 py-0.5 rounded border border-blue-500/30">{breakpointRule || "Manual"}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 relative z-10 overflow-x-auto no-scrollbar max-w-[50%]">
+            {modificationTags.map((tag) => (
+              <span key={tag} className="text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border border-blue-400/20 bg-blue-500/10 text-blue-300 whitespace-nowrap">
+                {tag.replace('BREAKPOINT_', '').replace('_CHANGED', '').replace('REQ_', '').replace('RES_', '')}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* URL Section */}
       <div id='url-viewer' className='border-b border-zinc-900/50 w-full p-3 bg-black/40'>
         <UrlColorizer url={url} intercepted={selected.intercepted as boolean} />

@@ -6,6 +6,7 @@ import { useSessionContext } from "@src/context/SessionContext";
 import { Icon } from "../ui/Icon";
 import { PortDialog } from "./components/PortDialog";
 import { SaveSessionDialog } from "./components/SaveSessionDialog";
+import { FiPause } from "react-icons/fi";
 
 interface HeaderProps {
   toggleBottomPane: () => void;
@@ -63,6 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
 export const HeaderLeft = () => {
   const { isRun, setIsRun, clearData, provider, currentPort } = useAppProvider();
   const { isReviewMode, reviewedSession, viewSession, saveCapture, folders } = useSessionContext();
+  const { pausedBreakpoints, openNewWindow } = useAppProvider();
   const [isPortDialogOpen, setIsPortDialogOpen] = React.useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = React.useState(false);
 
@@ -156,6 +158,25 @@ export const HeaderLeft = () => {
             label="Save to Session List"
             onClick={() => setIsSaveDialogOpen(true)}
           />
+
+          {pausedBreakpoints.length > 0 && (
+            <>
+              <div className="h-4 w-px bg-zinc-800/50 mx-1" />
+              <div 
+                onClick={() => openNewWindow("breakpoint-hit", "Paused Traffic Review")}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50 transition-all cursor-pointer group shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)] animate-in slide-in-from-top-2 duration-300"
+              >
+                <div className="relative">
+                  <FiPause size={14} className="group-hover:scale-110 transition-transform" />
+                  <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse shadow-[0_0_8px_#fbbf24]" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest bg-amber-500 text-black px-1.5 py-0.5 rounded-lg shadow-sm">
+                  {pausedBreakpoints.length}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider hidden lg:block opacity-80 group-hover:opacity-100 transition-opacity">Paused Items</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
       <PortDialog

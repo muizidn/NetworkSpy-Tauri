@@ -27,6 +27,7 @@ import ViewersPage from "./routes/viewers";
 import FiltersPage from "./routes/filters";
 import { SessionProvider } from "./context/SessionContext";
 import { ViewerProvider } from "./context/ViewerContext";
+import { BreakpointHitView } from "./packages/breakpoint/BreakpointHitView";
 
 // import ScriptEditor from "./routes/script-editor";
 
@@ -95,6 +96,10 @@ const router = createBrowserRouter([
       {
         path: "/filters",
         element: <FiltersPage />,
+      },
+      {
+        path: "/breakpoint-hit",
+        element: <BreakpointHitView />,
       },
     ],
   },

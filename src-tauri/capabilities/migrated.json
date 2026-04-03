@@ -5,7 +5,16 @@
   "windows": [
     "main",
     "tag",
-    "certificate-installer"
+    "certificate-installer",
+    "breakpoint-hit",
+    "breakpoint",
+    "diffing",
+    "logging",
+    "rewrite",
+    "scripting",
+    "sessions",
+    "viewers",
+    "filters"
   ],
   "permissions": [
     "core:default",

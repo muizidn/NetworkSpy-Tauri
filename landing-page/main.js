@@ -8,7 +8,12 @@ const observerOptions = {
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
-            entry.target.classList.add('reveal-active');
+            entry.target.classList.add('visible');
+            // Add a slight stagger delay if data-delay is present
+            const delay = entry.target.dataset.delay;
+            if (delay) {
+                entry.target.style.transitionDelay = delay;
+            }
             observer.unobserve(entry.target);
         }
     });
@@ -19,27 +24,122 @@ document.addEventListener('DOMContentLoaded', () => {
     revealElements.forEach(el => observer.observe(el));
 });
 
-// Add some CSS dynamically for the active state of reveal
-const style = document.createElement('style');
-style.textContent = `
-    .reveal {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
-    }
-    .reveal-active {
-        opacity: 1;
-        transform: translateY(0);
-    }
-`;
-document.head.appendChild(style);
-
-// Sticky header shadow on scroll
+// Header scroll effect
 const header = document.querySelector('header');
 window.addEventListener('scroll', () => {
-    if (window.scrollY > 20) {
-        header.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1)';
+    if (window.scrollY > 50) {
+        header.style.background = 'rgba(15, 23, 42, 0.8)';
+        header.style.top = '0';
+        header.style.width = '100%';
+        header.style.borderRadius = '0';
     } else {
-        header.style.boxShadow = 'none';
+        header.style.background = 'rgba(15, 23, 42, 0.1)';
+        header.style.top = '1rem';
+        header.style.width = '90%';
+        header.style.borderRadius = '999px';
     }
 });
+
+// Installation Logic
+const origin = window.location.origin;
+const commands = {
+    unix: `curl -fsSL ${origin}/install.sh | bash`,
+    win: `iwr -useb ${origin}/install.ps1 | iex`
+};
+
+const installCommand = document.getElementById('install-command');
+const copyBtn = document.getElementById('copy-command');
+const tabs = document.querySelectorAll('.os-tab');
+
+function setOS(os) {
+    tabs.forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-os="${os}"]`)?.classList.add('active');
+    if (installCommand) installCommand.textContent = commands[os];
+}
+
+// Detect OS
+const userAgent = window.navigator.userAgent.toLowerCase();
+if (userAgent.indexOf('win') !== -1) {
+    setOS('win');
+} else {
+    setOS('unix');
+}
+
+// OS Tab Switching
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        setOS(tab.dataset.os);
+    });
+});
+
+// Copy to Clipboard
+copyBtn?.addEventListener('click', async () => {
+    const text = installCommand.textContent.trim();
+    try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.classList.add('success');
+        copyBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        
+        setTimeout(() => {
+            copyBtn.classList.remove('success');
+            copyBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+    }
+});
+
+// Text Click-to-Flip Animation (GSAP)
+const heroPhrases = [
+    "Superpower",
+    "Best HTTP Proxy",
+    "Token Analyzer",
+    "Breakpoint System",
+    "Viewer Engine"
+];
+
+const dynamicText = document.getElementById('dynamic-hero-text');
+let currentPhraseIndex = 0;
+let isFlipping = false;
+
+function flipToNext() {
+    if (isFlipping) return;
+    isFlipping = true;
+
+    currentPhraseIndex = (currentPhraseIndex + 1) % heroPhrases.length;
+    const nextPhrase = heroPhrases[currentPhraseIndex];
+
+    // Professional 3D Flip Timeline
+    const tl = gsap.timeline({
+        onComplete: () => { isFlipping = false; }
+    });
+
+    tl.to(dynamicText, {
+        rotationY: 90,
+        duration: 0.25,
+        ease: "power2.in",
+        onComplete: () => {
+            dynamicText.textContent = nextPhrase;
+        }
+    });
+
+    tl.set(dynamicText, { rotationY: -90 });
+
+    tl.to(dynamicText, {
+        rotationY: 0,
+        duration: 0.45,
+        ease: "back.out(1.7)"
+    });
+}
+
+if (dynamicText) {
+    dynamicText.addEventListener('click', flipToNext);
+    
+    // Auto flip every 5 seconds
+    setInterval(() => {
+        if (!document.hidden && !isFlipping) {
+            flipToNext();
+        }
+    }, 5000);
+}
+

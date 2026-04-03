@@ -53,6 +53,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create .env file
+        shell: bash
+        env:
+          BRAND_NAME_PROD: "Network Spy"
+          BRAND_NAME_DEV: "Network Spy (DEV)"
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+             echo "APP_NAME=$BRAND_NAME_PROD" > .env
+          else
+             echo "APP_NAME=$BRAND_NAME_DEV" > .env
+          fi
+
       - name: Setup Perl
         uses: shogo82148/actions-setup-perl@v1
         with:
@@ -120,6 +132,12 @@ jobs:
         with:
           tagName: ${{ needs.get-version.outputs.app_version }}
           releaseName: "Network Spy ${{ needs.get-version.outputs.app_version }}"
-          releaseBody: "Automated release from ${{ github.ref_name }} branch."
-          releaseDraft: true
+          releaseBody: |
+            ### Automated Build
+            This release was automatically built from the **${{ github.ref_name }}** branch.
+
+            - **Commit**: [${{ github.sha }}](${{ github.event.repository.html_url }}/commit/${{ github.sha }})
+            - **Workflow Run**: [${{ github.run_id }}](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})
+            - **Environment**: ${{ matrix.platform }}
+          releaseDraft: ${{ github.ref_name != 'develop' }}
           prerelease: ${{ github.ref_name != 'main' }}

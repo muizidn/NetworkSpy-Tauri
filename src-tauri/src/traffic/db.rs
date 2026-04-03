@@ -70,104 +70,7 @@ impl TrafficDb {
              PRAGMA mmap_size=30000000000;"
         )?;
 
-        // Phase 5: Optimized Schema
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS traffic (
-                id TEXT PRIMARY KEY,
-                uri TEXT,
-                method TEXT,
-                version TEXT,
-                client TEXT,
-                req_headers TEXT,
-                res_headers TEXT,
-                status_code INTEGER,
-                intercepted INTEGER DEFAULT 1,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-            )",
-            [],
-        )?;
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS body (
-                traffic_id TEXT PRIMARY KEY,
-                req_body BLOB,
-                res_body BLOB,
-                req_content_type TEXT,
-                req_content_encoding TEXT,
-                res_content_type TEXT,
-                res_content_encoding TEXT,
-                FOREIGN KEY(traffic_id) REFERENCES traffic(id) ON DELETE CASCADE
-            )",
-            [],
-        )?;
-
-        // Migration: Add missing columns to body table if they don't exist
-        let _ = conn.execute("ALTER TABLE traffic ADD COLUMN client TEXT", []);
-        let _ = conn.execute("ALTER TABLE traffic ADD COLUMN tags TEXT", []);
-        let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_type TEXT", []);
-        let _ = conn.execute("ALTER TABLE body ADD COLUMN req_content_encoding TEXT", []);
-        let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_type TEXT", []);
-        let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_encoding TEXT", []);
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS allow_list (
-                domain TEXT PRIMARY KEY
-            )",
-            [],
-        )?;
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS tag_rules (
-                id TEXT PRIMARY KEY,
-                enabled INTEGER DEFAULT 1,
-                name TEXT,
-                method TEXT,
-                matching_rule TEXT,
-                tag TEXT,
-                is_sync INTEGER DEFAULT 1,
-                scope TEXT,
-                color TEXT,
-                bg_color TEXT,
-                folder_id TEXT
-            )",
-            [],
-        )?;
-
-        let _ = conn.execute("ALTER TABLE tag_rules ADD COLUMN folder_id TEXT", []);
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS tag_rule_folder (
-                id TEXT PRIMARY KEY,
-                name TEXT UNIQUE
-            )",
-            [],
-        )?;
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS filter_presets (
-                id TEXT PRIMARY KEY,
-                name TEXT,
-                description TEXT,
-                filters TEXT
-            )",
-            [],
-        )?;
-
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            )",
-            [],
-        )?;
-
-        // Migration: Ensure description column exists for older databases
-        let _ = conn.execute("ALTER TABLE filter_presets ADD COLUMN description TEXT", []);
-
-        // Task 1.2: Add Indexes
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp)", [])?;
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_uri ON traffic(uri)", [])?;
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_method ON traffic(method)", [])?;
+        crate::traffic::schema::init_all_tables(&conn)?;
 
         let (tx, rx) = unbounded::<TrafficEvent>();
         let recent_traffic = Arc::new(RwLock::new(VecDeque::with_capacity(10000)));
@@ -243,36 +146,7 @@ impl TrafficDb {
     }
 
     pub fn get_traffic_metadata(&self, id: String) -> rusqlite::Result<Option<TrafficMetadata>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client, tags FROM traffic WHERE id = ?1",
-        )?;
-        
-        let mut rows = stmt.query_map(params![id], |row| {
-            Ok(TrafficMetadata {
-                id: row.get(0)?,
-                uri: row.get(1)?,
-                method: row.get(2)?,
-                version: row.get(3)?,
-                req_headers: row.get(4)?,
-                res_headers: row.get(5)?,
-                status_code: row.get(6)?,
-                intercepted: row.get::<_, i32>(7)? != 0,
-                timestamp: row.get(8)?,
-                req_body_size: 0, // Metadata only query
-                res_body_size: 0, // Metadata only query
-                client: row.get(9)?,
-                tags: row.get::<_, Option<String>>(10)?
-                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
-                    .unwrap_or_default(),
-            })
-        })?;
-
-        if let Some(row) = rows.next() {
-            Ok(Some(row?))
-        } else {
-            Ok(None)
-        }
+        crate::traffic::schema::traffic::get_traffic_metadata(&self.conn.lock().unwrap(), id)
     }
 
     pub fn get_request_data(&self, id: &str) -> Option<RequestResponseData> {
@@ -306,24 +180,7 @@ impl TrafficDb {
     }
 
     pub fn get_request_body_info(&self, id: String) -> rusqlite::Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT req_body, req_content_type, req_content_encoding FROM body WHERE traffic_id = ?1")?;
-        let res = stmt.query_row(params![id], |row| {
-            let data: Option<Vec<u8>> = row.get(0)?;
-            let content_type: Option<String> = row.get(1)?;
-            let content_encoding: Option<String> = row.get(2)?;
-            
-            let bytes = data.map(|bytes| {
-                if bytes.starts_with(b"ZSTD") {
-                    zstd::decode_all(&bytes[4..]).unwrap_or(bytes)
-                } else {
-                    bytes
-                }
-            }).unwrap_or_default();
-            
-            Ok(Some((bytes, content_type, content_encoding)))
-        }).or(Ok(None));
-        res
+        crate::traffic::schema::traffic::get_request_body_info(&self.conn.lock().unwrap(), id)
     }
 
     pub fn get_request_body(&self, id: String) -> rusqlite::Result<Option<Vec<u8>>> {
@@ -331,24 +188,7 @@ impl TrafficDb {
     }
 
     pub fn get_response_body_info(&self, id: String) -> rusqlite::Result<Option<(Vec<u8>, Option<String>, Option<String>)>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT res_body, res_content_type, res_content_encoding FROM body WHERE traffic_id = ?1")?;
-        let res = stmt.query_row(params![id], |row| {
-            let data: Option<Vec<u8>> = row.get(0)?;
-            let content_type: Option<String> = row.get(1)?;
-            let content_encoding: Option<String> = row.get(2)?;
-            
-            let bytes = data.map(|bytes| {
-                if bytes.starts_with(b"ZSTD") {
-                    zstd::decode_all(&bytes[4..]).unwrap_or(bytes)
-                } else {
-                    bytes
-                }
-            }).unwrap_or_default();
-            
-            Ok(Some((bytes, content_type, content_encoding)))
-        }).or(Ok(None));
-        res
+        crate::traffic::schema::traffic::get_response_body_info(&self.conn.lock().unwrap(), id)
     }
 
     pub fn get_response_body(&self, id: String) -> rusqlite::Result<Option<Vec<u8>>> {
@@ -365,202 +205,27 @@ impl TrafficDb {
     }
 
     pub fn get_all_metadata(&self, limit: usize) -> rusqlite::Result<Vec<TrafficMetadata>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client, tags 
-             FROM traffic 
-             ORDER BY timestamp DESC 
-             LIMIT ?1",
-        )?;
-        
-        let rows = stmt.query_map(params![limit], |row| {
-            Ok(TrafficMetadata {
-                id: row.get(0)?,
-                uri: row.get(1)?,
-                method: row.get(2)?,
-                version: row.get(3)?,
-                req_headers: row.get(4)?,
-                res_headers: row.get(5)?,
-                status_code: row.get(6)?,
-                intercepted: row.get::<_, i32>(7)? != 0,
-                timestamp: row.get(8)?,
-                req_body_size: 0,
-                res_body_size: 0,
-                client: row.get(9)?,
-                tags: row.get::<_, Option<String>>(10)?
-                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
-                    .unwrap_or_default(),
-            })
-        })?;
-
-        let mut results = Vec::new();
-        for row in rows {
-            results.push(row?);
-        }
-        Ok(results)
+        crate::traffic::schema::traffic::get_all_metadata(&self.conn.lock().unwrap(), limit)
     }
 
     pub fn get_allow_list(&self) -> rusqlite::Result<Vec<String>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT domain FROM allow_list")?;
-        let rows = stmt.query_map([], |row| row.get(0))?;
-        let mut list = Vec::new();
-        for row in rows {
-            list.push(row?);
-        }
-        Ok(list)
+        crate::traffic::schema::traffic::get_allow_list(&self.conn.lock().unwrap())
     }
 
     pub fn add_to_allow_list(&self, domain: String) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT OR IGNORE INTO allow_list (domain) VALUES (?1)",
-            params![domain],
-        )?;
-        Ok(())
+        crate::traffic::schema::traffic::add_to_allow_list(&self.conn.lock().unwrap(), domain)
     }
 
     pub fn get_all_traffic_with_bodies(&self) -> rusqlite::Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(
-            "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
-             b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client, t.tags 
-             FROM traffic t 
-             LEFT JOIN body b ON t.id = b.traffic_id 
-             ORDER BY t.timestamp ASC",
-        )?;
-        
-        let rows = stmt.query_map([], |row| {
-            let meta = TrafficMetadata {
-                id: row.get(0)?,
-                uri: row.get(1)?,
-                method: row.get(2)?,
-                version: row.get(3)?,
-                req_headers: row.get(4)?,
-                res_headers: row.get(5)?,
-                status_code: row.get(6)?,
-                intercepted: row.get::<_, i32>(7)? != 0,
-                timestamp: row.get(8)?,
-                req_body_size: 0,
-                res_body_size: 0,
-                client: row.get(15)?,
-                tags: row.get::<_, Option<String>>(16)?
-                    .map(|s| serde_json::from_str(&s).unwrap_or_default())
-                    .unwrap_or_default(),
-            };
-            
-            let req_body: Option<Vec<u8>> = row.get(9)?;
-            let res_body: Option<Vec<u8>> = row.get(10)?;
-            let req_ct: Option<String> = row.get(11)?;
-            let req_ce: Option<String> = row.get(12)?;
-            let res_ct: Option<String> = row.get(13)?;
-            let res_ce: Option<String> = row.get(14)?;
-            
-            let req_decoded = req_body.map(|bytes| {
-                if bytes.starts_with(b"ZSTD") {
-                    zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
-                } else {
-                    bytes
-                }
-            });
-            
-            let res_decoded = res_body.map(|bytes| {
-                if bytes.starts_with(b"ZSTD") {
-                    zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
-                } else {
-                    bytes
-                }
-            });
-            
-            Ok((meta, req_decoded, res_decoded, req_ct, req_ce, res_ct, res_ce))
-        })?;
-
-        let mut results = Vec::new();
-        for row in rows {
-            results.push(row?);
-        }
-        Ok(results)
+        crate::traffic::schema::traffic::get_all_traffic_with_bodies(&self.conn.lock().unwrap())
     }
 
     pub fn get_traffic_with_bodies_by_ids(&self, ids: Vec<String>) -> rusqlite::Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
-        let conn = self.conn.lock().unwrap();
-        if ids.is_empty() {
-            return Ok(Vec::new());
-        }
-        
-        let mut results = Vec::new();
-        for chunk in ids.chunks(900) {
-            let placeholders: Vec<String> = (0..chunk.len()).map(|_| "?".to_string()).collect();
-            let query = format!(
-                "SELECT t.id, t.uri, t.method, t.version, t.req_headers, t.res_headers, t.status_code, t.intercepted, t.timestamp, 
-                 b.req_body, b.res_body, b.req_content_type, b.req_content_encoding, b.res_content_type, b.res_content_encoding, t.client, t.tags 
-                 FROM traffic t 
-                 LEFT JOIN body b ON t.id = b.traffic_id 
-                 WHERE t.id IN ({})
-                 ORDER BY t.timestamp ASC",
-                placeholders.join(", ")
-            );
-            
-            let mut stmt = conn.prepare(&query)?;
-            let params_slice: Vec<&dyn rusqlite::ToSql> = chunk.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
-            
-            let rows = stmt.query_map(&params_slice[..], |row| {
-                let meta = TrafficMetadata {
-                    id: row.get(0)?,
-                    uri: row.get(1)?,
-                    method: row.get(2)?,
-                    version: row.get(3)?,
-                    req_headers: row.get(4)?,
-                    res_headers: row.get(5)?,
-                    status_code: row.get(6)?,
-                    intercepted: row.get::<_, i32>(7)? != 0,
-                    timestamp: row.get(8)?,
-                    req_body_size: 0,
-                    res_body_size: 0,
-                    client: row.get(15)?,
-                    tags: row.get::<_, Option<String>>(16)?
-                        .map(|s| serde_json::from_str(&s).unwrap_or_default())
-                        .unwrap_or_default(),
-                };
-                
-                let req_body: Option<Vec<u8>> = row.get(9)?;
-                let res_body: Option<Vec<u8>> = row.get(10)?;
-                let req_ct: Option<String> = row.get(11)?;
-                let req_ce: Option<String> = row.get(12)?;
-                let res_ct: Option<String> = row.get(13)?;
-                let res_ce: Option<String> = row.get(14)?;
-                
-                let req_decoded = req_body.map(|bytes| {
-                    if bytes.starts_with(b"ZSTD") {
-                        zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
-                    } else {
-                        bytes
-                    }
-                });
-                
-                let res_decoded = res_body.map(|bytes| {
-                    if bytes.starts_with(b"ZSTD") {
-                        zstd::decode_all(&bytes[4..]).unwrap_or_else(|_| bytes)
-                    } else {
-                        bytes
-                    }
-                });
-                
-                Ok((meta, req_decoded, res_decoded, req_ct, req_ce, res_ct, res_ce))
-            })?;
-            
-            for row in rows {
-                results.push(row?);
-            }
-        }
-        
-        Ok(results)
+        crate::traffic::schema::traffic::get_traffic_with_bodies_by_ids(&self.conn.lock().unwrap(), ids)
     }
 
     pub fn clear_all(&self) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM traffic", [])?;
-        conn.execute("DELETE FROM body", [])?;
+        crate::traffic::schema::traffic::clear_all(&self.conn.lock().unwrap())?;
         let mut recent = self.recent_traffic.write().unwrap();
         recent.clear();
         Ok(())
@@ -604,7 +269,15 @@ fn flush_buffer(conn: &mut Connection, buffer: &mut Vec<TrafficEvent>) {
 
     {
         let mut insert_traffic = tx.prepare_cached(
-            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted, client, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) ON CONFLICT(id) DO NOTHING"
+            "INSERT INTO traffic (id, uri, method, version, req_headers, intercepted, client, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) 
+             ON CONFLICT(id) DO UPDATE SET 
+                uri = excluded.uri, 
+                method = excluded.method, 
+                version = excluded.version, 
+                req_headers = excluded.req_headers, 
+                intercepted = excluded.intercepted, 
+                client = excluded.client, 
+                tags = excluded.tags"
         ).expect("Failed to prepare insert_traffic");
 
         let mut insert_body = tx.prepare_cached(
@@ -688,68 +361,51 @@ pub struct FilterPreset {
 
 impl TrafficDb {
     pub fn get_filter_presets(&self) -> rusqlite::Result<Vec<FilterPreset>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, name, description, filters FROM filter_presets")?;
-        let rows = stmt.query_map([], |row| {
-            Ok(FilterPreset {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                description: row.get(2)?,
-                filters: row.get(3)?,
-            })
-        })?;
-        
-        let mut list = Vec::new();
-        for row in rows {
-            list.push(row?);
-        }
-        Ok(list)
+        crate::traffic::schema::filter_presets::get_filter_presets(&self.conn.lock().unwrap())
     }
 
     pub fn add_filter_preset(&self, preset: FilterPreset) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT INTO filter_presets (id, name, description, filters) VALUES (?1, ?2, ?3, ?4)",
-            params![preset.id, preset.name, preset.description, preset.filters],
-        )?;
-        Ok(())
+        crate::traffic::schema::filter_presets::add_filter_preset(&self.conn.lock().unwrap(), preset)
     }
 
     pub fn update_filter_preset(&self, id: String, name: Option<String>, description: Option<String>, filters: Option<String>) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        if let Some(n) = name {
-            conn.execute("UPDATE filter_presets SET name = ?2 WHERE id = ?1", params![id, n])?;
-        }
-        if let Some(d) = description {
-            conn.execute("UPDATE filter_presets SET description = ?2 WHERE id = ?1", params![id, d])?;
-        }
-        if let Some(f) = filters {
-            conn.execute("UPDATE filter_presets SET filters = ?2 WHERE id = ?1", params![id, f])?;
-        }
-        Ok(())
+        crate::traffic::schema::filter_presets::update_filter_preset(&self.conn.lock().unwrap(), id, name, description, filters)
     }
 
     pub fn delete_filter_preset(&self, id: String) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM filter_presets WHERE id = ?1", params![id])?;
-        Ok(())
+        crate::traffic::schema::filter_presets::delete_filter_preset(&self.conn.lock().unwrap(), id)
     }
 
     pub fn get_setting(&self, key: &str) -> rusqlite::Result<Option<String>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT value FROM settings WHERE key = ?1")?;
-        let res = stmt.query_row(params![key], |row| row.get(0)).or(Ok(None));
-        res
+        crate::traffic::schema::settings::get_setting(&self.conn.lock().unwrap(), key)
     }
 
     pub fn set_setting(&self, key: &str, value: &str) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-            params![key, value],
-        )?;
-        Ok(())
+        crate::traffic::schema::settings::set_setting(&self.conn.lock().unwrap(), key, value)
     }
+
+    pub fn get_breakpoints(&self) -> rusqlite::Result<Vec<BreakpointRule>> {
+        crate::traffic::schema::breakpoints::get_breakpoints(&self.conn.lock().unwrap())
+    }
+
+    pub fn save_breakpoint(&self, rule: BreakpointRule) -> rusqlite::Result<()> {
+        crate::traffic::schema::breakpoints::save_breakpoint(&self.conn.lock().unwrap(), rule)
+    }
+
+    pub fn delete_breakpoint(&self, id: String) -> rusqlite::Result<()> {
+        crate::traffic::schema::breakpoints::delete_breakpoint(&self.conn.lock().unwrap(), id)
+    }
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct BreakpointRule {
+    pub id: String,
+    pub enabled: bool,
+    pub name: String,
+    pub method: String,
+    pub matching_rule: String,
+    pub request: bool,
+    pub response: bool,
 }
 
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {
@@ -817,4 +473,35 @@ pub struct RequestResponseData {
     pub content_encoding: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_code: Option<i32>,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct ScriptRule {
+    pub id: String,
+    pub enabled: bool,
+    pub name: String,
+    pub method: String,
+    pub matching_rule: String,
+    pub request: bool,
+    pub response: bool,
+    pub script: String,
+    pub error: Option<String>,
+}
+
+impl TrafficDb {
+    pub fn get_scripts(&self) -> rusqlite::Result<Vec<ScriptRule>> {
+        crate::traffic::schema::scripts::get_scripts(&self.conn.lock().unwrap())
+    }
+
+    pub fn save_script(&self, rule: ScriptRule) -> rusqlite::Result<()> {
+        crate::traffic::schema::scripts::save_script(&self.conn.lock().unwrap(), rule)
+    }
+
+    pub fn delete_script(&self, id: String) -> rusqlite::Result<()> {
+        crate::traffic::schema::scripts::delete_script(&self.conn.lock().unwrap(), id)
+    }
+
+    pub fn set_script_error(&self, id: String, error: Option<String>) -> rusqlite::Result<()> {
+        crate::traffic::schema::scripts::set_script_error(&self.conn.lock().unwrap(), id, error)
+    }
 }
