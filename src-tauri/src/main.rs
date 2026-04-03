@@ -450,6 +450,8 @@ fn main() {
             commands::get_scripts,
             commands::save_script,
             commands::delete_script,
+            commands::get_script_enabled,
+            commands::set_script_enabled,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

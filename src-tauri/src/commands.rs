@@ -63,6 +63,17 @@ pub async fn get_breakpoint_enabled(state: tauri::State<'_, Arc<BreakpointManage
 }
 
 #[tauri::command]
+pub async fn set_script_enabled(state: tauri::State<'_, Arc<ScriptManager>>, enabled: bool) -> Result<(), String> {
+    state.is_enabled.store(enabled, Ordering::SeqCst);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_script_enabled(state: tauri::State<'_, Arc<ScriptManager>>) -> Result<bool, String> {
+    Ok(state.is_enabled.load(Ordering::SeqCst))
+}
+
+#[tauri::command]
 pub async fn resume_breakpoint(
     app: tauri::AppHandle,
     state: tauri::State<'_, Arc<BreakpointManager>>, 

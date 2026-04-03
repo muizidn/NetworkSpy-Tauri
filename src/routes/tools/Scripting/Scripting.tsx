@@ -130,6 +130,7 @@ const ScriptingList: React.FC = () => {
     const [data, setData] = useState<ScriptingModel[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [editingScript, setEditingScript] = useState<ScriptingModel | null | "new">(null);
+    const [isGlobalEnabled, setIsGlobalEnabled] = useState(true);
   
     const fetchData = async () => {
       try {
@@ -147,10 +148,22 @@ const ScriptingList: React.FC = () => {
           error: s.error
         }));
         setData(mapped);
+        const enabled = await invoke<boolean>("get_script_enabled");
+        setIsGlobalEnabled(enabled);
       } catch (e) {
         console.error("Failed to fetch scripts:", e);
       } finally {
         setIsLoading(false);
+      }
+    };
+
+    const toggleGlobal = async () => {
+      const newState = !isGlobalEnabled;
+      try {
+          await invoke("set_script_enabled", { enabled: newState });
+          setIsGlobalEnabled(newState);
+      } catch (e) {
+          console.error("Failed to toggle global scripting:", e);
       }
     };
 
@@ -225,6 +238,34 @@ const ScriptingList: React.FC = () => {
         onSearchChange={setSearchTerm}
         onAdd={() => setEditingScript("new")}
         onClear={() => {}}
+        actions={
+          <div 
+              onClick={toggleGlobal}
+              className={twMerge(
+                  "flex items-center gap-3 px-4 py-2 rounded-xl border transition-all cursor-pointer select-none",
+                  isGlobalEnabled 
+                      ? "bg-amber-950/20 border-amber-500/50 text-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.1)]" 
+                      : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-400"
+              )}
+          >
+              <div className={twMerge(
+                  "w-2 h-2 rounded-full",
+                  isGlobalEnabled ? "bg-amber-500 shadow-[0_0_10px_#f59e0b] animate-pulse" : "bg-zinc-700"
+              )} />
+              <span className="text-[11px] font-black uppercase tracking-widest whitespace-nowrap">
+                  {isGlobalEnabled ? "Scripting Active" : "Scripting Paused"}
+              </span>
+              <div className={twMerge(
+                  "w-8 h-4 rounded-full relative transition-all bg-zinc-800/50",
+                  isGlobalEnabled ? "bg-amber-500/30" : "bg-zinc-800"
+              )}>
+                  <div className={twMerge(
+                      "absolute top-1 w-2 h-2 rounded-full transition-all duration-300",
+                      isGlobalEnabled ? "right-1 bg-amber-400" : "left-1 bg-zinc-600"
+                  )} />
+              </div>
+          </div>
+        }
       />
       
       <div className="flex-grow min-h-0">
