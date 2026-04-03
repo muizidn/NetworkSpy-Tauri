@@ -1,3 +1,7 @@
+pub mod traffic;
+pub mod breakpoints;
+pub mod scripting;
+
 use axum::{
     extract::{State, Query},
     response::{sse::{Event, Sse}, IntoResponse},
@@ -7,11 +11,10 @@ use axum::{
 use futures::stream::Stream;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{convert::Infallible, sync::Arc, collections::HashMap, time::Duration};
+use std::{convert::Infallible, sync::Arc, collections::HashMap};
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tauri::{AppHandle, Manager};
-use crate::traffic::db::{TrafficDb, BreakpointRule, ScriptRule};
 use uuid::Uuid;
 use tower_http::cors::CorsLayer;
 
@@ -39,7 +42,6 @@ type SseSender = mpsc::UnboundedSender<Result<Event, Infallible>>;
 
 struct McpState {
     app_handle: AppHandle,
-    // Map of session ID to sender for SSE
     sessions: Arc<Mutex<HashMap<String, SseSender>>>,
 }
 
@@ -71,11 +73,9 @@ async fn sse_handler(
     let mut sessions = state.sessions.lock().await;
     sessions.insert(session_id.clone(), tx.clone());
     
-    // According to MCP SSE spec, we must send the POST endpoint as the first message
     let _ = tx.send(Ok(Event::default().event("endpoint").data(format!("/messages?session_id={}", session_id))));
 
     let stream = UnboundedReceiverStream::new(rx);
-    
     Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::new())
 }
 
@@ -191,8 +191,6 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
         "resources/read" => {
             let uri = req.params["uri"].as_str().unwrap_or("");
             if uri == "traffic://latest" {
-                let db = app_handle.state::<Arc<TrafficDb>>();
-                let traffic = db.get_recent_traffic(50);
                 McpResponse {
                     jsonrpc: "2.0".to_string(),
                     id,
@@ -200,7 +198,7 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
                         "contents": [{
                             "uri": uri,
                             "mimeType": "application/json",
-                            "text": serde_json::to_string(&traffic).unwrap_or_default()
+                            "text": traffic::get_latest_traffic_resource(app_handle).await
                         }]
                     })),
                     error: None,
@@ -219,9 +217,9 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
             let arguments = &req.params["arguments"];
 
             let result = match tool_name {
-                "get_traffic_list" => handle_get_traffic_list(app_handle, arguments).await,
-                "save_script" => handle_save_script(app_handle, arguments).await,
-                "save_breakpoint" => handle_save_breakpoint(app_handle, arguments).await,
+                "get_traffic_list" => traffic::handle_get_traffic_list(app_handle, arguments).await,
+                "save_script" => scripting::handle_save_script(app_handle, arguments).await,
+                "save_breakpoint" => breakpoints::handle_save_breakpoint(app_handle, arguments).await,
                 _ => Err(json!({ "code": -32601, "message": "Method not found" })),
             };
 
@@ -246,64 +244,5 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
             result: None,
             error: Some(json!({ "code": -32601, "message": "Method not found" })),
         }
-    }
-}
-
-async fn handle_get_traffic_list(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
-    let limit = args["limit"].as_i64().unwrap_or(20) as usize;
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    
-    let traffic = db.get_recent_traffic(limit);
-    Ok(json!(traffic))
-}
-
-async fn handle_save_script(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
-    let name = args["name"].as_str().ok_or(json!({ "message": "Missing name" }))?;
-    let script = args["script"].as_str().ok_or(json!({ "message": "Missing script" }))?;
-    let matching_rule = args["matching_rule"].as_str().ok_or(json!({ "message": "Missing matching_rule" }))?;
-    let method = args["method"].as_str().unwrap_or("*");
-    let enabled = args["enabled"].as_bool().unwrap_or(true);
-    
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    
-    let rule = ScriptRule {
-        id: Uuid::new_v4().to_string(),
-        name: name.to_string(),
-        enabled,
-        method: method.to_string(),
-        matching_rule: matching_rule.to_string(),
-        script: script.to_string(),
-        request: true,
-        response: true,
-        error: None,
-    };
-    
-    match db.save_script(rule) {
-        Ok(_) => Ok(json!({ "status": "success" })),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
-}
-
-async fn handle_save_breakpoint(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
-    let name = args["name"].as_str().ok_or(json!({ "message": "Missing name" }))?;
-    let matching_rule = args["matching_rule"].as_str().ok_or(json!({ "message": "Missing matching_rule" }))?;
-    let method = args["method"].as_str().unwrap_or("*");
-    let enabled = args["enabled"].as_bool().unwrap_or(true);
-    
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    
-    let rule = BreakpointRule {
-        id: Uuid::new_v4().to_string(),
-        name: name.to_string(),
-        enabled,
-        method: method.to_string(),
-        matching_rule: matching_rule.to_string(),
-        request: true,
-        response: true,
-    };
-    
-    match db.save_breakpoint(rule) {
-        Ok(_) => Ok(json!({ "status": "success" })),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
     }
 }
