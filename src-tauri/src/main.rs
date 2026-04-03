@@ -13,6 +13,7 @@ pub mod scripting;
 pub mod settings;
 // pub mod submenu;
 pub mod traffic;
+pub mod mcp;
 
 pub use breakpoints::*;
 pub use scripting::*;
@@ -168,6 +169,9 @@ fn main() {
 
             let script_manager = Arc::new(ScriptManager::new());
             app_handle.manage(Arc::clone(&script_manager));
+
+            // Start MCP Server for LLM/Claude Code integration
+            mcp::spawn_mcp_server(app_handle.clone());
 
             let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
             if list.is_empty() {
