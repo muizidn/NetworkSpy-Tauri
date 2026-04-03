@@ -55,6 +55,15 @@ use crate::traffic::db::{is_text_content_type, body_to_string};
 use commands::*;
 
 fn main() {
+    dotenvy::dotenv().ok();
+    
+    let app_name = std::env::var("APP_NAME").unwrap_or_else(|_| {
+        #[cfg(debug_assertions)]
+        return "Network Spy (DEV)".to_string();
+        #[cfg(not(debug_assertions))]
+        return "Network Spy".to_string();
+    });
+
     let args: Vec<String> = std::env::args().collect();
     let app_data_dir = get_app_data_dir();
     
@@ -107,7 +116,7 @@ fn main() {
             let global_tools_submenu = create_tools_submenu(app)?;
             
             let global_mac_menu = MenuBuilder::new(app)
-                .item(&SubmenuBuilder::new(app, "network-spy")
+                .item(&SubmenuBuilder::new(app, &app_name)
                     .about(None)
                     .separator()
                     .services()
@@ -116,7 +125,7 @@ fn main() {
                     .hide_others()
                     .show_all()
                     .separator()
-                    .item(&MenuItemBuilder::with_id("quit", "Quit network-spy").accelerator("Cmd+Q").build(app)?)
+                    .item(&MenuItemBuilder::with_id("quit", format!("Quit {}", app_name)).accelerator("Cmd+Q").build(app)?)
                     .build()?)
                 .item(&global_tools_submenu)
                 .build()?;
@@ -318,7 +327,7 @@ fn main() {
             let window_tools_submenu = create_tools_submenu(app_handle)?;
 
             let main_window_menu = MenuBuilder::new(app_handle)
-                .item(&SubmenuBuilder::new(app_handle, "network-spy")
+                .item(&SubmenuBuilder::new(app_handle, &app_name)
                     .item(&MenuItemBuilder::with_id("show", "Show").build(app_handle)?)
                     .item(&tauri::menu::PredefinedMenuItem::separator(app_handle)?)
                     .item(&MenuItemBuilder::with_id("quit", "Quit").build(app_handle)?)

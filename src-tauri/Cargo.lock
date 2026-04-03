@@ -3,6 +3,44 @@
 version = 4
 
 [[package]]
+name = "NetworkSpy"
+version = "0.0.0"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "boa_engine",
+ "brotli",
+ "bytes",
+ "chrono",
+ "cron",
+ "crossbeam-channel",
+ "dotenvy",
+ "flate2",
+ "globset",
+ "hostname",
+ "hyper",
+ "network_spy_proxy",
+ "once_cell",
+ "rcgen 0.12.1",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-os",
+ "tauri-plugin-process",
+ "tauri-plugin-shell",
+ "tempfile",
+ "time",
+ "tokio",
+ "uuid",
+ "windows 0.62.2",
+ "zstd",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1042,6 +1080,12 @@ dependencies = [
  "selectors 0.35.0",
  "tendril",
 ]
+
+[[package]]
+name = "dotenvy"
+version = "0.15.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "dpi"
@@ -2728,43 +2772,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee6cda3051665f1fb8d9e08fc35c96d5a244fb1be711a03b71118828afc9a873"
 dependencies = [
  "jni-sys",
-]
-
-[[package]]
-name = "network-spy"
-version = "0.0.0"
-dependencies = [
- "async-trait",
- "base64 0.22.1",
- "boa_engine",
- "brotli",
- "bytes",
- "chrono",
- "cron",
- "crossbeam-channel",
- "flate2",
- "globset",
- "hostname",
- "hyper",
- "network_spy_proxy",
- "once_cell",
- "rcgen 0.12.1",
- "rusqlite",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-os",
- "tauri-plugin-process",
- "tauri-plugin-shell",
- "tempfile",
- "time",
- "tokio",
- "uuid",
- "windows 0.62.2",
- "zstd",
 ]
 
 [[package]]

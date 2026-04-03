@@ -1,5 +1,5 @@
 [package]
-name = "network-spy"
+name = "NetworkSpy"
 version = "0.0.0"
 description = "A Tauri App"
 authors = ["you"]
@@ -42,6 +42,7 @@ rcgen = "0.12"
 hostname = "0.3"
 time = { version = "0.3", features = ["macros"] }
 boa_engine = "0.21.1"
+dotenvy = "0.15.7"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62.2", features = ["Win32_Networking_WinInet", "Win32_Foundation"] }
