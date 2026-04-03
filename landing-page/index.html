@@ -13,6 +13,8 @@
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%236366f1%22></rect><path d=%22M30 70 L50 30 L70 70%22 stroke=%22white%22 stroke-width=%228%22 fill=%22none%22 stroke-linecap=%22round%22></path></svg>">
 
     <link rel="stylesheet" href="./style.css">
+    <!-- GSAP for Professional Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 
 <body>
@@ -43,7 +45,7 @@
         <section class="hero">
             <div class="container">
                 <div class="badge reveal">New: LLM Token Stream Analysis v0.1.2</div>
-                <h1 class="reveal">The <span>Superpower</span> for modern network debugging.</h1>
+                <h1 class="reveal">The <span id="dynamic-hero-text" style="color: var(--primary);">Superpower</span> <br> for modern network debugging.</h1>
                 <p class="reveal">Stop guessing. Intercept, decrypt, and visualize your application's traffic with a
                     stunning, high-performance interface built for the generative era.</p>
 

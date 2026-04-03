@@ -88,3 +88,58 @@ copyBtn?.addEventListener('click', async () => {
         console.error('Failed to copy: ', err);
     }
 });
+
+// Text Click-to-Flip Animation (GSAP)
+const heroPhrases = [
+    "Superpower",
+    "Best HTTP Proxy",
+    "Token Analyzer",
+    "Breakpoint System",
+    "Viewer Engine"
+];
+
+const dynamicText = document.getElementById('dynamic-hero-text');
+let currentPhraseIndex = 0;
+let isFlipping = false;
+
+function flipToNext() {
+    if (isFlipping) return;
+    isFlipping = true;
+
+    currentPhraseIndex = (currentPhraseIndex + 1) % heroPhrases.length;
+    const nextPhrase = heroPhrases[currentPhraseIndex];
+
+    // Professional 3D Flip Timeline
+    const tl = gsap.timeline({
+        onComplete: () => { isFlipping = false; }
+    });
+
+    tl.to(dynamicText, {
+        rotationY: 90,
+        duration: 0.25,
+        ease: "power2.in",
+        onComplete: () => {
+            dynamicText.textContent = nextPhrase;
+        }
+    });
+
+    tl.set(dynamicText, { rotationY: -90 });
+
+    tl.to(dynamicText, {
+        rotationY: 0,
+        duration: 0.45,
+        ease: "back.out(1.7)"
+    });
+}
+
+if (dynamicText) {
+    dynamicText.addEventListener('click', flipToNext);
+    
+    // Auto flip every 5 seconds
+    setInterval(() => {
+        if (!document.hidden && !isFlipping) {
+            flipToNext();
+        }
+    }, 5000);
+}
+

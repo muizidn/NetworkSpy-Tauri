@@ -611,3 +611,13 @@ footer {
   .hero h1 { font-size: 2.75rem; }
   .hero p { font-size: 1.1rem; }
 }
+
+#dynamic-hero-text {
+  display: inline-block;
+  cursor: pointer;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  user-select: none;
+  position: relative;
+}
+
