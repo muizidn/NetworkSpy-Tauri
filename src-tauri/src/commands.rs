@@ -1,13 +1,12 @@
 use crate::*;
-use tauri::{AppHandle, Manager, Emitter, State};
+use tauri::{AppHandle, Manager, Emitter};
 use std::sync::Arc;
 use std::collections::HashMap;
-use crate::traffic::db::{TrafficDb, TrafficEvent, FilterPreset, BreakpointRule, ScriptRule, TrafficMetadata};
+use crate::traffic::db::{TrafficDb, TrafficEvent};
 use crate::traffic::har_util::{create_har_log, HarLog};
 use base64::{Engine as _, engine::general_purpose};
 use std::fs;
 use rusqlite::params;
-use tokio::sync::RwLock;
 use std::sync::atomic::Ordering;
 
 #[tauri::command]

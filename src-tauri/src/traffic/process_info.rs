@@ -5,7 +5,6 @@ use once_cell::sync::Lazy;
 use base64::{engine::general_purpose, Engine as _};
 
 static PROCESS_CACHE: Lazy<Mutex<HashMap<String, String>>> = Lazy::new(|| Mutex::new(HashMap::new()));
-static ATTEMPTS_CACHE: Lazy<Mutex<HashMap<String, u32>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 pub fn get_client_info(client_addr: &str) -> String {
     // client_addr is usually "127.0.0.1:12345"
