@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 pub mod ca_manager;
+pub mod proxy_handlers_functions;
 mod certificate_installer;
 pub mod eval;
 pub mod proxy_toggle;
