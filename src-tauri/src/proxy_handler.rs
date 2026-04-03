@@ -126,7 +126,7 @@ impl TrafficListener for MyTrafficListener {
             &traffic_id,
         );
 
-        let mut modified_request_data = script_modified_data;
+        let modified_request_data = script_modified_data;
 
         // 2. Handle Breakpoint for Request
         let (modified_request_data, matched_rule_name) = crate::proxy_handlers_functions::breakpoints::handle_request_breakpoints(

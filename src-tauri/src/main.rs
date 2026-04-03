@@ -21,7 +21,6 @@ pub use settings::*;
 
 use bytes::Bytes;
 use certificate_installer::CertificateInstaller;
-use eval::{matches_breakpoint, run_script};
 use hyper::{Request, Response, Version};
 use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
 use tauri::menu::{Menu, MenuItem, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
