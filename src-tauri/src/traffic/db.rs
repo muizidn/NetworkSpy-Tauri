@@ -599,120 +599,39 @@ pub struct FilterPreset {
 
 impl TrafficDb {
     pub fn get_filter_presets(&self) -> rusqlite::Result<Vec<FilterPreset>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, name, description, filters FROM filter_presets")?;
-        let rows = stmt.query_map([], |row| {
-            Ok(FilterPreset {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                description: row.get(2)?,
-                filters: row.get(3)?,
-            })
-        })?;
-        
-        let mut list = Vec::new();
-        for row in rows {
-            list.push(row?);
-        }
-        Ok(list)
+        crate::traffic::schema::filter_presets::get_filter_presets(&self.conn.lock().unwrap())
     }
 
     pub fn add_filter_preset(&self, preset: FilterPreset) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT INTO filter_presets (id, name, description, filters) VALUES (?1, ?2, ?3, ?4)",
-            params![preset.id, preset.name, preset.description, preset.filters],
-        )?;
-        Ok(())
+        crate::traffic::schema::filter_presets::add_filter_preset(&self.conn.lock().unwrap(), preset)
     }
 
     pub fn update_filter_preset(&self, id: String, name: Option<String>, description: Option<String>, filters: Option<String>) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        if let Some(n) = name {
-            conn.execute("UPDATE filter_presets SET name = ?2 WHERE id = ?1", params![id, n])?;
-        }
-        if let Some(d) = description {
-            conn.execute("UPDATE filter_presets SET description = ?2 WHERE id = ?1", params![id, d])?;
-        }
-        if let Some(f) = filters {
-            conn.execute("UPDATE filter_presets SET filters = ?2 WHERE id = ?1", params![id, f])?;
-        }
-        Ok(())
+        crate::traffic::schema::filter_presets::update_filter_preset(&self.conn.lock().unwrap(), id, name, description, filters)
     }
 
     pub fn delete_filter_preset(&self, id: String) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM filter_presets WHERE id = ?1", params![id])?;
-        Ok(())
+        crate::traffic::schema::filter_presets::delete_filter_preset(&self.conn.lock().unwrap(), id)
     }
 
     pub fn get_setting(&self, key: &str) -> rusqlite::Result<Option<String>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT value FROM settings WHERE key = ?1")?;
-        let res = stmt.query_row(params![key], |row| row.get(0)).or(Ok(None));
-        res
+        crate::traffic::schema::settings::get_setting(&self.conn.lock().unwrap(), key)
     }
 
     pub fn set_setting(&self, key: &str, value: &str) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-            params![key, value],
-        )?;
-        Ok(())
+        crate::traffic::schema::settings::set_setting(&self.conn.lock().unwrap(), key, value)
     }
 
     pub fn get_breakpoints(&self) -> rusqlite::Result<Vec<BreakpointRule>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, enabled, name, method, matching_rule, request, response FROM breakpoints")?;
-        let rows = stmt.query_map([], |row| {
-            Ok(BreakpointRule {
-                id: row.get(0)?,
-                enabled: row.get::<_, i32>(1)? != 0,
-                name: row.get(2)?,
-                method: row.get(3)?,
-                matching_rule: row.get(4)?,
-                request: row.get::<_, i32>(5)? != 0,
-                response: row.get::<_, i32>(6)? != 0,
-            })
-        })?;
-        
-        let mut list = Vec::new();
-        for row in rows {
-            list.push(row?);
-        }
-        Ok(list)
+        crate::traffic::schema::breakpoints::get_breakpoints(&self.conn.lock().unwrap())
     }
 
     pub fn save_breakpoint(&self, rule: BreakpointRule) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT INTO breakpoints (id, enabled, name, method, matching_rule, request, response) 
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) 
-             ON CONFLICT(id) DO UPDATE SET 
-                enabled = excluded.enabled, 
-                name = excluded.name, 
-                method = excluded.method, 
-                matching_rule = excluded.matching_rule, 
-                request = excluded.request, 
-                response = excluded.response",
-            params![
-                rule.id, 
-                if rule.enabled { 1 } else { 0 }, 
-                rule.name, 
-                rule.method, 
-                rule.matching_rule, 
-                if rule.request { 1 } else { 0 }, 
-                if rule.response { 1 } else { 0 },
-            ],
-        )?;
-        Ok(())
+        crate::traffic::schema::breakpoints::save_breakpoint(&self.conn.lock().unwrap(), rule)
     }
 
     pub fn delete_breakpoint(&self, id: String) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM breakpoints WHERE id = ?1", params![id])?;
-        Ok(())
+        crate::traffic::schema::breakpoints::delete_breakpoint(&self.conn.lock().unwrap(), id)
     }
 }
 
@@ -808,58 +727,14 @@ pub struct ScriptRule {
 
 impl TrafficDb {
     pub fn get_scripts(&self) -> rusqlite::Result<Vec<ScriptRule>> {
-        let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, enabled, name, method, matching_rule, request, response, script FROM scripts")?;
-        let rows = stmt.query_map([], |row| {
-            Ok(ScriptRule {
-                id: row.get(0)?,
-                enabled: row.get::<_, i32>(1)? != 0,
-                name: row.get(2)?,
-                method: row.get(3)?,
-                matching_rule: row.get(4)?,
-                request: row.get::<_, i32>(5)? != 0,
-                response: row.get::<_, i32>(6)? != 0,
-                script: row.get(7)?,
-            })
-        })?;
-        
-        let mut list = Vec::new();
-        for row in rows {
-            list.push(row?);
-        }
-        Ok(list)
+        crate::traffic::schema::scripts::get_scripts(&self.conn.lock().unwrap())
     }
 
     pub fn save_script(&self, rule: ScriptRule) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute(
-            "INSERT INTO scripts (id, enabled, name, method, matching_rule, request, response, script) 
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) 
-             ON CONFLICT(id) DO UPDATE SET 
-                enabled = excluded.enabled, 
-                name = excluded.name, 
-                method = excluded.method, 
-                matching_rule = excluded.matching_rule, 
-                request = excluded.request, 
-                response = excluded.response,
-                script = excluded.script",
-            params![
-                rule.id, 
-                if rule.enabled { 1 } else { 0 }, 
-                rule.name, 
-                rule.method, 
-                rule.matching_rule, 
-                if rule.request { 1 } else { 0 }, 
-                if rule.response { 1 } else { 0 },
-                rule.script
-            ],
-        )?;
-        Ok(())
+        crate::traffic::schema::scripts::save_script(&self.conn.lock().unwrap(), rule)
     }
 
     pub fn delete_script(&self, id: String) -> rusqlite::Result<()> {
-        let conn = self.conn.lock().unwrap();
-        conn.execute("DELETE FROM scripts WHERE id = ?1", params![id])?;
-        Ok(())
+        crate::traffic::schema::scripts::delete_script(&self.conn.lock().unwrap(), id)
     }
 }
