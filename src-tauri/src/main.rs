@@ -107,9 +107,14 @@ fn main() {
         .setup(move |app| {
             
 
-            let tools_submenu = create_tools_submenu(app)?;
+            // 1. Global Application Menu Setup (macOS)
+            // Tauri menu bindings take explicit ownership over items. 
+            // Because macOS uses a global bar and Windows/Linux uses per-window bars,
+            // we configure two physically separate menu structures to guarantee
+            // they display natively and correctly on all respective OSes.
+            let global_tools_submenu = create_tools_submenu(app)?;
             
-            let menu = MenuBuilder::new(app)
+            let global_mac_menu = MenuBuilder::new(app)
                 .item(&SubmenuBuilder::new(app, "network-spy")
                     .about(None)
                     .separator()
@@ -121,10 +126,10 @@ fn main() {
                     .separator()
                     .item(&MenuItemBuilder::with_id("quit", "Quit network-spy").accelerator("Cmd+Q").build(app)?)
                     .build()?)
-                .item(&tools_submenu)
+                .item(&global_tools_submenu)
                 .build()?;
 
-            app.set_menu(menu)?;
+            app.set_menu(global_mac_menu)?;
 
             // Event handling is unified below in the global handler
 
@@ -316,21 +321,22 @@ fn main() {
                 })
                 .build(app_handle)?;
 
-            // Window Menu Setup (Linux/Windows top menu bar)
-            let tools_submenu = create_tools_submenu(app_handle)?;
+            // 2. Window Menu Setup (Linux/Windows top menu bar)
+            // Notice we construct a brand-new instance of `create_tools_submenu`!
+            let window_tools_submenu = create_tools_submenu(app_handle)?;
 
-            let app_menu = MenuBuilder::new(app_handle)
+            let main_window_menu = MenuBuilder::new(app_handle)
                 .item(&SubmenuBuilder::new(app_handle, "network-spy")
                     .item(&MenuItemBuilder::with_id("show", "Show").build(app_handle)?)
                     .item(&tauri::menu::PredefinedMenuItem::separator(app_handle)?)
                     .item(&MenuItemBuilder::with_id("quit", "Quit").build(app_handle)?)
                     .build()?)
-                .item(&tools_submenu)
+                .item(&window_tools_submenu)
                 .build()?;
 
             // Set the menu ONLY on the main window
             if let Some(main_window) = app_handle.get_webview_window("main") {
-                let _ = main_window.set_menu(app_menu);
+                let _ = main_window.set_menu(main_window_menu);
             }
 
             // Global Menu Event Handler for both Tray and Window Menu
