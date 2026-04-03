@@ -55,14 +55,16 @@ use crate::traffic::db::{is_text_content_type, body_to_string};
 use commands::*;
 
 fn main() {
-    dotenvy::dotenv().ok();
+    // Try to load .env from current directory or parent directory (root)
+    if dotenvy::dotenv().is_err() {
+        if let Ok(parent) = std::env::current_dir().map(|p| p.parent().map(|pp| pp.to_path_buf())) {
+            if let Some(parent_path) = parent {
+                dotenvy::from_path(parent_path.join(".env")).ok();
+            }
+        }
+    }
     
-    let app_name = std::env::var("APP_NAME").unwrap_or_else(|_| {
-        #[cfg(debug_assertions)]
-        return "Network Spy (DEV)".to_string();
-        #[cfg(not(debug_assertions))]
-        return "Network Spy".to_string();
-    });
+    let app_name = std::env::var("APP_NAME").expect("FATAL: APP_NAME not found in .env file. Please ensure a .env file exists in the root with APP_NAME defined.");
 
     let args: Vec<String> = std::env::args().collect();
     let app_data_dir = get_app_data_dir();
