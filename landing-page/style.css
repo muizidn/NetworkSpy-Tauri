@@ -94,16 +94,11 @@ nav {
   -webkit-text-fill-color: transparent;
 }
 
-.logo-icon {
+.logo-img {
   width: 2.5rem;
   height: 2.5rem;
-  background: linear-gradient(135deg, var(--primary), #818cf8);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow: 0 8px 16px -4px var(--primary-glow);
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px var(--primary-glow));
 }
 
 .nav-links {
@@ -481,6 +476,113 @@ footer {
 }
 
 /* Reveal Animation */
+/* Installation Section */
+.install-section {
+  padding: 8rem 0;
+}
+
+.install-container {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.os-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0;
+  transform: translateY(1px); /* To overlap the border slightly */
+  padding-left: 2rem;
+}
+
+.os-tab {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.75rem;
+  border-radius: 1rem 1rem 0 0;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.os-tab.active {
+  background: #020617;
+  color: white;
+  border-color: var(--border);
+  z-index: 2;
+}
+
+.os-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #020617;
+}
+
+.command-box {
+  background: #020617;
+  border: 1px solid var(--border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 1.5rem;
+  border-bottom-left-radius: 1.5rem;
+  border-bottom-right-radius: 1.5rem;
+  padding: 3rem;
+  position: relative;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8);
+  z-index: 1;
+}
+
+.command-icon {
+  width: 2rem;
+  height: 2rem;
+  opacity: 0.5;
+}
+
+.command-text {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 1.1rem;
+  color: white;
+  flex: 1;
+  word-break: break-all;
+}
+
+.copy-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+.copy-btn.success {
+  background: #10b981;
+  border-color: #10b981;
+}
+
 .reveal {
   opacity: 0;
   transform: translateY(30px);
