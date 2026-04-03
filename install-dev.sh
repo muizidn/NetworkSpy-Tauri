@@ -63,33 +63,29 @@ fi
 cd "$TEMP_DIR"
 
 if [ "$OS" = "darwin" ]; then
-    # asset name example: NetworkSpy_0.1.2-develop-build.20260403.2_aarch64.dmg
-    # We need to handle BOTH naming patterns (network-spy or NetworkSpy) 
-    # and version prefixes safely.
+    echo "🔍 Discovering macOS assets..."
     
-    # Extract version without 'v' prefix
-    VER_CLEAN=${VERSION#v}
+    # Fetch specific release data to get a cleaner asset list
+    RELEASE_DATA=$(curl -s "https://api.github.com/repos/$GITHUB_REPO/releases/tags/$VERSION")
     
-    # Try multiple naming patterns due to recent renaming
-    FILENAMES=(
-        "NetworkSpy_${VER_CLEAN}_${ARCH_NAME_MAC}.dmg"
-        "network-spy_${VER_CLEAN}_${ARCH_NAME_MAC}.dmg"
-    )
+    # Discover the .dmg asset dynamically based on extension and architecture
+    ASSET_DATA=$(echo "$RELEASE_DATA" | grep "browser_download_url" | grep ".dmg" | grep "$ARCH_NAME_MAC" | head -n 1) || true
+    
+    if [ -z "$ASSET_DATA" ]; then
+        # Fallback for universal or differently named builds
+        ASSET_DATA=$(echo "$RELEASE_DATA" | grep "browser_download_url" | grep ".dmg" | head -n 1)
+    fi
 
-    SUCCESS=false
-    for FILENAME in "${FILENAMES[@]}"; do
-        DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
-        echo "⬇️ Trying $DOWNLOAD_URL..."
-        if curl -L -f -O "$DOWNLOAD_URL"; then
-            SUCCESS=true
-            break
-        fi
-    done
+    DOWNLOAD_URL=$(echo "$ASSET_DATA" | sed -E 's/.*"([^"]+)".*/\1/')
+    FILENAME=$(basename "$DOWNLOAD_URL")
 
-    if [ "$SUCCESS" = false ]; then
-        echo "❌ Download failed for all known naming patterns."
+    if [ -z "$DOWNLOAD_URL" ]; then
+        echo "❌ Could not find a suitable .dmg asset in release $VERSION."
         exit 1
     fi
+
+    echo "⬇️ Downloading $FILENAME..."
+    curl -L -O "$DOWNLOAD_URL"
     
     echo "💿 Mounting DMG..."
     MOUNT_POINT=$(hdiutil attach "$FILENAME" -nobrowse -plist | grep -A 1 "mount-point" | grep string | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
@@ -124,28 +120,20 @@ if [ "$OS" = "darwin" ]; then
     echo "💡 Open with: open -a '$APP_NAME'"
 
 elif [ "$OS" = "linux" ]; then
-    VER_CLEAN=${VERSION#v}
+    echo "🔍 Discovering Linux assets..."
     
-    FILENAMES=(
-        "NetworkSpy_${VER_CLEAN}_${ARCH_NAME}.deb"
-        "network-spy_${VER_CLEAN}_${ARCH_NAME}.deb"
-    )
+    RELEASE_DATA=$(curl -s "https://api.github.com/repos/$GITHUB_REPO/releases/tags/$VERSION")
+    ASSET_DATA=$(echo "$RELEASE_DATA" | grep "browser_download_url" | grep ".deb" | grep "$ARCH_NAME" | head -n 1) || true
+    DOWNLOAD_URL=$(echo "$ASSET_DATA" | sed -E 's/.*"([^"]+)".*/\1/')
+    FILENAME=$(basename "$DOWNLOAD_URL")
 
-    SUCCESS=false
-    for FILENAME in "${FILENAMES[@]}"; do
-        DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
-        if curl -L -f -O "$DOWNLOAD_URL"; then
-            SUCCESS=true
-            break
-        fi
-    done
-
-    if [ "$SUCCESS" = false ]; then
-        echo "❌ Download failed."
+    if [ -z "$DOWNLOAD_URL" ]; then
+        echo "❌ Could not find a suitable .deb asset."
         exit 1
     fi
     
-    echo "🔐 Installing via dpkg..."
+    echo "⬇️ Downloading $FILENAME..."
+    curl -L -O "$DOWNLOAD_URL"
     sudo dpkg -i "$FILENAME" || sudo apt-get install -f -y
     rm "$FILENAME"
     echo "✅ Success! Network Spy DEV is installed."

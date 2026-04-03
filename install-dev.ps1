@@ -15,9 +15,13 @@ if ([string]::IsNullOrWhiteSpace($Version) -or $Version -eq "latest") {
         $RELEASES_URL = "https://api.github.com/repos/$REPO/releases"
         $RELEASES = Invoke-RestMethod -Uri $RELEASES_URL -Method Get -ErrorAction Stop
         if ($RELEASES.Count -gt 0) {
-            # Take the very first release (most recent, including pre-releases)
-            $RELEASE_INFO = $RELEASES[0]
-            $Version = $RELEASE_INFO.tag_name
+            # Pick the first one
+            $RELEASE_INFO_SUMMARY = $RELEASES[0]
+            $Version = $RELEASE_INFO_SUMMARY.tag_name
+
+            # Fetch the FULL release data for assets
+            $RELEASE_URL = "https://api.github.com/repos/$REPO/releases/tags/$Version"
+            $RELEASE_INFO = Invoke-RestMethod -Uri $RELEASE_URL -Method Get -ErrorAction Stop
         } else {
             Write-Host "[ERROR] No releases found in the repository." -ForegroundColor Red
             exit 1
@@ -46,20 +50,19 @@ if ($ARCH -eq "ARM64") {
 Write-Host "[*] Target DEV Version: $Version" -ForegroundColor Gray
 Write-Host "[*] Platform: Windows ($MSI_ARCH)" -ForegroundColor Gray
 
-# 3. Find Matching Asset (Handles both NetworkSpy and network-spy naming)
-$ASSET_PATTERNS = @(
-    "NetworkSpy_.*_$($MSI_ARCH)_en-US\.msi",
-    "network-spy_.*_$($MSI_ARCH)_en-US\.msi"
-)
+# 3. Find Matching Asset (Dynamic Discovery)
+Write-Host "[*] Discovering MSI assets..." -ForegroundColor Gray
+$MATCHING_ASSET = $RELEASE_INFO.assets | Where-Object { 
+    $_.name -like "*$($MSI_ARCH)*" -and $_.name -like "*.msi" 
+} | Select-Object -First 1
 
-$MATCHING_ASSET = $null
-foreach ($Pattern in $ASSET_PATTERNS) {
-    $MATCHING_ASSET = $RELEASE_INFO.assets | Where-Object { $_.name -match $Pattern } | Select-Object -First 1
-    if ($MATCHING_ASSET) { break }
+if ($null -eq $MATCHING_ASSET) {
+    # Fallback to any MSI if architecture-specific one is missing
+    $MATCHING_ASSET = $RELEASE_INFO.assets | Where-Object { $_.name -like "*.msi" } | Select-Object -First 1
 }
 
 if ($null -eq $MATCHING_ASSET) {
-    Write-Host "[ERROR] Could not find matching MSI ($MSI_ARCH) for $Version." -ForegroundColor Red
+    Write-Host "[ERROR] Could not find matching MSI asset in release $Version." -ForegroundColor Red
     exit 1
 }
 
