@@ -63,7 +63,7 @@ Network Spy is designed around a core philosophy: **Viewers are a Superpower.**
 
 ## ⚡ Quick Install
 
-The fastest way to install or update Network Spy is via the terminal:
+The fastest way to install or update Network Spy is via the terminal (Stable Releases):
 
 ###  macOS / 🐧 Linux
 ```bash
@@ -73,6 +73,19 @@ curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/in
 ### 🪟 Windows (PowerShell)
 ```powershell
 iwr -useb https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install.ps1 | iex
+```
+
+### 🧪 Bleeding Edge (Develop Builds)
+If you want the latest features from the `develop` branch before they are officially released:
+
+#### macOS / Linux
+```bash
+curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install-dev.sh | sh
+```
+
+#### Windows (PowerShell)
+```powershell
+iwr -useb https://raw.githubusercontent.com/muizidn/NetworkSpy-Tauri/develop/install-dev.ps1 | iex
 ```
 
 ---
