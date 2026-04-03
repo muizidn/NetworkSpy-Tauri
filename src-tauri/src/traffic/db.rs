@@ -485,6 +485,7 @@ pub struct ScriptRule {
     pub request: bool,
     pub response: bool,
     pub script: String,
+    pub error: Option<String>,
 }
 
 impl TrafficDb {
@@ -498,5 +499,9 @@ impl TrafficDb {
 
     pub fn delete_script(&self, id: String) -> rusqlite::Result<()> {
         crate::traffic::schema::scripts::delete_script(&self.conn.lock().unwrap(), id)
+    }
+
+    pub fn set_script_error(&self, id: String, error: Option<String>) -> rusqlite::Result<()> {
+        crate::traffic::schema::scripts::set_script_error(&self.conn.lock().unwrap(), id, error)
     }
 }

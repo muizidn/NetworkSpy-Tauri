@@ -81,6 +81,7 @@ function script(request, response) {
           script: code,
           request: isRequest,
           response: isResponse,
+          error: null
         }
       });
       onSave();
@@ -201,6 +202,20 @@ function script(request, response) {
               </label>
             </div>
           </div>
+          
+          {script?.error && (
+            <div className="p-4 bg-red-950/20 border border-red-900/30 rounded-lg">
+               <div className="flex items-start space-x-2">
+                  <FiX className="text-red-400 mt-0.5" size={14} />
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-bold text-red-300 uppercase tracking-widest">Runtime Error</p>
+                    <pre className="text-[10px] text-zinc-400 font-mono whitespace-pre-wrap mt-2 overflow-x-auto leading-relaxed">
+                      {script.error}
+                    </pre>
+                  </div>
+               </div>
+            </div>
+          )}
 
           <div className="p-4 bg-blue-950/20 border border-blue-900/30 rounded-lg">
              <div className="flex items-start space-x-2">

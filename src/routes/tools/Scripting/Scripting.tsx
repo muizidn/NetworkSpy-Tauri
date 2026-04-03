@@ -16,6 +16,7 @@ export interface ScriptingModel {
   script: string;
   request: boolean;
   response: boolean;
+  error?: string;
 }
 
 export class ScriptingCellRenderer implements Renderer<ScriptingModel> {
@@ -66,6 +67,15 @@ export class ScriptingCellRenderer implements Renderer<ScriptingModel> {
         break;
       case "name":
         content = <span className="font-bold text-zinc-200">{input.name}</span>;
+        break;
+      case "error":
+        content = input.error ? (
+          <span className="text-[10px] text-red-500 font-mono truncate max-w-[200px]" title={input.error}>
+            {input.error}
+          </span>
+        ) : (
+          <span className="text-[10px] text-zinc-600 italic">None</span>
+        );
         break;
       case "method":
         content = (
@@ -133,7 +143,8 @@ const ScriptingList: React.FC = () => {
           matchingRule: s.matching_rule,
           script: s.script,
           request: s.request,
-          response: s.response
+          response: s.response,
+          error: s.error
         }));
         setData(mapped);
       } catch (e) {
@@ -176,7 +187,8 @@ const ScriptingList: React.FC = () => {
             matching_rule: updated.matchingRule,
             script: updated.script,
             request: updated.request,
-            response: updated.response
+            response: updated.response,
+            error: null
           } 
         });
         fetchData();
@@ -253,6 +265,11 @@ const ScriptingList: React.FC = () => {
                 renderer: {
                    render: ({ input }) => new ScriptingCellRenderer("response", (a) => handleAction(input, a)).render({ input })
                 },
+            },
+            {
+                title: "Error",
+                minWidth: 200,
+                renderer: new ScriptingCellRenderer("error"),
             },
             {
                 title: "Actions",

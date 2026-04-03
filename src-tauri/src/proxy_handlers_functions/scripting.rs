@@ -34,8 +34,14 @@ pub fn handle_request_scripts(
                         Ok(modified) => {
                             final_script_name = script_rule.name.clone();
                             script_modified_data = Some(modified);
+                            if script_rule.error.is_some() {
+                                let _ = traffic_db.set_script_error(script_rule.id.clone(), None);
+                            }
                         }
-                        Err(e) => println!("Script error in rule '{}': {}", script_rule.name, e),
+                        Err(e) => {
+                            println!("[SCRIPTING] Script error in rule '{}': {}", script_rule.name, e);
+                            let _ = traffic_db.set_script_error(script_rule.id.clone(), Some(e.to_string()));
+                        }
                     }
                 }
             }
@@ -73,8 +79,14 @@ pub fn handle_response_scripts(
                         Ok(modified) => {
                             script_name = script_rule.name.clone();
                             modified_by_script = Some(modified);
+                            if script_rule.error.is_some() {
+                                let _ = traffic_db.set_script_error(script_rule.id.clone(), None);
+                            }
                         }
-                        Err(e) => println!("Script error in rule '{}': {}", script_rule.name, e),
+                        Err(e) => {
+                            println!("[SCRIPTING] Script error in rule '{}': {}", script_rule.name, e);
+                            let _ = traffic_db.set_script_error(script_rule.id.clone(), Some(e.to_string()));
+                        }
                     }
                 }
             }
