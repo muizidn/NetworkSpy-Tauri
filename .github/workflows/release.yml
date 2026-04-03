@@ -45,6 +45,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create .env file
+        shell: bash
+        env:
+          BRAND_NAME_PROD: "Network Spy"
+          BRAND_NAME_DEV: "Network Spy (DEV)"
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+             echo "APP_NAME=$BRAND_NAME_PROD" > .env
+          else
+             echo "APP_NAME=$BRAND_NAME_DEV" > .env
+          fi
+
       - name: Setup Perl
         uses: shogo82148/actions-setup-perl@v1
         with:
