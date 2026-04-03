@@ -79,7 +79,7 @@ copyBtn?.addEventListener('click', async () => {
         await navigator.clipboard.writeText(text);
         copyBtn.classList.add('success');
         copyBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-        
+
         setTimeout(() => {
             copyBtn.classList.remove('success');
             copyBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
@@ -89,57 +89,63 @@ copyBtn?.addEventListener('click', async () => {
     }
 });
 
-// Text Click-to-Flip Animation (GSAP)
+// Text Logic
 const heroPhrases = [
     "Superpower",
-    "Best HTTP Proxy",
-    "Token Analyzer",
-    "Breakpoint System",
-    "Viewer Engine"
+    "HTTP Proxy",
+    "LLM API Analyzer",
+    "Breakpoint Engine",
+    "GraphQL Inspection"
 ];
 
 const dynamicText = document.getElementById('dynamic-hero-text');
 let currentPhraseIndex = 0;
-let isFlipping = false;
+let isAnimating = false;
 
-function flipToNext() {
-    if (isFlipping) return;
-    isFlipping = true;
+function animateTextChange() {
+    if (isAnimating) return;
+    isAnimating = true;
 
     currentPhraseIndex = (currentPhraseIndex + 1) % heroPhrases.length;
     const nextPhrase = heroPhrases[currentPhraseIndex];
 
-    // Professional 3D Flip Timeline
+    // GSAP Timeline for High-End Text Reveal
     const tl = gsap.timeline({
-        onComplete: () => { isFlipping = false; }
-    });
-
-    tl.to(dynamicText, {
-        rotationY: 90,
-        duration: 0.25,
-        ease: "power2.in",
         onComplete: () => {
-            dynamicText.textContent = nextPhrase;
+            isAnimating = false;
         }
     });
 
-    tl.set(dynamicText, { rotationY: -90 });
-
+    // 1. Fade out current text
     tl.to(dynamicText, {
-        rotationY: 0,
-        duration: 0.45,
-        ease: "back.out(1.7)"
+        opacity: 0,
+        y: -10,
+        filter: "blur(10px)",
+        duration: 0.3,
+        ease: "power2.in",
+        onComplete: () => {
+            dynamicText.textContent = nextPhrase;
+            gsap.set(dynamicText, { y: 20, filter: "blur(20px)", opacity: 0 });
+        }
+    });
+
+    // 2. Animate next word in with a professional stagger/blur reveal
+    tl.to(dynamicText, {
+        opacity: 1,
+        y: 0,
+        filter: "blur(0px)",
+        duration: 0.8,
+        ease: "elastic.out(1.1, 0.75)"
     });
 }
 
 if (dynamicText) {
-    dynamicText.addEventListener('click', flipToNext);
-    
-    // Auto flip every 5 seconds
+    dynamicText.addEventListener('click', animateTextChange);
+
+    // Auto cycle
     setInterval(() => {
-        if (!document.hidden && !isFlipping) {
-            flipToNext();
+        if (!document.hidden && !isAnimating) {
+            animateTextChange();
         }
     }, 5000);
 }
-
