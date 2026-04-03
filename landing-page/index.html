@@ -4,13 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NetworkSpy | AI-Powered Network Debugger for Mac, Windows & Linux</title>
-    <meta name="description"
-        content="NetworkSpy is the ultimate cross-platform tool for network traffic analysis and debugging. Powerful, fast, and beautiful.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <title>NetworkSpy | The Next-Gen Network Analyzer</title>
+    <meta name="description" content="NetworkSpy is the ultimate cross-platform tool for network traffic analysis and debugging. Built for the modern generative era.">
+    
+    <!-- Favicon placeholder (would be actual favicon in production) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%236366f1%22></rect><path d=%22M30 70 L50 30 L70 70%22 stroke=%22white%22 stroke-width=%228%22 fill=%22none%22 stroke-linecap=%22round%22></path></svg>">
+
     <link rel="stylesheet" href="./style.css">
 </head>
 
@@ -20,8 +19,7 @@
             <nav>
                 <a href="#" class="logo">
                     <div class="logo-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                         </svg>
                     </div>
@@ -29,14 +27,12 @@
                 </a>
                 <div class="nav-links">
                     <a href="#features">Features</a>
-                    <a href="#pro">Pro</a>
-                    <a href="#changelog">Changelog</a>
-                    <a href="#docs">Docs</a>
+                    <a href="#showcase">Showcase</a>
+                    <a href="#changelog">Releases</a>
                 </div>
                 <div class="nav-actions">
-                    <a href="#" class="btn btn-secondary">Sign In</a>
-                    <a href="https://wa.me/6282243905005?text=Halo%2C%20saya%20tertarik%20tahu%20program%20Free%20license%20Network%20Spy.%20Saya%20adalah%20developer%20software%20AI%20%5BNAMA%5D%2C%20apa%20yang%20perlu%20saya%20lakukan%20ya%3F"
-                        target="_blank" class="btn btn-primary">Free License</a>
+                    <a href="https://github.com/muizidn/NetworkSpy-Tauri" target="_blank" class="btn btn-secondary">Star on GitHub</a>
+                    <a href="https://wa.me/6282243905005?text=Halo%2C%20saya%20tertarik%20tahu%20program%20Free%20license%20Network%20Spy." target="_blank" class="btn btn-primary">Free License</a>
                 </div>
             </nav>
         </div>
@@ -46,268 +42,113 @@
         <!-- Hero Section -->
         <section class="hero">
             <div class="container">
-                <h1 class="reveal">The <span>AI-Powered</span> network debugger for modern stacks.</h1>
-                <p class="reveal" style="animation-delay: 0.1s;">Stop manually parsing logs. Let NetworkSpy intercept AI
-                    streams and use built-in intelligence to explain complex network issues in seconds.</p>
-                <div class="nav-actions reveal" style="justify-content: center; animation-delay: 0.2s;">
-                    <a href="https://wa.me/6282243905005?text=Halo%2C%20saya%20tertarik%20tahu%20program%20Free%20license%20Network%20Spy.%20Saya%20adalah%20developer%20software%20AI%20%5BNAMA%5D%2C%20apa%20yang%20perlu%20saya%20lakukan%20ya%3F"
-                        target="_blank" class="btn btn-primary" style="padding: 1rem 2.5rem; font-size: 1.1rem;">I want
-                        a Free license</a>
+                <div class="badge reveal">New: LLM Token Stream Analysis v0.1.2</div>
+                <h1 class="reveal">The <span>Superpower</span> for modern network debugging.</h1>
+                <p class="reveal">Stop guessing. Intercept, decrypt, and visualize your application's traffic with a stunning, high-performance interface built for the generative era.</p>
+                
+                <div class="nav-actions reveal" style="justify-content: center;">
+                    <a href="https://github.com/muizidn/NetworkSpy-Tauri/releases" class="btn btn-primary">Download Latest</a>
+                    <a href="#features" class="btn btn-secondary">Explore Features</a>
                 </div>
-                <p class="reveal"
-                    style="animation-delay: 0.3s; margin-top: 1.5rem; font-size: 0.875rem; font-weight: 500;">
-                    Available on <span style="color: var(--text-main);">macOS</span>, <span
-                        style="color: var(--text-main);">Windows</span>, and <span
-                        style="color: var(--text-main);">Linux</span>
-                </p>
 
-                <div class="hero-mockup reveal" style="animation-delay: 0.4s;">
-                    <div class="hero-glow"></div>
-                    <div class="mockup-container">
-                        <img src="./hero-mockup.jpeg" alt="NetworkSpy Interface"
-                            style="width: 100%; height: 100%; object-fit: cover;">
+                <div class="hero-visual reveal">
+                    <div class="main-mockup">
+                        <img src="./github/readme/banner.png" alt="NetworkSpy Banner">
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Video Demo Section -->
-        <section class="video-section">
-            <div class="container">
-                <span class="section-tag">Watch it in action</span>
-                <h2>See how AI transforms debugging.</h2>
-                <div class="video-container reveal">
-                    <!-- Replace VIDEO_ID with your actual YouTube video ID -->
-                    <iframe src="https://www.youtube.com/embed/fN1tVjEg6zw?si=HwhkgwYkV6S8pc6j" title="NetworkSpy Demo"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen></iframe>
-                </div>
-            </div>
-        </section>
-
-        <!-- Social Proof -->
-        <section class="social-proof">
-            <div class="container">
-                <p class="social-title">TRUSTED BY DEVELOPERS FROM WORLD-CLASS COMPANIES</p>
-                <div class="logos">
-                    <div class="logo-item">VELOCITY</div>
-                    <div class="logo-item">CLOUDFLARE</div>
-                    <div class="logo-item">NETLIFY</div>
-                    <div class="logo-item">STRIPE</div>
-                    <div class="logo-item">VERCEL</div>
-                    <div class="logo-item">SUPABASE</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features Section -->
+        <!-- Feature Grid -->
         <section id="features" class="features">
             <div class="container">
                 <span class="section-tag">Capabilities</span>
-                <h2>Everything you need for network debugging.</h2>
+                <h2 class="reveal">Built for speed, beauty, and intelligence.</h2>
 
                 <div class="feature-grid">
-                    <!-- Specialized Viewers Group -->
-                    <div class="feature-card reveal">
-                        <div class="feature-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path
-                                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
-                                </path>
-                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                            </svg>
-                        </div>
-                        <h3>Advanced Viewers</h3>
-                        <p>Specialized views for <strong>LLM streams</strong>, <strong>GraphQL</strong>, and
-                            <strong>Backend as a Service</strong> (Firebase, Supabase, Appwrite) with schema-aware
-                            formatting.
-                        </p>
+                    <div class="feature-box reveal">
+                        <div class="feature-icon">🚀</div>
+                        <h3>High Performance</h3>
+                        <p>Rust-powered proxy engine for zero-latency traffic interception. Built to handle heavy loads without breaking a sweat.</p>
                     </div>
-
-                    <div class="feature-card reveal" style="animation-delay: 0.1s;">
-                        <div class="feature-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                        </div>
-                        <h3>Security First</h3>
-                        <p>Industry-standard SSL proxying with deep security analysis. Identify vulnerabilities in your
-                            API headers and payload encryption instantly.</p>
+                    <div class="feature-box reveal">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Native Support</h3>
+                        <p>Deeply optimized for macOS, Windows, and Linux. A truly native experience across all your favorite platforms.</p>
                     </div>
-
-                    <div class="feature-card reveal" style="animation-delay: 0.2s;">
-                        <div class="feature-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                            </svg>
-                        </div>
-                        <h3>Enhanced Analysis</h3>
-                        <p>Go beyond simple request lists with advanced data visualization, error pattern detection, and
-                            automated performance profiling.</p>
-                    </div>
-
-                    <div class="feature-card reveal" style="animation-delay: 0.3s;">
-                        <div class="feature-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                        </div>
-                        <h3>Smart Summary</h3>
-                        <p>Get an instant high-level overview of your session. Total bandwidth, error rates, and top
-                            domains summarized at a glance.</p>
-                    </div>
-
-                    <div class="feature-card reveal" style="animation-delay: 0.4s;">
-                        <div class="feature-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                        </div>
-                        <h3>Visual Timeline</h3>
-                        <p>Debug race conditions and latency with a precision timeline view. See exactly when every
-                            request started and ended in parallel.</p>
-                    </div>
-
-                    <div class="feature-card reveal" style="animation-delay: 0.5s;">
-                        <div class="feature-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                            </svg>
-                        </div>
-                        <h3>Scripting & Mocking</h3>
-                        <p>Write custom JavaScript logic to modify traffic on the fly. Mock any endpoint to simulate
-                            edge cases and enjoy a better dev experience.</p>
+                    <div class="feature-box reveal">
+                        <div class="feature-icon">🧬</div>
+                        <h3>Schema-Aware</h3>
+                        <p>Automatically detects and formats GraphQL, JSON, and multi-part payloads with intelligent schema-aware coloring.</p>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Value Showcase -->
+        <section id="showcase" class="feature-showcase">
+            <div class="container">
+                
+                <!-- Showcase 1: LLM -->
+                <div class="showcase-row">
+                    <div class="showcase-content reveal">
+                        <span class="section-tag">AI Powered</span>
+                        <h2>The World's First <span>LLM Token</span> Analyzer.</h2>
+                        <p>Debug GenAI apps with ease. Intercept streaming tokens in real-time, track token usage, and visualize latency for every chunk.</p>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="margin-bottom: 1rem; display: flex; gap: 1rem;">✅ Real-time token streaming visualization</li>
+                            <li style="margin-bottom: 1rem; display: flex; gap: 1rem;">✅ Automatic latency distribution maps</li>
+                            <li style="margin-bottom: 1rem; display: flex; gap: 1rem;">✅ Payload & Response comparison</li>
+                        </ul>
+                    </div>
+                    <div class="showcase-visual reveal">
+                        <div class="browser-frame">
+                            <img src="./github/readme/llm-token-analyzer.png" alt="LLM Token Analyzer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Showcase 2: Traffic Summary -->
+                <div class="showcase-row">
+                    <div class="showcase-content reveal">
+                        <span class="section-tag">Insights</span>
+                        <h2>Insights at a <span>Glance</span>.</h2>
+                        <p>Get an instant high-level overview of your session. Total bandwidth, error rates, top domains, and protocol distribution summarized instantly.</p>
+                        <a href="#" class="btn btn-secondary">Learn more about Stats</a>
+                    </div>
+                    <div class="showcase-visual reveal">
+                        <div class="browser-frame">
+                            <img src="./github/readme/traffic-summary.png" alt="Traffic Summary">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Showcase 3: Custom Viewers -->
+                <div class="showcase-row">
+                    <div class="showcase-content reveal">
+                        <span class="section-tag">Extensibility</span>
+                        <h2>Build Your Own <span>Inspectors</span>.</h2>
+                        <p>NetworkSpy isn't just a list of requests. Use our extensible viewer engine to build custom tab visualizers for any data format.</p>
+                    </div>
+                    <div class="showcase-visual reveal">
+                        <div class="browser-frame">
+                            <img src="./github/features/custom-viewer.png" alt="Custom Viewer Engine">
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
         <!-- CTA Section -->
-        <section class="cta-section">
+        <section class="cta">
             <div class="container">
-                <div class="cta-box reveal">
+                <div class="cta-wrap reveal">
                     <h2>Ready to debug faster?</h2>
-                    <p>Join thousands of developers who use NetworkSpy to ship high-quality apps with confidence.</p>
-                    <a href="https://wa.me/6282243905005?text=Halo%2C%20saya%20tertarik%20tahu%20program%20Free%20license%20Network%20Spy.%20Saya%20adalah%20developer%20software%20AI%20%5BNAMA%5D%2C%20apa%20yang%20perlu%20saya%20lakukan%20ya%3F"
-                        target="_blank" class="btn btn-primary btn-lg">I want a Free license</a>
-                </div>
-            </div>
-        </section>
-
-        <!-- Detailed Feature Breakdown -->
-        <section class="feature-detail">
-            <div class="container">
-                <!-- Feature 1: LLM/API Debugging -->
-                <div class="feature-detail-row">
-                    <div class="feature-detail-content reveal">
-                        <span class="section-tag">Intelligence</span>
-                        <h2>The World's Best <span>LLM Viewer</span> & Explainer.</h2>
-                        <p>Built specifically for the generative era. Intercept streaming tokens in real-time and let AI
-                            automatically explain errors, high latency, or broken schemas.</p>
-                        <ul style="list-style: none; color: var(--text-muted); margin-bottom: 2rem;">
-                            <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
-                                    stroke-width="2">
-                                    <path d="M12 2v8"></path>
-                                    <path d="m16 6-4 4-4-4"></path>
-                                    <rect width="20" height="14" x="2" y="6" rx="2"></rect>
-                                </svg>
-                                <strong>Real-time Stream Tracking:</strong> Visualize LLM tokens as they arrive.
-                            </li>
-                            <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
-                                    stroke-width="2">
-                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                                <strong>AI Issue Context:</strong> Get human-friendly explanations for 500 errors.
-                            </li>
-                            <li style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)"
-                                    stroke-width="2">
-                                    <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path>
-                                    <path d="M12 7v5l3 3"></path>
-                                </svg>
-                                <strong>Smart Latency Analysis:</strong> Knows exactly why your GPT-4 turbo call is
-                                slow.
-                            </li>
-                        </ul>
-                        <a href="https://wa.me/6282243905005?text=Halo%2C%20saya%20tertarik%20tahu%20program%20Free%20license%20Network%20Spy.%20Saya%20adalah%20developer%20software%20AI%20%5BNAMA%5D%2C%20apa%20yang%20perlu%20saya%20lakukan%20ya%3F"
-                            target="_blank" class="btn btn-primary">I want a Free license</a>
-                    </div>
-                    <div class="feature-detail-visual reveal" style="animation-delay: 0.2s;">
-                        <div class="feature-mockup-wrapper"
-                            style="border: 1px solid rgba(59, 130, 246, 0.5); box-shadow: 0 0 40px rgba(59, 130, 246, 0.1);">
-                            <img src="./hero-mockup.jpeg" alt="AI-Powered Debugging">
-
-                            <!-- Callouts -->
-                            <div class="callout callout-1" style="top: 15%; right: -20px;">
-                                <div class="callout-dot"></div>
-                                <div class="callout-line"></div>
-                                <div class="callout-text">AI Explains: "Invalid OpenAI API Key"</div>
-                            </div>
-                            <div class="callout callout-2" style="bottom: 15%; left: -40px;">
-                                <div class="callout-text">Streaming: 45 tokens/sec</div>
-                                <div class="callout-line"></div>
-                                <div class="callout-dot"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Feature 2: High Security & Privacy -->
-                <div class="feature-detail-row">
-                    <div class="feature-detail-content reveal">
-                        <span class="section-tag">Security</span>
-                        <h2>Safer debugging with deep inspection.</h2>
-                        <p>Protect your sensitive data while debugging. NetworkSpy automatically identifies insecure
-                            headers and helps you mask credentials in your logs.</p>
-                        <a href="#" class="btn btn-secondary">Security Compliance Guide</a>
-                    </div>
-                    <div class="feature-detail-visual reveal" style="animation-delay: 0.2s;">
-                        <div class="feature-mockup-wrapper">
-                            <img src="./hero-mockup.jpeg" alt="Security Dashboard">
-
-                            <div class="callout callout-2" style="bottom: 25%; left: -50px;">
-                                <div class="callout-text">Automated header vulnerability scans</div>
-                                <div class="callout-line"></div>
-                                <div class="callout-dot"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Feature 3: Visual Timeline -->
-                <div class="feature-detail-row" style="margin-bottom: 0;">
-                    <div class="feature-detail-content reveal">
-                        <span class="section-tag">Productivity</span>
-                        <h2>A truly enjoyable experience.</h2>
-                        <p>Debugging shouldn't be a chore. Our precision timeline view lets you visualize concurrency
-                            issues and slow waterfall requests with ease.</p>
-                        <a href="https://wa.me/6282243905005?text=Halo%2C%20saya%20tertarik%20tahu%20program%20Free%20license%20Network%20Spy.%20Saya%20adalah%20developer%20software%20AI%20%5BNAMA%5D%2C%20apa%20yang%20perlu%20saya%20lakukan%20ya%3F"
-                            target="_blank" class="btn btn-primary">I want a Free license</a>
-                    </div>
-                    <div class="feature-detail-visual reveal" style="animation-delay: 0.2s;">
-                        <div class="feature-mockup-wrapper">
-                            <img src="./hero-mockup.jpeg" alt="Timeline View">
-
-                            <div class="callout callout-1" style="top: 40%; right: -10px;">
-                                <div class="callout-dot"></div>
-                                <div class="callout-line"></div>
-                                <div class="callout-text">Precision millisecond timing</div>
-                            </div>
-                        </div>
+                    <p>Experience the ultimate network analysis tool today. Free license available for personal and AI development use.</p>
+                    <div class="nav-actions" style="justify-content: center; margin-top: 3rem;">
+                        <a href="https://github.com/muizidn/NetworkSpy-Tauri/releases" class="btn btn-primary">Get Started Now</a>
+                        <a href="https://wa.me/6282243905005" target="_blank" class="btn btn-secondary">Claim Free License</a>
                     </div>
                 </div>
             </div>
@@ -316,12 +157,11 @@
 
     <footer>
         <div class="container">
-            <div class="footer-grid">
-                <div class="footer-info">
-                    <a href="#" class="logo">
+            <div class="footer-top">
+                <div class="footer-desc">
+                    <a href="#" class="logo" style="margin-bottom: 1.5rem;">
                         <div class="logo-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                             </svg>
                         </div>
@@ -329,37 +169,28 @@
                     </a>
                     <p>The premium network debugging tool for modern developers.</p>
                 </div>
-                <div class="footer-links">
-                    <h4>Product</h4>
-                    <ul>
-                        <li><a href="#">Pricing</a></li>
-                        <li><a href="#">Features</a></li>
-                        <li><a href="#">Releases</a></li>
-                    </ul>
-                </div>
-                <div class="footer-links">
-                    <h4>Resources</h4>
-                    <ul>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Community</a></li>
-                    </ul>
-                </div>
-                <div class="footer-links">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Contact</a></li>
-                    </ul>
+                <div class="footer-nav">
+                    <div class="footer-col">
+                        <h4>Product</h4>
+                        <ul>
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#showcase">Showcase</a></li>
+                            <li><a href="https://github.com/muizidn/NetworkSpy-Tauri/releases">Download</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="https://github.com/muizidn/NetworkSpy-Tauri">GitHub</a></li>
+                            <li><a href="#">Documentation</a></li>
+                            <li><a href="#">API</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 NetworkSpy Inc. All rights reserved.</p>
-                <div style="display: flex; gap: 2rem;">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                </div>
+                <p>&copy; 2026 muizidn. Released under MIT License.</p>
+                <p>Designed with ❤️ for the AI Generation.</p>
             </div>
         </div>
     </footer>
