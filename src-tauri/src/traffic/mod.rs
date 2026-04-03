@@ -7,3 +7,5 @@ pub mod tags;
 pub mod sessions;
 pub mod viewers;
 pub mod bottom_pane;
+pub mod schema;
+pub mod schema;
