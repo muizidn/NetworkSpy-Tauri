@@ -1,10 +1,19 @@
+use axum::{
+    extract::{State, Query},
+    response::{sse::{Event, Sse}, IntoResponse},
+    routing::{get, post},
+    Json, Router,
+};
+use futures::stream::Stream;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::sync::Arc;
-use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
+use std::{convert::Infallible, sync::Arc, collections::HashMap, time::Duration};
+use tokio::sync::{mpsc, Mutex};
+use tokio_stream::wrappers::UnboundedReceiverStream;
 use tauri::{AppHandle, Manager};
 use crate::traffic::db::{TrafficDb, BreakpointRule, ScriptRule};
 use uuid::Uuid;
+use tower_http::cors::CorsLayer;
 
 #[derive(Debug, Deserialize)]
 struct McpRequest {
@@ -26,24 +35,68 @@ struct McpResponse {
     id: Option<Value>,
 }
 
+type SseSender = mpsc::UnboundedSender<Result<Event, Infallible>>;
+
+struct McpState {
+    app_handle: AppHandle,
+    // Map of session ID to sender for SSE
+    sessions: Arc<Mutex<HashMap<String, SseSender>>>,
+}
+
 pub fn spawn_mcp_server(app_handle: AppHandle) {
-    tauri::async_runtime::spawn(async move {
-        let stdin = BufReader::new(io::stdin());
-        let mut lines = stdin.lines();
-        let mut stdout = io::stdout();
-
-        while let Ok(Some(line)) = lines.next_line().await {
-            let request: McpRequest = match serde_json::from_str(&line) {
-                Ok(req) => req,
-                Err(_) => continue,
-            };
-
-            let response = handle_mcp_request(&app_handle, request).await;
-            let response_json = serde_json::to_string(&response).unwrap_or_default();
-            let _ = stdout.write_all(format!("{}\n", response_json).as_bytes()).await;
-            let _ = stdout.flush().await;
-        }
+    let state = Arc::new(McpState {
+        app_handle,
+        sessions: Arc::new(Mutex::new(HashMap::new())),
     });
+
+    let app = Router::new()
+        .route("/sse", get(sse_handler))
+        .route("/messages", post(post_handler))
+        .layer(CorsLayer::permissive())
+        .with_state(state);
+
+    tauri::async_runtime::spawn(async move {
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
+        eprintln!("MCP HTTP Server starting on http://localhost:3001/sse");
+        axum::serve(listener, app).await.unwrap();
+    });
+}
+
+async fn sse_handler(
+    State(state): State<Arc<McpState>>,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let session_id = Uuid::new_v4().to_string();
+    let (tx, rx) = mpsc::unbounded_channel();
+    
+    let mut sessions = state.sessions.lock().await;
+    sessions.insert(session_id.clone(), tx.clone());
+    
+    // According to MCP SSE spec, we must send the POST endpoint as the first message
+    let _ = tx.send(Ok(Event::default().event("endpoint").data(format!("/messages?session_id={}", session_id))));
+
+    let stream = UnboundedReceiverStream::new(rx);
+    
+    Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::new())
+}
+
+#[derive(Deserialize)]
+struct PostParams {
+    session_id: String,
+}
+
+async fn post_handler(
+    State(state): State<Arc<McpState>>,
+    Query(params): Query<PostParams>,
+    Json(req): Json<McpRequest>,
+) -> impl IntoResponse {
+    let response = handle_mcp_request(&state.app_handle, req).await;
+    
+    let sessions = state.sessions.lock().await;
+    if let Some(tx) = sessions.get(&params.session_id) {
+        let _ = tx.send(Ok(Event::default().event("message").data(serde_json::to_string(&response).unwrap_or_default())));
+    }
+    
+    axum::http::StatusCode::ACCEPTED
 }
 
 async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpResponse {
@@ -57,7 +110,8 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
                 result: Some(json!({
                     "protocolVersion": "2024-11-05",
                     "capabilities": {
-                        "tools": {}
+                        "tools": {},
+                        "resources": {}
                     },
                     "serverInfo": {
                         "name": "network-spy-mcp",
@@ -67,7 +121,7 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
                 error: None,
             }
         },
-        "listTools" => {
+        "tools/list" => {
             McpResponse {
                 jsonrpc: "2.0".to_string(),
                 id,

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "network-spy-dev-binary": {
+      "type": "local",
+      "command": [
+        "/Users/muiz/Desktop/NetworkSpy-Tauri/src-tauri/target/release/NetworkSpy"
+      ],
+      "enabled": false
+    },
+    "network-spy-dev-http": {
+      "type": "remote",
+      "url": "http://localhost:3001/sse",
+      "enabled": true
+    }
+  }
+}

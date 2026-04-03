@@ -1,22 +1,55 @@
 # Network Spy - Model Context Protocol (MCP) Guide
 
-Network Spy includes a built-in **MCP (Model Context Protocol)** server that allows LLMs like **Claude Code**, **Claude Desktop**, and **Cursor** to interact directly with your intercepted network traffic.
+Network Spy includes a built-in **MCP (Model Context Protocol)** server that allows LLMs like **Claude Code**, **Claude Desktop**, and **OpenCode** to interact directly with your intercepted network traffic.
 
 ## 🚀 Overview
 
-The MCP server runs as a background task within the Network Spy application. It communicates over **Stdio**, meaning external tools can launch the Network Spy binary to call commands.
-
-### 🛡️ Prerequisites
-*   The Network Spy application **must be running** for the MCP server to have access to live intercepted traffic.
-*   You must have the Network Spy binary path correct for your OS.
+Network Spy supports both **HTTP (SSE)** and **Stdio** for MCP. We recommend using **HTTP (SSE)** for the best stability.
 
 ---
 
-## 💻 Connecting to MCP Clients
+## 💻 Connecting via HTTP (SSE) - Recommended
+This method allows you to connect to the running app via its local web server.
+
+### 1. OpenCode (opencode.ai)
+1.  Open your OpenCode config (usually at `~/.opencode/config.json`).
+2.  Add the following server configuration:
+
+**Config:**
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "network-spy": {
+      "type": "remote",
+      "url": "http://localhost:3001/sse",
+      "enabled": true
+    }
+  }
+}
+```
+
+---
+
+### 2. Claude Desktop (GUI)
+Open your `claude_desktop_config.json` and add:
+
+```json
+{
+  "mcpServers": {
+    "network-spy": {
+      "url": "http://localhost:3001/sse"
+    }
+  }
+}
+```
+
+---
+
+## 🛠️ Global Stdio Connection (Binary)
+If you prefer to have the AI launch the application binary directly:
 
 ### 1. Claude Code (CLI)
-To connect Claude Code to Network Spy, add the server to your `mcp_servers.json` or run:
-
 **macOS/Linux:**
 ```bash
 claude mcp add network-spy "/Applications/NetworkSpy.app/Contents/MacOS/NetworkSpy"
@@ -29,58 +62,33 @@ claude mcp add network-spy "$env:LOCALAPPDATA\Programs\NetworkSpy\NetworkSpy.exe
 
 ---
 
-### 2. Claude Desktop (GUI)
-Open your `claude_desktop_config.json` file:
-*   **macOS:** `~/Library/Application Support/Anthropic/Claude/claude_desktop_config.json`
-*   **Windows:** `%APPDATA%\Anthropic\Claude\claude_desktop_config.json`
-
-Add the following configuration:
-
-```json
-{
-  "mcpServers": {
-    "network-spy": {
-      "command": "/Applications/NetworkSpy.app/Contents/MacOS/NetworkSpy",
-      "args": []
-    }
-  }
-}
-```
-*(Replace the path if you are on Windows or Linux)*
-
----
-
 ### 📂 Default Binary Paths
 
 | OS | Default Installation Path |
 | :--- | :--- |
 | **macOS** | `/Applications/NetworkSpy.app/Contents/MacOS/NetworkSpy` |
 | **Windows** | `%LOCALAPPDATA%\Programs\NetworkSpy\NetworkSpy.exe` |
-| **Linux** | `/usr/bin/network-spy` (if installed via .deb/rpm) |
+| **Linux** | `/usr/bin/network-spy` |
 
 ---
 
 ## 🛠️ Available MCP Tools
 
-Once connected, you can ask your AI to perform the following actions:
+*   **`get_traffic_list`**: Fetch intercepted HTTP requests.
+*   **`save_script`**: Create/Update JavaScript traffic rules.
+*   **`save_breakpoint`**: Set live traffic interceptions.
 
-### 1. `get_traffic_list`
-**Usage:** *Fetch the latest HTTP requests intercepted.*
-*   `limit`: Integer (default 20).
-*   **Prompt Example:** *"Show me the last 5 HTTP requests intercepted by Network Spy."*
+---
 
-### 2. `save_script`
-**Usage:** *Create or update a JavaScript rule to modify traffic on-the-fly.*
-*   `name`: Name of the rule.
-*   `script`: The JavaScript logic.
-*   `matching_rule`: Glob or Regex pattern for URLs.
-*   **Prompt Example:** *"Write a script to mock all API calls to `api.test.io` with a 200 OK status."*
+## 🔭 Live Resource Access
+The server exposes **`traffic://latest`**. Claude can monitor this to see your live network activity as it happens.
 
-### 3. `save_breakpoint`
-**Usage:** *Set an interception point that pauses requests matching a pattern.*
-*   `name`: Name of the breakpoint.
-*   `matching_rule`: Pattern to match.
-*   **Prompt Example:** *"Set a breakpoint for any URL containing `/v1/auth`."*
+---
+
+## ⚠️ Troubleshooting
+1.  **Connection Refused**: Ensure the Network Spy app is open.
+2.  **Capabilities Empty**: Rebuild the app with `cargo build`.
+3.  **Port Conflict**: The MCP server uses port `3001` by default.
 
 ---
 
