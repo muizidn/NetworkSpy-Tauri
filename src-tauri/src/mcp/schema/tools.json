@@ -33,6 +33,28 @@
             "inputSchema": { "type": "object", "properties": {} }
         },
         {
+            "name": "save_filter_preset",
+            "description": "Create or update a filter preset. Providing an 'id' updates an existing one.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "ID of existing preset to update" },
+                    "name": { "type": "string", "description": "Name of the preset" },
+                    "description": { "type": "string", "description": "Optional description" },
+                    "filters": { "type": "string", "description": "JSON string of filter criteria" }
+                }
+            }
+        },
+        {
+            "name": "delete_filter_preset",
+            "description": "Delete a filter preset by ID",
+            "inputSchema": {
+                "type": "object",
+                "properties": { "id": { "type": "string" } },
+                "required": ["id"]
+            }
+        },
+        {
             "name": "list_scripts",
             "description": "List all active traffic modification scripts",
             "inputSchema": { "type": "object", "properties": {} }

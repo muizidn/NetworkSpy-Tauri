@@ -1,8 +1,41 @@
 use crate::BreakpointData;
-use boa_engine::{Context, Source};
+use boa_engine::{Context, Source, JsValue, NativeFunction, JsString, property::Attribute, object::ObjectInitializer};
 
 pub fn run_script(script: &str, mut data: BreakpointData) -> Result<BreakpointData, String> {
     let mut context = Context::default();
+
+    // Register console.log, console.warn, console.error
+    let console = ObjectInitializer::new(&mut context)
+        .function(
+            NativeFunction::from_fn_ptr(|_this, args, _context| {
+                let msg = args.iter().map(|v| v.display().to_string()).collect::<Vec<_>>().join(" ");
+                println!("[JS LOG] {}", msg);
+                Ok(JsValue::undefined())
+            }),
+            JsString::from("log"),
+            0,
+        )
+        .function(
+            NativeFunction::from_fn_ptr(|_this, args, _context| {
+                let msg = args.iter().map(|v| v.display().to_string()).collect::<Vec<_>>().join(" ");
+                println!("[JS WARN] {}", msg);
+                Ok(JsValue::undefined())
+            }),
+            JsString::from("warn"),
+            0,
+        )
+        .function(
+            NativeFunction::from_fn_ptr(|_this, args, _context| {
+                let msg = args.iter().map(|v| v.display().to_string()).collect::<Vec<_>>().join(" ");
+                eprintln!("[JS ERROR] {}", msg);
+                Ok(JsValue::undefined())
+            }),
+            JsString::from("error"),
+            0,
+        )
+        .build();
+
+    context.register_global_property(JsString::from("console"), console, Attribute::all());
 
     // Prepare Request/Response objects
     let headers_map = &data.headers;

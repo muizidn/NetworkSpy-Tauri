@@ -253,7 +253,8 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
                 "get_traffic_list" => traffic::handle_get_traffic_list(app_handle, arguments).await,
                 "get_traffic_details" => traffic::handle_get_traffic_details(app_handle, arguments).await,
                 "list_filter_presets" => traffic::handle_list_filter_presets(app_handle).await,
-                
+                "save_filter_preset" => traffic::handle_save_filter_preset(app_handle, arguments).await,
+                "delete_filter_preset" => traffic::handle_delete_filter_preset(app_handle, arguments).await,
                 "list_scripts" => scripting::handle_list_scripts(app_handle).await,
                 "save_script" => scripting::handle_save_script(app_handle, arguments).await,
                 "delete_script" => scripting::handle_delete_script(app_handle, arguments).await,
