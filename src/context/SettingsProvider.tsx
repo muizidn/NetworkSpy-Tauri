@@ -20,6 +20,8 @@ interface SettingsContextInterface {
   setMcpStdioEnabled: (enabled: boolean) => void;
   mcpHttpEnabled: boolean;
   setMcpHttpEnabled: (enabled: boolean) => void;
+  mcpHttpPort: number;
+  setMcpHttpPort: (port: number) => void;
 }
 
 export const SettingsContext = createContext<SettingsContextInterface>({
@@ -35,6 +37,8 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   setMcpStdioEnabled: () => {},
   mcpHttpEnabled: true,
   setMcpHttpEnabled: () => {},
+  mcpHttpPort: 3001,
+  setMcpHttpPort: () => {},
 });
 
 export const useSettingsContext = () => useContext(SettingsContext);
@@ -49,15 +53,17 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [streamCertificateLogs, setStreamCertificateLogs] = useState(false);
   const [mcpStdioEnabled, setMcpStdioEnabled] = useState(true);
   const [mcpHttpEnabled, setMcpHttpEnabled] = useState(true);
+  const [mcpHttpPort, setMcpHttpPort] = useState(3001);
 
   useEffect(() => {
-    invoke<{ show_connect_method: boolean; stream_certificate_logs: boolean; mcp_stdio_enabled: boolean; mcp_http_enabled: boolean }>("get_proxy_settings")
+    invoke<{ show_connect_method: boolean; stream_certificate_logs: boolean; mcp_stdio_enabled: boolean; mcp_http_enabled: boolean; mcp_http_port: number }>("get_proxy_settings")
       .then((settings) => {
         if (settings) {
           setShowConnectMethod(settings.show_connect_method);
           setStreamCertificateLogs(settings.stream_certificate_logs);
           setMcpStdioEnabled(settings.mcp_stdio_enabled);
           setMcpHttpEnabled(settings.mcp_http_enabled);
+          setMcpHttpPort(settings.mcp_http_port);
         }
       })
       .catch(console.error);
@@ -78,10 +84,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         show_connect_method: showConnectMethod,
         stream_certificate_logs: streamCertificateLogs,
         mcp_stdio_enabled: mcpStdioEnabled,
-        mcp_http_enabled: mcpHttpEnabled
+        mcp_http_enabled: mcpHttpEnabled,
+        mcp_http_port: mcpHttpPort
       } 
     }).catch(console.error);
-  }, [showConnectMethod, streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled]);
+  }, [showConnectMethod, streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled, mcpHttpPort]);
 
   return (
     <SettingsContext.Provider
@@ -97,7 +104,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         mcpStdioEnabled,
         setMcpStdioEnabled,
         mcpHttpEnabled,
-        setMcpHttpEnabled
+        setMcpHttpEnabled,
+        mcpHttpPort,
+        setMcpHttpPort
       }}>
       {children}
     </SettingsContext.Provider>

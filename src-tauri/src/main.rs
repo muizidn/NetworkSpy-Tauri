@@ -170,6 +170,15 @@ fn main() {
             let script_manager = Arc::new(ScriptManager::new());
             app_handle.manage(Arc::clone(&script_manager));
 
+            // Load settings from DB
+            let proxy_settings_data = if let Ok(Some(val)) = traffic_db.get_setting("proxy_settings") {
+                serde_json::from_str::<ProxySettings>(&val).unwrap_or_default()
+            } else {
+                ProxySettings::default()
+            };
+            let proxy_settings = Arc::new(std::sync::RwLock::new(proxy_settings_data));
+            app_handle.manage(ManagedProxySettings(Arc::clone(&proxy_settings)));
+
             // Start MCP Server for LLM/Claude Code integration
             mcp::spawn_mcp_server(app_handle.clone());
 
@@ -187,15 +196,6 @@ fn main() {
             }
             let allow_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
-
-            // Load settings from DB
-            let proxy_settings_data = if let Ok(Some(val)) = traffic_db.get_setting("proxy_settings") {
-                serde_json::from_str::<ProxySettings>(&val).unwrap_or_default()
-            } else {
-                ProxySettings::default()
-            };
-            let proxy_settings = Arc::new(std::sync::RwLock::new(proxy_settings_data));
-            app_handle.manage(ManagedProxySettings(Arc::clone(&proxy_settings)));
 
             let actual_port = (9090..65535)
                 .find(|port| std::net::TcpListener::bind(("127.0.0.1", *port)).is_ok())

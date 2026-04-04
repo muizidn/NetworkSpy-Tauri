@@ -11,7 +11,7 @@ use axum::{
 use futures::stream::Stream;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{convert::Infallible, sync::Arc, collections::HashMap};
+use std::{convert::Infallible, sync::Arc, collections::HashMap, time::Duration};
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tauri::{AppHandle, Manager};
@@ -51,21 +51,63 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
         sessions: Arc::new(Mutex::new(HashMap::new())),
     });
 
-    // 1. Start HTTP Server (for GUI clients like OpenCode)
-    let app = Router::new()
-        .route("/sse", get(sse_handler))
-        .route("/messages", post(post_handler))
-        .layer(CorsLayer::permissive())
-        .with_state(state);
-
+    // 1. Dynamic HTTP Server Task (Supervisor)
     let http_handle = app_handle.clone();
+    let http_state = state.clone();
     tauri::async_runtime::spawn(async move {
-        let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
-        eprintln!("MCP HTTP Server starting on http://localhost:3001/sse");
-        axum::serve(listener, app).await.unwrap();
+        let mut current_server: Option<(u16, tauri::async_runtime::JoinHandle<()>)> = None;
+
+        loop {
+            let (mcp_enabled, port) = {
+                let settings = http_handle.state::<crate::settings::ManagedProxySettings>();
+                let s = settings.0.read().unwrap();
+                (s.mcp_http_enabled, s.mcp_http_port)
+            };
+
+            // Case A: Enabled but either not running or running on wrong port
+            if mcp_enabled {
+                let needs_restart = match &current_server {
+                    Some((p, _)) => *p != port,
+                    None => true,
+                };
+
+                if needs_restart {
+                    if let Some((_, handle)) = current_server.take() {
+                        handle.abort();
+                        eprintln!("MCP HTTP Server stopping for restart...");
+                    }
+
+                    let app = Router::new()
+                        .route("/sse", get(sse_handler))
+                        .route("/messages", post(post_handler))
+                        .layer(CorsLayer::permissive())
+                        .with_state(http_state.clone());
+
+                    let bind_addr = format!("0.0.0.0:{}", port);
+                    match tokio::net::TcpListener::bind(&bind_addr).await {
+                        Ok(listener) => {
+                            eprintln!("MCP HTTP Server starting on http://localhost:{}/sse", port);
+                            let server_task = tauri::async_runtime::spawn(async move {
+                                let _ = axum::serve(listener, app).await;
+                            });
+                            current_server = Some((port, server_task));
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to bind MCP HTTP Server to {}: {}", bind_addr, e);
+                        }
+                    }
+                }
+            } else if let Some((_, handle)) = current_server.take() {
+                // Case B: Disabled but running
+                handle.abort();
+                eprintln!("MCP HTTP Server stopped by settings.");
+            }
+
+            tokio::time::sleep(Duration::from_secs(2)).await;
+        }
     });
 
-    // 2. Start Stdio Loop (for CLI clients like Claude Code)
+    // 2. Start Stdio Loop (Dynamic check inside the loop)
     let stdio_handle = app_handle.clone();
     tauri::async_runtime::spawn(async move {
         use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};

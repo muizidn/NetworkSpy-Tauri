@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSettings, FiTarget, FiInfo, FiTerminal, FiCpu } from 'react-icons/fi';
+import { FiSettings, FiTarget, FiInfo, FiTerminal, FiCpu, FiPlay, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import { useSettingsContext } from '../context/SettingsProvider';
 import { getVersion } from '@tauri-apps/api/app';
 
@@ -12,9 +12,29 @@ export default function Settings() {
     mcpStdioEnabled,
     setMcpStdioEnabled,
     mcpHttpEnabled,
-    setMcpHttpEnabled
+    setMcpHttpEnabled,
+    mcpHttpPort,
+    setMcpHttpPort
   } = useSettingsContext();
   const [appVersion, setAppVersion] = useState<string>('0.0.0');
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+
+  const testMcpConnection = async () => {
+    setTestStatus('testing');
+    try {
+      // We try to connect to the SSE endpoint. 
+      // Since SSE is a stream, we just check if the initial request succeeds.
+      const response = await fetch(`http://localhost:${mcpHttpPort}/sse`);
+      if (response.ok) {
+        setTestStatus('success');
+        setTimeout(() => setTestStatus('idle'), 3000);
+      } else {
+        setTestStatus('error');
+      }
+    } catch (e) {
+      setTestStatus('error');
+    }
+  };
 
   useEffect(() => {
     getVersion().then(setAppVersion);
@@ -132,6 +152,49 @@ export default function Settings() {
                     <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 ${mcpHttpEnabled ? 'left-7' : 'left-1'}`} />
                 </button>
             </div>
+
+            {mcpHttpEnabled && (
+                <div className="ml-14 p-4 rounded-xl bg-indigo-900/10 border border-indigo-900/30 flex items-center justify-between mb-4">
+                    <div>
+                        <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">HTTP Port</h4>
+                        <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">AI agents will connect to this port on localhost.</p>
+                    </div>
+                    <input 
+                        type="number"
+                        value={mcpHttpPort}
+                        onChange={(e) => setMcpHttpPort(parseInt(e.target.value) || 3001)}
+                        className="w-24 bg-zinc-900 border border-indigo-900/50 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500 transition-colors"
+                        min="1024"
+                        max="65535"
+                    />
+                    
+                    <button 
+                        onClick={testMcpConnection}
+                        disabled={testStatus === 'testing'}
+                        className={`px-4 py-1.5 rounded-lg border flex items-center gap-2 transition-all duration-300 ml-2 ${
+                            testStatus === 'success' ? 'bg-green-600/20 border-green-500/50 text-green-400' :
+                            testStatus === 'error' ? 'bg-red-600/20 border-red-500/50 text-red-400' :
+                            'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-500 hover:scale-105 active:scale-95'
+                        }`}
+                    >
+                        {testStatus === 'testing' ? (
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : testStatus === 'success' ? (
+                            <FiCheckCircle size={14} />
+                        ) : testStatus === 'error' ? (
+                            <FiXCircle size={14} />
+                        ) : (
+                            <FiPlay size={14} />
+                        )}
+                        <span className="text-[10px] uppercase font-black tracking-widest leading-none mt-0.5">
+                            {testStatus === 'testing' ? 'Testing...' :
+                             testStatus === 'success' ? 'Success' :
+                             testStatus === 'error' ? 'Failed' : 'Test'
+                            }
+                        </span>
+                    </button>
+                </div>
+            )}
             
             <div className="p-8 rounded-2xl bg-gradient-to-br from-zinc-900/50 to-transparent border border-zinc-800/50 flex flex-col gap-4">
                 <div className="flex items-center gap-2 text-zinc-500">

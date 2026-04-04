@@ -9,21 +9,25 @@ pub struct ProxySettings {
     pub show_connect_method: bool,
     #[serde(default)]
     pub stream_certificate_logs: bool,
-    #[serde(default = "default_true")]
+    #[serde(default)]
     pub mcp_stdio_enabled: bool,
-    #[serde(default = "default_true")]
+    #[serde(default)]
     pub mcp_http_enabled: bool,
+    #[serde(default = "default_port")]
+    pub mcp_http_port: u16,
 }
 
 fn default_true() -> bool { true }
+fn default_port() -> u16 { 3001 }
 
 impl Default for ProxySettings {
     fn default() -> Self {
         Self {
             show_connect_method: true,
             stream_certificate_logs: false,
-            mcp_stdio_enabled: true,
-            mcp_http_enabled: true,
+            mcp_stdio_enabled: false,
+            mcp_http_enabled: false,
+            mcp_http_port: 3001,
         }
     }
 }
