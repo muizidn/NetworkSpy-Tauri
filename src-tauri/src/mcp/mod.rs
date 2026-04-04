@@ -25,9 +25,8 @@ const CAPABILITIES_JSON: &str = include_str!("schema/capabilities.json");
 const TOOLS_JSON: &str = include_str!("schema/tools.json");
 const RESOURCES_JSON: &str = include_str!("schema/resources.json");
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct McpRequest {
-    #[allow(dead_code)]
     jsonrpc: String,
     method: String,
     #[serde(default)]
@@ -35,7 +34,7 @@ struct McpRequest {
     id: Option<Value>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 struct McpResponse {
     jsonrpc: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -44,6 +43,26 @@ struct McpResponse {
     error: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     id: Option<Value>,
+}
+
+impl McpResponse {
+    fn success(id: Option<Value>, result: Value) -> Self {
+        Self {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: Some(result),
+            error: None,
+        }
+    }
+
+    fn error(id: Option<Value>, code: i32, message: &str) -> Self {
+        Self {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: None,
+            error: Some(json!({ "code": code, "message": message })),
+        }
+    }
 }
 
 type StreamSender = mpsc::UnboundedSender<String>;
@@ -72,7 +91,6 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
                 (s.mcp_http_enabled, s.mcp_http_port)
             };
 
-            // Case A: Enabled but either not running or running on wrong port
             if mcp_enabled {
                 let needs_restart = match &current_server {
                     Some((p, _)) => *p != port,
@@ -82,40 +100,37 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
                 if needs_restart {
                     if let Some((_, handle)) = current_server.take() {
                         handle.abort();
-                        eprintln!("MCP HTTP Server stopping for restart...");
+                        eprintln!("[MCP] Restarting server on port {}...", port);
                     }
 
                     let app = Router::new()
-                        .route("/mcp", get(stream_handler))
-                        .route("/messages", post(post_handler))
+                        .route("/mcp", get(mcp_stream_handler)) // Custom Streaming (MCP+)
+                        .route("/mcp", post(mcp_direct_handler)) // Standard Stateless POST
+                        .route("/messages", post(mcp_session_post_handler)) // Sessioned POST
                         .layer(CorsLayer::permissive())
                         .with_state(http_state.clone());
 
                     let bind_addr = format!("0.0.0.0:{}", port);
                     match tokio::net::TcpListener::bind(&bind_addr).await {
                         Ok(listener) => {
-                            eprintln!("MCP HTTP Server starting on http://localhost:{}/mcp", port);
+                            eprintln!("[MCP] Server active at http://0.0.0.0:{}", port);
                             let server_task = tauri::async_runtime::spawn(async move {
                                 let _ = axum::serve(listener, app).await;
                             });
                             current_server = Some((port, server_task));
                         }
-                        Err(e) => {
-                            eprintln!("Failed to bind MCP HTTP Server to {}: {}", bind_addr, e);
-                        }
+                        Err(e) => eprintln!("[MCP] Error binding port {}: {}", port, e),
                     }
                 }
             } else if let Some((_, handle)) = current_server.take() {
-                // Case B: Disabled but running
                 handle.abort();
-                eprintln!("MCP HTTP Server stopped by settings.");
+                eprintln!("[MCP] Server disabled.");
             }
-
             tokio::time::sleep(Duration::from_secs(2)).await;
         }
     });
 
-    // 2. Start Stdio Loop
+    // 2. Stdio Transport
     let stdio_handle = app_handle.clone();
     tauri::async_runtime::spawn(async move {
         use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -125,41 +140,59 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
 
         while let Ok(Some(line)) = lines.next_line().await {
             let settings = stdio_handle.state::<crate::settings::ManagedProxySettings>();
-            let mcp_enabled = {
-                let s = settings.0.read().unwrap();
-                s.mcp_stdio_enabled
+            if !settings.0.read().unwrap().mcp_stdio_enabled { continue; }
+
+            let req: McpRequest = match serde_json::from_str(&line) {
+                Ok(r) => r,
+                Err(_) => {
+                    let err = McpResponse::error(None, -32700, "Parse error");
+                    let _ = stdout.write_all(format!("{}\n", serde_json::to_string(&err).unwrap()).as_bytes()).await;
+                    continue;
+                }
             };
 
-            if !mcp_enabled {
-                continue;
-            }
-
-            let request: McpRequest = match serde_json::from_str(&line) {
-                Ok(req) => req,
-                Err(_) => continue,
-            };
-
-            let response = handle_mcp_request(&stdio_handle, request).await;
-            let response_json = serde_json::to_string(&response).unwrap_or_default();
-            let _ = stdout.write_all(format!("{}\n", response_json).as_bytes()).await;
+            let resp = handle_mcp_request(&stdio_handle, req).await;
+            let _ = stdout.write_all(format!("{}\n", serde_json::to_string(&resp).unwrap()).as_bytes()).await;
             let _ = stdout.flush().await;
         }
     });
 }
 
-async fn stream_handler(
+// --- Axum Handlers ---
+
+/// Standard Stateless JSON-RPC POST Endpoint
+async fn mcp_direct_handler(
     State(state): State<Arc<McpState>>,
+    Json(req): Json<McpRequest>,
 ) -> impl IntoResponse {
+    Json(handle_mcp_request(&state.app_handle, req).await)
+}
+
+/// Custom NDJSON Streaming Endpoint (MCP+)
+async fn mcp_stream_handler(State(state): State<Arc<McpState>>) -> impl IntoResponse {
     let session_id = Uuid::new_v4().to_string();
     let (tx, rx) = mpsc::unbounded_channel();
     
-    let mut sessions = state.sessions.lock().await;
-    sessions.insert(session_id.clone(), tx.clone());
+    // Auto-cleanup on disconnect
+    let sessions_root = state.sessions.clone();
+    let sid = session_id.clone();
     
-    // Send session establishment message
-    let _ = tx.send(format!("{}\n", json!({"type": "endpoint", "uri": format!("/messages?session_id={}", session_id)})));
+    let stream = UnboundedReceiverStream::new(rx)
+        .map(Ok::<_, Infallible>)
+        .chain(futures::stream::once(async move {
+            let mut s = sessions_root.lock().await;
+            s.remove(&sid);
+            eprintln!("[MCP] Session {} disconnected and cleaned.", sid);
+            Ok::<_, Infallible>("".to_string())
+        }));
 
-    let stream = UnboundedReceiverStream::new(rx).map(Ok::<_, Infallible>);
+    {
+        let mut s = state.sessions.lock().await;
+        s.insert(session_id.clone(), tx.clone());
+    }
+
+    // Handshake: Send session endpoint
+    let _ = tx.send(format!("{}\n", json!({"type": "endpoint", "uri": format!("/messages?session_id={}", session_id)})));
 
     (
         [
@@ -172,131 +205,114 @@ async fn stream_handler(
 }
 
 #[derive(Deserialize)]
-struct PostParams {
-    session_id: String,
-}
+struct SessionParams { session_id: String }
 
-async fn post_handler(
+/// Session-bound POST for Streaming
+async fn mcp_session_post_handler(
     State(state): State<Arc<McpState>>,
-    Query(params): Query<PostParams>,
+    Query(params): Query<SessionParams>,
     Json(req): Json<McpRequest>,
 ) -> impl IntoResponse {
-    let settings = state.app_handle.state::<crate::settings::ManagedProxySettings>();
-    let mcp_enabled = {
-        let s = settings.0.read().unwrap();
-        s.mcp_http_enabled
-    };
-
-    if !mcp_enabled {
-        return axum::http::StatusCode::FORBIDDEN.into_response();
-    }
-
     let response = handle_mcp_request(&state.app_handle, req).await;
-    
-    let sessions = state.sessions.lock().await;
+    let mut sessions = state.sessions.lock().await;
     if let Some(tx) = sessions.get(&params.session_id) {
-        let _ = tx.send(format!("{}\n", serde_json::to_string(&response).unwrap_or_default()));
+        if tx.send(format!("{}\n", serde_json::to_string(&response).unwrap_or_default())).is_err() {
+            sessions.remove(&params.session_id);
+        }
     }
-    
     axum::http::StatusCode::ACCEPTED.into_response()
 }
 
+// --- Core MCP Handler ---
+
 async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpResponse {
     let id = req.id.clone();
+    let start = std::time::Instant::now();
     
-    match req.method.as_str() {
+    let resp = match req.method.as_str() {
         "initialize" => {
-            let result: Value = serde_json::from_str(CAPABILITIES_JSON).unwrap();
-            McpResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: Some(result),
-                error: None,
-            }
+            let caps: Value = serde_json::from_str(CAPABILITIES_JSON).unwrap_or(json!({}));
+            McpResponse::success(id, json!({
+                "protocolVersion": "2024-11-05",
+                "capabilities": caps,
+                "serverInfo": {
+                    "name": "Network Spy MCP Server",
+                    "version": "1.2.0"
+                }
+            }))
+        },
+        "initialized" => {
+            // Notification: No response required
+            return McpResponse::success(None, json!(null));
         },
         "tools/list" => {
-            let result: Value = serde_json::from_str(TOOLS_JSON).unwrap();
-            McpResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: Some(result),
-                error: None,
-            }
+            let tools: Value = serde_json::from_str(TOOLS_JSON).unwrap_or(json!({ "tools": [] }));
+            McpResponse::success(id, tools)
         },
         "resources/list" => {
-            let result: Value = serde_json::from_str(RESOURCES_JSON).unwrap();
-            McpResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: Some(result),
-                error: None,
-            }
+            let res: Value = serde_json::from_str(RESOURCES_JSON).unwrap_or(json!({ "resources": [] }));
+            McpResponse::success(id, res)
         },
         "resources/read" => {
             let uri = req.params["uri"].as_str().unwrap_or("");
             if uri == "traffic://latest" {
-                McpResponse {
-                    jsonrpc: "2.0".to_string(),
-                    id,
-                    result: Some(json!({
-                        "contents": [{
-                            "uri": uri,
-                            "mimeType": "application/json",
-                            "text": traffic::get_latest_traffic_resource(app_handle).await
-                        }]
-                    })),
-                    error: None,
-                }
+                let data = traffic::get_latest_traffic_resource(app_handle).await;
+                McpResponse::success(id, json!({
+                    "contents": [{
+                        "uri": uri,
+                        "mimeType": "application/json",
+                        "text": data
+                    }]
+                }))
             } else {
-                McpResponse {
-                    jsonrpc: "2.0".to_string(),
-                    id,
-                    result: None,
-                    error: Some(json!({ "code": -32602, "message": "Invalid resource URI" })),
-                }
+                McpResponse::error(id, -32602, "Invalid resource URI")
             }
         },
         "tools/call" => {
-            let tool_name = req.params["name"].as_str().unwrap_or("");
-            let arguments = &req.params["arguments"];
+            let name = req.params["name"].as_str().unwrap_or("");
+            let args = &req.params["arguments"];
 
-            let result = match tool_name {
-                "get_traffic_list" => traffic::handle_get_traffic_list(app_handle, arguments).await,
-                "get_traffic_details" => traffic::handle_get_traffic_details(app_handle, arguments).await,
+            let result = match name {
+                "get_traffic_list" => traffic::handle_get_traffic_list(app_handle, args).await,
+                "get_traffic_details" => traffic::handle_get_traffic_details(app_handle, args).await,
                 "list_filter_presets" => traffic::handle_list_filter_presets(app_handle).await,
-                "save_filter_preset" => traffic::handle_save_filter_preset(app_handle, arguments).await,
-                "delete_filter_preset" => traffic::handle_delete_filter_preset(app_handle, arguments).await,
+                "save_filter_preset" => traffic::handle_save_filter_preset(app_handle, args).await,
+                "delete_filter_preset" => traffic::handle_delete_filter_preset(app_handle, args).await,
                 "list_scripts" => scripting::handle_list_scripts(app_handle).await,
-                "save_script" => scripting::handle_save_script(app_handle, arguments).await,
-                "delete_script" => scripting::handle_delete_script(app_handle, arguments).await,
-
+                "save_script" => scripting::handle_save_script(app_handle, args).await,
+                "delete_script" => scripting::handle_delete_script(app_handle, args).await,
                 "list_breakpoints" => breakpoints::handle_list_breakpoints(app_handle).await,
-                "save_breakpoint" => breakpoints::handle_save_breakpoint(app_handle, arguments).await,
-                "delete_breakpoint" => breakpoints::handle_delete_breakpoint(app_handle, arguments).await,
-                
-                _ => Err(json!({ "code": -32601, "message": "Method not found" })),
+                "save_breakpoint" => breakpoints::handle_save_breakpoint(app_handle, args).await,
+                "delete_breakpoint" => breakpoints::handle_delete_breakpoint(app_handle, args).await,
+                _ => Err(json!({ "code": -32601, "message": "Tool not found" })),
             };
 
             match result {
-                Ok(val) => McpResponse {
-                    jsonrpc: "2.0".to_string(),
-                    id,
-                    result: Some(json!({ "content": [{ "type": "text", "text": serde_json::to_string(&val).unwrap_or_default() }] })),
-                    error: None,
+                Ok(val) => {
+                    // Optimized content response (avoid double encoding)
+                    let text_resp = if val.is_string() {
+                         val.as_str().unwrap().to_string()
+                    } else {
+                         serde_json::to_string_pretty(&val).unwrap_or_default()
+                    };
+
+                    McpResponse::success(id, json!({
+                        "content": [{
+                            "type": "text",
+                            "text": text_resp
+                        }]
+                    }))
                 },
-                Err(err) => McpResponse {
-                    jsonrpc: "2.0".to_string(),
-                    id,
-                    result: None,
-                    error: Some(err),
-                }
+                Err(err) => McpResponse::error(id, err["code"].as_i64().unwrap_or(-32000) as i32, err["message"].as_str().unwrap_or("Unknown error")),
             }
         }
-        _ => McpResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
-            result: None,
-            error: Some(json!({ "code": -32601, "message": "Method not found" })),
-        }
+        _ => McpResponse::error(id, -32601, &format!("Method '{}' not found", req.method)),
+    };
+
+    let duration = start.elapsed();
+    if duration.as_millis() > 100 {
+        eprintln!("[MCP] Slow request: {} took {:?}", req.method, duration);
     }
+    
+    resp
 }
