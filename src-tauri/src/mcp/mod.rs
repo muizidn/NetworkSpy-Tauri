@@ -2,13 +2,14 @@ pub mod traffic;
 pub mod breakpoints;
 pub mod scripting;
 
+use axum::body::Body;
 use axum::{
     extract::{State, Query},
-    response::{sse::{Event, Sse}, IntoResponse},
+    response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
-use futures::stream::Stream;
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{convert::Infallible, sync::Arc, collections::HashMap, time::Duration};
@@ -17,6 +18,7 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use tauri::{AppHandle, Manager};
 use uuid::Uuid;
 use tower_http::cors::CorsLayer;
+use axum::http::header;
 
 // Static JSON Schemas for MCP
 const CAPABILITIES_JSON: &str = include_str!("schema/capabilities.json");
@@ -44,11 +46,11 @@ struct McpResponse {
     id: Option<Value>,
 }
 
-type SseSender = mpsc::UnboundedSender<Result<Event, Infallible>>;
+type StreamSender = mpsc::UnboundedSender<String>;
 
 struct McpState {
     app_handle: AppHandle,
-    sessions: Arc<Mutex<HashMap<String, SseSender>>>,
+    sessions: Arc<Mutex<HashMap<String, StreamSender>>>,
 }
 
 pub fn spawn_mcp_server(app_handle: AppHandle) {
@@ -84,7 +86,7 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
                     }
 
                     let app = Router::new()
-                        .route("/sse", get(sse_handler))
+                        .route("/mcp", get(stream_handler))
                         .route("/messages", post(post_handler))
                         .layer(CorsLayer::permissive())
                         .with_state(http_state.clone());
@@ -92,7 +94,7 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
                     let bind_addr = format!("0.0.0.0:{}", port);
                     match tokio::net::TcpListener::bind(&bind_addr).await {
                         Ok(listener) => {
-                            eprintln!("MCP HTTP Server starting on http://localhost:{}/sse", port);
+                            eprintln!("MCP HTTP Server starting on http://localhost:{}/mcp", port);
                             let server_task = tauri::async_runtime::spawn(async move {
                                 let _ = axum::serve(listener, app).await;
                             });
@@ -113,7 +115,7 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
         }
     });
 
-    // 2. Start Stdio Loop (Dynamic check inside the loop)
+    // 2. Start Stdio Loop
     let stdio_handle = app_handle.clone();
     tauri::async_runtime::spawn(async move {
         use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
@@ -145,19 +147,28 @@ pub fn spawn_mcp_server(app_handle: AppHandle) {
     });
 }
 
-async fn sse_handler(
+async fn stream_handler(
     State(state): State<Arc<McpState>>,
-) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+) -> impl IntoResponse {
     let session_id = Uuid::new_v4().to_string();
     let (tx, rx) = mpsc::unbounded_channel();
     
     let mut sessions = state.sessions.lock().await;
     sessions.insert(session_id.clone(), tx.clone());
     
-    let _ = tx.send(Ok(Event::default().event("endpoint").data(format!("/messages?session_id={}", session_id))));
+    // Send session establishment message
+    let _ = tx.send(format!("{}\n", json!({"type": "endpoint", "uri": format!("/messages?session_id={}", session_id)})));
 
-    let stream = UnboundedReceiverStream::new(rx);
-    Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::new())
+    let stream = UnboundedReceiverStream::new(rx).map(Ok::<_, Infallible>);
+
+    (
+        [
+            (header::CONTENT_TYPE, "application/x-ndjson"),
+            (header::CACHE_CONTROL, "no-cache"),
+            (header::CONNECTION, "keep-alive"),
+        ],
+        Body::from_stream(stream),
+    )
 }
 
 #[derive(Deserialize)]
@@ -184,7 +195,7 @@ async fn post_handler(
     
     let sessions = state.sessions.lock().await;
     if let Some(tx) = sessions.get(&params.session_id) {
-        let _ = tx.send(Ok(Event::default().event("message").data(serde_json::to_string(&response).unwrap_or_default())));
+        let _ = tx.send(format!("{}\n", serde_json::to_string(&response).unwrap_or_default()));
     }
     
     axum::http::StatusCode::ACCEPTED.into_response()

@@ -10,7 +10,7 @@
     },
     "network-spy-dev-http": {
       "type": "remote",
-      "url": "http://localhost:3001/sse",
+      "url": "http://localhost:3001/mcp",
       "enabled": true
     }
   }

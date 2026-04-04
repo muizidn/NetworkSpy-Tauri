@@ -22,7 +22,7 @@ This method allows you to connect to the running app via its local web server.
   "mcp": {
     "network-spy": {
       "type": "remote",
-      "url": "http://localhost:3001/sse",
+      "url": "http://localhost:3001/mcp",
       "enabled": true
     }
   }
@@ -38,7 +38,7 @@ Open your `claude_desktop_config.json` and add:
 {
   "mcpServers": {
     "network-spy": {
-      "url": "http://localhost:3001/sse"
+      "url": "http://localhost:3001/mcp"
     }
   }
 }
