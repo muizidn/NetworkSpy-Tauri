@@ -223,32 +223,66 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
                             }
                         },
                         {
+                            "name": "list_scripts",
+                            "description": "List all active traffic modification scripts",
+                            "inputSchema": { "type": "object", "properties": {} }
+                        },
+                        {
                             "name": "save_script",
-                            "description": "Create or update a scripting rule for modifying traffic",
+                            "description": "Create or update a scripting rule. Providing an 'id' updates an existing one.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
+                                    "id": { "type": "string" },
                                     "name": { "type": "string" },
-                                    "script": { "type": "string", "description": "JavaScript code to modify request/response" },
-                                    "matching_rule": { "type": "string", "description": "Glob or regex for URLs" },
-                                    "method": { "type": "string", "default": "*" },
-                                    "enabled": { "type": "boolean", "default": true }
+                                    "script": { "type": "string" },
+                                    "matching_rule": { "type": "string" },
+                                    "method": { "type": "string" },
+                                    "enabled": { "type": "boolean" },
+                                    "request": { "type": "boolean", "default": true },
+                                    "response": { "type": "boolean", "default": true }
                                 },
                                 "required": ["name", "script", "matching_rule"]
                             }
                         },
                         {
+                            "name": "delete_script",
+                            "description": "Delete a scripting rule by ID",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": { "id": { "type": "string" } },
+                                "required": ["id"]
+                            }
+                        },
+                        {
+                            "name": "list_breakpoints",
+                            "description": "List all active traffic interception breakpoints",
+                            "inputSchema": { "type": "object", "properties": {} }
+                        },
+                        {
                             "name": "save_breakpoint",
-                            "description": "Create or update a traffic breakpoint (interception rule)",
+                            "description": "Create or update a breakpoint. Providing an 'id' updates an existing one.",
                             "inputSchema": {
                                 "type": "object",
                                 "properties": {
+                                    "id": { "type": "string" },
                                     "name": { "type": "string" },
-                                    "matching_rule": { "type": "string", "description": "Glob or regex for URLs" },
-                                    "method": { "type": "string", "default": "*" },
-                                    "enabled": { "type": "boolean", "default": true }
+                                    "matching_rule": { "type": "string" },
+                                    "method": { "type": "string" },
+                                    "enabled": { "type": "boolean" },
+                                    "request": { "type": "boolean", "default": true },
+                                    "response": { "type": "boolean", "default": true }
                                 },
                                 "required": ["name", "matching_rule"]
+                            }
+                        },
+                        {
+                            "name": "delete_breakpoint",
+                            "description": "Delete a breakpoint by ID",
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": { "id": { "type": "string" } },
+                                "required": ["id"]
                             }
                         }
                     ]
@@ -303,8 +337,15 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
 
             let result = match tool_name {
                 "get_traffic_list" => traffic::handle_get_traffic_list(app_handle, arguments).await,
+                
+                "list_scripts" => scripting::handle_list_scripts(app_handle).await,
                 "save_script" => scripting::handle_save_script(app_handle, arguments).await,
+                "delete_script" => scripting::handle_delete_script(app_handle, arguments).await,
+
+                "list_breakpoints" => breakpoints::handle_list_breakpoints(app_handle).await,
                 "save_breakpoint" => breakpoints::handle_save_breakpoint(app_handle, arguments).await,
+                "delete_breakpoint" => breakpoints::handle_delete_breakpoint(app_handle, arguments).await,
+                
                 _ => Err(json!({ "code": -32601, "message": "Method not found" })),
             };
 
