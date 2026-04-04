@@ -1,6 +1,7 @@
 pub mod traffic;
 pub mod breakpoints;
 pub mod scripting;
+pub mod validator;
 
 use axum::body::Body;
 use axum::{
@@ -276,6 +277,7 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
                 "get_traffic_list" => traffic::handle_get_traffic_list(app_handle, args).await,
                 "get_traffic_details" => traffic::handle_get_traffic_details(app_handle, args).await,
                 "list_filter_presets" => traffic::handle_list_filter_presets(app_handle).await,
+                "get_filter_preset_template" => traffic::handle_get_filter_preset_template().await,
                 "save_filter_preset" => traffic::handle_save_filter_preset(app_handle, args).await,
                 "delete_filter_preset" => traffic::handle_delete_filter_preset(app_handle, args).await,
                 "list_scripts" => scripting::handle_list_scripts(app_handle).await,

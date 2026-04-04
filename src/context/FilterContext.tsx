@@ -142,37 +142,41 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const evaluateRule = (traffic: TrafficItemMap, filter: FilterRule): boolean => {
     if (!filter.enabled || !filter.value) return true;
 
+    // Backward compatibility normalization (Human Readable -> CONSTANT_UPPERCASE)
+    const normalizedType = filter.type.toUpperCase().replace(/\s+/g, '_');
+    const normalizedOp = filter.operator.toUpperCase().replace(/\s+/g, '_');
+
     let targetValue: any = "";
-    switch (filter.type) {
-      case "URL": targetValue = traffic.url; break;
-      case "Method": targetValue = traffic.method; break;
-      case "Status": targetValue = traffic.status; break;
-      case "Client": targetValue = traffic.client; break;
-      case "Code": targetValue = traffic.code; break;
-      case "Time": targetValue = traffic.time; break;
-      case "Duration": targetValue = traffic.duration; break;
-      case "Request Size": targetValue = traffic.request; break;
-      case "Response Size": targetValue = traffic.response; break;
-      case "Performance": targetValue = traffic.performance; break;
-      case "SSL": targetValue = traffic.intercepted; break;
-      case "Tags": targetValue = traffic.tags; break;
-      case "ID": targetValue = traffic.id; break;
+    switch (normalizedType) {
+      case FilterTypes.URL: targetValue = traffic.url; break;
+      case FilterTypes.METHOD: targetValue = traffic.method; break;
+      case FilterTypes.STATUS: targetValue = traffic.status; break;
+      case FilterTypes.CLIENT: targetValue = traffic.client; break;
+      case FilterTypes.CODE: targetValue = traffic.code; break;
+      case FilterTypes.TIME: targetValue = traffic.time; break;
+      case FilterTypes.DURATION: targetValue = traffic.duration; break;
+      case FilterTypes.REQUEST_SIZE: targetValue = traffic.request; break;
+      case FilterTypes.RESPONSE_SIZE: targetValue = traffic.response; break;
+      case FilterTypes.PERFORMANCE: targetValue = traffic.performance; break;
+      case FilterTypes.SSL: targetValue = traffic.intercepted; break;
+      case FilterTypes.TAGS: targetValue = traffic.tags; break;
+      case FilterTypes.ID: targetValue = traffic.id; break;
       default: return true;
     }
 
     // Special handling for Tags (string array)
-    if (filter.type === "Tags" && Array.isArray(targetValue)) {
+    if (normalizedType === FilterTypes.TAGS && Array.isArray(targetValue)) {
       const val = filter.value.toLowerCase();
-      switch (filter.operator) {
-        case FilterOperators.Contains:
+      switch (normalizedOp) {
+        case FilterOperators.CONTAINS:
           return targetValue.some(t => t.toLowerCase().includes(val));
-        case FilterOperators.Equals:
+        case FilterOperators.EQUALS:
           return targetValue.some(t => t.toLowerCase() === val);
-        case FilterOperators.NotEquals:
+        case FilterOperators.NOT_EQUALS:
           return !targetValue.some(t => t.toLowerCase() === val);
-        case FilterOperators.StartsWith:
+        case FilterOperators.STARTS_WITH:
           return targetValue.some(t => t.toLowerCase().startsWith(val));
-        case FilterOperators.EndsWith:
+        case FilterOperators.ENDS_WITH:
           return targetValue.some(t => t.toLowerCase().endsWith(val));
         default:
           return true;
@@ -184,44 +188,44 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     // Standard string operators (Contains, Equals, etc.)
     const stringOperators: string[] = [
-      FilterOperators.Contains,
-      FilterOperators.NotContains,
-      FilterOperators.StartsWith,
-      FilterOperators.EndsWith,
-      FilterOperators.Equals,
-      FilterOperators.NotEquals,
-      FilterOperators.MatchesRegex
+      FilterOperators.CONTAINS,
+      FilterOperators.NOT_CONTAINS,
+      FilterOperators.STARTS_WITH,
+      FilterOperators.ENDS_WITH,
+      FilterOperators.EQUALS,
+      FilterOperators.NOT_EQUALS,
+      FilterOperators.MATCHES_REGEX
     ];
 
-    if (stringOperators.includes(filter.operator)) {
-      switch (filter.operator) {
-        case FilterOperators.Contains: return targetStr.includes(valStr);
-        case FilterOperators.NotContains: return !targetStr.includes(valStr);
-        case FilterOperators.StartsWith: return targetStr.startsWith(valStr);
-        case FilterOperators.EndsWith: return targetStr.endsWith(valStr);
-        case FilterOperators.Equals: return targetStr === valStr;
-        case FilterOperators.NotEquals: return targetStr !== valStr;
-        case FilterOperators.MatchesRegex:
+    if (stringOperators.includes(normalizedOp)) {
+      switch (normalizedOp) {
+        case FilterOperators.CONTAINS: return targetStr.includes(valStr);
+        case FilterOperators.NOT_CONTAINS: return !targetStr.includes(valStr);
+        case FilterOperators.STARTS_WITH: return targetStr.startsWith(valStr);
+        case FilterOperators.ENDS_WITH: return targetStr.endsWith(valStr);
+        case FilterOperators.EQUALS: return targetStr === valStr;
+        case FilterOperators.NOT_EQUALS: return targetStr !== valStr;
+        case FilterOperators.MATCHES_REGEX:
           try { return new RegExp(filter.value, "i").test(targetStr); } catch { return true; }
         default: return true;
       }
     }
 
     // Numeric and unit-aware operators (GreaterThan, LessThan, After, Before)
-    const isTimestampOp = filter.operator === FilterOperators.After || filter.operator === FilterOperators.Before;
-    const isNumericOp = filter.operator === FilterOperators.GreaterThan || filter.operator === FilterOperators.LessThan;
+    const isTimestampOp = normalizedOp === FilterOperators.AFTER || normalizedOp === FilterOperators.BEFORE;
+    const isNumericOp = normalizedOp === FilterOperators.GREATER_THAN || normalizedOp === FilterOperators.LESS_THAN;
 
     if (isTimestampOp || isNumericOp) {
       let tNum = 0;
       let fNum = 0;
 
-      if (filter.type === "Time") {
+      if (normalizedType === FilterTypes.TIME) {
         tNum = traffic.timestamp as number;
         fNum = parseTimestampValue(filter.value);
-      } else if (filter.type === "Duration") {
+      } else if (normalizedType === FilterTypes.DURATION) {
         tNum = parseTimeValue(targetValue);
         fNum = parseTimeValue(filter.value);
-      } else if (filter.type === "Request Size" || filter.type === "Response Size") {
+      } else if (normalizedType === FilterTypes.REQUEST_SIZE || normalizedType === FilterTypes.RESPONSE_SIZE) {
         tNum = parseSizeValue(targetValue);
         fNum = parseSizeValue(filter.value);
       } else {
@@ -229,8 +233,8 @@ export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         fNum = parseNumericValue(filter.value);
       }
 
-      if (filter.operator === FilterOperators.After || filter.operator === FilterOperators.GreaterThan) return tNum > fNum;
-      if (filter.operator === FilterOperators.Before || filter.operator === FilterOperators.LessThan) return tNum < fNum;
+      if (normalizedOp === FilterOperators.AFTER || normalizedOp === FilterOperators.GREATER_THAN) return tNum > fNum;
+      if (normalizedOp === FilterOperators.BEFORE || normalizedOp === FilterOperators.LESS_THAN) return tNum < fNum;
     }
 
     return true;

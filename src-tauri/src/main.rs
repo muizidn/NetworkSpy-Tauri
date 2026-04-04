@@ -467,6 +467,7 @@ fn main() {
             commands::delete_script,
             commands::get_script_enabled,
             commands::set_script_enabled,
+            commands::validate_filter_preset_command,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

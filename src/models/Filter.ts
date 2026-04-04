@@ -1,31 +1,31 @@
 export const FilterTypes = {
   URL: "URL",
-  Method: "Method",
-  Status: "Status",
-  Client: "Client",
-  Code: "Code",
-  Time: "Time",
-  Duration: "Duration",
-  RequestSize: "Request Size",
-  ResponseSize: "Response Size",
-  Performance: "Performance",
+  METHOD: "METHOD",
+  STATUS: "STATUS",
+  CLIENT: "CLIENT",
+  CODE: "CODE",
+  TIME: "TIME",
+  DURATION: "DURATION",
+  REQUEST_SIZE: "REQUEST_SIZE",
+  RESPONSE_SIZE: "RESPONSE_SIZE",
+  PERFORMANCE: "PERFORMANCE",
   SSL: "SSL",
-  Tags: "Tags",
+  TAGS: "TAGS",
   ID: "ID",
 } as const;
 
 export const FilterOperators = {
-  Contains: "Contains",
-  NotContains: "Not Contains",
-  StartsWith: "Starts with",
-  EndsWith: "Ends with",
-  Equals: "Equals",
-  NotEquals: "Not Equals",
-  GreaterThan: "Greater Than",
-  LessThan: "Less Than",
-  After: "After",
-  Before: "Before",
-  MatchesRegex: "Matches Regex"
+  CONTAINS: "CONTAINS",
+  NOT_CONTAINS: "NOT_CONTAINS",
+  STARTS_WITH: "STARTS_WITH",
+  ENDS_WITH: "ENDS_WITH",
+  EQUALS: "EQUALS",
+  NOT_EQUALS: "NOT_EQUALS",
+  GREATER_THAN: "GREATER_THAN",
+  LESS_THAN: "LESS_THAN",
+  AFTER: "AFTER",
+  BEFORE: "BEFORE",
+  MATCHES_REGEX: "MATCHES_REGEX"
 } as const;
 
 export type FilterType = typeof FilterTypes[keyof typeof FilterTypes];

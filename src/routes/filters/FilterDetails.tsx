@@ -46,7 +46,7 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                             </div>
                             <div>
                                 {isEditing ? (
-                                    <input 
+                                    <input
                                         value={editName}
                                         onChange={(e) => setEditName(e.target.value)}
                                         className="bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2 text-xl font-bold text-white focus:outline-none focus:border-blue-500/50"
@@ -64,12 +64,12 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
 
                     <div className="flex gap-2">
                         {!filter.isBuiltIn && (
-                            <button 
+                            <button
                                 onClick={() => isEditing ? handleSave() : setIsEditing(true)}
                                 className={twMerge(
                                     "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs transition-all",
-                                    isEditing 
-                                        ? "bg-green-600 text-white hover:bg-green-500 shadow-lg shadow-green-900/20" 
+                                    isEditing
+                                        ? "bg-green-600 text-white hover:bg-green-500 shadow-lg shadow-green-900/20"
                                         : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 hover:border-zinc-700"
                                 )}
                             >
@@ -92,7 +92,7 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                             </h2>
                         </div>
                         {isEditing ? (
-                            <textarea 
+                            <textarea
                                 value={editDesc}
                                 onChange={(e) => setEditDesc(e.target.value)}
                                 placeholder="Describe what this filter does (Markdown supported)..."
@@ -116,7 +116,7 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                             </h2>
                             <span className="text-[10px] font-mono text-zinc-700 bg-zinc-900 px-2 py-0.5 rounded">{filter.filters.length} Conditions</span>
                         </div>
-                        
+
                         <div className="space-y-3">
                             {filter.filters.length === 0 ? (
                                 <div className="p-8 text-center bg-zinc-900/20 border border-zinc-900 rounded-2xl border-dashed">
@@ -133,7 +133,7 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
 
                 {/* Sidebar Info */}
                 <div className="space-y-8">
-                     <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 space-y-6 shadow-xl">
+                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 space-y-6 shadow-xl">
                         <div>
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-4">Properties</h4>
                             <div className="space-y-4">
@@ -149,41 +149,41 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                         </div>
 
                         <div className="pt-6 border-t border-zinc-800">
-                             <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-4">Share Actions</h4>
-                             <button 
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-4">Share Actions</h4>
+                            <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(JSON.stringify(filter, null, 2));
                                     alert('Copied to clipboard!');
                                 }}
                                 className="w-full flex items-center justify-between p-3 rounded-2xl bg-zinc-800/50 hover:bg-blue-600 hover:text-white transition-all text-zinc-400"
-                             >
+                            >
                                 <span className="text-xs font-bold">Copy JSON Payload</span>
                                 <FiCopy />
-                             </button>
+                            </button>
                         </div>
-                     </div>
+                    </div>
 
-                     {!filter.isBuiltIn && (
+                    {!filter.isBuiltIn && (
                         <div className="p-6 rounded-3xl bg-rose-500/5 border border-rose-500/10 space-y-4">
-                             <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-500/60">Danger Zone</h4>
-                             <p className="text-[10px] text-rose-500/40">This action is irreversible. All associated rules will be permanently removed.</p>
-                             <button 
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-500/60">Danger Zone</h4>
+                            <p className="text-[10px] text-rose-500/40">This action is irreversible. All associated rules will be permanently removed.</p>
+                            <button
                                 onClick={() => setIsDeleteModalOpen(true)}
                                 className="w-full py-3 rounded-2xl border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold"
-                             >
-                                 Permanently Delete
-                             </button>
+                            >
+                                Permanently Delete
+                            </button>
                         </div>
-                     )}
+                    )}
                 </div>
             </div>
-            
+
             {/* Custom Deletion Modal */}
             {isDeleteModalOpen && (
                 <div className="fixed inset-0 z-[999] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div 
-                      className="absolute inset-0" 
-                      onClick={() => setIsDeleteModalOpen(false)}
+                    <div
+                        className="absolute inset-0"
+                        onClick={() => setIsDeleteModalOpen(false)}
                     />
                     <div className="relative w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-[32px] p-8 space-y-8 shadow-[0_32px_128px_rgba(0,0,0,1)] animate-in zoom-in-95 duration-200">
                         <div className="w-16 h-16 rounded-[24px] bg-rose-500/10 border border-rose-400/20 flex items-center justify-center text-rose-500 mx-auto shadow-inner">
@@ -192,20 +192,20 @@ const FilterDetails: React.FC<FilterDetailsProps> = ({ filter }) => {
                         <div className="text-center space-y-2">
                             <h3 className="text-xl font-black text-white tracking-tight leading-none uppercase">Confirm Delete</h3>
                             <p className="text-xs text-zinc-500 leading-relaxed italic">
-                                This will permanently remove <span className="text-zinc-300 font-bold">"{filter.name}"</span>. 
+                                This will permanently remove <span className="text-zinc-300 font-bold">"{filter.name}"</span>.
                                 This operation is irreversible and all associated rules will be lost.
                             </p>
                         </div>
                         <div className="flex flex-col gap-2 pt-2">
-                            <button 
-                              onClick={confirmDelete}
-                              className="w-full py-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-[11px] tracking-widest uppercase transition-all shadow-lg shadow-rose-950/20 active:scale-[0.98]"
+                            <button
+                                onClick={confirmDelete}
+                                className="w-full py-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black text-[11px] tracking-widest uppercase transition-all shadow-lg shadow-rose-950/20 active:scale-[0.98]"
                             >
                                 Permanently Delete
                             </button>
-                            <button 
-                              onClick={() => setIsDeleteModalOpen(false)}
-                              className="w-full py-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 font-black text-[11px] tracking-widest uppercase transition-all active:scale-[0.98]"
+                            <button
+                                onClick={() => setIsDeleteModalOpen(false)}
+                                className="w-full py-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 font-black text-[11px] tracking-widest uppercase transition-all active:scale-[0.98]"
                             >
                                 Cancel
                             </button>
@@ -244,7 +244,7 @@ const RuleCard = ({ node }: { node: FilterNode }) => {
                 </span>
             </div>
             {!node.enabled && (
-                 <span className="text-[9px] font-bold text-zinc-600 uppercase border border-zinc-800 px-2 py-1 rounded">Disabled</span>
+                <span className="text-[9px] font-bold text-zinc-600 uppercase border border-zinc-800 px-2 py-1 rounded">Disabled</span>
             )}
         </div>
     );

@@ -6,13 +6,44 @@
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "limit": { "type": "integer", "default": 20 },
-                    "offset": { "type": "integer", "default": 0 },
-                    "sort_by": { "type": "string", "enum": ["timestamp", "method", "uri", "status_code"], "default": "timestamp" },
-                    "sort_order": { "type": "string", "enum": ["asc", "desc"], "default": "desc" },
-                    "method": { "type": "string", "description": "Filter by HTTP method (GET, POST, etc.)" },
-                    "uri_contains": { "type": "string", "description": "Filter by substring in URI" },
-                    "status_code": { "type": "integer", "description": "Filter by exact status code" }
+                    "limit": {
+                        "type": "integer",
+                        "default": 20
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "default": 0
+                    },
+                    "sort_by": {
+                        "type": "string",
+                        "enum": [
+                            "timestamp",
+                            "method",
+                            "uri",
+                            "status_code"
+                        ],
+                        "default": "timestamp"
+                    },
+                    "sort_order": {
+                        "type": "string",
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "default": "desc"
+                    },
+                    "method": {
+                        "type": "string",
+                        "description": "Filter by HTTP method (GET, POST, etc.)"
+                    },
+                    "uri_contains": {
+                        "type": "string",
+                        "description": "Filter by substring in URI"
+                    },
+                    "status_code": {
+                        "type": "integer",
+                        "description": "Filter by exact status code"
+                    }
                 }
             }
         },
@@ -22,27 +53,122 @@
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "id": { "type": "string", "description": "The unique UUID of the traffic item" }
+                    "id": {
+                        "type": "string",
+                        "description": "The unique UUID of the traffic item"
+                    }
                 },
-                "required": ["id"]
+                "required": [
+                    "id"
+                ]
             }
         },
         {
             "name": "list_filter_presets",
             "description": "List all saved filter presets from the user's settings",
-            "inputSchema": { "type": "object", "properties": {} }
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            }
+        },
+        {
+            "name": "get_filter_preset_template",
+            "description": "Get a correctly structured example of a filter preset to understand how to build recursive FilterNodes (Rules/Groups). Call this before using save_filter_preset.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            }
         },
         {
             "name": "save_filter_preset",
-            "description": "Create or update a filter preset. Providing an 'id' updates an existing one.",
+            "description": "Create or update a filter preset. IMPORTANT: Use the structure returned by get_filter_preset_template. Send filter as RAW JSON not stringified json. Use children array for groups.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "id": { "type": "string", "description": "ID of existing preset to update" },
-                    "name": { "type": "string", "description": "Name of the preset" },
-                    "description": { "type": "string", "description": "Optional description" },
-                    "filters": { "type": "string", "description": "JSON string of filter criteria" }
-                }
+                    "id": {
+                        "type": "string",
+                        "description": "ID of existing preset to update"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the preset"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional description"
+                    },
+                    "filters": {
+                        "type": "array",
+                        "description": "Array of FilterNodes. MUST strictly follow tree-based recursive structure (Rules/Groups). Use CONSTANT_UPPERCASE for all types and operators.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "enabled": {
+                                    "type": "boolean"
+                                },
+                                "isGroup": {
+                                    "type": "boolean"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "URL",
+                                        "METHOD",
+                                        "STATUS",
+                                        "CLIENT",
+                                        "CODE",
+                                        "TIME",
+                                        "DURATION",
+                                        "REQUEST_SIZE",
+                                        "RESPONSE_SIZE",
+                                        "PERFORMANCE",
+                                        "SSL",
+                                        "TAGS",
+                                        "ID"
+                                    ]
+                                },
+                                "operator": {
+                                    "type": "string",
+                                    "enum": [
+                                        "CONTAINS",
+                                        "NOT_CONTAINS",
+                                        "STARTS_WITH",
+                                        "ENDS_WITH",
+                                        "EQUALS",
+                                        "NOT_EQUALS",
+                                        "GREATER_THAN",
+                                        "LESS_THAN",
+                                        "AFTER",
+                                        "BEFORE",
+                                        "MATCHES_REGEX"
+                                    ]
+                                },
+                                "value": {
+                                    "type": "string"
+                                },
+                                "logic": {
+                                    "type": "string",
+                                    "enum": [
+                                        "AND",
+                                        "OR"
+                                    ],
+                                    "description": "Only for groups"
+                                },
+                                "children": {
+                                    "type": "array",
+                                    "description": "Recursive FilterNodes for groups"
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "filters"
+                ]
             }
         },
         {
@@ -50,14 +176,23 @@
             "description": "Delete a filter preset by ID",
             "inputSchema": {
                 "type": "object",
-                "properties": { "id": { "type": "string" } },
-                "required": ["id"]
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
             }
         },
         {
             "name": "list_scripts",
             "description": "List all active traffic modification scripts",
-            "inputSchema": { "type": "object", "properties": {} }
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            }
         },
         {
             "name": "save_script",
@@ -65,16 +200,38 @@
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" },
-                    "script": { "type": "string" },
-                    "matching_rule": { "type": "string" },
-                    "method": { "type": "string" },
-                    "enabled": { "type": "boolean" },
-                    "request": { "type": "boolean", "default": true },
-                    "response": { "type": "boolean", "default": true }
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "script": {
+                        "type": "string"
+                    },
+                    "matching_rule": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "request": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "response": {
+                        "type": "boolean",
+                        "default": true
+                    }
                 },
-                "required": ["name", "script", "matching_rule"]
+                "required": [
+                    "name",
+                    "script",
+                    "matching_rule"
+                ]
             }
         },
         {
@@ -82,14 +239,23 @@
             "description": "Delete a scripting rule by ID",
             "inputSchema": {
                 "type": "object",
-                "properties": { "id": { "type": "string" } },
-                "required": ["id"]
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
             }
         },
         {
             "name": "list_breakpoints",
             "description": "List all active traffic interception breakpoints",
-            "inputSchema": { "type": "object", "properties": {} }
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            }
         },
         {
             "name": "save_breakpoint",
@@ -97,15 +263,34 @@
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" },
-                    "matching_rule": { "type": "string" },
-                    "method": { "type": "string" },
-                    "enabled": { "type": "boolean" },
-                    "request": { "type": "boolean", "default": true },
-                    "response": { "type": "boolean", "default": true }
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "matching_rule": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "request": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "response": {
+                        "type": "boolean",
+                        "default": true
+                    }
                 },
-                "required": ["name", "matching_rule"]
+                "required": [
+                    "name",
+                    "matching_rule"
+                ]
             }
         },
         {
@@ -113,8 +298,14 @@
             "description": "Delete a breakpoint by ID",
             "inputSchema": {
                 "type": "object",
-                "properties": { "id": { "type": "string" } },
-                "required": ["id"]
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
             }
         }
     ]

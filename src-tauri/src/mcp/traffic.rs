@@ -3,6 +3,7 @@ use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 use crate::traffic::db::{TrafficDb, FilterPreset};
 use uuid::Uuid;
+use crate::mcp::validator::{validate_filter_node, validate_filter_preset};
 
 pub async fn handle_get_traffic_list(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
     let limit = args["limit"].as_u64().unwrap_or(20) as usize;
@@ -59,12 +60,69 @@ pub async fn handle_list_filter_presets(app_handle: &AppHandle) -> Result<Value,
     }
 }
 
+const FILTER_PRESET_TEMPLATE_JSON: &str = include_str!("schema/filter_preset_template.json");
+
+pub async fn handle_get_filter_preset_template() -> Result<Value, Value> {
+    match serde_json::from_str(FILTER_PRESET_TEMPLATE_JSON) {
+        Ok(v) => Ok(v),
+        Err(e) => Err(json!({ "code": -32000, "message": format!("Internal schema error: {}", e) }))
+    }
+}
+
 pub async fn handle_save_filter_preset(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
     let db = app_handle.state::<Arc<TrafficDb>>();
     let id = args["id"].as_str().map(|s| s.to_string());
     let name = args["name"].as_str();
     let description = args["description"].as_str().map(|s| s.to_string());
-    let filters = args["filters"].as_str();
+    
+
+    println!("args==>savefilter==>args: {}", args);
+
+    // Performance: Only validate if the 'filters' structure is provided
+    let mut filters_json = if args["filters"].is_array() {
+        Some(args["filters"].clone())
+    } else if let Some(s) = args["filters"].as_str() {
+        match serde_json::from_str::<Value>(s) {
+            Ok(v) => Some(v),
+            Err(_) => return Err(json!({ "code": -32602, "message": "Invalid JSON in filters object. Please stringify the filters JSON." }))
+        }
+    } else {
+        None
+    };
+
+    if let Some(ref mut f) = filters_json {
+        // Recursively normalize ALL nodes to CONSTANT_UPPERCASE for types/operators before validation and save
+        fn normalize_recursive(val: &mut Value) {
+            if let Some(arr) = val.as_array_mut() {
+                for item in arr { normalize_recursive(item); }
+            } else if let Some(obj) = val.as_object_mut() {
+                if let Some(t) = obj.get_mut("type").and_then(|v| v.as_str()) {
+                    let norm = t.to_uppercase().replace(" ", "_");
+                    obj.insert("type".to_string(), json!(norm));
+                }
+                if let Some(o) = obj.get_mut("operator").and_then(|v| v.as_str()) {
+                    let norm = o.to_uppercase().replace(" ", "_");
+                    obj.insert("operator".to_string(), json!(norm));
+                }
+                if let Some(children) = obj.get_mut("children") {
+                    normalize_recursive(children);
+                }
+            }
+        }
+        normalize_recursive(f);
+
+        // Construct a full preset object for validation
+        let mut validation_obj = args.clone();
+        if let Some(obj) = validation_obj.as_object_mut() {
+            obj.insert("filters".to_string(), f.clone());
+        }
+        
+        if let Err(e) = crate::mcp::validator::validate_filter_preset(&validation_obj) {
+            return Err(json!({ "code": -32602, "message": format!("Validation failed: {}", e) }));
+        }
+    }
+
+    let filters_str = filters_json.map(|v| serde_json::to_string(&v).unwrap_or_default());
 
     match id {
         Some(existing_id) => {
@@ -72,18 +130,21 @@ pub async fn handle_save_filter_preset(app_handle: &AppHandle, args: &Value) -> 
                 existing_id, 
                 name.map(|s| s.to_string()), 
                 description, 
-                filters.map(|s| s.to_string())
+                filters_str
             ) {
                 Ok(_) => Ok(json!({ "status": "success", "message": "Updated existing preset" })),
                 Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
             }
         },
         None => {
+            let name_val = name.ok_or(json!({ "message": "Missing name for new preset" }))?.to_string();
+            let filters_val = filters_str.ok_or(json!({ "message": "Missing filters for new preset" }))?;
+            
             let new_preset = FilterPreset {
                 id: Uuid::new_v4().to_string(),
-                name: name.ok_or(json!({ "message": "Missing name for new preset" }))?.to_string(),
+                name: name_val,
                 description,
-                filters: filters.ok_or(json!({ "message": "Missing filters for new preset" }))?.to_string(),
+                filters: filters_val,
             };
             match db.add_filter_preset(new_preset) {
                 Ok(_) => Ok(json!({ "status": "success", "message": "Created new preset" })),

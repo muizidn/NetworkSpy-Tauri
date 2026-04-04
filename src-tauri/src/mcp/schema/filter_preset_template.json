@@ -1,0 +1,54 @@
+{
+  "name": "Template Example",
+  "description": "Example demonstrating recursive AND/OR groups and Rules using CONSTANT_UPPERCASE.",
+  "filters": [
+    {
+      "isGroup": true,
+      "id": "group-1",
+      "enabled": true,
+      "logic": "AND",
+      "children": [
+        {
+          "isGroup": false,
+          "id": "rule-url",
+          "enabled": true,
+          "type": "URL",
+          "operator": "CONTAINS",
+          "value": "api"
+        },
+        {
+          "isGroup": true,
+          "id": "group-2",
+          "enabled": true,
+          "logic": "OR",
+          "children": [
+            {
+              "isGroup": false,
+              "id": "rule-err",
+              "enabled": true,
+              "type": "CODE",
+              "operator": "GREATER_THAN",
+              "value": "400"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "isGroup": false,
+      "id": "rule-2",
+      "enabled": true,
+      "type": "CODE",
+      "operator": "GREATER_THAN",
+      "value": "400"
+    },
+    {
+      "isGroup": false,
+      "id": "rule-3",
+      "enabled": true,
+      "type": "CODE",
+      "operator": "GREATER_THAN",
+      "value": "400"
+    }
+  ]
+}

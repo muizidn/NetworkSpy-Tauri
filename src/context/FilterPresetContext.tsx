@@ -25,64 +25,64 @@ export const useFilterPresetContext = () => {
 
 const STANDARD_LIBRARY: PredefinedFilter[] = [
   { id: "all", name: "All Traffic", filters: [], isBuiltIn: true },
-  { 
-    id: "sl-graphql", 
-    name: "GraphQL", 
+  {
+    id: "sl-graphql",
+    name: "GraphQL",
     description: "Matches common GraphQL endpoints and content types.",
     filters: [
-      { isGroup: false, id: "sl-g-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.Contains, value: "graphql" }
-    ], 
-    isBuiltIn: true 
+      { isGroup: false, id: "sl-g-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.CONTAINS, value: "graphql" }
+    ],
+    isBuiltIn: true
   },
-  { 
-    id: "sl-json", 
-    name: "JSON API", 
+  {
+    id: "sl-json",
+    name: "JSON API",
     description: "Filters for JSON responses.",
     filters: [
-      { isGroup: false, id: "sl-j-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.Contains, value: ".json" },
-      { isGroup: false, id: "sl-j-2", enabled: true, type: FilterTypes.Method, operator: FilterOperators.Equals, value: "POST" }
-    ], 
-    isBuiltIn: true 
+      { isGroup: false, id: "sl-j-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.CONTAINS, value: ".json" },
+      { isGroup: false, id: "sl-j-2", enabled: true, type: FilterTypes.METHOD, operator: FilterOperators.EQUALS, value: "POST" }
+    ],
+    isBuiltIn: true
   },
-  { 
-    id: "sl-images", 
-    name: "Media & Images", 
+  {
+    id: "sl-images",
+    name: "Media & Images",
     description: "Filters for image assets (png, jpg, gif, webp, svg).",
     filters: [
-      { 
+      {
         isGroup: true, id: "sl-i-g", enabled: true, logic: "OR", children: [
-          { isGroup: false, id: "sl-i-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.EndsWith, value: ".png" },
-          { isGroup: false, id: "sl-i-2", enabled: true, type: FilterTypes.URL, operator: FilterOperators.EndsWith, value: ".jpg" },
-          { isGroup: false, id: "sl-i-3", enabled: true, type: FilterTypes.URL, operator: FilterOperators.EndsWith, value: ".jpeg" },
-          { isGroup: false, id: "sl-i-4", enabled: true, type: FilterTypes.URL, operator: FilterOperators.EndsWith, value: ".svg" },
-          { isGroup: false, id: "sl-i-5", enabled: true, type: FilterTypes.URL, operator: FilterOperators.EndsWith, value: ".webp" }
+          { isGroup: false, id: "sl-i-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.ENDS_WITH, value: ".png" },
+          { isGroup: false, id: "sl-i-2", enabled: true, type: FilterTypes.URL, operator: FilterOperators.ENDS_WITH, value: ".jpg" },
+          { isGroup: false, id: "sl-i-3", enabled: true, type: FilterTypes.URL, operator: FilterOperators.ENDS_WITH, value: ".jpeg" },
+          { isGroup: false, id: "sl-i-4", enabled: true, type: FilterTypes.URL, operator: FilterOperators.ENDS_WITH, value: ".svg" },
+          { isGroup: false, id: "sl-i-5", enabled: true, type: FilterTypes.URL, operator: FilterOperators.ENDS_WITH, value: ".webp" }
         ]
       }
-    ], 
-    isBuiltIn: true 
+    ],
+    isBuiltIn: true
   },
-  { 
-    id: "sl-assets", 
-    name: "Scripts & Styles", 
+  {
+    id: "sl-assets",
+    name: "Scripts & Styles",
     description: "Static assets: JS and CSS files.",
     filters: [
-      { 
+      {
         isGroup: true, id: "sl-a-g", enabled: true, logic: "OR", children: [
-          { isGroup: false, id: "sl-a-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.EndsWith, value: ".js" },
-          { isGroup: false, id: "sl-a-2", enabled: true, type: FilterTypes.URL, operator: FilterOperators.EndsWith, value: ".css" }
+          { isGroup: false, id: "sl-a-1", enabled: true, type: FilterTypes.URL, operator: FilterOperators.ENDS_WITH, value: ".js" },
+          { isGroup: false, id: "sl-a-2", enabled: true, type: FilterTypes.URL, operator: FilterOperators.ENDS_WITH, value: ".css" }
         ]
       }
-    ], 
-    isBuiltIn: true 
+    ],
+    isBuiltIn: true
   },
-  { 
-    id: "sl-errors", 
-    name: "4xx & 5xx Errors", 
+  {
+    id: "sl-errors",
+    name: "4xx & 5xx Errors",
     description: "Captured failures and error status codes.",
     filters: [
-      { isGroup: false, id: "sl-e-1", enabled: true, type: FilterTypes.Status, operator: FilterOperators.GreaterThan, value: "399" }
-    ], 
-    isBuiltIn: true 
+      { isGroup: false, id: "sl-e-1", enabled: true, type: FilterTypes.STATUS, operator: FilterOperators.GREATER_THAN, value: "399" }
+    ],
+    isBuiltIn: true
   },
 ];
 
@@ -154,43 +154,43 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
 
     try {
-        await invoke("add_filter_preset", { 
-            preset: {
-                id: newId,
-                name,
-                description,
-                filters: JSON.stringify(filters)
-            }
-        });
-        
-        setUserFilters(prev => [...prev, newPredefined]);
+      await invoke("add_filter_preset", {
+        preset: {
+          id: newId,
+          name,
+          description,
+          filters: JSON.stringify(filters)
+        }
+      });
+
+      setUserFilters(prev => [...prev, newPredefined]);
     } catch (err) {
-        console.error("Failed to add filter preset to DB", err);
+      console.error("Failed to add filter preset to DB", err);
     }
-    
+
     return newId;
   };
 
   const updatePreset = async (id: string, updates: Partial<PredefinedFilter>) => {
     try {
-        await invoke("update_filter_preset", {
-            id,
-            name: updates.name !== undefined ? updates.name : null,
-            description: updates.description !== undefined ? updates.description : null,
-            filters: updates.filters ? JSON.stringify(updates.filters) : null
-        });
-        setUserFilters(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+      await invoke("update_filter_preset", {
+        id,
+        name: updates.name !== undefined ? updates.name : null,
+        description: updates.description !== undefined ? updates.description : null,
+        filters: updates.filters ? JSON.stringify(updates.filters) : null
+      });
+      setUserFilters(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
     } catch (err) {
-        console.error("Failed to update filter preset in DB", err);
+      console.error("Failed to update filter preset in DB", err);
     }
   };
 
   const removePreset = async (id: string) => {
     try {
-        await invoke("delete_filter_preset", { id });
-        setUserFilters(prev => prev.filter(f => f.id !== id));
+      await invoke("delete_filter_preset", { id });
+      setUserFilters(prev => prev.filter(f => f.id !== id));
     } catch (err) {
-        console.error("Failed to delete filter preset from DB", err);
+      console.error("Failed to delete filter preset from DB", err);
     }
   };
 

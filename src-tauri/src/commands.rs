@@ -508,3 +508,7 @@ pub async fn load_session(path: String, db: tauri::State<'_, Arc<TrafficDb>>, ap
     Ok(())
 }
 
+#[tauri::command]
+pub fn validate_filter_preset_command(preset: serde_json::Value) -> Result<(), String> {
+    crate::mcp::validator::validate_filter_preset(&preset)
+}

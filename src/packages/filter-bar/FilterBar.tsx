@@ -2,7 +2,8 @@ import React from "react";
 import { useFilterContext, FilterNode, FilterRule, FilterGroup, FilterType, FilterOperator, FilterTypes, FilterOperators } from "@src/context/FilterContext";
 import { v4 as uuidv4 } from "uuid";
 import { twMerge } from "tailwind-merge";
-import { FiSearch, FiX } from "react-icons/fi";
+import { FiSearch, FiX, FiAlertCircle } from "react-icons/fi";
+import { invoke } from "@tauri-apps/api/core";
 
 const FilterNodeRenderer = ({
   node,
@@ -143,6 +144,14 @@ export const FilterBar = () => {
   } = useFilterContext();
 
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (errorMsg) {
+      const timer = setTimeout(() => setErrorMsg(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMsg]);
 
   const { appPredefined, userPredefined } = React.useMemo(() => {
     const filtered = predefinedFilters.filter(f =>
@@ -160,7 +169,7 @@ export const FilterBar = () => {
       id: uuidv4(),
       enabled: true,
       type: FilterTypes.URL,
-      operator: FilterOperators.Contains,
+      operator: FilterOperators.CONTAINS,
       value: "",
     };
 
@@ -195,7 +204,7 @@ export const FilterBar = () => {
           id: uuidv4(),
           enabled: true,
           type: FilterTypes.URL,
-          operator: FilterOperators.Contains,
+          operator: FilterOperators.CONTAINS,
           value: ""
         }
       ]
@@ -251,17 +260,42 @@ export const FilterBar = () => {
   const [showSaveInput, setShowSaveInput] = React.useState(false);
   const [saveName, setSaveName] = React.useState("");
 
-  const handleSaveCurrent = () => {
-    if (saveName.trim()) {
+  const handleSaveCurrent = async () => {
+    if (!saveName.trim()) {
+      setErrorMsg("Please provide a name for the filter preset.");
+      return;
+    }
+
+    try {
+      // Invoke the Rust validator first
+      await invoke("validate_filter_preset_command", { 
+        preset: {
+          name: saveName.trim(),
+          filters: filters
+        }
+      });
+      
       saveCurrentFilters(saveName.trim());
       setFilters([]); // Clear the filters once saved
       setSaveName("");
       setShowSaveInput(false);
+    } catch (err: any) {
+      // Show the Rust validation error in the UI error bar!
+      setErrorMsg(err.toString());
     }
   };
 
   return (
-    <div className='bg-[#202020] text-white flex flex-col w-full'>
+    <div className='bg-[#202020] text-white flex flex-col w-full relative'>
+      {errorMsg && (
+        <div className="absolute top-[-36px] left-0 right-0 h-9 bg-rose-600 flex items-center px-4 gap-2 animate-in slide-in-from-top duration-300 z-50 shadow-xl overflow-hidden">
+          <FiAlertCircle size={14} className="text-white" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-white mt-0.5">{errorMsg}</span>
+          <button onClick={() => setErrorMsg(null)} className="ml-auto hover:scale-110 transition-transform">
+            <FiX size={14} className="text-white/80" />
+          </button>
+        </div>
+      )}
       <div className='flex items-center border-y border-black h-9 relative'>
         {/* Search Input for Presets */}
         <div className="flex items-center px-3 border-r border-zinc-800 h-full group shrink-0">
