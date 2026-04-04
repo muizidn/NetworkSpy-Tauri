@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { FiSettings, FiTarget, FiInfo, FiTerminal } from 'react-icons/fi';
+import { FiSettings, FiTarget, FiInfo, FiTerminal, FiCpu } from 'react-icons/fi';
 import { useSettingsContext } from '../context/SettingsProvider';
 import { getVersion } from '@tauri-apps/api/app';
 
 export default function Settings() {
-  const { showConnectMethod, setShowConnectMethod, streamCertificateLogs, setStreamCertificateLogs } = useSettingsContext();
+  const { 
+    showConnectMethod, 
+    setShowConnectMethod, 
+    streamCertificateLogs, 
+    setStreamCertificateLogs,
+    mcpStdioEnabled,
+    setMcpStdioEnabled,
+    mcpHttpEnabled,
+    setMcpHttpEnabled
+  } = useSettingsContext();
   const [appVersion, setAppVersion] = useState<string>('0.0.0');
 
   useEffect(() => {
@@ -67,7 +76,60 @@ export default function Settings() {
                 <button 
                    className={`w-12 h-6 rounded-full relative transition-all duration-300 ${streamCertificateLogs ? 'bg-green-600 shadow-[0_0_15px_rgba(34,197,94,0.4)]' : 'bg-zinc-800'}`}
                 >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 ${streamCertificateLogs ? 'left-7' : 'left-1'}`} />
+                </button>
+            </div>
+
+            <div className="pt-8 border-t border-zinc-900 mt-12 pb-4">
+                <h2 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                    Model Context Protocol (MCP)
+                </h2>
+                <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-wider mt-1">Enable LLM automation for your terminal & IDE</p>
+            </div>
+
+            <div 
+              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-purple-900/50 transition-all duration-300 cursor-pointer"
+              onClick={() => setMcpStdioEnabled(!mcpStdioEnabled)}
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
+                        <FiCpu size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-white mb-0.5">Enable MCP Stdio (Terminal)</h3>
+                        <p className="text-xs text-zinc-500 max-w-md leading-relaxed">
+                            Allows CLI tools like <strong>Claude Code</strong> to launch the binary and interact directly via standard input/output.
+                        </p>
+                    </div>
+                </div>
+                
+                <button 
+                   className={`w-12 h-6 rounded-full relative transition-all duration-300 ${mcpStdioEnabled ? 'bg-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.4)]' : 'bg-zinc-800'}`}
+                >
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 ${mcpStdioEnabled ? 'left-7' : 'left-1'}`} />
+                </button>
+            </div>
+
+            <div 
+              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-indigo-900/50 transition-all duration-300 cursor-pointer"
+              onClick={() => setMcpHttpEnabled(!mcpHttpEnabled)}
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                        <FiCpu size={20} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-white mb-0.5">Enable MCP HTTP/SSE (Web)</h3>
+                        <p className="text-xs text-zinc-500 max-w-md leading-relaxed">
+                            Exposes your traffic on <strong>http://localhost:3001/sse</strong>. Perfect for <strong>OpenCode</strong> or browser-based AI agents.
+                        </p>
+                    </div>
+                </div>
+                
+                <button 
+                   className={`w-12 h-6 rounded-full relative transition-all duration-300 ${mcpHttpEnabled ? 'bg-indigo-600 shadow-[0_0_15px_rgba(79,70,229,0.4)]' : 'bg-zinc-800'}`}
+                >
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 ${mcpHttpEnabled ? 'left-7' : 'left-1'}`} />
                 </button>
             </div>
             

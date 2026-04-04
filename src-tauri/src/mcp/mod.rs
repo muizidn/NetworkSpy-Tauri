@@ -47,20 +47,53 @@ struct McpState {
 
 pub fn spawn_mcp_server(app_handle: AppHandle) {
     let state = Arc::new(McpState {
-        app_handle,
+        app_handle: app_handle.clone(),
         sessions: Arc::new(Mutex::new(HashMap::new())),
     });
 
+    // 1. Start HTTP Server (for GUI clients like OpenCode)
     let app = Router::new()
         .route("/sse", get(sse_handler))
         .route("/messages", post(post_handler))
         .layer(CorsLayer::permissive())
         .with_state(state);
 
+    let http_handle = app_handle.clone();
     tauri::async_runtime::spawn(async move {
         let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
         eprintln!("MCP HTTP Server starting on http://localhost:3001/sse");
         axum::serve(listener, app).await.unwrap();
+    });
+
+    // 2. Start Stdio Loop (for CLI clients like Claude Code)
+    let stdio_handle = app_handle.clone();
+    tauri::async_runtime::spawn(async move {
+        use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
+        let stdin = BufReader::new(io::stdin());
+        let mut lines = stdin.lines();
+        let mut stdout = io::stdout();
+
+        while let Ok(Some(line)) = lines.next_line().await {
+            let settings = stdio_handle.state::<crate::settings::ManagedProxySettings>();
+            let mcp_enabled = {
+                let s = settings.0.read().unwrap();
+                s.mcp_stdio_enabled
+            };
+
+            if !mcp_enabled {
+                continue;
+            }
+
+            let request: McpRequest = match serde_json::from_str(&line) {
+                Ok(req) => req,
+                Err(_) => continue,
+            };
+
+            let response = handle_mcp_request(&stdio_handle, request).await;
+            let response_json = serde_json::to_string(&response).unwrap_or_default();
+            let _ = stdout.write_all(format!("{}\n", response_json).as_bytes()).await;
+            let _ = stdout.flush().await;
+        }
     });
 }
 
@@ -89,6 +122,16 @@ async fn post_handler(
     Query(params): Query<PostParams>,
     Json(req): Json<McpRequest>,
 ) -> impl IntoResponse {
+    let settings = state.app_handle.state::<crate::settings::ManagedProxySettings>();
+    let mcp_enabled = {
+        let s = settings.0.read().unwrap();
+        s.mcp_http_enabled
+    };
+
+    if !mcp_enabled {
+        return axum::http::StatusCode::FORBIDDEN.into_response();
+    }
+
     let response = handle_mcp_request(&state.app_handle, req).await;
     
     let sessions = state.sessions.lock().await;
@@ -96,7 +139,7 @@ async fn post_handler(
         let _ = tx.send(Ok(Event::default().event("message").data(serde_json::to_string(&response).unwrap_or_default())));
     }
     
-    axum::http::StatusCode::ACCEPTED
+    axum::http::StatusCode::ACCEPTED.into_response()
 }
 
 async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpResponse {
