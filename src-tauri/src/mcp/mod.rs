@@ -18,8 +18,14 @@ use tauri::{AppHandle, Manager};
 use uuid::Uuid;
 use tower_http::cors::CorsLayer;
 
+// Static JSON Schemas for MCP
+const CAPABILITIES_JSON: &str = include_str!("schema/capabilities.json");
+const TOOLS_JSON: &str = include_str!("schema/tools.json");
+const RESOURCES_JSON: &str = include_str!("schema/resources.json");
+
 #[derive(Debug, Deserialize)]
 struct McpRequest {
+    #[allow(dead_code)]
     jsonrpc: String,
     method: String,
     #[serde(default)]
@@ -189,121 +195,29 @@ async fn handle_mcp_request(app_handle: &AppHandle, req: McpRequest) -> McpRespo
     
     match req.method.as_str() {
         "initialize" => {
+            let result: Value = serde_json::from_str(CAPABILITIES_JSON).unwrap();
             McpResponse {
                 jsonrpc: "2.0".to_string(),
                 id,
-                result: Some(json!({
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {},
-                        "resources": {}
-                    },
-                    "serverInfo": {
-                        "name": "network-spy-mcp",
-                        "version": "0.1.0"
-                    }
-                })),
+                result: Some(result),
                 error: None,
             }
         },
         "tools/list" => {
+            let result: Value = serde_json::from_str(TOOLS_JSON).unwrap();
             McpResponse {
                 jsonrpc: "2.0".to_string(),
                 id,
-                result: Some(json!({
-                    "tools": [
-                        {
-                            "name": "get_traffic_list",
-                            "description": "Get a list of intercepted HTTP traffic",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "limit": { "type": "integer", "default": 20 }
-                                }
-                            }
-                        },
-                        {
-                            "name": "list_scripts",
-                            "description": "List all active traffic modification scripts",
-                            "inputSchema": { "type": "object", "properties": {} }
-                        },
-                        {
-                            "name": "save_script",
-                            "description": "Create or update a scripting rule. Providing an 'id' updates an existing one.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "id": { "type": "string" },
-                                    "name": { "type": "string" },
-                                    "script": { "type": "string" },
-                                    "matching_rule": { "type": "string" },
-                                    "method": { "type": "string" },
-                                    "enabled": { "type": "boolean" },
-                                    "request": { "type": "boolean", "default": true },
-                                    "response": { "type": "boolean", "default": true }
-                                },
-                                "required": ["name", "script", "matching_rule"]
-                            }
-                        },
-                        {
-                            "name": "delete_script",
-                            "description": "Delete a scripting rule by ID",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": { "id": { "type": "string" } },
-                                "required": ["id"]
-                            }
-                        },
-                        {
-                            "name": "list_breakpoints",
-                            "description": "List all active traffic interception breakpoints",
-                            "inputSchema": { "type": "object", "properties": {} }
-                        },
-                        {
-                            "name": "save_breakpoint",
-                            "description": "Create or update a breakpoint. Providing an 'id' updates an existing one.",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": {
-                                    "id": { "type": "string" },
-                                    "name": { "type": "string" },
-                                    "matching_rule": { "type": "string" },
-                                    "method": { "type": "string" },
-                                    "enabled": { "type": "boolean" },
-                                    "request": { "type": "boolean", "default": true },
-                                    "response": { "type": "boolean", "default": true }
-                                },
-                                "required": ["name", "matching_rule"]
-                            }
-                        },
-                        {
-                            "name": "delete_breakpoint",
-                            "description": "Delete a breakpoint by ID",
-                            "inputSchema": {
-                                "type": "object",
-                                "properties": { "id": { "type": "string" } },
-                                "required": ["id"]
-                            }
-                        }
-                    ]
-                })),
+                result: Some(result),
                 error: None,
             }
         },
         "resources/list" => {
+            let result: Value = serde_json::from_str(RESOURCES_JSON).unwrap();
             McpResponse {
                 jsonrpc: "2.0".to_string(),
                 id,
-                result: Some(json!({
-                    "resources": [
-                        {
-                            "uri": "traffic://latest",
-                            "name": "Latest Traffic",
-                            "description": "The 50 most recent HTTP requests intercepted",
-                            "mimeType": "application/json"
-                        }
-                    ]
-                })),
+                result: Some(result),
                 error: None,
             }
         },

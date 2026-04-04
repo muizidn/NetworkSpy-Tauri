@@ -1,0 +1,11 @@
+{
+    "protocolVersion": "2024-11-05",
+    "capabilities": {
+        "tools": {},
+        "resources": {}
+    },
+    "serverInfo": {
+        "name": "network-spy-mcp",
+        "version": "0.1.0"
+    }
+}

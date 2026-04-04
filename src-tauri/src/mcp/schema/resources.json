@@ -1,0 +1,10 @@
+{
+    "resources": [
+        {
+            "uri": "traffic://latest",
+            "name": "Latest Traffic",
+            "description": "The 50 most recent HTTP requests intercepted",
+            "mimeType": "application/json"
+        }
+    ]
+}
