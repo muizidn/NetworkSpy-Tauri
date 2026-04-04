@@ -58,12 +58,16 @@ jobs:
         env:
           BRAND_NAME_PROD: "Network Spy"
           BRAND_NAME_DEV: "Network Spy (DEV)"
+          POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+          POSTHOG_HOST: ${{ secrets.VITE_POSTHOG_HOST }}
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
              echo "APP_NAME=$BRAND_NAME_PROD" > .env
           else
              echo "APP_NAME=$BRAND_NAME_DEV" > .env
           fi
+          echo "VITE_POSTHOG_KEY=$POSTHOG_KEY" >> .env
+          echo "VITE_POSTHOG_HOST=${POSTHOG_HOST:-https://app.posthog.com}" >> .env
 
       - name: Setup Perl
         uses: shogo82148/actions-setup-perl@v1
@@ -129,6 +133,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+          VITE_POSTHOG_HOST: ${{ secrets.VITE_POSTHOG_HOST }}
         with:
           tagName: ${{ needs.get-version.outputs.app_version }}
           releaseName: "Network Spy ${{ needs.get-version.outputs.app_version }}"
