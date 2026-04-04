@@ -31,6 +31,7 @@
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
     "postcss": "^8.4.25",
+    "posthog-js": "^1.364.7",
     "react": "^18.2.0",
     "react-accessible-treeview": "^2.9.1",
     "react-dnd": "^16.0.1",

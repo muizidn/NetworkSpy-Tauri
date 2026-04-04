@@ -1,5 +1,6 @@
 import React from "react";
 import { useFilterContext, FilterNode, FilterRule, FilterGroup, FilterType, FilterOperator, FilterTypes, FilterOperators } from "@src/context/FilterContext";
+import { useAnalytics } from "@src/context/AnalyticsProvider";
 import { v4 as uuidv4 } from "uuid";
 import { twMerge } from "tailwind-merge";
 import { FiSearch, FiX, FiAlertCircle } from "react-icons/fi";

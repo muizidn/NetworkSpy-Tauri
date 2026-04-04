@@ -113,29 +113,32 @@ import { TrafficListProvider } from "@src/packages/main-content/context/TrafficL
 import { TauriEnvProvider } from "@src/packages/app-env";
 import { PaneProvider } from "./context/PaneProvider";
 import { FilterPresetProvider } from "./context/FilterPresetContext";
+import { AnalyticsProvider } from "./context/AnalyticsProvider";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <TauriProvider>
-      <TagProvider>
-        <SessionProvider>
-          <ViewerProvider>
-            <SettingsProvider>
-              <FilterPresetProvider>
-                <TrafficListProvider>
-                  <TauriEnvProvider>
-                    <PaneProvider>
-                      <DndProvider backend={HTML5Backend}>
-                        <RouterProvider router={router} />
-                      </DndProvider>
-                    </PaneProvider>
-                  </TauriEnvProvider>
-                </TrafficListProvider>
-              </FilterPresetProvider>
-            </SettingsProvider>
-          </ViewerProvider>
-        </SessionProvider>
-      </TagProvider>
-    </TauriProvider>
+    <AnalyticsProvider>
+      <TauriProvider>
+        <TagProvider>
+          <SessionProvider>
+            <ViewerProvider>
+              <SettingsProvider>
+                <FilterPresetProvider>
+                  <TrafficListProvider>
+                    <TauriEnvProvider>
+                      <PaneProvider>
+                        <DndProvider backend={HTML5Backend}>
+                          <RouterProvider router={router} />
+                        </DndProvider>
+                      </PaneProvider>
+                    </TauriEnvProvider>
+                  </TrafficListProvider>
+                </FilterPresetProvider>
+              </SettingsProvider>
+            </ViewerProvider>
+          </SessionProvider>
+        </TagProvider>
+      </TauriProvider>
+    </AnalyticsProvider>
   </React.StrictMode>
 );
