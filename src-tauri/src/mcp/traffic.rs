@@ -1,9 +1,10 @@
 use serde_json::{json, Value};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
-use crate::traffic::db::{TrafficDb, FilterPreset};
+use crate::traffic::db::{TrafficDb, FilterPreset, TrafficMetadata};
 use uuid::Uuid;
 use crate::mcp::validator::{validate_filter_node, validate_filter_preset};
+use crate::traffic::filter_engine::FilterEngine;
 
 pub async fn handle_get_traffic_list(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
     let limit = args["limit"].as_u64().unwrap_or(20) as usize;
@@ -15,12 +16,50 @@ pub async fn handle_get_traffic_list(app_handle: &AppHandle, args: &Value) -> Re
     let method = args["method"].as_str().map(|s| s.to_string());
     let uri_contains = args["uri_contains"].as_str().map(|s| s.to_string());
     let status_code = args["status_code"].as_i64().map(|n| n as i32);
+    let filter_presets = args["filter_presets"].as_array();
     
     let db = app_handle.state::<Arc<TrafficDb>>();
     
-    match db.get_filtered_traffic(limit, offset, sort_by, sort_order, method, uri_contains, status_code) {
-        Ok(traffic) => Ok(json!(traffic)),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
+    // 1. Initial SQL fetch (basic filters + slightly larger limit for in-memory refinement)
+    let sql_limit = if filter_presets.is_some() { 1000 } else { limit };
+    let traffic_results = match db.get_filtered_traffic(sql_limit, offset, sort_by, sort_order, method, uri_contains, status_code) {
+        Ok(t) => t,
+        Err(e) => return Err(json!({ "code": -32000, "message": e.to_string() })),
+    };
+
+    // 2. If presets requested, perform advanced filtering in-memory
+    if let Some(preset_ids) = filter_presets {
+        if preset_ids.is_empty() {
+            return Ok(json!(traffic_results.into_iter().take(limit).collect::<Vec<_>>()));
+        }
+
+        // Fetch the full preset objects from DB
+        let all_saved_presets = db.get_filter_presets().unwrap_or_default();
+        let active_presets: Vec<FilterPreset> = all_saved_presets.into_iter()
+            .filter(|p| preset_ids.iter().any(|id| id.as_str() == Some(&p.id)))
+            .collect();
+
+        if active_presets.is_empty() {
+            return Ok(json!(traffic_results.into_iter().take(limit).collect::<Vec<_>>()));
+        }
+
+        // Combine presets with OR logic
+        let filtered: Vec<TrafficMetadata> = traffic_results.into_iter()
+            .filter(|traffic| {
+                active_presets.iter().any(|preset| {
+                    if let Ok(filters_json) = serde_json::from_str::<Value>(&preset.filters) {
+                        FilterEngine::matches_preset(traffic, &filters_json)
+                    } else {
+                        false
+                    }
+                })
+            })
+            .take(limit)
+            .collect();
+
+        Ok(json!(filtered))
+    } else {
+        Ok(json!(traffic_results))
     }
 }
 
@@ -74,9 +113,7 @@ pub async fn handle_save_filter_preset(app_handle: &AppHandle, args: &Value) -> 
     let id = args["id"].as_str().map(|s| s.to_string());
     let name = args["name"].as_str();
     let description = args["description"].as_str().map(|s| s.to_string());
-    
 
-    println!("args==>savefilter==>args: {}", args);
 
     // Performance: Only validate if the 'filters' structure is provided
     let mut filters_json = if args["filters"].is_array() {

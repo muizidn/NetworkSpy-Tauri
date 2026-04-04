@@ -8,3 +8,4 @@ pub mod sessions;
 pub mod viewers;
 pub mod bottom_pane;
 pub mod schema;
+pub mod filter_engine;

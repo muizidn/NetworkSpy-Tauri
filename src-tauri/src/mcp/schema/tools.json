@@ -14,6 +14,13 @@
                         "type": "integer",
                         "default": 0
                     },
+                    "filter_presets": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Array of saved filter preset IDs to apply. Multiple presets are combined with OR logic."
+                    },
                     "sort_by": {
                         "type": "string",
                         "enum": [

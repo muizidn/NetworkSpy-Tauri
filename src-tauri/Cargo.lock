@@ -24,6 +24,7 @@ dependencies = [
  "network_spy_proxy",
  "once_cell",
  "rcgen 0.12.1",
+ "regex",
  "rusqlite",
  "serde",
  "serde_json",

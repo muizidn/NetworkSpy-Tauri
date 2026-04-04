@@ -37,6 +37,7 @@ flate2 = "1.1.9"
 brotli = "8.0.2"
 base64 = "0.22.1"
 globset = "0.4.18"
+regex = "1.10"
 uuid = { version = "1.8", features = ["v4"] }
 rcgen = "0.12"
 hostname = "0.3"
