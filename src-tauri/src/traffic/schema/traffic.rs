@@ -163,6 +163,85 @@ pub fn get_all_metadata(conn: &Connection, limit: usize) -> rusqlite::Result<Vec
     Ok(results)
 }
 
+pub fn get_filtered_metadata(
+    conn: &Connection, 
+    limit: usize, 
+    offset: usize,
+    sort_by: Option<String>,
+    sort_order: Option<String>,
+    method: Option<String>,
+    uri_contains: Option<String>,
+    status_code: Option<i32>
+) -> rusqlite::Result<Vec<TrafficMetadata>> {
+    let mut query = "SELECT id, uri, method, version, req_headers, res_headers, status_code, intercepted, timestamp, client, tags FROM traffic WHERE 1=1".to_string();
+    let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+    if let Some(m) = method {
+        query.push_str(" AND method = ?");
+        params_vec.push(Box::new(m));
+    }
+
+    if let Some(uri) = uri_contains {
+        query.push_str(" AND uri LIKE ?");
+        params_vec.push(Box::new(format!("%{}%", uri)));
+    }
+
+    if let Some(sc) = status_code {
+        query.push_str(" AND status_code = ?");
+        params_vec.push(Box::new(sc));
+    }
+
+    let sort_col = match sort_by.as_deref() {
+        Some("method") => "method",
+        Some("uri") => "uri",
+        Some("status_code") => "status_code",
+        _ => "timestamp"
+    };
+
+    let order = match sort_order.as_deref() {
+        Some("asc") => "ASC",
+        _ => "DESC"
+    };
+
+    query.push_str(&format!(" ORDER BY {} {}", sort_col, order));
+    query.push_str(" LIMIT ? OFFSET ?");
+    
+    // We need to convert Box<dyn ToSql> to &dyn ToSql
+    let mut stmt = conn.prepare(&query)?;
+    
+    let mut param_refs: Vec<&dyn rusqlite::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+    let limit_box = Box::new(limit as i64);
+    let offset_box = Box::new(offset as i64);
+    param_refs.push(limit_box.as_ref());
+    param_refs.push(offset_box.as_ref());
+
+    let rows = stmt.query_map(&param_refs[..], |row| {
+        Ok(TrafficMetadata {
+            id: row.get(0)?,
+            uri: row.get(1)?,
+            method: row.get(2)?,
+            version: row.get(3)?,
+            req_headers: row.get(4)?,
+            res_headers: row.get(5)?,
+            status_code: row.get(6)?,
+            intercepted: row.get::<_, i32>(7)? != 0,
+            timestamp: row.get(8)?,
+            req_body_size: 0,
+            res_body_size: 0,
+            client: row.get(9)?,
+            tags: row.get::<_, Option<String>>(10)?
+                .map(|s| serde_json::from_str(&s).unwrap_or_default())
+                .unwrap_or_default(),
+        })
+    })?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row?);
+    }
+    Ok(results)
+}
+
 pub fn get_allow_list(conn: &Connection) -> rusqlite::Result<Vec<String>> {
     let mut stmt = conn.prepare("SELECT domain FROM allow_list")?;
     let rows = stmt.query_map([], |row| row.get(0))?;

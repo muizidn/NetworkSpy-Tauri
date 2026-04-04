@@ -208,6 +208,28 @@ impl TrafficDb {
         crate::traffic::schema::traffic::get_all_metadata(&self.conn.lock().unwrap(), limit)
     }
 
+    pub fn get_filtered_traffic(
+        &self, 
+        limit: usize, 
+        offset: usize,
+        sort_by: Option<String>,
+        sort_order: Option<String>,
+        method: Option<String>,
+        uri_contains: Option<String>,
+        status_code: Option<i32>
+    ) -> rusqlite::Result<Vec<TrafficMetadata>> {
+        crate::traffic::schema::traffic::get_filtered_metadata(
+            &self.conn.lock().unwrap(), 
+            limit, 
+            offset, 
+            sort_by, 
+            sort_order, 
+            method, 
+            uri_contains, 
+            status_code
+        )
+    }
+
     pub fn get_allow_list(&self) -> rusqlite::Result<Vec<String>> {
         crate::traffic::schema::traffic::get_allow_list(&self.conn.lock().unwrap())
     }
@@ -465,7 +487,7 @@ pub struct TrafficMetadata {
     pub tags: Vec<String>,
 }
 
-#[derive(Clone, serde::Serialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
 pub struct RequestResponseData {
     pub headers: HashMap<String, String>,
     pub body: Vec<u8>,
@@ -473,6 +495,18 @@ pub struct RequestResponseData {
     pub content_encoding: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status_code: Option<i32>,
+}
+
+impl Default for RequestResponseData {
+    fn default() -> Self {
+        Self {
+            headers: HashMap::new(),
+            body: Vec::new(),
+            content_type: "text/plain".to_string(),
+            content_encoding: None,
+            status_code: None,
+        }
+    }
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]

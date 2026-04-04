@@ -2,13 +2,35 @@
     "tools": [
         {
             "name": "get_traffic_list",
-            "description": "Get a list of intercepted HTTP traffic",
+            "description": "Get a list of intercepted HTTP traffic with advanced filtering and sorting",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "limit": { "type": "integer", "default": 20 }
+                    "limit": { "type": "integer", "default": 20 },
+                    "offset": { "type": "integer", "default": 0 },
+                    "sort_by": { "type": "string", "enum": ["timestamp", "method", "uri", "status_code"], "default": "timestamp" },
+                    "sort_order": { "type": "string", "enum": ["asc", "desc"], "default": "desc" },
+                    "method": { "type": "string", "description": "Filter by HTTP method (GET, POST, etc.)" },
+                    "uri_contains": { "type": "string", "description": "Filter by substring in URI" },
+                    "status_code": { "type": "integer", "description": "Filter by exact status code" }
                 }
             }
+        },
+        {
+            "name": "get_traffic_details",
+            "description": "Get full request and response details for a specific traffic item including headers and bodies",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "The unique UUID of the traffic item" }
+                },
+                "required": ["id"]
+            }
+        },
+        {
+            "name": "list_filter_presets",
+            "description": "List all saved filter presets from the user's settings",
+            "inputSchema": { "type": "object", "properties": {} }
         },
         {
             "name": "list_scripts",
