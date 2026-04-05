@@ -4,10 +4,10 @@ import { LeftSidebar } from "./packages/sidebar/LeftSidebar";
 import { ProStatusDialog } from "./packages/sidebar/ProStatusDialog";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { twMerge } from "tailwind-merge";
-
-
+import { useAppUpdater } from "./hooks/useAppUpdater";
 
 export default function Layout() {
+  useAppUpdater();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const [proDialogStatus, setProDialogStatus] = useState<'trial' | 'pro'>('pro');
   const [isMainWindow, setIsMainWindow] = useState(true);
