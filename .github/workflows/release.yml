@@ -162,7 +162,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: "network-spy"
-          SENTRY_PROJECT: "network-spy-tauri"
+          SENTRY_PROJECT: "desktop-app"
         shell: bash
         run: |
           # Install Sentry CLI if not exists

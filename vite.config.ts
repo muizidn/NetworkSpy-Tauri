@@ -12,7 +12,7 @@ export default defineConfig({
     sentryVitePlugin({
         authToken: process.env.SENTRY_AUTH_TOKEN,
         org: "network-spy",
-        project: "network-spy-tauri",
+        project: "desktop-app",
         disable: !process.env.SENTRY_AUTH_TOKEN,
     }),
   ],
