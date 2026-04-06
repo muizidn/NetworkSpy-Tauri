@@ -3,7 +3,6 @@ use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 use crate::traffic::db::{TrafficDb, FilterPreset, TrafficMetadata};
 use uuid::Uuid;
-use crate::mcp::validator::{validate_filter_node, validate_filter_preset};
 use crate::traffic::filter_engine::FilterEngine;
 
 pub async fn handle_get_traffic_list(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {

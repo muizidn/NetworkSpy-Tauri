@@ -35,7 +35,7 @@ pub fn run_script(script: &str, mut data: BreakpointData) -> Result<BreakpointDa
         )
         .build();
 
-    context.register_global_property(JsString::from("console"), console, Attribute::all());
+    let _ = context.register_global_property(JsString::from("console"), console, Attribute::all());
 
     // Prepare Request/Response objects
     let headers_map = &data.headers;
