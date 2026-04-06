@@ -165,5 +165,5 @@ jobs:
           SENTRY_ORG: "network-spy"
           SENTRY_PROJECT: "desktop-app"
         with:
-          version: ${{ needs.get-version.outputs.app_version }}
+          release: ${{ needs.get-version.outputs.app_version }}
           sourcemaps: "./src-tauri/target/release/"
