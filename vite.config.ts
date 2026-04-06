@@ -13,6 +13,7 @@ export default defineConfig({
         authToken: process.env.SENTRY_AUTH_TOKEN,
         org: "network-spy",
         project: "network-spy-tauri",
+        disable: !process.env.SENTRY_AUTH_TOKEN,
     }),
   ],
   resolve: {
@@ -40,6 +41,6 @@ export default defineConfig({
     // don't minify for debug builds
     minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
     // produce sourcemaps for debug builds, or for Sentry in production
-    sourcemap: true,
+    sourcemap: !!process.env.SENTRY_AUTH_TOKEN || !!process.env.TAURI_DEBUG,
   },
 });
