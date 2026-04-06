@@ -56,24 +56,22 @@ jobs:
       - name: Create .env file
         shell: bash
         env:
-          BRAND_NAME_PROD: "Network Spy"
-          BRAND_NAME_DEV: "Network Spy (DEV)"
+          APP_NAME: ${{ github.ref_name == 'main' && 'Network Spy' || 'Network Spy (DEV)' }}
           POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
           POSTHOG_HOST: ${{ secrets.VITE_POSTHOG_HOST }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
-             echo "APP_NAME=$BRAND_NAME_PROD" > .env
-          else
-             echo "APP_NAME=$BRAND_NAME_DEV" > .env
-          fi
+          echo "APP_NAME=$APP_NAME" > .env
           echo "VITE_POSTHOG_KEY=$POSTHOG_KEY" >> .env
           echo "VITE_POSTHOG_HOST=${POSTHOG_HOST:-https://app.posthog.com}" >> .env
           echo "VITE_SENTRY_DSN=$VITE_SENTRY_DSN" >> .env
           echo "SENTRY_DSN=$SENTRY_DSN" >> .env
           echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env
+          
+          # Verify file contents (Secrets will stay masked by GitHub)
+          cat .env
 
       - name: Setup Perl
         uses: shogo82148/actions-setup-perl@v1
