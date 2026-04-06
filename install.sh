@@ -8,6 +8,12 @@
 set -e
 
 GITHUB_REPO="muizidn/NetworkSpy-Tauri"
+SCRIPT_BRANCH="main"
+
+# Fetch latest commit ID for transparency (silently)
+COMMIT_ID=$(curl -s -H "Cache-Control: no-cache" "https://api.github.com/repos/$GITHUB_REPO/commits/$SCRIPT_BRANCH" | grep '"sha":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/' | cut -c1-7)
+COMMIT_ID=${COMMIT_ID:-"unknown"}
+
 REPO_URL="https://github.com/$GITHUB_REPO"
 API_URL="https://api.github.com/repos/$GITHUB_REPO/releases"
 
@@ -28,6 +34,7 @@ done
 TEMP_DIR=$(mktemp -d)
 
 echo "🚀 Starting Network Spy Installation..."
+echo "📂 Script Source: github.com/$GITHUB_REPO ($SCRIPT_BRANCH#$COMMIT_ID)"
 
 # 1. Platform Detection
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')

@@ -5,8 +5,18 @@ param (
 )
 
 $REPO = "muizidn/NetworkSpy-Tauri"
+$SCRIPT_BRANCH = "develop"
+
+# Fetch latest commit ID for transparency
+try {
+    $COMMIT_INFO = Invoke-RestMethod -Uri "https://api.github.com/repos/$REPO/commits/$SCRIPT_BRANCH" -Method Get -Headers @{"Cache-Control"="no-cache"} -ErrorAction SilentlyContinue
+    $COMMIT_ID = ($COMMIT_INFO.sha).Substring(0, 7)
+} catch {
+    $COMMIT_ID = "unknown"
+}
 
 Write-Host "--- Network Spy DEVELOPMENT Installation for Windows ---" -ForegroundColor Yellow
+Write-Host "[*] Script Source: github.com/$REPO ($SCRIPT_BRANCH#$COMMIT_ID)" -ForegroundColor Gray
 
 # 1. Version Detection (Latest including pre-releases/dev builds)
 if ([string]::IsNullOrWhiteSpace($Version) -or $Version -eq "latest") {
