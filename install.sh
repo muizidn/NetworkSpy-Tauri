@@ -47,10 +47,10 @@ fi
 # 2. Version Detection
 if [ -z "$VERSION" ] || [ "$VERSION" = "latest" ]; then
     echo "🔍 Fetching latest version info..."
-    VERSION=$(curl -s $API_URL/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    VERSION=$(curl -s -H "Cache-Control: no-cache" $API_URL/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     if [ -z "$VERSION" ]; then
         # Fallback if no 'latest' release exists (common for develop builds)
-        VERSION=$(curl -s $API_URL | grep '"tag_name":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+        VERSION=$(curl -s -H "Cache-Control: no-cache" $API_URL | grep '"tag_name":' | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
     fi
 fi
 

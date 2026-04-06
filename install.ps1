@@ -60,7 +60,7 @@ if ([string]::IsNullOrWhiteSpace($Version) -or $Version -eq "latest") {
     Write-Host "[*] Fetching latest version info..."
     try {
         $RELEASE_URL = "https://api.github.com/repos/$REPO/releases/latest"
-        $RELEASE_INFO = Invoke-RestMethod -Uri $RELEASE_URL -Method Get -ErrorAction Stop
+        $RELEASE_INFO = Invoke-RestMethod -Uri $RELEASE_URL -Method Get -Headers @{"Cache-Control"="no-cache"} -ErrorAction Stop
         $Version = $RELEASE_INFO.tag_name
     } catch {
         Write-Host "[!] Could not fetch latest release info, looking for any tagged version..." -ForegroundColor Yellow
