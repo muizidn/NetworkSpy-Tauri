@@ -67,6 +67,15 @@ fn main() {
     
     let app_name = std::env::var("APP_NAME").expect("FATAL: APP_NAME not found in .env file. Please ensure a .env file exists in the root with APP_NAME defined.");
 
+    let _guard = if let Ok(dsn) = std::env::var("SENTRY_DSN") {
+        Some(sentry::init((dsn, sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        })))
+    } else {
+        None
+    };
+
     let args: Vec<String> = std::env::args().collect();
     let app_data_dir = get_app_data_dir();
     

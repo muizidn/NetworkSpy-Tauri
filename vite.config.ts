@@ -1,12 +1,20 @@
 import { defineConfig } from "vite";
 import { resolve } from 'path';
 import react from "@vitejs/plugin-react";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 const root = resolve(__dirname, 'src');
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    sentryVitePlugin({
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        org: "network-spy",
+        project: "network-spy-tauri",
+    }),
+  ],
   resolve: {
     alias: {
       "@src": root,
@@ -31,7 +39,7 @@ export default defineConfig({
     target: process.env.TAURI_PLATFORM == "windows" ? "chrome105" : "safari13",
     // don't minify for debug builds
     minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
-    // produce sourcemaps for debug builds
-    sourcemap: !!process.env.TAURI_DEBUG,
+    // produce sourcemaps for debug builds, or for Sentry in production
+    sourcemap: true,
   },
 });

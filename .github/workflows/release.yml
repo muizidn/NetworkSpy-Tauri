@@ -60,6 +60,9 @@ jobs:
           BRAND_NAME_DEV: "Network Spy (DEV)"
           POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
           POSTHOG_HOST: ${{ secrets.VITE_POSTHOG_HOST }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
              echo "APP_NAME=$BRAND_NAME_PROD" > .env
@@ -68,6 +71,9 @@ jobs:
           fi
           echo "VITE_POSTHOG_KEY=$POSTHOG_KEY" >> .env
           echo "VITE_POSTHOG_HOST=${POSTHOG_HOST:-https://app.posthog.com}" >> .env
+          echo "VITE_SENTRY_DSN=$VITE_SENTRY_DSN" >> .env
+          echo "SENTRY_DSN=$SENTRY_DSN" >> .env
+          echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env
 
       - name: Setup Perl
         uses: shogo82148/actions-setup-perl@v1
@@ -137,6 +143,7 @@ jobs:
           VITE_POSTHOG_HOST: ${{ secrets.VITE_POSTHOG_HOST }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PASSWORD: ${{ secrets.TAURI_SIGNING_PASSWORD }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         with:
           tagName: ${{ needs.get-version.outputs.app_version }}
           releaseName: "Network Spy ${{ needs.get-version.outputs.app_version }}"
@@ -149,3 +156,17 @@ jobs:
             - **Environment**: ${{ matrix.platform }}
           releaseDraft: ${{ github.ref_name != 'develop' }}
           prerelease: ${{ github.ref_name != 'main' }}
+
+      - name: Upload Sentry Rust Debug Symbols
+        if: env.SENTRY_AUTH_TOKEN != ''
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: "network-spy"
+          SENTRY_PROJECT: "network-spy-tauri"
+        shell: bash
+        run: |
+          # Install Sentry CLI if not exists
+          curl -sL https://sentry.io/get-cli/ | bash
+          
+          # Upload debug files from the target directory
+          sentry-cli debug-files upload --include-sources src-tauri/target/release/
