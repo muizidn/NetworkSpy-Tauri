@@ -70,13 +70,27 @@ cd "$TEMP_DIR"
 
 if [ "$OS" = "darwin" ]; then
     # macOS Installation (.dmg)
-    # Asset naming pattern: network-spy_0.1.0_x64.dmg 
-    FILENAME="network-spy_${VERSION#v}_${ARCH_NAME_MAC}.dmg"
-    DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
+    echo "🔍 Discovering macOS assets..."
+    
+    # Discovery based on extension and architecture
+    ASSET_DATA=$(curl -s "https://api.github.com/repos/$GITHUB_REPO/releases/tags/$VERSION" | grep "browser_download_url" | grep ".dmg" | grep "$ARCH_NAME_MAC" | head -n 1) || true
+    
+    if [ -z "$ASSET_DATA" ]; then
+        # Fallback for universal or differently named builds
+        ASSET_DATA=$(curl -s "https://api.github.com/repos/$GITHUB_REPO/releases/tags/$VERSION" | grep "browser_download_url" | grep ".dmg" | head -n 1)
+    fi
+
+    DOWNLOAD_URL=$(echo "$ASSET_DATA" | sed -E 's/.*"([^"]+)".*/\1/')
+    FILENAME=$(basename "$DOWNLOAD_URL")
+
+    if [ -z "$DOWNLOAD_URL" ]; then
+        echo "❌ Could not find a suitable .dmg asset in release $VERSION."
+        exit 1
+    fi
     
     echo "⬇️ Downloading $FILENAME..."
     if ! curl -L -O "$DOWNLOAD_URL"; then
-        echo "❌ Download failed. Is the version/platform correct? URL: $DOWNLOAD_URL"
+        echo "❌ Download failed. URL: $DOWNLOAD_URL"
         exit 1
     fi
     
@@ -105,16 +119,24 @@ if [ "$OS" = "darwin" ]; then
     rm "$FILENAME"
     
     echo "✅ Success! Network Spy is now in your Applications folder."
-    echo "💡 You can open it using: open -a 'Network Spy'"
+    echo "💡 You can open it using: open -a '$APP_NAME'"
 
 elif [ "$OS" = "linux" ]; then
     # Linux Installation (.deb)
-    FILENAME="network-spy_${VERSION#v}_${ARCH_NAME}.deb"
-    DOWNLOAD_URL="$REPO_URL/releases/download/$VERSION/$FILENAME"
+    echo "🔍 Discovering Linux assets..."
+    
+    ASSET_DATA=$(curl -s "https://api.github.com/repos/$GITHUB_REPO/releases/tags/$VERSION" | grep "browser_download_url" | grep ".deb" | grep "$ARCH_NAME" | head -n 1) || true
+    DOWNLOAD_URL=$(echo "$ASSET_DATA" | sed -E 's/.*"([^"]+)".*/\1/')
+    FILENAME=$(basename "$DOWNLOAD_URL")
+
+    if [ -z "$DOWNLOAD_URL" ]; then
+        echo "❌ Could not find a suitable .deb asset."
+        exit 1
+    fi
     
     echo "⬇️ Downloading $FILENAME..."
     if ! curl -L -O "$DOWNLOAD_URL"; then
-        echo "❌ Download failed. Is the version/platform correct? URL: $DOWNLOAD_URL"
+        echo "❌ Download failed. URL: $DOWNLOAD_URL"
         exit 1
     fi
     

@@ -101,8 +101,8 @@ Write-Host "[*] Target Version: $Version" -ForegroundColor Gray
 Write-Host "[*] Platform: Windows ($MSI_ARCH)" -ForegroundColor Gray
 
 # 3. Find Matching Asset (Robust Discovery)
-# Looking for pattern: network-spy_.*_x64_en-US.msi
-$ASSET_PATTERN = "network-spy_.*_$($MSI_ARCH)_en-US\.msi"
+# Looking for pattern: (Network.Spy|network-spy)_.*_x64_en-US.msi (Case Insensitive)
+$ASSET_PATTERN = "^(?i)(Network|network)[-.]Spy_.*_$($MSI_ARCH)_.*\.msi$"
 $MATCHING_ASSET = $RELEASE_INFO.assets | Where-Object { $_.name -match $ASSET_PATTERN } | Select-Object -First 1
 
 if ($null -eq $MATCHING_ASSET) {
