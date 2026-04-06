@@ -157,16 +157,13 @@ jobs:
           releaseDraft: ${{ github.ref_name != 'develop' }}
           prerelease: ${{ github.ref_name != 'main' }}
 
-      - name: Upload Sentry Rust Debug Symbols
+      - name: Sentry Release
         if: env.SENTRY_AUTH_TOKEN != ''
+        uses: getsentry/action-release@v3
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: "network-spy"
           SENTRY_PROJECT: "desktop-app"
-        shell: bash
-        run: |
-          # Install Sentry CLI if not exists
-          curl -sL https://sentry.io/get-cli/ | bash
-          
-          # Upload debug files from the target directory
-          sentry-cli debug-files upload --include-sources src-tauri/target/release/
+        with:
+          version: ${{ needs.get-version.outputs.app_version }}
+          sourcemaps: "./src-tauri/target/release/"
