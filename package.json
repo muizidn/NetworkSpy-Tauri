@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
+    "@posthog/react": "^1.8.3",
     "@sentry/browser": "^10.47.0",
     "@sentry/react": "^10.47.0",
     "@sentry/vite-plugin": "^5.1.1",
