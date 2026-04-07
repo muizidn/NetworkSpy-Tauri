@@ -33,9 +33,9 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   setShowConnectMethod: () => {},
   streamCertificateLogs: false,
   setStreamCertificateLogs: () => {},
-  mcpStdioEnabled: true,
+  mcpStdioEnabled: false,
   setMcpStdioEnabled: () => {},
-  mcpHttpEnabled: true,
+  mcpHttpEnabled: false,
   setMcpHttpEnabled: () => {},
   mcpHttpPort: 3001,
   setMcpHttpPort: () => {},
@@ -51,8 +51,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   });
   const [showConnectMethod, setShowConnectMethod] = useState(false);
   const [streamCertificateLogs, setStreamCertificateLogs] = useState(false);
-  const [mcpStdioEnabled, setMcpStdioEnabled] = useState(true);
-  const [mcpHttpEnabled, setMcpHttpEnabled] = useState(true);
+  const [mcpStdioEnabled, setMcpStdioEnabled] = useState(false);
+  const [mcpHttpEnabled, setMcpHttpEnabled] = useState(false);
   const [mcpHttpPort, setMcpHttpPort] = useState(3001);
 
   useEffect(() => {
