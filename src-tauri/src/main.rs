@@ -56,22 +56,19 @@ use crate::traffic::db::{is_text_content_type, body_to_string};
 use commands::*;
 
 fn main() {
-    // Try to load .env from current directory or parent directory (root)
-    if dotenvy::dotenv().is_err() {
-        if let Ok(parent) = std::env::current_dir().map(|p| p.parent().map(|pp| pp.to_path_buf())) {
-            if let Some(parent_path) = parent {
-                dotenvy::from_path(parent_path.join(".env")).ok();
-            }
-        }
-    }
-    
-    let app_name = std::env::var("APP_NAME").expect("FATAL: APP_NAME not found in .env file. Please ensure a .env file exists in the root with APP_NAME defined.");
+    // Use compile-time environment variables (baked into the binary via build.rs)
+    // This ensures no .env file is needed at runtime.
+    let app_name = env!("APP_NAME");
 
-    let _guard = if let Ok(dsn) = std::env::var("SENTRY_DSN") {
-        Some(sentry::init((dsn, sentry::ClientOptions {
-            release: sentry::release_name!(),
-            ..Default::default()
-        })))
+    let _guard = if let Some(dsn) = option_env!("SENTRY_DSN") {
+        if !dsn.is_empty() {
+            Some(sentry::init((dsn, sentry::ClientOptions {
+                release: sentry::release_name!(),
+                ..Default::default()
+            })))
+        } else {
+            None
+        }
     } else {
         None
     };
