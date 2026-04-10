@@ -5,7 +5,7 @@ import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { useAppProvider } from "@src/packages/app-env";
 import { RequestPairData } from "../../RequestTab";
-import { decodeBody, parseBodyAsJson, parseSSE } from "../../utils/bodyUtils";
+import { decodeBody, parseBodyAsJson, parseSSE, ToolCall } from "../../utils/bodyUtils";
 
 // Colors for token visualization
 const TOKEN_COLORS = [
@@ -53,24 +53,25 @@ export const LLMTokenAnalyzerMode = () => {
     }).finally(() => setLoading(false));
   }, [selected, provider]);
 
-  const extractText = (data: RequestPairData | null, type: 'input' | 'output') => {
-    if (!data?.body) return "";
-    
+  const extractData = (data: RequestPairData | null, type: 'input' | 'output'): { text: string; toolCalls: ToolCall[] } => {
+    if (!data?.body) return { text: "", toolCalls: [] };
+
     const contentType = data.content_type || "";
     const headers = data.headers || [];
     const transferEncoding = headers.find(h => h.key.toLowerCase() === 'transfer-encoding')?.value || "";
-    
+
     // SSE detection: usually text/event-stream, often chunked
-    const isSSE = contentType.toLowerCase().includes("event-stream") || 
-                  (contentType.toLowerCase().includes("text/") && transferEncoding.toLowerCase().includes("chunked") && decodeBody(data.body).includes("data: "));
+    const isSSE = contentType.toLowerCase().includes("event-stream") ||
+      (contentType.toLowerCase().includes("text/") && transferEncoding.toLowerCase().includes("chunked") && decodeBody(data.body).includes("data: "));
 
     if (isSSE && type === 'output') {
-        return parseSSE(data.body);
+      const { content, toolCalls } = parseSSE(data.body);
+      return { text: content, toolCalls };
     }
 
     const parsed = parseBodyAsJson(data.body);
     if (!parsed) {
-      return decodeBody(data.body);
+      return { text: decodeBody(data.body), toolCalls: [] };
     }
 
     try {
@@ -81,34 +82,44 @@ export const LLMTokenAnalyzerMode = () => {
         const choices = parsed.choices || [];
         const choice = choices[index] || choices[0];
         const content = choice?.message?.content || choice?.text || parsed.content || "";
+        const toolCalls = choice?.message?.tool_calls || [];
 
         if (Array.isArray(content)) {
-          return content.map((p: any) => p.text || "").join("\n");
+          return { text: content.map((p: any) => p.text || "").join("\n"), toolCalls };
         }
-        return String(content || "");
+        return { text: String(content || ""), toolCalls };
       }
 
       // Request patterns (Prompt)
       if (type === 'input') {
+        let toolCalls: ToolCall[] = [];
+        let text = "";
+
         if (parsed.messages && Array.isArray(parsed.messages)) {
-          return parsed.messages.map((m: any) => {
+          text = parsed.messages.map((m: any) => {
             let contentStr = "";
             if (typeof m.content === 'string') {
               contentStr = m.content;
             } else if (Array.isArray(m.content)) {
               contentStr = m.content.map((p: any) => p.text || "").join("\n");
             }
+            if (m.tool_calls) toolCalls = [...toolCalls, ...m.tool_calls];
             return `${m.role.toUpperCase()}:\n${contentStr}`;
           }).join("\n\n");
+        } else if (parsed.prompt) {
+          text = parsed.prompt;
         }
-        if (parsed.prompt) return parsed.prompt;
+        return { text, toolCalls };
       }
     } catch (e) { }
-    return decodeBody(data.body);
+    return { text: decodeBody(data.body), toolCalls: [] };
   };
 
-  const inputText = useMemo(() => extractText(inputData, 'input'), [inputData, inputChoiceIndex]);
-  const outputText = useMemo(() => extractText(outputData, 'output'), [outputData, outputChoiceIndex]);
+  const inputInfo = useMemo(() => extractData(inputData, 'input'), [inputData, inputChoiceIndex]);
+  const outputInfo = useMemo(() => extractData(outputData, 'output'), [outputData, outputChoiceIndex]);
+
+  const inputText = inputInfo.text;
+  const outputText = outputInfo.text;
 
   const enc = useMemo(() => getEncoding(encodingName), [encodingName]);
 
@@ -128,6 +139,7 @@ export const LLMTokenAnalyzerMode = () => {
   const outputAnalysis = useMemo(() => analyze(outputText), [outputText, enc]);
 
   const activeAnalysis = viewMode === "input" ? inputAnalysis : outputAnalysis;
+  const activeToolCalls = viewMode === "input" ? inputInfo.toolCalls : outputInfo.toolCalls;
 
   if (!selected) return <Placeholder text="Select a traffic item to analyze tokens" />;
   if (loading) return <Placeholder text="Analyzing full transaction..." icon={<FiLayers className="animate-spin" size={32} />} />;
@@ -236,6 +248,25 @@ export const LLMTokenAnalyzerMode = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-indigo-500/5 via-transparent to-transparent">
+            {activeToolCalls.length > 0 && (
+              <div className="mb-8 p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-2">
+                    <FiZap size={12} /> Structured Tool Calls Detected
+                  </h3>
+                  <span className="text-[9px] text-zinc-600 italic">Excluded from text token count</span>
+                </div>
+                <div className="grid grid-cols-1 @sm:grid-cols-2 gap-2">
+                  {activeToolCalls.map((tc, idx) => (
+                    <div key={idx} className="p-2 bg-black/40 rounded border border-zinc-800 font-mono text-[10px]">
+                      <div className="text-amber-400 font-bold truncate">{tc.function?.name}()</div>
+                      <div className="text-zinc-600 text-[8px] truncate mt-1">ID: {tc.id}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {activeAnalysis.count > 0 ? (
               <div className="flex flex-wrap gap-y-2 leading-relaxed">
                 {activeAnalysis.decodedTokens.map((token, i) => (
@@ -252,8 +283,9 @@ export const LLMTokenAnalyzerMode = () => {
                 ))}
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-zinc-700 italic text-sm">
-                No content to visualize for this {viewMode}
+              <div className="h-full flex flex-col items-center justify-center text-zinc-700 italic text-sm gap-2">
+                <FiDatabase size={32} className="opacity-20" />
+                <span>No textual content to visualize for this {viewMode}</span>
               </div>
             )}
           </div>

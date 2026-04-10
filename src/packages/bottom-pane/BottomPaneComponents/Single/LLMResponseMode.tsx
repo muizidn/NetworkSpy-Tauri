@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { useAppProvider } from "@src/packages/app-env";
 import { RequestPairData } from "../../RequestTab";
-import { decodeBody, parseBodyAsJson, parseSSE } from "../../utils/bodyUtils";
+import { decodeBody, parseBodyAsJson, parseSSE, ToolCall } from "../../utils/bodyUtils";
 
 export const LLMResponseMode = () => {
   const { provider } = useAppProvider();
@@ -41,11 +41,13 @@ export const LLMResponseMode = () => {
                   (contentType.toLowerCase().includes("text/") && transferEncoding.toLowerCase().includes("chunked") && decodeBody(body).includes("data: "));
 
     if (isSSE) {
+        const { content, toolCalls, model, finishReason, usage } = parseSSE(body);
         return {
-            content: parseSSE(body),
-            model: "sse-stream",
-            usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
-            finishReason: "stop",
+            content,
+            toolCalls,
+            model: model || "sse-stream",
+            usage: usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+            finishReason: finishReason || "stop",
             raw: null,
             choiceCount: 1
         };
@@ -56,6 +58,7 @@ export const LLMResponseMode = () => {
         if (!body) return null;
         return { 
           content: decodeBody(body), 
+          toolCalls: [],
           model: "raw-data", 
           usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
           finishReason: "n/a",
@@ -69,14 +72,16 @@ export const LLMResponseMode = () => {
       const choice = choices[choiceIndex] || choices[0] || {};
       
       const content = choice.message?.content || choice.text || parsed.content || "";
+      const toolCalls = choice.message?.tool_calls || [];
       const model = parsed.model || "unknown-model";
-      const usage = parsed.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
+      const usage = parsed.usage || parsed.usage_metadata || parsed.usageMetadata || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
       const finishReason = choice.finish_reason || "unknown";
 
-      return { content, model, usage, finishReason, raw: parsed, choiceCount: choices.length };
+      return { content, toolCalls, model, usage, finishReason, raw: parsed, choiceCount: choices.length };
     } catch (e) {
       return { 
         content: decodeBody(data?.body), 
+        toolCalls: [],
         model: "raw-data", 
         usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
         finishReason: "n/a",
@@ -118,7 +123,7 @@ export const LLMResponseMode = () => {
   if (loading) return <Placeholder text="Fetching AI response data..." />;
   if (!responseInfo) return <Placeholder text="No valid LLM response body found" icon={<FiInfo size={32} />} />;
 
-  const { content, model, usage, finishReason, choiceCount } = responseInfo;
+  const { content, toolCalls, model, usage, finishReason, choiceCount } = responseInfo;
 
   return (
     <div className="flex flex-col h-full bg-[#15181a] text-zinc-300 overflow-hidden select-none">
@@ -228,10 +233,43 @@ export const LLMResponseMode = () => {
 
           <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
             <div className="max-w-2xl mx-auto space-y-4">
-               {/* Content Rendering */}
-               <div className="text-lg leading-relaxed text-zinc-200 font-serif">
-                  {renderContent(content)}
-               </div>
+                {/* Tool Calls Rendering */}
+                {toolCalls && toolCalls.length > 0 && (
+                  <div className="space-y-4 mt-8 pt-8 border-t border-zinc-800">
+                    <h3 className="text-[10px] uppercase font-bold text-zinc-500 tracking-widest flex items-center gap-2">
+                       <FiCode size={12} className="text-blue-500" /> Tool Invitations
+                    </h3>
+                    <div className="space-y-3">
+                      {toolCalls.map((tc: ToolCall, idx: number) => (
+                        <div key={idx} className="bg-zinc-900/50 rounded-xl border border-zinc-800/50 overflow-hidden">
+                          <div className="px-4 py-2 bg-zinc-800/30 border-b border-zinc-800/50 flex items-center justify-between">
+                             <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-zinc-500 bg-black/30 px-1.5 py-0.5 rounded italic">#{tc.id || idx}</span>
+                                <span className="text-xs font-bold text-blue-400 font-mono tracking-tight">{tc.function?.name}()</span>
+                             </div>
+                             <span className="text-[9px] uppercase font-bold text-zinc-600 tracking-tighter">{tc.type}</span>
+                          </div>
+                          <div className="p-4 bg-[#0a0a0a]">
+                             <pre className="text-[11px] font-mono text-zinc-400 leading-relaxed overflow-x-auto">
+                                {(() => {
+                                  try {
+                                    return JSON.stringify(JSON.parse(tc.function?.arguments || "{}"), null, 2);
+                                  } catch (e) {
+                                    return tc.function?.arguments || "{}";
+                                  }
+                                })()}
+                             </pre>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Content Rendering */}
+                <div className="text-lg leading-relaxed text-zinc-200 font-serif">
+                   {renderContent(content)}
+                </div>
             </div>
           </div>
 
