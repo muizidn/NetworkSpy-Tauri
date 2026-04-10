@@ -5,6 +5,7 @@ import { FiSearch } from "react-icons/fi";
 import { BsPinAngleFill } from "react-icons/bs";
 import { twMerge } from "tailwind-merge";
 import { useViewerContext } from "@src/context/ViewerContext";
+import { useAnalytics } from "@src/context/AnalyticsProvider";
 
 interface ViewerOption {
   id: string;
@@ -17,6 +18,7 @@ export const BottomPaneOptions = () => {
   const { setMode, selectionType, setSelectionType, mode: currentMode } = useBottomPaneContext();
   const { selections } = useTrafficListContext();
   const { viewers } = useViewerContext();
+  const analytics = useAnalytics();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [pinnedModes, setPinnedModes] = useState<string[]>(() => {
@@ -43,6 +45,14 @@ export const BottomPaneOptions = () => {
 
   // Centralized click handler
   const handleModeSelection = (opt: ViewerOption) => {
+    analytics.track("select_viewer", {
+      viewerId: opt.id,
+      viewerTitle: opt.title,
+      isCustom: opt.isCustom || false,
+      selectionType: selectionType,
+      trafficId: selections.firstSelected?.id
+    });
+
     if (opt.isCustom) {
       setMode({ type: "viewer", id: opt.id });
     } else {
