@@ -42,6 +42,16 @@ pub fn create_help_submenu<R: tauri::Runtime>(manager: &impl Manager<R>) -> taur
         .build()
 }
 
+pub fn create_traffic_submenu<R: tauri::Runtime>(manager: &impl Manager<R>) -> tauri::Result<Submenu<R>> {
+    SubmenuBuilder::new(manager, "Traffic")
+        .item(&MenuItemBuilder::with_id("toggle_capture", "Pause Capture").accelerator("CmdOrCtrl+E").build(manager)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("clear_traffic", "Clear All Traffic").accelerator("CmdOrCtrl+K").build(manager)?)
+        .separator()
+        .item(&MenuItemBuilder::with_id("save_capture", "Save Capture...").accelerator("CmdOrCtrl+S").build(manager)?)
+        .build()
+}
+
 pub fn create_tools_submenu<R: tauri::Runtime>(manager: &impl Manager<R>) -> tauri::Result<Submenu<R>> {
     SubmenuBuilder::new(manager, "Tools")
         .item(&MenuItemBuilder::with_id("install_cert", "Install Root Certificate").build(manager)?)

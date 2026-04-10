@@ -126,6 +126,7 @@ fn main() {
             let file_submenu = create_file_submenu(app, app_name)?;
             let edit_submenu = create_edit_submenu(app)?;
             let view_submenu = create_view_submenu(app)?;
+            let traffic_submenu = create_traffic_submenu(app)?;
             let global_tools_submenu = create_tools_submenu(app)?;
             let help_submenu = create_help_submenu(app)?;
             
@@ -133,6 +134,7 @@ fn main() {
                 .item(&file_submenu)
                 .item(&edit_submenu)
                 .item(&view_submenu)
+                .item(&traffic_submenu)
                 .item(&global_tools_submenu)
                 .item(&help_submenu)
                 .build()?;
@@ -335,6 +337,7 @@ fn main() {
             let window_file_submenu = create_file_submenu(app_handle, app_name)?;
             let window_edit_submenu = create_edit_submenu(app_handle)?;
             let window_view_submenu = create_view_submenu(app_handle)?;
+            let window_traffic_submenu = create_traffic_submenu(app_handle)?;
             let window_tools_submenu = create_tools_submenu(app_handle)?;
             let window_help_submenu = create_help_submenu(app_handle)?;
  
@@ -342,6 +345,7 @@ fn main() {
                 .item(&window_file_submenu)
                 .item(&window_edit_submenu)
                 .item(&window_view_submenu)
+                .item(&window_traffic_submenu)
                 .item(&window_tools_submenu)
                 .item(&window_help_submenu)
                 .build()?;
@@ -378,6 +382,24 @@ fn main() {
                         tauri::async_runtime::spawn(async move {
                             let _ = handle.emit("check-for-updates", ());
                         });
+                    }
+                    "toggle_capture" => {
+                        if let Some(toggle) = PROXY_TOGGLE.get() {
+                            if toggle.is_on() {
+                                toggle.turn_off();
+                                let _ = _app.emit("proxy-status", false);
+                            } else {
+                                let port = ACTUAL_PORT.load(Ordering::SeqCst) as u64;
+                                toggle.turn_on(port);
+                                let _ = _app.emit("proxy-status", true);
+                            }
+                        }
+                    }
+                    "clear_traffic" => {
+                        let _ = _app.emit("menu-clear-traffic", ());
+                    }
+                    "save_capture" => {
+                        let _ = _app.emit("menu-save-capture", ());
                     }
                     "quit" | "quit-app" => {
                         if let Some(toggle) = PROXY_TOGGLE.get() {

@@ -1,4 +1,5 @@
 import { usePaneContext } from "@src/context/PaneProvider";
+import { listen } from "@tauri-apps/api/event";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { useAppProvider } from "../app-env";
@@ -78,6 +79,15 @@ export const HeaderLeft = () => {
       console.error("Failed to update port", err);
     }
   };
+
+  React.useEffect(() => {
+    const unlisten = listen("menu-save-capture", () => {
+      setIsSaveDialogOpen(true);
+    });
+    return () => {
+      unlisten.then(fn => fn());
+    };
+  }, []);
 
   return (
     <>

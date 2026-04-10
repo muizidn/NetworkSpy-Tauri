@@ -119,6 +119,23 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
   }, []);
 
   useEffect(() => {
+    const unlistenStatus = listen<boolean>("proxy-status", (event) => {
+      console.log("[TauriEnv] Proxy status changed from menu:", event.payload);
+      setIsRun(event.payload);
+    });
+
+    const unlistenClear = listen("menu-clear-traffic", () => {
+      console.log("[TauriEnv] Clear traffic triggered from menu");
+      clearData();
+    });
+
+    return () => {
+      unlistenStatus.then(f => f());
+      unlistenClear.then(f => f());
+    };
+  }, [setIsRun, clearData]);
+
+  useEffect(() => {
     const unlistenResumed = listen<string>("breakpoint_resumed", (event) => {
       console.log("[TauriEnv] Breakpoint RESUMED:", event.payload);
       setPausedBreakpoints(prev => prev.filter(p => p.id !== event.payload));
