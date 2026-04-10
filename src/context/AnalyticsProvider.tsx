@@ -10,6 +10,20 @@ const options = {
   defaults: '2026-01-30',
 } as const;
 
+const DevIdentifier: React.FC = () => {
+  const posthog = usePostHog();
+  React.useEffect(() => {
+    if (import.meta.env.DEV && posthog) {
+      posthog.identify('local-developer', {
+        role: 'developer',
+        is_dev: true,
+        environment: 'development'
+      });
+    }
+  }, [posthog]);
+  return null;
+};
+
 export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }) => {
   const apiKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 
@@ -19,6 +33,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
 
   return (
     <PostHogProvider apiKey={apiKey} options={options}>
+      <DevIdentifier />
       {children}
     </PostHogProvider>
   );
