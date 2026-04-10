@@ -24,7 +24,7 @@ use bytes::Bytes;
 use certificate_installer::CertificateInstaller;
 use hyper::{Request, Response, Version};
 use network_spy_proxy::{proxy::Proxy, traffic::TrafficListener};
-use tauri::menu::{Menu, MenuItem, MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+use tauri::menu::{Menu, MenuItem, MenuBuilder};
 use async_trait::async_trait;
 use once_cell::sync::OnceCell;
 use proxy_toggle::ProxyToggle;
@@ -123,21 +123,18 @@ fn main() {
             // Because macOS uses a global bar and Windows/Linux uses per-window bars,
             // we configure two physically separate menu structures to guarantee
             // they display natively and correctly on all respective OSes.
+            let file_submenu = create_file_submenu(app, app_name)?;
+            let edit_submenu = create_edit_submenu(app)?;
+            let view_submenu = create_view_submenu(app)?;
             let global_tools_submenu = create_tools_submenu(app)?;
+            let help_submenu = create_help_submenu(app)?;
             
             let global_mac_menu = MenuBuilder::new(app)
-                .item(&SubmenuBuilder::new(app, &app_name)
-                    .about(None)
-                    .separator()
-                    .services()
-                    .separator()
-                    .hide()
-                    .hide_others()
-                    .show_all()
-                    .separator()
-                    .item(&MenuItemBuilder::with_id("quit", format!("Quit {}", app_name)).accelerator("Cmd+Q").build(app)?)
-                    .build()?)
+                .item(&file_submenu)
+                .item(&edit_submenu)
+                .item(&view_submenu)
                 .item(&global_tools_submenu)
+                .item(&help_submenu)
                 .build()?;
 
             app.set_menu(global_mac_menu)?;
@@ -335,17 +332,18 @@ fn main() {
                 })
                 .build(app_handle)?;
 
-            // 2. Window Menu Setup (Linux/Windows top menu bar)
-            // Notice we construct a brand-new instance of `create_tools_submenu`!
+            let window_file_submenu = create_file_submenu(app_handle, app_name)?;
+            let window_edit_submenu = create_edit_submenu(app_handle)?;
+            let window_view_submenu = create_view_submenu(app_handle)?;
             let window_tools_submenu = create_tools_submenu(app_handle)?;
-
+            let window_help_submenu = create_help_submenu(app_handle)?;
+ 
             let main_window_menu = MenuBuilder::new(app_handle)
-                .item(&SubmenuBuilder::new(app_handle, &app_name)
-                    .item(&MenuItemBuilder::with_id("show", "Show").build(app_handle)?)
-                    .item(&tauri::menu::PredefinedMenuItem::separator(app_handle)?)
-                    .item(&MenuItemBuilder::with_id("quit", "Quit").build(app_handle)?)
-                    .build()?)
+                .item(&window_file_submenu)
+                .item(&window_edit_submenu)
+                .item(&window_view_submenu)
                 .item(&window_tools_submenu)
+                .item(&window_help_submenu)
                 .build()?;
 
             // Set the menu ONLY on the main window
@@ -375,6 +373,12 @@ fn main() {
                     "scripting" => {
                         let _ = open_new_window_internal(&app_handle_menu, "scripting".to_string(), "Custom Scripting".to_string());
                     }
+                    "check_updates" => {
+                        let handle = app_handle_menu.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = handle.emit("check-for-updates", ());
+                        });
+                    }
                     "quit" | "quit-app" => {
                         if let Some(toggle) = PROXY_TOGGLE.get() {
                             toggle.turn_off();
@@ -390,6 +394,11 @@ fn main() {
                     "reset_proxy" => {
                         if let Some(toggle) = PROXY_TOGGLE.get() {
                             toggle.turn_off();
+                        }
+                    }
+                    "reload" => {
+                        if let Some(window) = _app.get_webview_window("main") {
+                            let _ = window.eval("window.location.reload()");
                         }
                     }
                     _ => {}

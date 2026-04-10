@@ -3,9 +3,10 @@ import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
 import { JSONTree } from "react-json-tree";
-import { FiZap, FiLayers, FiSearch } from "react-icons/fi";
 import jmespath from "jmespath";
 import { parseBodyAsJson } from "../../utils/bodyUtils";
+import { MonacoEditor } from "../../../ui/MonacoEditor";
+import { FiZap, FiLayers, FiSearch, FiCode, FiEye } from "react-icons/fi";
 
 export const JSONTreeMode = () => {
   const { provider } = useAppProvider();
@@ -21,6 +22,8 @@ export const JSONTreeMode = () => {
   const [filterQuery, setFilterQuery] = useState("");
   const [isFlattened, setIsFlattened] = useState(false);
   const [hideNulls, setHideNulls] = useState(false);
+  const [viewType, setViewType] = useState<"tree" | "raw">("tree");
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
 
   useEffect(() => {
     if (!trafficId) return;
@@ -103,6 +106,46 @@ export const JSONTreeMode = () => {
     return result;
   }, [rawJson, filterQuery, isFlattened, hideNulls]);
 
+  const suggestions = useMemo(() => {
+    if (!rawJson || !filterQuery.includes(".") && filterQuery.length === 0) {
+        if (rawJson && typeof rawJson === 'object' && !Array.isArray(rawJson)) {
+            return Object.keys(rawJson).sort();
+        }
+        return [];
+    }
+
+    try {
+      const lastDotIndex = filterQuery.lastIndexOf(".");
+      const parentPath = lastDotIndex === -1 ? "" : filterQuery.substring(0, lastDotIndex);
+      const currentInput = lastDotIndex === -1 ? filterQuery : filterQuery.substring(lastDotIndex + 1);
+      
+      let context = parentPath ? jmespath.search(rawJson, parentPath) : rawJson;
+      
+      // If context is array, get keys from first element
+      if (Array.isArray(context) && context.length > 0) {
+        context = context[0];
+      }
+
+      if (context && typeof context === 'object' && !Array.isArray(context)) {
+        return Object.keys(context)
+          .filter(k => k.toLowerCase().startsWith(currentInput.toLowerCase()))
+          .sort();
+      }
+    } catch (e) {
+       return [];
+    }
+    return [];
+  }, [rawJson, filterQuery]);
+
+  const placeholderHint = useMemo(() => {
+    if (!rawJson || typeof rawJson !== 'object' || Array.isArray(rawJson)) {
+        return "Query (e.g. [?status==`active`].id)";
+    }
+    const keys = Object.keys(rawJson).slice(0, 3);
+    if (keys.length === 0) return "Query (e.g. data.items[0].id)";
+    return `Try typing: ${keys.join(", ")}... (JMESPath supported)`;
+  }, [rawJson]);
+
   if (!trafficId) return <Placeholder text="Select a request to analyze JSON structure" />;
   if (loading) return <Placeholder text="Scanning object hierarchy..." />;
 
@@ -125,6 +168,30 @@ export const JSONTreeMode = () => {
     base0D: '#66d9ef',
     base0E: '#ae81ff',
     base0F: '#cc6633',
+  };
+
+  const selectSuggestion = (key: string) => {
+    const lastDotIndex = filterQuery.lastIndexOf(".");
+    const parentPath = lastDotIndex === -1 ? "" : filterQuery.substring(0, lastDotIndex + 1);
+    setFilterQuery(parentPath + key);
+    setSuggestionIndex(0);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSuggestionIndex(prev => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSuggestionIndex(prev => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      selectSuggestion(suggestions[suggestionIndex]);
+    } else if (e.key === "Escape") {
+      setSuggestionIndex(0);
+    }
   };
 
   return (
@@ -157,7 +224,7 @@ export const JSONTreeMode = () => {
             {transformedJson && (
                 <div className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">
                     <span className="text-[10px] font-black text-blue-400 uppercase tracking-tighter">
-                        {typeof transformedJson === 'object' ? Object.keys(transformedJson).length : 1} Nodes Found
+                        {typeof transformedJson === 'object' && transformedJson !== null ? (Array.isArray(transformedJson) ? transformedJson.length : Object.keys(transformedJson).length) : 1} Nodes Found
                     </span>
                 </div>
             )}
@@ -166,27 +233,50 @@ export const JSONTreeMode = () => {
 
       {/* Transformation Toolbar */}
       <div className="px-4 @sm:px-6 py-3 border-b border-zinc-900 bg-[#080808] flex flex-col @md:flex-row gap-4 items-stretch @md:items-center shrink-0">
-        <div className="flex-1 flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-1.5 focus-within:border-blue-500/50 transition-all">
-            <div className="flex items-center gap-2 shrink-0">
-                <FiSearch className="text-zinc-600 text-sm" />
-                <a 
-                    href="https://jmespath.org/tutorial.html" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-[8px] bg-zinc-800 text-zinc-500 px-1 py-0.5 rounded border border-zinc-700 hover:text-blue-400 hover:border-blue-500/30 transition-all font-black uppercase tracking-tighter cursor-help"
-                    title="Click for JMESPath language tutorial"
-                >
-                    JMESPath
-                </a>
+        <div className="flex-1 relative">
+            <div className="flex items-center gap-2 bg-zinc-900/50 border border-zinc-800 rounded-xl px-3 py-1.5 focus-within:border-blue-500/50 transition-all">
+                <div className="flex items-center gap-2 shrink-0">
+                    <FiSearch className="text-zinc-600 text-sm" />
+                    <a 
+                        href="https://jmespath.org/tutorial.html" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[8px] bg-zinc-800 text-zinc-500 px-1 py-0.5 rounded border border-zinc-700 hover:text-blue-400 hover:border-blue-500/30 transition-all font-black uppercase tracking-tighter cursor-help"
+                        title="Click for JMESPath language tutorial"
+                    >
+                        JMESPath
+                    </a>
+                </div>
+                <input 
+                    value={filterQuery}
+                    onChange={(e) => {
+                        setFilterQuery(e.target.value);
+                        setSuggestionIndex(0);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    placeholder={placeholderHint}
+                    className="bg-transparent border-none text-xs text-zinc-300 w-full focus:outline-none placeholder:text-zinc-700 font-mono min-w-0"
+                />
+                {filterQuery && (
+                    <button onClick={() => setFilterQuery("")} className="text-zinc-600 hover:text-zinc-400 text-[10px] font-bold uppercase transition-colors">Clear</button>
+                )}
             </div>
-            <input 
-                value={filterQuery}
-                onChange={(e) => setFilterQuery(e.target.value)}
-                placeholder="Query (e.g. data.items[?status==`active`].id)"
-                className="bg-transparent border-none text-xs text-zinc-300 w-full focus:outline-none placeholder:text-zinc-700 font-mono min-w-0"
-            />
-            {filterQuery && (
-                <button onClick={() => setFilterQuery("")} className="text-zinc-600 hover:text-zinc-400 text-[10px] font-bold uppercase transition-colors">Clear</button>
+
+            {/* Autocomplete Dropdown */}
+            {suggestions.length > 0 && filterQuery.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-[#121212] border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden max-h-48 overflow-y-auto custom-scrollbar">
+                    {suggestions.map((s, idx) => (
+                        <div 
+                            key={s}
+                            onClick={() => selectSuggestion(s)}
+                            onMouseEnter={() => setSuggestionIndex(idx)}
+                            className={`px-3 py-2 text-[10px] font-mono cursor-pointer transition-colors flex items-center justify-between ${idx === suggestionIndex ? 'bg-blue-600/20 text-blue-300' : 'text-zinc-500 hover:bg-zinc-800'}`}
+                        >
+                            <span>{s}</span>
+                            {idx === suggestionIndex && <span className="text-[8px] bg-blue-600 text-white px-1 rounded font-black">ENTER</span>}
+                        </div>
+                    ))}
+                </div>
             )}
         </div>
 
@@ -205,6 +295,25 @@ export const JSONTreeMode = () => {
                 <FiZap />
                 Hide Nulls
             </button>
+
+            <div className="h-6 w-px bg-zinc-800 mx-2 self-center" />
+
+            <div className="flex bg-black rounded-xl p-1 border border-zinc-800">
+                <button 
+                    onClick={() => setViewType("tree")}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight transition-all ${viewType === "tree" ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-600 hover:text-zinc-400'}`}
+                >
+                    <FiEye />
+                    Tree
+                </button>
+                <button 
+                    onClick={() => setViewType("raw")}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tight transition-all ${viewType === "raw" ? 'bg-zinc-700 text-white shadow-md' : 'text-zinc-600 hover:text-zinc-400'}`}
+                >
+                    <FiCode />
+                    Raw
+                </button>
+            </div>
         </div>
       </div>
 
@@ -226,15 +335,38 @@ export const JSONTreeMode = () => {
                 </div>
             </div>
         ) : (
-            <div className="max-w-5xl mx-auto bg-zinc-900/10 rounded-2xl p-4 border border-zinc-800/50 shadow-inner">
-                <JSONTree 
-                    data={transformedJson} 
-                    theme={theme}
-                    invertTheme={false} 
-                    hideRoot={false}
-                    labelRenderer={(keyPath: ReadonlyArray<string | number>) => <span className="text-zinc-500 font-mono text-xs">{keyPath[0]}:</span>}
-                    valueRenderer={(val: any) => <span className="text-blue-300 font-mono text-xs italic">{String(val)}</span>}
-                />
+            <div className="h-full flex flex-col">
+                {viewType === "tree" ? (
+                    <div className="max-w-5xl w-full mx-auto bg-zinc-900/10 rounded-2xl p-4 border border-zinc-800/50 shadow-inner overflow-auto">
+                        <JSONTree 
+                            data={transformedJson} 
+                            theme={theme}
+                            invertTheme={false} 
+                            hideRoot={false}
+                            labelRenderer={(keyPath: ReadonlyArray<string | number>) => <span className="text-zinc-500 font-mono text-xs">{keyPath[0]}:</span>}
+                            valueRenderer={(val: any) => <span className="text-blue-300 font-mono text-xs italic">{String(val)}</span>}
+                        />
+                    </div>
+                ) : (
+                    <div className="h-full w-full rounded-2xl border border-zinc-900 overflow-hidden shadow-2xl">
+                        <MonacoEditor
+                            value={JSON.stringify(transformedJson, null, 2)}
+                            language="json"
+                            theme="vs-dark"
+                            options={{
+                                readOnly: true,
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false,
+                                fontSize: 11,
+                                fontFamily: 'JetBrains Mono, Fira Code, monospace',
+                                lineNumbers: 'off',
+                                folding: true,
+                                renderLineHighlight: 'none',
+                                wordWrap: 'on'
+                            }}
+                        />
+                    </div>
+                )}
             </div>
         )}
       </div>
