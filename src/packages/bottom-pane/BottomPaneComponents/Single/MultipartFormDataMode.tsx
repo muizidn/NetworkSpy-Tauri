@@ -1,16 +1,17 @@
-import { Editor } from "@monaco-editor/react";
+import { OnMount } from "@monaco-editor/react";
 import { useEffect, useMemo, useState } from "react";
 import { FiSearch, FiFile, FiTag, FiDatabase, FiEye, FiDownload } from "react-icons/fi";
 import { useAppProvider } from "../../../app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { HexView } from "../../TabRenderer/HexView";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 
 interface MultipartPart {
-  name: string;
-  filename: string;
-  contentType: string;
-  value: Uint8Array;
-  size: number;
+    name: string;
+    filename: string;
+    contentType: string;
+    value: Uint8Array;
+    size: number;
 }
 
 export const MultipartFormDataMode = () => {
@@ -69,9 +70,9 @@ export const MultipartFormDataMode = () => {
         return parts.filter(p => {
             const lowSearch = search.toLowerCase();
             const textValue = new TextDecoder().decode(p.value.slice(0, 1000));
-            return p.name.toLowerCase().includes(lowSearch) || 
-                   p.filename.toLowerCase().includes(lowSearch) ||
-                   textValue.toLowerCase().includes(lowSearch);
+            return p.name.toLowerCase().includes(lowSearch) ||
+                p.filename.toLowerCase().includes(lowSearch) ||
+                textValue.toLowerCase().includes(lowSearch);
         });
     }, [parts, search]);
 
@@ -79,7 +80,7 @@ export const MultipartFormDataMode = () => {
 
     const displayContent = useMemo(() => {
         if (!selectedPart) return "";
-        
+
         if (viewMode === "hex") {
             return ""; // HexView handles this
         }
@@ -105,23 +106,23 @@ export const MultipartFormDataMode = () => {
                     <div className="flex flex-col">
                         <h2 className="text-sm font-black text-white tracking-widest uppercase">Multipart Inspector</h2>
                         <div className="flex items-center gap-2">
-                             <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-tighter">{parts.length} Fields</span>
-                             <span className="text-[10px] text-zinc-800">•</span>
-                             <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-tighter">Total: {totalSize.toLocaleString()} B</span>
-                             {boundary && (
+                            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-tighter">{parts.length} Fields</span>
+                            <span className="text-[10px] text-zinc-800">•</span>
+                            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-tighter">Total: {totalSize.toLocaleString()} B</span>
+                            {boundary && (
                                 <>
                                     <span className="text-[10px] text-zinc-800">•</span>
                                     <span className="text-[10px] text-blue-500/50 font-mono font-bold tracking-tighter">Boundary: {boundary}</span>
                                 </>
-                             )}
+                            )}
                         </div>
                     </div>
                 </div>
 
                 <div className="relative group max-w-xs w-full">
                     <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" size={14} />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder="Filter form fields..."
                         className="w-full bg-[#171717] border border-zinc-800 rounded-xl py-2 pl-9 pr-4 text-xs text-zinc-300 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium"
                         value={search}
@@ -182,23 +183,23 @@ export const MultipartFormDataMode = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                     {selectedPart.contentType.toLowerCase().includes("json") && (
-                                        <button 
+                                    {selectedPart.contentType.toLowerCase().includes("json") && (
+                                        <button
                                             onClick={() => setIsBeautified(!isBeautified)}
                                             className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${isBeautified ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'}`}
                                         >
                                             {isBeautified ? 'Raw' : 'Beautify'}
                                         </button>
-                                     )}
-                                     {(selectedPart.contentType.toLowerCase().includes("octet-stream") || selectedPart.filename !== "-") && (
-                                         <button 
+                                    )}
+                                    {(selectedPart.contentType.toLowerCase().includes("octet-stream") || selectedPart.filename !== "-") && (
+                                        <button
                                             onClick={() => setViewMode(viewMode === 'hex' ? 'text' : 'hex')}
                                             className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${viewMode === 'hex' ? 'bg-purple-600 text-white border-purple-400 shadow-[0_0_15px_rgba(147,51,234,0.3)]' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'}`}
-                                         >
-                                             {viewMode === 'hex' ? 'Text View' : 'Hex View'}
-                                         </button>
-                                     )}
-                                     <button 
+                                        >
+                                            {viewMode === 'hex' ? 'Text View' : 'Hex View'}
+                                        </button>
+                                    )}
+                                    <button
                                         className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-700 transition-all active:scale-95 shadow-xl"
                                         onClick={() => {
                                             const blob = new Blob([selectedPart.value as any], { type: selectedPart.contentType });
@@ -209,10 +210,10 @@ export const MultipartFormDataMode = () => {
                                             a.click();
                                             URL.revokeObjectURL(url);
                                         }}
-                                     >
+                                    >
                                         <FiDownload size={14} />
                                         <span>Download</span>
-                                     </button>
+                                    </button>
                                 </div>
                             </div>
                             <div className="flex-grow bg-[#1e1e1e] relative overflow-auto">
@@ -221,7 +222,7 @@ export const MultipartFormDataMode = () => {
                                         <HexView data={selectedPart.value} />
                                     </div>
                                 ) : (
-                                    <Editor
+                                    <MonacoEditor
                                         height="100%"
                                         language={selectedPart.contentType.toLowerCase().includes("json") ? "json" : (selectedPart.contentType.toLowerCase().includes("html") ? "html" : (selectedPart.contentType.toLowerCase().includes("javascript") ? "javascript" : "text"))}
                                         theme="vs-dark"
@@ -256,7 +257,7 @@ const parseMultipart = (body: Uint8Array, boundary: string) => {
     const dashBoundary = "--" + boundary;
     const boundaryBytes = new TextEncoder().encode(dashBoundary);
     const result: MultipartPart[] = [];
-    
+
     let lastOffset = 0;
     while (lastOffset < body.length) {
         let foundBoundary = -1;
@@ -279,26 +280,26 @@ const parseMultipart = (body: Uint8Array, boundary: string) => {
         const nextBoundarySearchStart = foundBoundary + boundaryBytes.length;
         let nextBoundary = -1;
         for (let i = nextBoundarySearchStart; i <= body.length - boundaryBytes.length; i++) {
-             let matches = true;
-             for (let j = 0; j < boundaryBytes.length; j++) {
-                 if (body[i + j] !== boundaryBytes[j]) {
-                     matches = false;
-                     break;
-                 }
-             }
-             if (matches) {
-                 nextBoundary = i;
-                 break;
-             }
+            let matches = true;
+            for (let j = 0; j < boundaryBytes.length; j++) {
+                if (body[i + j] !== boundaryBytes[j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) {
+                nextBoundary = i;
+                break;
+            }
         }
 
         if (nextBoundary === -1) break;
 
         const partData = body.slice(foundBoundary + boundaryBytes.length + 2, nextBoundary); // +2 for \r\n
-        
+
         let headerEnd = -1;
         for (let i = 0; i < partData.length - 3; i++) {
-            if (partData[i] === 13 && partData[i+1] === 10 && partData[i+2] === 13 && partData[i+3] === 10) {
+            if (partData[i] === 13 && partData[i + 1] === 10 && partData[i + 2] === 13 && partData[i + 3] === 10) {
                 headerEnd = i;
                 break;
             }
@@ -337,7 +338,7 @@ const parseMultipart = (body: Uint8Array, boundary: string) => {
                 size: bodyContent.length
             });
         }
-        
+
         lastOffset = nextBoundary;
     }
 

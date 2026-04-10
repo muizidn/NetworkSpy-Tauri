@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
 import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
-import { Editor } from "@monaco-editor/react";
 import { twMerge } from "tailwind-merge";
 import { FiActivity, FiCpu, FiBox, FiTerminal, FiInfo, FiLayers, FiCode, FiCheckCircle, FiAlertTriangle, FiZap, FiGrid } from "react-icons/fi";
 import { decodeBody, parseBodyAsJson } from "../../utils/bodyUtils";
+import { useMemo, useState, useEffect } from "react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 
 type GqlMechanism = "Standard POST" | "Batched POST" | "GET Query Params" | "Persisted Query (queryId)" | "LinkedIn Specialized";
 
@@ -166,26 +166,26 @@ export const GraphQLMode = () => {
         <div className="flex items-center gap-2 @sm:gap-4">
           {/* Layout Mode Toggle (Desktop only) */}
           <div className="hidden @5xl:flex items-center bg-black/40 rounded-lg p-0.5 border border-zinc-800 mr-2 shrink-0">
-             <button
-               onClick={() => setLayoutMode("grid")}
-               className={twMerge(
-                 "p-1.5 rounded-md transition-all",
-                 layoutMode === "grid" ? "bg-zinc-800 text-pink-400 shadow-xl" : "text-zinc-600 hover:text-zinc-400"
-               )}
-               title="Multi-Pane Layout"
-             >
-               <FiGrid size={14} />
-             </button>
-             <button
-               onClick={() => setLayoutMode("tabbed")}
-               className={twMerge(
-                 "p-1.5 rounded-md transition-all",
-                 layoutMode === "tabbed" ? "bg-zinc-800 text-pink-400 shadow-xl" : "text-zinc-600 hover:text-zinc-400"
-               )}
-               title="Focused Tab Layout"
-             >
-               <FiLayers size={14} />
-             </button>
+            <button
+              onClick={() => setLayoutMode("grid")}
+              className={twMerge(
+                "p-1.5 rounded-md transition-all",
+                layoutMode === "grid" ? "bg-zinc-800 text-pink-400 shadow-xl" : "text-zinc-600 hover:text-zinc-400"
+              )}
+              title="Multi-Pane Layout"
+            >
+              <FiGrid size={14} />
+            </button>
+            <button
+              onClick={() => setLayoutMode("tabbed")}
+              className={twMerge(
+                "p-1.5 rounded-md transition-all",
+                layoutMode === "tabbed" ? "bg-zinc-800 text-pink-400 shadow-xl" : "text-zinc-600 hover:text-zinc-400"
+              )}
+              title="Focused Tab Layout"
+            >
+              <FiLayers size={14} />
+            </button>
           </div>
 
           {isBatched && (
@@ -279,8 +279,8 @@ export const GraphQLMode = () => {
             layoutMode === 'grid' ? (activeTab !== "query" && "hidden @5xl:flex") : (activeTab !== "query" && "hidden")
           )}>
             <div className={twMerge(
-                "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30 justify-between",
-                layoutMode === 'grid' && "@5xl:flex"
+              "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30 justify-between",
+              layoutMode === 'grid' && "@5xl:flex"
             )}>
               <div className="flex items-center gap-2">
                 <FiCode className="text-pink-500" size={14} />
@@ -295,7 +295,7 @@ export const GraphQLMode = () => {
               )}
             </div>
             <div className="flex-grow bg-black/30">
-              <Editor
+              <MonacoEditor
                 height="100%"
                 defaultLanguage="graphql"
                 theme="vs-dark"
@@ -308,7 +308,7 @@ export const GraphQLMode = () => {
                   scrollBeyondLastLine: false,
                   lineNumbers: "on",
                   renderLineHighlight: "all",
-                  padding: { top: 16 }
+                  padding: { top: 16 },
                 }}
               />
             </div>
@@ -321,26 +321,60 @@ export const GraphQLMode = () => {
             layoutMode === 'grid' ? (activeTab === "query" && "hidden @5xl:flex") : (activeTab === "query" && "hidden")
           )}>
             <div className="flex-grow flex flex-col overflow-hidden">
-                {/* Variables */}
+              {/* Variables */}
+              <div className={twMerge(
+                "flex flex-col border-b border-zinc-900 transition-all",
+                activeTab === "response" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
+                (activeTab as any) === "extensions" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
+                activeTab === "variables" ? "flex-grow" : (layoutMode === 'grid' ? "h-1/3" : "hidden")
+              )}>
+                <div className={twMerge(
+                  "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30",
+                  layoutMode === 'grid' && "@5xl:flex"
+                )}>
+                  <FiLayers className="text-blue-500" size={14} />
+                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Variables</span>
+                </div>
+                <div className="flex-grow bg-black/30">
+                  <MonacoEditor
+                    height="100%"
+                    defaultLanguage="json"
+                    theme="vs-dark"
+                    value={activeData.variables}
+                    options={{
+                      readOnly: true,
+                      minimap: { enabled: false },
+                      fontSize: 11,
+                      fontFamily: "JetBrains Mono, Menlo, monospace",
+                      scrollBeyondLastLine: false,
+                      lineNumbers: "on",
+                      padding: { top: 12 },
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Extensions */}
+              {activeData.extensions && (
                 <div className={twMerge(
                   "flex flex-col border-b border-zinc-900 transition-all",
                   activeTab === "response" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
-                  (activeTab as any) === "extensions" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
-                  activeTab === "variables" ? "flex-grow" : (layoutMode === 'grid' ? "h-1/3" : "hidden")
+                  activeTab === "variables" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
+                  (activeTab as any) === "extensions" ? "flex-grow" : (layoutMode === 'grid' ? "h-1/3" : "hidden")
                 )}>
                   <div className={twMerge(
-                      "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30",
-                      layoutMode === 'grid' && "@5xl:flex"
+                    "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30",
+                    layoutMode === 'grid' && "@5xl:flex"
                   )}>
-                    <FiLayers className="text-blue-500" size={14} />
-                    <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Variables</span>
+                    <FiActivity className="text-amber-500" size={14} />
+                    <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Extensions</span>
                   </div>
                   <div className="flex-grow bg-black/30">
-                    <Editor
+                    <MonacoEditor
                       height="100%"
                       defaultLanguage="json"
                       theme="vs-dark"
-                      value={activeData.variables}
+                      value={activeData.extensions}
                       options={{
                         readOnly: true,
                         minimap: { enabled: false },
@@ -348,79 +382,45 @@ export const GraphQLMode = () => {
                         fontFamily: "JetBrains Mono, Menlo, monospace",
                         scrollBeyondLastLine: false,
                         lineNumbers: "on",
-                        padding: { top: 12 }
+                        padding: { top: 12 },
                       }}
                     />
                   </div>
                 </div>
+              )}
 
-                {/* Extensions */}
-                {activeData.extensions && (
-                    <div className={twMerge(
-                        "flex flex-col border-b border-zinc-900 transition-all",
-                        activeTab === "response" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
-                        activeTab === "variables" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
-                        (activeTab as any) === "extensions" ? "flex-grow" : (layoutMode === 'grid' ? "h-1/3" : "hidden")
-                    )}>
-                        <div className={twMerge(
-                             "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30",
-                             layoutMode === 'grid' && "@5xl:flex"
-                        )}>
-                            <FiActivity className="text-amber-500" size={14} />
-                            <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Extensions</span>
-                        </div>
-                        <div className="flex-grow bg-black/30">
-                            <Editor
-                                height="100%"
-                                defaultLanguage="json"
-                                theme="vs-dark"
-                                value={activeData.extensions}
-                                options={{
-                                    readOnly: true,
-                                    minimap: { enabled: false },
-                                    fontSize: 11,
-                                    fontFamily: "JetBrains Mono, Menlo, monospace",
-                                    scrollBeyondLastLine: false,
-                                    lineNumbers: "on",
-                                    padding: { top: 12 }
-                                }}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* Response */}
+              {/* Response */}
+              <div className={twMerge(
+                "flex flex-col bg-[#050505] transition-all",
+                activeTab === "variables" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
+                (activeTab as any) === "extensions" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
+                activeTab === "response" ? "flex-grow" : (layoutMode === 'grid' ? "h-1/3" : "hidden")
+              )}>
                 <div className={twMerge(
-                  "flex flex-col bg-[#050505] transition-all",
-                  activeTab === "variables" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
-                  (activeTab as any) === "extensions" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
-                  activeTab === "response" ? "flex-grow" : (layoutMode === 'grid' ? "h-1/3" : "hidden")
+                  "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800 bg-zinc-900/50",
+                  layoutMode === 'grid' && "@5xl:flex"
                 )}>
-                  <div className={twMerge(
-                      "hidden items-center gap-2 px-4 py-2 border-b border-zinc-800 bg-zinc-900/50",
-                      layoutMode === 'grid' && "@5xl:flex"
-                  )}>
-                    <FiTerminal className="text-emerald-500" size={14} />
-                    <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Response Payload</span>
-                  </div>
-                  <div className="flex-grow">
-                    <Editor
-                      height="100%"
-                      defaultLanguage="json"
-                      theme="vs-dark"
-                      value={responseBody || "// No response captured"}
-                      options={{
-                        readOnly: true,
-                        minimap: { enabled: false },
-                        fontSize: 11,
-                        fontFamily: "JetBrains Mono, Menlo, monospace",
-                        scrollBeyondLastLine: false,
-                        lineNumbers: "on",
-                        padding: { top: 12 }
-                      }}
-                    />
-                  </div>
+                  <FiTerminal className="text-emerald-500" size={14} />
+                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Response Payload</span>
                 </div>
+                <div className="flex-grow">
+                  <MonacoEditor
+                    height="100%"
+                    defaultLanguage="json"
+                    theme="vs-dark"
+                    value={responseBody || "// No response captured"}
+                    options={{
+                      readOnly: true,
+                      minimap: { enabled: false },
+                      fontSize: 11,
+                      fontFamily: "JetBrains Mono, Menlo, monospace",
+                      scrollBeyondLastLine: false,
+                      lineNumbers: "on",
+                      padding: { top: 12 },
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,10 +1,11 @@
-import { Editor } from "@monaco-editor/react";
+import { OnMount } from "@monaco-editor/react";
 import { useEffect, useMemo, useState } from "react";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
 import { NSTabs, Tab } from "../ui/NSTabs";
 import { TableView } from "../ui/TableView";
 import { KeyValueRenderer } from "./KeyValueRenderer";
 import { decodeBody } from "./utils/bodyUtils";
+import { MonacoEditor } from "../ui/MonacoEditor";
 
 export type RequestPairData = {
   headers: { key: string; value: string }[];
@@ -170,7 +171,7 @@ export const RequestTab = (props: {
               {isBeautified ? "Original" : "Beautify"}
             </button>
           )}
-          <Editor
+          <MonacoEditor
             height="100%"
             language={data.content_type.includes("json") ? "json" : "text"}
             theme="vs-dark"

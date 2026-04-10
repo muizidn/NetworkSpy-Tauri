@@ -1,9 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
 import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
-import { Editor } from "@monaco-editor/react";
 import { decodeBody } from "../../utils/bodyUtils";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
+import { useMemo, useState, useEffect } from "react";
 
 const escapeShellArg = (arg: string): string => {
   return `'${arg.replace(/'/g, "'\\''")}'`;
@@ -47,7 +47,7 @@ export const CurlMode = () => {
   return (
     <div className="h-full bg-[#1e1e1e] flex flex-col">
       <div className="flex-grow relative">
-        <Editor
+        <MonacoEditor
           height="100%"
           defaultLanguage="shell"
           theme="vs-dark"
