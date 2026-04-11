@@ -76,6 +76,14 @@ export const MonacoEditor = (props: EditorProps) => {
           },
         },
         {
+          id: "format",
+          text: "Format Document",
+          enabled: !isReadOnly,
+          action: () => {
+            editor.getAction("editor.action.formatDocument")?.run();
+          },
+        },
+        {
           item: "Separator",
         } as any,
         {
