@@ -1,12 +1,14 @@
 import { Editor, EditorProps, OnMount } from "@monaco-editor/react";
-import { Menu } from "@tauri-apps/api/menu";
+import { Menu, PredefinedMenuItem, MenuItemOptions } from "@tauri-apps/api/menu";
 import { useState, useCallback } from "react";
 
 export const MonacoEditor = (props: EditorProps) => {
   const [editor, setEditor] = useState<any>(null);
+  const [monaco, setMonaco] = useState<any>(null);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     setEditor(editor);
+    setMonaco(monaco);
     if (props.onMount) {
       props.onMount(editor, monaco);
     }
@@ -14,14 +16,33 @@ export const MonacoEditor = (props: EditorProps) => {
 
   const handleContextMenu = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!editor) return;
+    if (!editor || !monaco) return;
 
     const selection = editor.getSelection();
     const hasSelection = selection && !selection.isEmpty();
     const selectedText = hasSelection ? editor.getModel()?.getValueInRange(selection) : "";
 
     try {
+      const isReadOnly = editor.getOption(monaco.editor.EditorOption.readOnly);
+
       const items = [
+        {
+          id: "cut",
+          text: "Cut",
+          enabled: hasSelection && !isReadOnly,
+          action: async () => {
+            if (selectedText) {
+              await navigator.clipboard.writeText(selectedText);
+              editor.executeEdits("clipboard", [
+                {
+                  range: selection,
+                  text: "",
+                  forceMoveMarkers: true,
+                },
+              ]);
+            }
+          },
+        },
         {
           id: "copy",
           text: "Copy",
@@ -33,11 +54,36 @@ export const MonacoEditor = (props: EditorProps) => {
           },
         },
         {
+          id: "paste",
+          text: "Paste",
+          enabled: !isReadOnly,
+          action: async () => {
+            try {
+              const text = await navigator.clipboard.readText();
+              if (text) {
+                const selection = editor.getSelection();
+                editor.executeEdits("clipboard", [
+                  {
+                    range: selection,
+                    text: text,
+                    forceMoveMarkers: true,
+                  },
+                ]);
+              }
+            } catch (err) {
+              console.error("Paste failed", err);
+            }
+          },
+        },
+        {
+          item: "Separator",
+        } as any,
+        {
           id: "select_all",
           text: "Select All",
           action: () => {
-             editor.focus();
-             editor.setSelection(editor.getModel().getFullModelRange());
+            editor.focus();
+            editor.setSelection(editor.getModel().getFullModelRange());
           },
         },
         {
