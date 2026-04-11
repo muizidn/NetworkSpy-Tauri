@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { FiFileText, FiZap } from "react-icons/fi";
-import Editor from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 
 interface BodyEditorProps {
     editedBody: string;
@@ -42,7 +42,7 @@ export const BreakpointBodyEditor: React.FC<BodyEditorProps> = ({ editedBody, se
             </div>
             
             <div className="flex-1 min-h-0">
-                <Editor
+                <MonacoEditor
                     height="100%"
                     defaultLanguage="json"
                     theme="vs-dark"

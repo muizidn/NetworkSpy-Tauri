@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FiMinimize } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
-import Editor from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 import { ViewerBlock } from "@src/context/ViewerContext";
 import { renderResult } from "../builder-utils/renderResult";
 
@@ -67,7 +67,7 @@ export const MaximizedBlock = ({ block, result, onClose, onUpdate }: MaximizedBl
                     </div>
                 ) : (
                     <div className="absolute inset-0 animate-in fade-in duration-300">
-                        <Editor
+                        <MonacoEditor
                             height="100%"
                             language={activeTab === 'js' ? 'javascript' : activeTab === 'html' ? 'html' : 'css'}
                             theme="vs-dark"

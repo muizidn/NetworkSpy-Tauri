@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { FiMaximize, FiCode, FiTrash2, FiAlertCircle, FiMinimize, FiSearch } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
-import Editor from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 import { ViewerBlock } from "@src/context/ViewerContext";
 import { renderResult } from "../builder-utils/renderResult";
 import { createPortal } from "react-dom";
@@ -167,7 +167,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                             </div>
                         </div>
                         <div className="h-[350px] border-y border-zinc-800/50">
-                            <Editor
+                            <MonacoEditor
                                 height="100%"
                                 language={
                                     activeTab === 'js' ? 'javascript' : 

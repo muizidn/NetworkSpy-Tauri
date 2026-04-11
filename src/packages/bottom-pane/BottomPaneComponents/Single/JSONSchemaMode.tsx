@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
-import Editor, { useMonaco } from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
+import { useMonaco } from "@monaco-editor/react";
 import { FiCpu, FiCheckCircle, FiAlertTriangle, FiCode, FiArrowRight, FiActivity, FiDatabase } from "react-icons/fi";
 import { decodeBody } from "../../utils/bodyUtils";
 
@@ -262,7 +263,7 @@ export const JSONSchemaMode = () => {
                         )}
                     </div>
                     <div className="flex-1 relative">
-                        <Editor
+                        <MonacoEditor
                             onMount={(editor) => schemaEditorRef.current = editor}
                             height="100%"
                             defaultLanguage="json"
@@ -298,7 +299,7 @@ export const JSONSchemaMode = () => {
                         )}
                     </div>
                     <div className="flex-1 relative">
-                        <Editor
+                        <MonacoEditor
                             onMount={(editor) => bodyEditorRef.current = editor}
                             height="100%"
                             defaultLanguage="json"

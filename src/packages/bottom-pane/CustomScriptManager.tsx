@@ -5,6 +5,7 @@ import { FiCode, FiPlus, FiSave, FiX, FiEdit2, FiTrash2, FiInfo } from "react-ic
 import { twMerge } from "tailwind-merge";
 import { Editor } from "@monaco-editor/react";
 import { CUSTOM_SCRIPT_TEMPLATES } from "./CustomScriptTemplates";
+import { MonacoEditor } from "../ui/MonacoEditor";
 
 interface CustomScriptManagerProps {
     category: string;
@@ -106,7 +107,7 @@ export const CustomScriptManager = ({ category, onUpdate }: CustomScriptManagerP
                     <div>
                         <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest ml-1 mb-1 block">JavaScript Logic</label>
                         <div className="relative rounded-2xl overflow-hidden border border-zinc-800 bg-black h-72">
-                            <Editor
+                            <MonacoEditor
                                 height="100%"
                                 defaultLanguage="javascript"
                                 theme="vs-dark"
@@ -138,7 +139,7 @@ export const CustomScriptManager = ({ category, onUpdate }: CustomScriptManagerP
                         disabled={isSaving}
                         className="flex-grow bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] font-black px-6 py-3 rounded-xl flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg shadow-emerald-900/20 transition-all"
                     >
-                        {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiSave />} 
+                        {isSaving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiSave />}
                         {isSaving ? "Saving..." : "Save Script"}
                     </button>
                     <button

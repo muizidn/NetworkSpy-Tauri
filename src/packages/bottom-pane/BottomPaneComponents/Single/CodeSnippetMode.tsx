@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useAppProvider } from "@src/packages/app-env";
 import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 import { RequestPairData } from "../../RequestTab";
-import { Editor } from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 import { FiCode, FiTerminal, FiShield, FiCpu, FiAlertTriangle, FiInfo, FiCheckCircle, FiEdit2 } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { CustomScriptManager } from "../../CustomScriptManager";
@@ -24,7 +24,7 @@ const SnippetCard = ({ label, content, lang, isRunning }: { label: string, conte
             </div>
         </div>
         <div className="flex-grow rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl relative">
-            <Editor
+            <MonacoEditor
                 height="100%"
                 language={lang}
                 theme="vs-dark"
@@ -310,7 +310,7 @@ print(response.json())`;
                         {viewMode === "dropdown" ? (
                             <div className="h-full flex flex-col">
                                 <div className="flex-grow rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl relative">
-                                    <Editor
+                                <MonacoEditor
                                         height="100%"
                                         language={activeSnippet.lang}
                                         theme="vs-dark"

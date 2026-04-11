@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import Editor from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 import { ViewerBlock } from "@src/context/ViewerContext";
 import { FiCopy, FiInfo, FiLayers, FiMaximize } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
@@ -106,7 +106,7 @@ export const FullSourceEditor: React.FC<FullSourceEditorProps> = ({
             </div>
 
             <div className="flex-1">
-                <Editor
+                <MonacoEditor
                     theme="vs-dark"
                     language="html"
                     options={{

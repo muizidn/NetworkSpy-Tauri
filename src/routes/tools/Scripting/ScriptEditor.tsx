@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiSave, FiX, FiInfo } from "react-icons/fi";
 import { ScriptingModel } from "./Scripting";
 import { invoke } from "@tauri-apps/api/core";
-import { Editor } from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 
 interface ScriptEditorProps {
   script?: ScriptingModel;
@@ -241,7 +241,7 @@ function script(request, response) {
 
         <div className="flex-grow flex flex-col min-w-0 bg-[#050505]">
           <div className="flex-grow">
-            <Editor
+            <MonacoEditor
               height="100%"
               defaultLanguage="javascript"
               theme="vs-dark"

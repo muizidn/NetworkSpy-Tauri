@@ -1,7 +1,7 @@
-import { Editor } from "@monaco-editor/react";
+import { MonacoEditor } from "@src/packages/ui/MonacoEditor";
 
 export const CodeView = ({ data, language }: { data: string, language?: string }) => (
-  <Editor
+  <MonacoEditor
     className="w-full h-full"
     defaultLanguage={language || "text"}
     defaultValue={data}
