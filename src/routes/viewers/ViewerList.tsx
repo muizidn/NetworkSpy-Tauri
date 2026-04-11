@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { FiChevronDown, FiChevronRight, FiEdit3, FiFolder, FiFolderPlus, FiPlus, FiSearch, FiTrash2, FiX, FiMove, FiEye, FiDownload, FiColumns } from "react-icons/fi";
+import { FiChevronDown, FiChevronRight, FiEdit3, FiFolder, FiFolderPlus, FiPlus, FiSearch, FiTrash2, FiX, FiMove, FiEye, FiDownload, FiColumns, FiCopy } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useViewerContext, Viewer, ViewerFolder } from "@src/context/ViewerContext";
 import { createPortal } from "react-dom";
@@ -14,7 +14,7 @@ interface ViewerListProps {
 }
 
 const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewer, isCompact, onToggleCompact }) => {
-    const { viewers, folders, deleteViewer, addFolder, deleteFolder, renameFolder, moveViewer, saveViewer } = useViewerContext();
+    const { viewers, folders, deleteViewer, addFolder, deleteFolder, renameFolder, moveViewer, saveViewer, duplicateViewer } = useViewerContext();
     const [searchTerm, setSearchTerm] = useState("");
     const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(new Set());
     
@@ -122,6 +122,7 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
                         isActive={selectedViewerId === viewer.id}
                         onSelect={() => onSelectViewer(viewer)}
                         onRename={() => { setEditingViewer(viewer); setNewViewerName(viewer.name); }}
+                        onDuplicate={() => duplicateViewer(viewer.id)}
                         onDelete={() => deleteViewer(viewer.id)}
                         isCompact={isCompact}
                     />
@@ -146,6 +147,7 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
                                 isActive={selectedViewerId === viewer.id}
                                 onSelect={() => onSelectViewer(viewer)}
                                 onRename={() => { setEditingViewer(viewer); setNewViewerName(viewer.name); }}
+                                onDuplicate={() => duplicateViewer(viewer.id)}
                                 onDelete={() => deleteViewer(viewer.id)}
                                 isCompact={isCompact}
                             />
@@ -244,7 +246,7 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
     );
 };
 
-const ViewerItem = ({ viewer, isActive, onSelect, onRename, onDelete, isNested, isCompact }: { viewer: Viewer, isActive: boolean, onSelect: () => void, onRename: () => void, onDelete: () => void, isNested?: boolean, isCompact?: boolean }) => (
+const ViewerItem = ({ viewer, isActive, onSelect, onRename, onDuplicate, onDelete, isNested, isCompact }: { viewer: Viewer, isActive: boolean, onSelect: () => void, onRename: () => void, onDuplicate: () => void, onDelete: () => void, isNested?: boolean, isCompact?: boolean }) => (
     <div 
         onClick={onSelect}
         className={twMerge(
@@ -264,12 +266,21 @@ const ViewerItem = ({ viewer, isActive, onSelect, onRename, onDelete, isNested, 
                 <button 
                     onClick={(e) => { e.stopPropagation(); onRename(); }}
                     className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-blue-400 rounded transition-all"
+                    title="Rename"
                 >
                     <FiEdit3 size={10} />
                 </button>
                 <button 
+                    onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+                    className="p-1 hover:bg-zinc-800 text-zinc-600 hover:text-amber-400 rounded transition-all"
+                    title="Duplicate"
+                >
+                    <FiCopy size={10} />
+                </button>
+                <button 
                     onClick={(e) => { e.stopPropagation(); if(confirm(`Delete viewer "${viewer.name}"?`)) onDelete(); }}
                     className="p-1 hover:bg-red-500/20 text-zinc-600 hover:text-red-500 rounded transition-all"
+                    title="Delete"
                 >
                     <FiTrash2 size={10} />
                 </button>

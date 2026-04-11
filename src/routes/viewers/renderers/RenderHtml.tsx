@@ -59,7 +59,69 @@ const AutoResizingIframe = ({ html }: { html: string }) => {
     );
 };
 
-export const RenderHtml = ({ data }: { data: any }) => {
+export const RenderHtml = ({ data, unsafe }: { data: any, unsafe?: boolean }) => {
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    React.useLayoutEffect(() => {
+        if (unsafe && containerRef.current) {
+            const runScripts = async () => {
+                if (!containerRef.current) return;
+                
+                // 1. Manually set content to clear any previous state and get raw scripts
+                containerRef.current.innerHTML = String(data);
+                
+                // 2. Extract scripts in their original order
+                const scripts = Array.from(containerRef.current.querySelectorAll("script"));
+                
+                for (const oldScript of scripts) {
+                    await new Promise<void>((resolve) => {
+                        const newScript = document.createElement("script");
+                        
+                        // Copy all attributes
+                        Array.from(oldScript.attributes).forEach((attr) =>
+                            newScript.setAttribute(attr.name, attr.value)
+                        );
+                        
+                        // Copy content
+                        const content = oldScript.text || oldScript.textContent || "";
+                        if (!newScript.src && content) {
+                            // Wrap inline scripts in a block scope to prevent global variable collisions
+                            newScript.text = `{\n${content}\n}`;
+                        } else {
+                            newScript.text = content;
+                        }
+
+                        if (newScript.src) {
+                            newScript.onload = () => resolve();
+                            newScript.onerror = () => resolve();
+                        } else {
+                            // Inline scripts run immediately on insertion
+                            // Wait for next tick to ensure browser processes it
+                            setTimeout(resolve, 0);
+                        }
+
+                        // Replace to trigger execution
+                        if (oldScript.parentNode) {
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+            };
+            runScripts();
+        }
+    }, [data, unsafe]);
+
+    if (unsafe) {
+        return (
+            <div 
+                ref={containerRef}
+                className="w-full h-full bg-transparent overflow-visible p-0 m-0"
+            />
+        );
+    }
+
     return (
         <div className="w-full bg-transparent m-0 border-none rounded-none overflow-hidden">
             <AutoResizingIframe html={String(data)} />

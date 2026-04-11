@@ -61,7 +61,7 @@ export const MaximizedBlock = ({ block, result, onClose, onUpdate }: MaximizedBl
                                 </div>
                             </div>
                             <div className="flex-1">
-                                {renderResult(block.type, result)}
+                                {renderResult(block, result)}
                             </div>
                         </div>
                     </div>

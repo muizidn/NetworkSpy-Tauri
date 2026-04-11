@@ -10,6 +10,7 @@ export interface ViewerBlock {
   html?: string;
   css?: string;
   padding?: number;
+  unsafeHtml?: boolean;
 }
 
 export interface ViewerContent {
@@ -44,6 +45,7 @@ interface ViewerContextState {
   deleteFolder: (id: string) => Promise<void>;
   renameFolder: (id: string, newName: string) => Promise<void>;
   moveViewer: (id: string, folderId: string | null) => Promise<void>;
+  duplicateViewer: (id: string) => Promise<void>;
   loadData: () => Promise<void>;
 }
 
@@ -106,6 +108,12 @@ export const ViewerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     await invoke("move_viewer_to_folder", { id, folderId });
     await loadData();
   };
+  
+  const duplicateViewer = async (id: string) => {
+    const viewer = viewers.find(v => v.id === id);
+    if (!viewer) return;
+    await saveViewer(`${viewer.name} Copy`, viewer.content, undefined, viewer.folderId);
+  };
 
   return (
     <ViewerContext.Provider value={{
@@ -117,6 +125,7 @@ export const ViewerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       deleteFolder,
       renameFolder,
       moveViewer,
+      duplicateViewer,
       loadData
     }}>
       {children}

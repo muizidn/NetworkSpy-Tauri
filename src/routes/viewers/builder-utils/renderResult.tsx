@@ -6,8 +6,8 @@ import { RenderJson } from "../renderers/RenderJson";
 import { RenderTable } from "../renderers/RenderTable";
 import { RenderHtml } from "../renderers/RenderHtml";
 
-export const renderResult = (type: ViewerBlock['type'], data: any) => {
-    // Placeholder view (stays styled)
+export const renderResult = (block: ViewerBlock, data: any) => {
+    const type = block.type;
     if (data === undefined || data === null) {
         return (
             <div className="h-20 flex flex-col items-center justify-center border border-dashed border-zinc-800/50 rounded-2xl bg-zinc-950/30 m-4">
@@ -30,7 +30,7 @@ export const renderResult = (type: ViewerBlock['type'], data: any) => {
             return <RenderTable data={data} />;
 
         case 'html':
-            return <RenderHtml data={data} />;
+            return <RenderHtml data={data} unsafe={block.unsafeHtml} />;
 
         default:
             return (
