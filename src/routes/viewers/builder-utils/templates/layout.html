@@ -1,0 +1,37 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="chart-container">
+  <div class="header">
+    <div class="title">Traffic Statistics</div>
+    <div id="timestamp" class="timestamp"></div>
+  </div>
+  <div class="host-badge" id="host-name"></div>
+  <canvas id="myChart"></canvas>
+</div>
+
+<script>
+  // Access data from Logic (JS) tab via window.DATA
+  const data = window.DATA;
+  
+  document.getElementById('host-name').textContent = data.host;
+  document.getElementById('timestamp').textContent = 'Last Checked: ' + data.timestamp;
+
+  const ctx = document.getElementById('myChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.labels || ['Req 1', 'Req 2', 'Req 3'],
+      datasets: [{
+        label: 'Response Time (ms)',
+        data: data.values || [12, 19, 3],
+        backgroundColor: data.chartColors,
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } } }
+    }
+  });
+</script>
