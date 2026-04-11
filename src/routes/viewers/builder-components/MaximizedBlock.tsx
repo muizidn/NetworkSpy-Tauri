@@ -36,8 +36,6 @@ export const MaximizedBlock = ({ block, result, onClose, onUpdate }: MaximizedBl
                                 <TabButton id="css" label="Styles (CSS)" active={activeTab === 'css'} onClick={() => setActiveTab('css')} color="text-purple-500" />
                             </>
                         )}
-                        <div className="w-px h-4 bg-zinc-800 mx-1 my-auto"></div>
-                        <TabButton id="preview" label="Preview Output" active={activeTab === 'preview'} onClick={() => setActiveTab('preview')} color="text-green-500" />
                     </div>
                 </div>
                 
@@ -50,45 +48,39 @@ export const MaximizedBlock = ({ block, result, onClose, onUpdate }: MaximizedBl
                 </button>
             </div>
 
-            <div className="flex-1 relative overflow-hidden">
-                {activeTab === 'preview' ? (
-                    <div className="absolute inset-0 p-12 overflow-y-auto bg-black/40 animate-in fade-in zoom-in-95 duration-300">
-                        <div className="max-w-5xl mx-auto h-full flex flex-col">
-                            <div className="flex items-center justify-between mb-8 shrink-0">
-                                <div>
-                                    <h3 className="text-xl font-black text-white uppercase">Result Preview</h3>
-                                    <p className="text-xs text-zinc-500 mt-1">Real-time output based on selected test context</p>
-                                </div>
-                            </div>
-                            <div className="flex-1">
-                                {renderResult(block, result)}
-                            </div>
-                        </div>
+            <div className="flex-1 flex overflow-hidden">
+                {/* EDITOR SIDE */}
+                <div className="flex-1 relative border-r border-zinc-800 animate-in fade-in duration-300">
+                    <MonacoEditor
+                        height="100%"
+                        language={activeTab === 'js' ? 'javascript' : activeTab === 'html' ? 'html' : 'css'}
+                        theme="vs-dark"
+                        value={activeTab === 'js' ? block.code : activeTab === 'html' ? (block.html || "") : (block.css || "")}
+                        onChange={(val) => {
+                            if (activeTab === 'js') onUpdate({ code: val || "" });
+                            else if (activeTab === 'html') onUpdate({ html: val || "" });
+                            else onUpdate({ css: val || "" });
+                        }}
+                        options={{
+                            minimap: { enabled: true },
+                            fontSize: 14,
+                            lineNumbers: 'on',
+                            padding: { top: 20 },
+                            fontFamily: 'JetBrains Mono, monospace',
+                            suggestOnTriggerCharacters: true,
+                            quickSuggestions: true,
+                        }}
+                    />
+                </div>
+
+                {/* PREVIEW SIDE */}
+                <div className="w-[35%] min-w-[400px] bg-black/20 overflow-y-auto p-10 animate-in slide-in-from-right-4 duration-500">
+                    <div className="mb-8">
+                        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-1">Live Result</h3>
+                        <div className="h-0.5 w-8 bg-blue-500 rounded-full"></div>
                     </div>
-                ) : (
-                    <div className="absolute inset-0 animate-in fade-in duration-300">
-                        <MonacoEditor
-                            height="100%"
-                            language={activeTab === 'js' ? 'javascript' : activeTab === 'html' ? 'html' : 'css'}
-                            theme="vs-dark"
-                            value={activeTab === 'js' ? block.code : activeTab === 'html' ? (block.html || "") : (block.css || "")}
-                            onChange={(val) => {
-                                if (activeTab === 'js') onUpdate({ code: val || "" });
-                                else if (activeTab === 'html') onUpdate({ html: val || "" });
-                                else onUpdate({ css: val || "" });
-                            }}
-                            options={{
-                                minimap: { enabled: true },
-                                fontSize: 14,
-                                lineNumbers: 'on',
-                                padding: { top: 20 },
-                                fontFamily: 'JetBrains Mono, monospace',
-                                suggestOnTriggerCharacters: true,
-                                quickSuggestions: true,
-                            }}
-                        />
-                    </div>
-                )}
+                    {renderResult(block, result)}
+                </div>
             </div>
         </div>
     );
