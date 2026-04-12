@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useTrafficListContext } from "../../../main-content/context/TrafficList";
-import { useAppProvider } from "@src/packages/app-env";
-import { useViewerContext, Viewer, ViewerBlock, ViewerContent } from "@src/context/ViewerContext";
-import { FiSearch, FiEye, FiLayers, FiAlertCircle, FiCode, FiZap } from "react-icons/fi";
-import { JSONTree } from "react-json-tree";
-import { twMerge } from "tailwind-merge";
 import { useSessionContext } from "@src/context/SessionContext";
-import { invoke } from "@tauri-apps/api/core";
-import { renderResult } from "@src/routes/viewers/builder-utils/renderResult";
-import { BlockItem } from "@src/routes/viewers/builder-components/BlockItem";
+import { useViewerContext, Viewer, ViewerBlock, ViewerContent } from "@src/context/ViewerContext";
+import { useAppProvider } from "@src/packages/app-env";
 import { Canvas } from "@src/routes/viewers/builder-components/Canvas";
+import { executeViewerBlock } from "@src/routes/viewers/builder-utils/viewerRunner";
+import React, { useEffect, useMemo, useState } from "react";
+import { FiEye, FiLayers, FiSearch, FiZap } from "react-icons/fi";
+import { useTrafficListContext } from "../../../main-content/context/TrafficList";
 
 const theme = {
     scheme: 'monokai',
@@ -72,86 +68,12 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
     }, [viewers, searchTerm]);
 
     const executeBlock = async (block: ViewerBlock) => {
-        if (!trafficId) return { error: "No traffic selected" };
-
-        const decoder = new TextDecoder();
-
-        const normalizeHeaders = (headers: any) => {
-            if (Array.isArray(headers)) {
-                return headers.reduce((acc, h) => ({ ...acc, [h.key || h.name]: h.value }), {});
-            }
-            return headers || {};
-        };
-
-        const readRequestHeaders = async () => {
-            if (!isReviewMode) {
-                const data = await provider.getRequestPairData(trafficId);
-                return normalizeHeaders(data?.headers);
-            }
-            const data: any = await invoke("get_session_request_data", { sessionId: reviewedSession?.id, trafficId });
-            return normalizeHeaders(data?.headers);
-        };
-
-        const readRequestBody = async () => {
-            let body: any;
-            if (!isReviewMode) body = (await provider.getRequestPairData(trafficId))?.body;
-            else body = await invoke("get_session_request_data", { sessionId: reviewedSession?.id, trafficId }).then((d: any) => d?.body);
-
-            if (!body) return "";
-            if (body instanceof Uint8Array || Array.isArray(body)) return decoder.decode(new Uint8Array(body));
-            return body;
-        };
-
-        const readResponseHeaders = async () => {
-            if (!isReviewMode) {
-                const data = await provider.getResponsePairData(trafficId);
-                return normalizeHeaders(data?.headers);
-            }
-            const data: any = await invoke("get_session_response_data", { sessionId: reviewedSession?.id, trafficId });
-            return normalizeHeaders(data?.headers);
-        };
-
-        const readResponseBody = async () => {
-            let body: any;
-            if (!isReviewMode) body = (await provider.getResponsePairData(trafficId))?.body;
-            else body = await invoke("get_session_response_data", { sessionId: reviewedSession?.id, trafficId }).then((d: any) => d?.body);
-
-            if (!body) return "";
-            if (body instanceof Uint8Array || Array.isArray(body)) return decoder.decode(new Uint8Array(body));
-            return body;
-        };
-
-        try {
-            const userCode = block.code.trim();
-            if (!userCode) return null;
-
-            // Strictly expect a named function 'code' to be defined in user script
-            const finalCode = `${userCode}\nreturn await code();`;
-
-            const wrappedCode = `
-                return (async () => {
-                    try {
-                        ${finalCode}
-                    } catch (e) {
-                        return { error: e.toString() };
-                    }
-                })()
-            `;
-
-            const fn = new Function('readRequestHeaders', 'readRequestBody', 'readResponseHeaders', 'readResponseBody', wrappedCode);
-            const data = await fn(readRequestHeaders, readRequestBody, readResponseHeaders, readResponseBody);
-
-            if (block.type === 'html' && data && typeof data === 'object' && !data.error) {
-                return `
-                    <style>${block.css || ''}</style>
-                    <script>window.DATA = ${JSON.stringify(data)};</script>
-                    ${block.html || ''}
-                `;
-            }
-            return data;
-        } catch (e: any) {
-            return { error: e.toString() };
-        }
+        return executeViewerBlock(block, {
+            trafficId,
+            isReviewMode,
+            reviewedSessionId: reviewedSession?.id,
+            provider
+        });
     };
 
     useEffect(() => {
@@ -166,10 +88,12 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                 const content: ViewerContent = JSON.parse(selectedViewer.content);
                 const results: Record<string, any> = {};
 
-                for (const block of content.blocks) {
+                // Use Promise.all for faster execution in real viewer if blocks are independent
+                const blockPromises = content.blocks.map(async (block) => {
                     results[block.id] = await executeBlock(block);
-                }
+                });
 
+                await Promise.all(blockPromises);
                 setRunningViewers(results);
             } catch (e) {
                 console.error("Failed to run viewer", e);
@@ -179,7 +103,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
         };
 
         runViewer();
-    }, [selectedViewer, trafficId, isReviewMode, reviewedSession]);
+    }, [selectedViewer, trafficId, isReviewMode, reviewedSession, provider]);
 
     if (!trafficId) return <Placeholder text="Select a request to apply custom viewer" />;
 

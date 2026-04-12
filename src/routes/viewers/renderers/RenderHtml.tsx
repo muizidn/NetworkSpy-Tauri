@@ -117,7 +117,7 @@ export const RenderHtml = ({ data, unsafe }: { data: any, unsafe?: boolean }) =>
         return (
             <div 
                 ref={containerRef}
-                className="w-full h-full bg-transparent overflow-visible p-0 m-0"
+                className="w-full h-full min-h-[150px] bg-transparent overflow-visible p-0 m-0"
             />
         );
     }

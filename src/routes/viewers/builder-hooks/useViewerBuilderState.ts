@@ -5,6 +5,7 @@ import { useTrafficListContext } from "@src/packages/main-content/context/Traffi
 import { useSessionContext } from "@src/context/SessionContext";
 import { useAppProvider } from "@src/packages/app-env";
 import { getDefaultCode, getDefaultHtml, getDefaultCss } from "../builder-utils/defaults";
+import { executeViewerBlock } from "../builder-utils/viewerRunner";
 
 export const useViewerBuilderState = (initialViewer: Viewer) => {
     const { saveViewer } = useViewerContext();
@@ -51,88 +52,21 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         if (!selectedTrafficId) return;
         setIsRunning(true);
         const results: Record<string, any> = {};
-        const decoder = new TextDecoder();
-
-        const normalizeHeaders = (headers: any) => {
-            if (Array.isArray(headers)) {
-                return headers.reduce((acc, h) => ({ ...acc, [h.key || h.name]: h.value }), {});
-            }
-            return headers || {};
-        };
 
         const executeBlock = async (block: ViewerBlock) => {
-            const userCode = block.code.trim();
-            if (!userCode) return null;
-
-            const readRequestHeaders = async () => {
-                if (testSource === 'live') {
-                    const data = await provider.getRequestPairData(selectedTrafficId);
-                    return normalizeHeaders(data?.headers);
-                }
-                const data: any = await invoke("get_session_request_data", { sessionId: selectedSessionId, trafficId: selectedTrafficId });
-                return normalizeHeaders(data?.headers);
-            };
-
-            const readRequestBody = async () => {
-                let body: any;
-                if (testSource === 'live') body = (await provider.getRequestPairData(selectedTrafficId))?.body;
-                else body = await invoke("get_session_request_data", { sessionId: selectedSessionId, trafficId: selectedTrafficId }).then((d: any) => d?.body);
-
-                if (!body) return "";
-                if (body instanceof Uint8Array || Array.isArray(body)) return decoder.decode(new Uint8Array(body));
-                return body;
-            };
-
-            const readResponseHeaders = async () => {
-                if (testSource === 'live') {
-                    const data = await provider.getResponsePairData(selectedTrafficId);
-                    return normalizeHeaders(data?.headers);
-                }
-                const data: any = await invoke("get_session_response_data", { sessionId: selectedSessionId, trafficId: selectedTrafficId });
-                return normalizeHeaders(data?.headers);
-            };
-
-            const readResponseBody = async () => {
-                let body: any;
-                if (testSource === 'live') body = (await provider.getResponsePairData(selectedTrafficId))?.body;
-                else body = await invoke("get_session_response_data", { sessionId: selectedSessionId, trafficId: selectedTrafficId }).then((d: any) => d?.body);
-
-                if (!body) return "";
-                if (body instanceof Uint8Array || Array.isArray(body)) return decoder.decode(new Uint8Array(body));
-                return body;
-            };
-
-            try {
-                const finalCode = `${userCode}\nreturn await code();`;
-                const wrappedCode = `
-                    return (async () => {
-                        try {
-                            ${finalCode}
-                        } catch (e) {
-                            return { error: e.toString() };
-                        }
-                    })()
-                `;
-
-                const asyncFn = new Function('readRequestHeaders', 'readRequestBody', 'readResponseHeaders', 'readResponseBody', wrappedCode);
-                const data = await asyncFn(readRequestHeaders, readRequestBody, readResponseHeaders, readResponseBody);
-
-                if (block.type === 'html' && data && typeof data === 'object' && !data.error) {
-                    return `
-                        <style>${block.css || ''}</style>
-                        <script>window.DATA = ${JSON.stringify(data)};</script>
-                        ${block.html || ''}
-                    `;
-                }
-                return data;
-            } catch (e: any) {
-                return { error: e.toString() };
-            }
+            return executeViewerBlock(block, {
+                trafficId: selectedTrafficId,
+                isReviewMode: testSource === 'session',
+                reviewedSessionId: selectedSessionId,
+                provider
+            });
         };
 
-        for (const block of blocks) {
+        const blockPromises = blocks.map(async (block) => {
             results[block.id] = await executeBlock(block);
-        }
+        });
+        
+        await Promise.all(blockPromises);
 
         setTestResults(results);
         setIsRunning(false);

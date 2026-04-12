@@ -15,43 +15,56 @@ interface CanvasProps {
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
-    blocks, maximizedBlockId, setMaximizedBlockId,
-    testResults, updateBlock, deleteBlock,
+    blocks, 
+    maximizedBlockId, 
+    setMaximizedBlockId,
+    testResults, 
+    updateBlock, 
+    deleteBlock,
     isViewerMode
 }) => {
-    return (
-        <div className="flex-1 overflow-y-auto custom-scrollbar relative bg-[#080808]">
-            {isViewerMode && maximizedBlockId && setMaximizedBlockId && updateBlock && testResults ? (
-                <MaximizedBlock
-                    block={blocks.find(b => b.id === maximizedBlockId)!}
-                    result={testResults[maximizedBlockId]}
-                    onClose={() => setMaximizedBlockId(null)}
-                    onUpdate={(updates) => updateBlock(maximizedBlockId, updates)}
-                />
-            ) : (
-                <div className="grid grid-cols-12">
-                    {blocks.length === 0 ? (
-                        <div className="col-span-12 flex justify-center items-center p-20">
-                            <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-20 flex flex-col items-center justify-center text-zinc-600">
-                                <FiLayers size={48} className="mb-4 opacity-20" />
-                                <p className="text-sm font-medium">Your canvas is empty</p>
-                                <p className="text-xs mt-1">Add blocks from the right panel to start building</p>
-                            </div>
-                        </div>
-                    ) : (
-                        blocks.map((block) => (
-                            <BlockItem
-                                key={block.id}
-                                block={block}
-                                isViewerMode={isViewerMode}
-                                result={testResults && testResults[block.id]}
-                                onDelete={deleteBlock && (() => deleteBlock(block.id))}
-                                onUpdate={updateBlock && ((updates) => updateBlock(block.id, updates))}
-                            />
-                        ))
-                    )}
+    // If a block is maximized, show only that block in full view
+    if (maximizedBlockId && setMaximizedBlockId && updateBlock) {
+        const block = blocks.find(b => b.id === maximizedBlockId);
+        if (block) {
+            return (
+                <div className="h-full w-full bg-[#111111]">
+                    <MaximizedBlock
+                        block={block}
+                        result={testResults && testResults[maximizedBlockId]}
+                        onClose={() => setMaximizedBlockId(null)}
+                        onUpdate={(updates) => updateBlock(maximizedBlockId, updates)}
+                    />
                 </div>
-            )}
+            );
+        }
+    }
+
+    return (
+        <div className="h-full w-full overflow-y-auto custom-scrollbar bg-[#080808]">
+            <div className="grid grid-cols-12 w-full min-h-full">
+                {blocks.length === 0 ? (
+                    <div className="col-span-12 flex justify-center items-center p-20">
+                        <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-20 flex flex-col items-center justify-center text-zinc-600">
+                            <FiLayers size={48} className="mb-4 opacity-20" />
+                            <p className="text-sm font-medium">Your canvas is empty</p>
+                            <p className="text-xs mt-1">Add blocks to start building</p>
+                        </div>
+                    </div>
+                ) : (
+                    blocks.map((block) => (
+                        <BlockItem
+                            key={block.id}
+                            block={block}
+                            isViewerMode={isViewerMode}
+                            result={testResults && testResults[block.id]}
+                            onDelete={deleteBlock ? (() => deleteBlock(block.id)) : undefined}
+                            onUpdate={updateBlock ? ((updates) => updateBlock(block.id, updates)) : undefined}
+                        />
+                    ))
+                )}
+            </div>
         </div>
     );
 };
+
