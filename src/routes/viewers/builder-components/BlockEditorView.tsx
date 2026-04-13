@@ -13,6 +13,20 @@ interface BlockEditorViewProps {
     onUpdate?: (updates: Partial<ViewerBlock>) => void;
 }
 
+
+
+const TabItem = ({ id, label, active, onClick, color, borderColor }: { id: string, label: string, active: boolean, onClick: () => void, color: string, borderColor: string }) => (
+    <button
+        onClick={onClick}
+        className={twMerge(
+            "text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all",
+            active ? twMerge(color, borderColor) : "text-zinc-600 border-transparent hover:text-zinc-400"
+        )}
+    >
+        {label}
+    </button>
+);
+
 export const BlockEditorView = ({
     block,
     result,
@@ -20,6 +34,8 @@ export const BlockEditorView = ({
     activeTab,
     setActiveTab,
     onUpdate
+}: BlockEditorViewProps) => {   // ✅ FIX: close props + add type
+
     const editorRef = React.useRef<any>(null);
 
     const handleFormat = () => {
@@ -27,10 +43,14 @@ export const BlockEditorView = ({
     };
 
     return (
-        <div className={twMerge(
-            "animate-in fade-in slide-in-from-top-1 duration-200 border-b border-zinc-800 flex flex-col", 
-            (block.colSpan >= 8 || isMaximized) ? "order-1 border-b-0 h-full min-h-[500px]" : "order-2"
-        )}>
+        <div
+            className={twMerge(
+                "animate-in fade-in slide-in-from-top-1 duration-200 border-b border-zinc-800 flex flex-col",
+                (block.colSpan >= 8 || isMaximized)
+                    ? "order-1 border-b-0 h-full min-h-[500px]"
+                    : "order-2"
+            )}
+        >
             <div className="px-5 py-2 flex items-center justify-between bg-black/40 border-b border-zinc-800/50">
                 <div className="flex items-center gap-6">
                     {block.type === 'html' ? (
@@ -50,7 +70,7 @@ export const BlockEditorView = ({
                     )}
 
                     {activeTab !== 'output' && (
-                        <button 
+                        <button
                             onClick={handleFormat}
                             className="flex items-center gap-1.5 px-2 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded transition-all border border-blue-500/20 group/format"
                             title="Format Code"
@@ -60,31 +80,47 @@ export const BlockEditorView = ({
                         </button>
                     )}
                 </div>
+
                 <div className="text-[8px] text-zinc-700 font-bold uppercase tracking-wider">
-                    {activeTab === 'js' ? 'Host Context' : activeTab === 'html' ? 'IFrame Source' : 'IFrame Styles'}
+                    {activeTab === 'js'
+                        ? 'Host Context'
+                        : activeTab === 'html'
+                            ? 'IFrame Source'
+                            : 'IFrame Styles'}
                 </div>
             </div>
+
             <div className="flex-1 min-h-[400px] border-y border-zinc-800/50">
                 <MonacoEditor
                     height="100%"
-                    onMount={(ed) => editorRef.current = ed}
+                    onMount={(ed) => (editorRef.current = ed)}
                     language={
-                        activeTab === 'js' ? 'javascript' : 
-                        activeTab === 'html' ? 'html' : 
-                        activeTab === 'css' ? 'css' : 
-                        (block.type === 'html' ? 'html' : 'json')
+                        activeTab === 'js'
+                            ? 'javascript'
+                            : activeTab === 'html'
+                                ? 'html'
+                                : activeTab === 'css'
+                                    ? 'css'
+                                    : block.type === 'html'
+                                        ? 'html'
+                                        : 'json'
                     }
                     theme="vs-dark"
                     options={{
                         readOnly: activeTab === 'output',
                         minimap: { enabled: false },
-                        fontSize: 11
+                        fontSize: 11,
                     }}
                     value={
-                        activeTab === 'js' ? block.code : 
-                        activeTab === 'html' ? (block.html || "") : 
-                        activeTab === 'css' ? (block.css || "") : 
-                        (typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result || ""))
+                        activeTab === 'js'
+                            ? block.code
+                            : activeTab === 'html'
+                                ? block.html || ""
+                                : activeTab === 'css'
+                                    ? block.css || ""
+                                    : typeof result === 'object'
+                                        ? JSON.stringify(result, null, 2)
+                                        : String(result || "")
                     }
                     onChange={(val) => {
                         if (activeTab === 'js') onUpdate?.({ code: val || "" });
@@ -96,15 +132,3 @@ export const BlockEditorView = ({
         </div>
     );
 };
-
-const TabItem = ({ id, label, active, onClick, color, borderColor }: { id: string, label: string, active: boolean, onClick: () => void, color: string, borderColor: string }) => (
-    <button
-        onClick={onClick}
-        className={twMerge(
-            "text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all", 
-            active ? twMerge(color, borderColor) : "text-zinc-600 border-transparent hover:text-zinc-400"
-        )}
-    >
-        {label}
-    </button>
-);
