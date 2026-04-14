@@ -1,4 +1,15 @@
 import React, { createContext, useContext, useState } from "react";
+import { ViewerMatcher } from "./ViewerContext";
+
+import sseJs from "./builtin-matchers/sse.js?raw";
+import graphqlHeaderJs from "./builtin-matchers/graphql-header.js?raw";
+import graphqlBodyJs from "./builtin-matchers/graphql-body.js?raw";
+import jsonJs from "./builtin-matchers/json.js?raw";
+import imageJs from "./builtin-matchers/image.js?raw";
+import htmlJs from "./builtin-matchers/html.js?raw";
+import videoJs from "./builtin-matchers/video.js?raw";
+import audioJs from "./builtin-matchers/audio.js?raw";
+import jwtJs from "./builtin-matchers/jwt.js?raw";
 
 /**
  * Mode when nothing is selected.
@@ -138,4 +149,34 @@ export const BottomPaneProvider: React.FC<{ children: React.ReactNode }> = ({
             {children}
         </BottomPaneContext.Provider>
     );
+};
+
+export const builtinMatchers: Record<string, ViewerMatcher[]> = {
+    sse_viewer: [
+        { js: sseJs }
+    ],
+    graphql: [
+        { js: graphqlHeaderJs },
+        { js: graphqlBodyJs },
+        { glob: "*graphql*" },
+        { glob: "*/graphql" }
+    ],
+    json_tree: [
+        { js: jsonJs }
+    ],
+    image_viewer: [
+        { js: imageJs }
+    ],
+    html_viewer: [
+        { js: htmlJs }
+    ],
+    video_viewer: [
+        { js: videoJs }
+    ],
+    audio_viewer: [
+        { js: audioJs }
+    ],
+    jwt_decoder: [
+        { js: jwtJs }
+    ]
 };

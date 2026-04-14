@@ -21,6 +21,12 @@ export interface ViewerContent {
     filter?: string;
     selectedTrafficId?: string;
   };
+  matchers?: ViewerMatcher[];
+}
+
+export interface ViewerMatcher {
+  js?: string;
+  glob?: string;
 }
 
 export interface Viewer {

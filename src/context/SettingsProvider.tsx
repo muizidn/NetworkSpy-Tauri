@@ -22,6 +22,8 @@ interface SettingsContextInterface {
   setMcpHttpEnabled: (enabled: boolean) => void;
   mcpHttpPort: number;
   setMcpHttpPort: (port: number) => void;
+  smartViewerMatch: boolean;
+  setSmartViewerMatch: (enabled: boolean) => void;
 }
 
 export const SettingsContext = createContext<SettingsContextInterface>({
@@ -39,6 +41,8 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   setMcpHttpEnabled: () => {},
   mcpHttpPort: 3001,
   setMcpHttpPort: () => {},
+  smartViewerMatch: false,
+  setSmartViewerMatch: () => {},
 });
 
 export const useSettingsContext = () => useContext(SettingsContext);
@@ -54,6 +58,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [mcpStdioEnabled, setMcpStdioEnabled] = useState(false);
   const [mcpHttpEnabled, setMcpHttpEnabled] = useState(false);
   const [mcpHttpPort, setMcpHttpPort] = useState(3001);
+  const [smartViewerMatch, setSmartViewerMatch] = useState(() => {
+    return localStorage.getItem("ns_smart_viewer_match") === "true";
+  });
 
   useEffect(() => {
     invoke<{ show_connect_method: boolean; stream_certificate_logs: boolean; mcp_stdio_enabled: boolean; mcp_http_enabled: boolean; mcp_http_port: number }>("get_proxy_settings")
@@ -77,6 +84,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem("ns_center_pane_sizes", JSON.stringify(sizesCenterPane));
   }, [sizesCenterPane]);
+
+  useEffect(() => {
+    localStorage.setItem("ns_smart_viewer_match", String(smartViewerMatch));
+  }, [smartViewerMatch]);
 
   useEffect(() => {
     invoke("update_proxy_settings", { 
@@ -106,7 +117,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         mcpHttpEnabled,
         setMcpHttpEnabled,
         mcpHttpPort,
-        setMcpHttpPort
+        setMcpHttpPort,
+        smartViewerMatch,
+        setSmartViewerMatch,
       }}>
       {children}
     </SettingsContext.Provider>

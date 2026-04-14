@@ -25,6 +25,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
         isToolboxVisible, setIsToolboxVisible,
         maximizedBlockId, setMaximizedBlockId,
         testResults,
+        matchers, setMatchers,
         isRunning,
         isSourceDialogOpen, setIsSourceDialogOpen,
         viewMode, setViewMode,
@@ -90,6 +91,8 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
                     runPreview={runPreview}
                     isRunning={isRunning}
                     addBlock={addBlock}
+                    matchers={matchers}
+                    setMatchers={setMatchers}
                 />
             </div>
 

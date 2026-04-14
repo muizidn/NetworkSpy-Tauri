@@ -14,7 +14,9 @@ export default function Settings() {
         mcpHttpEnabled,
         setMcpHttpEnabled,
         mcpHttpPort,
-        setMcpHttpPort
+        setMcpHttpPort,
+        smartViewerMatch,
+        setSmartViewerMatch
     } = useSettingsContext();
     const [appVersion, setAppVersion] = useState<string>('0.0.0');
     const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -54,6 +56,29 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-6">
+                    <div
+                        className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-zinc-700 transition-all duration-300 cursor-pointer"
+                        onClick={() => setSmartViewerMatch(!smartViewerMatch)}
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-yellow-500 group-hover:scale-110 transition-transform">
+                                <FiTarget size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-white mb-0.5">Smart Viewer Sorting</h3>
+                                <p className="text-xs text-zinc-500 max-w-md leading-relaxed">
+                                    Automatically analyzes request contents to intelligently push the highest-matching viewers (e.g. SSE, GraphQL) to the front of the list. Evaluates asynchronously in the background. May slightly impact rendering performance on slow PCs.
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            className={`w-12 h-6 rounded-full relative transition-all duration-300 ${smartViewerMatch ? 'bg-yellow-600 shadow-[0_0_15px_rgba(202,138,4,0.4)]' : 'bg-zinc-800'}`}
+                        >
+                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 ${smartViewerMatch ? 'left-7' : 'left-1'}`} />
+                        </button>
+                    </div>
+
                     <div
                         className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-zinc-700 transition-all duration-300 cursor-pointer"
                         onClick={() => setShowConnectMethod(!showConnectMethod)}
