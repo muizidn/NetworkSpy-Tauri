@@ -78,14 +78,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const verifyLicense = async (key: string | null = null) => {
     try {
       const result: any = await invoke("verify_license", { licenseKey: key });
-      console.log("DEBUG: verify_license raw result:", result);
       if (result.success) {
-        console.log("DEBUG: Setting verified state to true");
         setIsVerified(true);
         setPlan(result.plan);
         setApiFeatures(result.features || null);
       } else {
-        console.log("DEBUG: Setting verified state to false (unsuccessful)");
         setIsVerified(false);
         setPlan(null);
         setApiFeatures(null);
@@ -114,11 +111,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    invoke<{ 
-      show_connect_method: boolean; 
-      stream_certificate_logs: boolean; 
-      mcp_stdio_enabled: boolean; 
-      mcp_http_enabled: boolean; 
+    invoke<{
+      show_connect_method: boolean;
+      stream_certificate_logs: boolean;
+      mcp_stdio_enabled: boolean;
+      mcp_http_enabled: boolean;
       mcp_http_port: number;
       license_key: string;
     }>("get_proxy_settings")
@@ -129,11 +126,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
           setMcpStdioEnabled(settings.mcp_stdio_enabled);
           setMcpHttpEnabled(settings.mcp_http_enabled);
           setMcpHttpPort(settings.mcp_http_port);
-          
+
           // Try silent verify (uses keychain on backend)
-          verifyLicense(null)
-            .then(res => console.log("DEBUG: Silent verification result:", res))
-            .catch(err => console.error("DEBUG: Silent verification failed:", err));
+          verifyLicense(null).catch(() => { });
 
           setIsLoaded(true);
         }
@@ -156,15 +151,15 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!isLoaded) return;
-    
-    invoke("update_proxy_settings", { 
-      newSettings: { 
+
+    invoke("update_proxy_settings", {
+      newSettings: {
         show_connect_method: showConnectMethod,
         stream_certificate_logs: streamCertificateLogs,
         mcp_stdio_enabled: mcpStdioEnabled,
         mcp_http_enabled: mcpHttpEnabled,
         mcp_http_port: mcpHttpPort
-      } 
+      }
     }).catch(console.error);
   }, [showConnectMethod, streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled, mcpHttpPort, isLoaded]);
 

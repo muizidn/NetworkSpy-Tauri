@@ -28,17 +28,36 @@ static CACHED_LICENSE: Lazy<RwLock<LicenseState>> = Lazy::new(|| {
 
 
 fn save_license_to_keychain(key: &str) -> Result<(), String> {
+    println!("DEBUG: Keychain Save - Service: {}, User: {}", SERVICE_NAME, KEYCHAIN_USER);
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
-    entry.set_password(key).map_err(|e: keyring::Error| e.to_string())
+    entry.set_password(key).map_err(|e: keyring::Error| e.to_string())?;
+    
+    // Immediate verify
+    match entry.get_password() {
+        Ok(_) => println!("DEBUG: Immediate keychain verify SUCCESS"),
+        Err(e) => println!("DEBUG: Immediate keychain verify FAILED: {}", e),
+    }
+    Ok(())
 }
 
 fn get_license_from_keychain() -> Result<String, String> {
+    println!("DEBUG: Keychain Fetch - Service: {}, User: {}", SERVICE_NAME, KEYCHAIN_USER);
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
-    entry.get_password().map_err(|e: keyring::Error| e.to_string())
+    match entry.get_password() {
+        Ok(p) => {
+            println!("DEBUG: Keychain Fetch SUCCESS");
+            Ok(p)
+        },
+        Err(e) => {
+            println!("DEBUG: Keychain Fetch FAILED: {}", e);
+            Err(e.to_string())
+        }
+    }
 }
 
 #[tauri::command]
 pub fn revoke_license_from_keychain() -> Result<(), String> {
+    println!("DEBUG: Keychain REVOKE called");
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e| e.to_string())?;
     let _ = entry.delete_credential();
 
@@ -89,7 +108,20 @@ pub async fn verify_license(
     // Determine the key to use (provided or from keychain)
     let license_key = match license_key {
         Some(k) => k,
-        None => get_license_from_keychain().map_err(|_| "No license found".to_string())?,
+        None => {
+            match get_license_from_keychain() {
+                Ok(k) => k,
+                Err(_) => {
+                    return Ok(LicenseVerificationResult {
+                        success: false,
+                        message: "No license key found".to_string(),
+                        plan: Some("free".to_string()),
+                        error: None,
+                        features: None,
+                    });
+                }
+            }
+        }
     };
     
     // 1. Get or generate Device ID
@@ -207,7 +239,9 @@ pub async fn verify_license(
         .map_err(|e| format!("Failed to parse decrypted result: {}", e))?;
 
     if result.success {
+        println!("DEBUG: Verification successful, plan: {:?}", result.plan);
         // Save to keychain
+        println!("DEBUG: Attempting to save key to keychain: {}", license_key);
         if let Err(e) = save_license_to_keychain(&license_key) {
             println!("ERROR: Failed to save license to keychain: {}", e);
         } else {
