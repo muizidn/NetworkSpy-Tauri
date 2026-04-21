@@ -31,7 +31,7 @@ export default function Layout() {
         "flex flex-row w-screen h-screen overflow-hidden",
         isMainWindow ? "bg-[#0a0a0a]" : "bg-[#111111]"
     )}>
-      {isMainWindow && <LeftSidebar onProClick={openProDialog} />}
+      {isMainWindow && <LeftSidebar />}
       
       <div className="flex-grow h-screen overflow-hidden relative">
         <Outlet />
