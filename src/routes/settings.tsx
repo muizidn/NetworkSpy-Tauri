@@ -23,6 +23,7 @@ export default function Settings() {
         plan,
         isVerified,
         verifyLicense,
+        revokeLicense,
     } = useSettingsContext();
 
     const [appVersion, setAppVersion] = useState<string>('0.0.0');
@@ -101,38 +102,60 @@ export default function Settings() {
                         </div>
 
                         <div className="flex flex-col gap-4">
-                            <div className="flex gap-3">
-                                <input
-                                    type="text"
-                                    placeholder="NS-XXXX-XXXX-XXXX-XXXX"
-                                    value={localLicenseKey}
-                                    onChange={(e) => setLocalLicenseKey(e.target.value.toUpperCase())}
-                                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3.5 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                                />
-                                <button
-                                    onClick={handleVerifyLicense}
-                                    disabled={licenseStatus === 'verifying' || !localLicenseKey}
-                                    className={`px-8 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center gap-3 cursor-pointer ${licenseStatus === 'success' ? 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.3)]' :
-                                            licenseStatus === 'error' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]' :
-                                                'bg-white text-black hover:bg-blue-500 hover:text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]'
-                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                    {licenseStatus === 'verifying' ? (
-                                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                        <FiCheckCircle size={16} />
-                                    )}
-                                    <span>{licenseStatus === 'verifying' ? 'Verifying...' : 'Activate'}</span>
-                                </button>
-                            </div>
-
-                            {licenseMessage && (
-                                <div className={`flex items-center gap-3 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${licenseStatus === 'success' ? 'bg-green-500/5 border-green-500/20 text-green-500' : 'bg-red-500/5 border-red-500/20 text-red-500'
-                                    }`}>
-                                    {licenseStatus === 'success' ? <FiCheckCircle size={14} /> : <FiXCircle size={14} />}
-                                    <span className="text-[11px] font-bold uppercase tracking-wider">{licenseMessage}</span>
-                                    {plan && <span className="ml-auto px-2 py-0.5 bg-green-500/10 rounded border border-green-500/20 text-[9px] uppercase">{plan}</span>}
+                            {isVerified ? (
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-green-500/5 border border-green-500/20 animate-in fade-in zoom-in duration-500">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                                            <FiCheckCircle size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-black text-white tracking-tight uppercase">License Active</h3>
+                                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{plan || 'Professional'} Plan • Multi-device</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={revokeLicense}
+                                        className="px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-red-500 hover:border-red-500/50 hover:bg-red-500/5 transition-all cursor-pointer"
+                                    >
+                                        Revoke License
+                                    </button>
                                 </div>
+                            ) : (
+                                <>
+                                    <div className="flex gap-3">
+                                        <input
+                                            type="text"
+                                            placeholder="NS-XXXX-XXXX-XXXX-XXXX"
+                                            value={localLicenseKey}
+                                            onChange={(e) => setLocalLicenseKey(e.target.value.toUpperCase())}
+                                            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3.5 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                        />
+                                        <button
+                                            onClick={handleVerifyLicense}
+                                            disabled={licenseStatus === 'verifying' || !localLicenseKey}
+                                            className={`px-8 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center gap-3 cursor-pointer ${licenseStatus === 'success' ? 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.3)]' :
+                                                    licenseStatus === 'error' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]' :
+                                                        'bg-white text-black hover:bg-blue-500 hover:text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]'
+                                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                        >
+                                            {licenseStatus === 'verifying' ? (
+                                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <FiCheckCircle size={16} />
+                                            )}
+                                            <span>{licenseStatus === 'verifying' ? 'Verifying...' : 'Activate'}</span>
+                                        </button>
+                                    </div>
+
+                                    {licenseMessage && (
+                                        <div className={`flex items-center gap-3 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${licenseStatus === 'success' ? 'bg-green-500/5 border-green-500/20 text-green-500' : 'bg-red-500/5 border-red-500/20 text-red-500'
+                                            }`}>
+                                            {licenseStatus === 'success' ? <FiCheckCircle size={14} /> : <FiXCircle size={14} />}
+                                            <span className="text-[11px] font-bold uppercase tracking-wider">{licenseMessage}</span>
+                                            {plan && <span className="ml-auto px-2 py-0.5 bg-green-500/10 rounded border border-green-500/20 text-[9px] uppercase">{plan}</span>}
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

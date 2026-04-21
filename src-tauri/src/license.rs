@@ -7,6 +7,27 @@ use std::sync::Arc;
 use tauri::Manager;
 use hostname;
 use uuid::Uuid;
+use keyring::Entry;
+
+const SERVICE_NAME: &str = "app.networkspy.license";
+const KEYCHAIN_USER: &str = "networkspy_user";
+
+fn save_license_to_keychain(key: &str) -> Result<(), String> {
+    let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
+    entry.set_password(key).map_err(|e: keyring::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_license_from_keychain() -> Result<String, String> {
+    let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
+    entry.get_password().map_err(|e: keyring::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn revoke_license_from_keychain() -> Result<(), String> {
+    let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e| e.to_string())?;
+    entry.delete_credential().map_err(|e: keyring::Error| e.to_string())
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct LicenseRequest {
@@ -159,11 +180,12 @@ pub async fn verify_license(
 
     if result.success {
         let mut settings = state.0.write().map_err(|e| e.to_string())?;
-        settings.license_key = license_key;
+        settings.license_key = license_key.clone();
         let val = serde_json::to_string(&*settings).map_err(|e| e.to_string())?;
         let _ = db.set_setting("proxy_settings", &val);
+        
+        // Save to keychain
+        let _ = save_license_to_keychain(&license_key);
     }
-
-    println!("DEBUG: verify_license result: {:?}", result);
     Ok(result)
 }

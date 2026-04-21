@@ -30,31 +30,33 @@ interface SettingsContextInterface {
   isVerified: boolean;
   apiFeatures: any | null;
   verifyLicense: (key: string) => Promise<any>;
+  revokeLicense: () => Promise<void>;
 }
 
 export const SettingsContext = createContext<SettingsContextInterface>({
   theme: "dark",
-  setTheme: () => {},
+  setTheme: () => { },
   sizesCenterPane: [],
-  setSizesCenterPane: () => {},
+  setSizesCenterPane: () => { },
   showConnectMethod: false,
-  setShowConnectMethod: () => {},
+  setShowConnectMethod: () => { },
   streamCertificateLogs: false,
-  setStreamCertificateLogs: () => {},
+  setStreamCertificateLogs: () => { },
   mcpStdioEnabled: false,
-  setMcpStdioEnabled: () => {},
+  setMcpStdioEnabled: () => { },
   mcpHttpEnabled: false,
-  setMcpHttpEnabled: () => {},
+  setMcpHttpEnabled: () => { },
   mcpHttpPort: 3001,
-  setMcpHttpPort: () => {},
+  setMcpHttpPort: () => { },
   smartViewerMatch: false,
-  setSmartViewerMatch: () => {},
+  setSmartViewerMatch: () => { },
   licenseKey: "",
-  setLicenseKey: () => {},
+  setLicenseKey: () => { },
   plan: null,
   isVerified: false,
   apiFeatures: null,
-  verifyLicense: async () => {},
+  verifyLicense: async () => { },
+  revokeLicense: async () => { }
 });
 
 export const useSettingsContext = () => useContext(SettingsContext);
@@ -79,10 +81,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [apiFeatures, setApiFeatures] = useState<any | null>(null);
 
   const verifyLicense = async (key: string) => {
-    console.log("DEBUG: verifyLicense starting for key:", key);
     try {
       const result: any = await invoke("verify_license", { licenseKey: key });
-      console.log("DEBUG: verifyLicense result:", result);
       if (result.success) {
         setIsVerified(true);
         setPlan(result.plan);
@@ -95,7 +95,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       }
       return result;
     } catch (e) {
-      console.error("DEBUG: verifyLicense error:", e);
+      console.error("License verification failed", e);
       setIsVerified(false);
       setPlan(null);
       setApiFeatures(null);
@@ -103,12 +103,24 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const revokeLicense = async () => {
+    try {
+      await invoke("revoke_license_from_keychain");
+      setIsVerified(false);
+      setPlan(null);
+      setLicenseKey("");
+      setApiFeatures(null);
+    } catch (e) {
+      console.error("Failed to revoke license", e);
+    }
+  };
+
   useEffect(() => {
-    invoke<{ 
-      show_connect_method: boolean; 
-      stream_certificate_logs: boolean; 
-      mcp_stdio_enabled: boolean; 
-      mcp_http_enabled: boolean; 
+    invoke<{
+      show_connect_method: boolean;
+      stream_certificate_logs: boolean;
+      mcp_stdio_enabled: boolean;
+      mcp_http_enabled: boolean;
       mcp_http_port: number;
       license_key: string;
     }>("get_proxy_settings")
@@ -119,10 +131,21 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
           setMcpStdioEnabled(settings.mcp_stdio_enabled);
           setMcpHttpEnabled(settings.mcp_http_enabled);
           setMcpHttpPort(settings.mcp_http_port);
-          setLicenseKey(settings.license_key);
-          
+
+          // Use license key from settings first
           if (settings.license_key) {
-            verifyLicense(settings.license_key).catch(() => {});
+            setLicenseKey(settings.license_key);
+            verifyLicense(settings.license_key).catch(() => { });
+          } else {
+            // Fallback: check keychain
+            invoke<string>("get_license_from_keychain")
+              .then((key) => {
+                if (key) {
+                  setLicenseKey(key);
+                  verifyLicense(key).catch(() => { });
+                }
+              })
+              .catch(() => { });
           }
         }
       })
@@ -143,24 +166,24 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [smartViewerMatch]);
 
   useEffect(() => {
-    invoke("update_proxy_settings", { 
-      newSettings: { 
+    invoke("update_proxy_settings", {
+      newSettings: {
         show_connect_method: showConnectMethod,
         stream_certificate_logs: streamCertificateLogs,
         mcp_stdio_enabled: mcpStdioEnabled,
         mcp_http_enabled: mcpHttpEnabled,
         mcp_http_port: mcpHttpPort,
         license_key: licenseKey
-      } 
+      }
     }).catch(console.error);
   }, [showConnectMethod, streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled, mcpHttpPort, licenseKey]);
 
   return (
     <SettingsContext.Provider
-      value={{ 
-        theme, 
-        setTheme, 
-        sizesCenterPane, 
+      value={{
+        theme,
+        setTheme,
+        sizesCenterPane,
         setSizesCenterPane,
         showConnectMethod,
         setShowConnectMethod,
@@ -180,6 +203,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         isVerified,
         apiFeatures,
         verifyLicense,
+        revokeLicense,
       }}>
       {children}
     </SettingsContext.Provider>
