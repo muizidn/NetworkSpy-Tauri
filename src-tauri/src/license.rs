@@ -8,17 +8,31 @@ use tauri::Manager;
 use hostname;
 use uuid::Uuid;
 use keyring::Entry;
+use std::sync::RwLock;
+use once_cell::sync::Lazy;
 
 const SERVICE_NAME: &str = "app.networkspy.license";
 const KEYCHAIN_USER: &str = "networkspy_user";
+
+pub struct LicenseState {
+    pub plan: Option<String>,
+    pub features: Option<serde_json::Value>,
+}
+
+static CACHED_LICENSE: Lazy<RwLock<LicenseState>> = Lazy::new(|| {
+    RwLock::new(LicenseState {
+        plan: None,
+        features: None,
+    })
+});
+
 
 fn save_license_to_keychain(key: &str) -> Result<(), String> {
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
     entry.set_password(key).map_err(|e: keyring::Error| e.to_string())
 }
 
-#[tauri::command]
-pub fn get_license_from_keychain() -> Result<String, String> {
+fn get_license_from_keychain() -> Result<String, String> {
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
     entry.get_password().map_err(|e: keyring::Error| e.to_string())
 }
@@ -26,7 +40,15 @@ pub fn get_license_from_keychain() -> Result<String, String> {
 #[tauri::command]
 pub fn revoke_license_from_keychain() -> Result<(), String> {
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e| e.to_string())?;
-    entry.delete_credential().map_err(|e: keyring::Error| e.to_string())
+    let _ = entry.delete_credential();
+
+    // Clear Cache
+    if let Ok(mut cache) = CACHED_LICENSE.write() {
+        cache.plan = None;
+        cache.features = None;
+    }
+    
+    Ok(())
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -59,10 +81,16 @@ pub struct LicenseVerificationResult {
 #[tauri::command]
 pub async fn verify_license(
     app: tauri::AppHandle,
-    license_key: String,
+    license_key: Option<String>,
 ) -> Result<LicenseVerificationResult, String> {
     let state = app.state::<ManagedProxySettings>();
     let db = app.state::<Arc<traffic::db::TrafficDb>>();
+    
+    // Determine the key to use (provided or from keychain)
+    let license_key = match license_key {
+        Some(k) => k,
+        None => get_license_from_keychain().map_err(|_| "No license found".to_string())?,
+    };
     
     // 1. Get or generate Device ID
     let mut device_id = {
@@ -179,13 +207,74 @@ pub async fn verify_license(
         .map_err(|e| format!("Failed to parse decrypted result: {}", e))?;
 
     if result.success {
-        let mut settings = state.0.write().map_err(|e| e.to_string())?;
-        settings.license_key = license_key.clone();
-        let val = serde_json::to_string(&*settings).map_err(|e| e.to_string())?;
-        let _ = db.set_setting("proxy_settings", &val);
-        
         // Save to keychain
-        let _ = save_license_to_keychain(&license_key);
+        if let Err(e) = save_license_to_keychain(&license_key) {
+            println!("ERROR: Failed to save license to keychain: {}", e);
+        } else {
+            println!("DEBUG: License saved to keychain successfully");
+        }
+
+        // Update Cache
+        let mut cache = CACHED_LICENSE.write().map_err(|e| e.to_string())?;
+        cache.plan = result.plan.clone();
+        cache.features = result.features.clone();
     }
+
     Ok(result)
+}
+
+#[tauri::command]
+pub fn license_check_feature(feature: String) -> bool {
+    let cache = match CACHED_LICENSE.read() {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
+
+    let plan = cache.plan.as_deref().unwrap_or("free");
+    let is_personal = plan == "personal";
+    let is_pro = plan == "pro";
+    let is_licensed = is_personal || is_pro;
+
+    // Check dynamic features first if they exist
+    if let Some(features) = &cache.features {
+        if let Some(val) = features.get(&feature) {
+             if let Some(b) = val.as_bool() {
+                 return b;
+             }
+        }
+    }
+
+    match feature.as_str() {
+        "scripting" | "breakpoints" | "mcp" | "premium" => is_licensed,
+        "custom_viewers" => is_pro,
+        _ => false,
+    }
+}
+
+#[tauri::command]
+pub fn license_get_limit(limit_name: String) -> i32 {
+    let cache = match CACHED_LICENSE.read() {
+        Ok(c) => c,
+        Err(_) => return if limit_name == "max_tabs" { 2 } else { 3 },
+    };
+
+    let plan = cache.plan.as_deref().unwrap_or("free");
+    let is_personal = plan == "personal";
+    let is_pro = plan == "pro";
+    let is_licensed = is_personal || is_pro;
+
+    // Check dynamic features first if they exist
+    if let Some(features) = &cache.features {
+        if let Some(val) = features.get(&limit_name) {
+             if let Some(n) = val.as_i64() {
+                 return n as i32;
+             }
+        }
+    }
+
+    match limit_name.as_str() {
+        "max_tabs" => if is_licensed { 999 } else { 2 },
+        "max_filters" => if is_licensed { 999 } else { 3 },
+        _ => 0,
+    }
 }

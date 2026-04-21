@@ -17,8 +17,6 @@ pub struct ProxySettings {
     pub mcp_http_port: u16,
     #[serde(default)]
     pub device_id: String,
-    #[serde(default)]
-    pub license_key: String,
 }
 
 fn default_true() -> bool { true }
@@ -33,7 +31,6 @@ impl Default for ProxySettings {
             mcp_http_enabled: false,
             mcp_http_port: 3001,
             device_id: "".to_string(),
-            license_key: "".to_string(),
         }
     }
 }

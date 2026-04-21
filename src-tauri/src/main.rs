@@ -508,8 +508,9 @@ fn main() {
             commands::set_script_enabled,
             commands::validate_filter_preset_command,
             license::verify_license,
-            license::get_license_from_keychain,
             license::revoke_license_from_keychain,
+            license::license_check_feature,
+            license::license_get_limit,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

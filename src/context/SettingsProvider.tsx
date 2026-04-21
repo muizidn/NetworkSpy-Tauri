@@ -24,8 +24,6 @@ interface SettingsContextInterface {
   setMcpHttpPort: (port: number) => void;
   smartViewerMatch: boolean;
   setSmartViewerMatch: (enabled: boolean) => void;
-  licenseKey: string;
-  setLicenseKey: (key: string) => void;
   plan: string | null;
   isVerified: boolean;
   apiFeatures: any | null;
@@ -50,8 +48,6 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   setMcpHttpPort: () => { },
   smartViewerMatch: false,
   setSmartViewerMatch: () => { },
-  licenseKey: "",
-  setLicenseKey: () => { },
   plan: null,
   isVerified: false,
   apiFeatures: null,
@@ -75,20 +71,21 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [smartViewerMatch, setSmartViewerMatch] = useState(() => {
     return localStorage.getItem("ns_smart_viewer_match") === "true";
   });
-  const [licenseKey, setLicenseKey] = useState("");
   const [plan, setPlan] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [apiFeatures, setApiFeatures] = useState<any | null>(null);
 
-  const verifyLicense = async (key: string) => {
+  const verifyLicense = async (key: string | null = null) => {
     try {
       const result: any = await invoke("verify_license", { licenseKey: key });
+      console.log("DEBUG: verify_license raw result:", result);
       if (result.success) {
+        console.log("DEBUG: Setting verified state to true");
         setIsVerified(true);
         setPlan(result.plan);
-        setLicenseKey(key);
         setApiFeatures(result.features || null);
       } else {
+        console.log("DEBUG: Setting verified state to false (unsuccessful)");
         setIsVerified(false);
         setPlan(null);
         setApiFeatures(null);
@@ -108,19 +105,20 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       await invoke("revoke_license_from_keychain");
       setIsVerified(false);
       setPlan(null);
-      setLicenseKey("");
       setApiFeatures(null);
     } catch (e) {
       console.error("Failed to revoke license", e);
     }
   };
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
-    invoke<{
-      show_connect_method: boolean;
-      stream_certificate_logs: boolean;
-      mcp_stdio_enabled: boolean;
-      mcp_http_enabled: boolean;
+    invoke<{ 
+      show_connect_method: boolean; 
+      stream_certificate_logs: boolean; 
+      mcp_stdio_enabled: boolean; 
+      mcp_http_enabled: boolean; 
       mcp_http_port: number;
       license_key: string;
     }>("get_proxy_settings")
@@ -131,22 +129,13 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
           setMcpStdioEnabled(settings.mcp_stdio_enabled);
           setMcpHttpEnabled(settings.mcp_http_enabled);
           setMcpHttpPort(settings.mcp_http_port);
+          
+          // Try silent verify (uses keychain on backend)
+          verifyLicense(null)
+            .then(res => console.log("DEBUG: Silent verification result:", res))
+            .catch(err => console.error("DEBUG: Silent verification failed:", err));
 
-          // Use license key from settings first
-          if (settings.license_key) {
-            setLicenseKey(settings.license_key);
-            verifyLicense(settings.license_key).catch(() => { });
-          } else {
-            // Fallback: check keychain
-            invoke<string>("get_license_from_keychain")
-              .then((key) => {
-                if (key) {
-                  setLicenseKey(key);
-                  verifyLicense(key).catch(() => { });
-                }
-              })
-              .catch(() => { });
-          }
+          setIsLoaded(true);
         }
       })
       .catch(console.error);
@@ -166,17 +155,18 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [smartViewerMatch]);
 
   useEffect(() => {
-    invoke("update_proxy_settings", {
-      newSettings: {
+    if (!isLoaded) return;
+    
+    invoke("update_proxy_settings", { 
+      newSettings: { 
         show_connect_method: showConnectMethod,
         stream_certificate_logs: streamCertificateLogs,
         mcp_stdio_enabled: mcpStdioEnabled,
         mcp_http_enabled: mcpHttpEnabled,
-        mcp_http_port: mcpHttpPort,
-        license_key: licenseKey
-      }
+        mcp_http_port: mcpHttpPort
+      } 
     }).catch(console.error);
-  }, [showConnectMethod, streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled, mcpHttpPort, licenseKey]);
+  }, [showConnectMethod, streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled, mcpHttpPort, isLoaded]);
 
   return (
     <SettingsContext.Provider
@@ -197,8 +187,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         setMcpHttpPort,
         smartViewerMatch,
         setSmartViewerMatch,
-        licenseKey,
-        setLicenseKey,
         plan,
         isVerified,
         apiFeatures,

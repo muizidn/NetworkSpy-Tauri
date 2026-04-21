@@ -18,8 +18,6 @@ export default function Settings() {
         setMcpHttpPort,
         smartViewerMatch,
         setSmartViewerMatch,
-        licenseKey,
-        setLicenseKey,
         plan,
         isVerified,
         verifyLicense,
@@ -29,13 +27,11 @@ export default function Settings() {
     const [appVersion, setAppVersion] = useState<string>('0.0.0');
     const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
-    const [localLicenseKey, setLocalLicenseKey] = useState<string>(licenseKey);
+    const [localLicenseKey, setLocalLicenseKey] = useState<string>("");
     const [licenseStatus, setLicenseStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
     const [licenseMessage, setLicenseMessage] = useState<string>('');
 
-    useEffect(() => {
-        setLocalLicenseKey(licenseKey);
-    }, [licenseKey]);
+    // License key is no longer synced from context
 
     useEffect(() => {
         if (isVerified) {
