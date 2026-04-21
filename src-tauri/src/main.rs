@@ -14,6 +14,7 @@ pub mod settings;
 // pub mod submenu;
 pub mod traffic;
 pub mod mcp;
+pub mod license;
 
 pub use breakpoints::*;
 pub use scripting::*;
@@ -506,6 +507,7 @@ fn main() {
             commands::get_script_enabled,
             commands::set_script_enabled,
             commands::validate_filter_preset_command,
+            license::verify_license,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

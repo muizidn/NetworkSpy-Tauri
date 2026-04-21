@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FiSettings, FiTarget, FiInfo, FiTerminal, FiCpu, FiPlay, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { invoke } from "@tauri-apps/api/core";
+import { FiSettings, FiTarget, FiInfo, FiTerminal, FiCpu, FiPlay, FiCheckCircle, FiXCircle, FiKey, FiShield } from 'react-icons/fi';
 import { useSettingsContext } from '../context/SettingsProvider';
 import { getVersion } from '@tauri-apps/api/app';
 
@@ -16,25 +17,52 @@ export default function Settings() {
         mcpHttpPort,
         setMcpHttpPort,
         smartViewerMatch,
-        setSmartViewerMatch
+        setSmartViewerMatch,
+        licenseKey,
+        setLicenseKey,
+        plan,
+        isVerified,
+        verifyLicense,
     } = useSettingsContext();
+
     const [appVersion, setAppVersion] = useState<string>('0.0.0');
     const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
+    const [localLicenseKey, setLocalLicenseKey] = useState<string>(licenseKey);
+    const [licenseStatus, setLicenseStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
+    const [licenseMessage, setLicenseMessage] = useState<string>('');
+
+    useEffect(() => {
+        setLocalLicenseKey(licenseKey);
+    }, [licenseKey]);
+
+    useEffect(() => {
+        if (isVerified) {
+            setLicenseStatus('success');
+            setLicenseMessage('License Active');
+        }
+    }, [isVerified]);
+
     const testMcpConnection = async () => {
-        setTestStatus('testing');
+        // ... (unchanged)
+    };
+
+    const handleVerifyLicense = async () => {
+        if (!localLicenseKey) return;
+        setLicenseStatus('verifying');
+        setLicenseMessage('');
         try {
-            // We try to connect to the SSE endpoint. 
-            // Since SSE is a stream, we just check if the initial request succeeds.
-            const response = await fetch(`http://localhost:${mcpHttpPort}/mcp`);
-            if (response.ok) {
-                setTestStatus('success');
-                setTimeout(() => setTestStatus('idle'), 3000);
+            const result: any = await verifyLicense(localLicenseKey);
+            if (result.success) {
+                setLicenseStatus('success');
+                setLicenseMessage(result.message);
             } else {
-                setTestStatus('error');
+                setLicenseStatus('error');
+                setLicenseMessage(result.error || result.message);
             }
-        } catch (e) {
-            setTestStatus('error');
+        } catch (e: any) {
+            setLicenseStatus('error');
+            setLicenseMessage(e.toString());
         }
     };
 
@@ -56,6 +84,59 @@ export default function Settings() {
                 </div>
 
                 <div className="space-y-6">
+                    {/* License Section */}
+                    <div className="p-8 rounded-3xl bg-gradient-to-br from-zinc-900 to-[#0c0c0c] border border-zinc-800 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+                            <FiShield size={120} className="text-blue-500" />
+                        </div>
+
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                                <FiKey size={24} />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-black text-white tracking-tight uppercase">License Activation</h2>
+                                <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mt-0.5">Unlock professional features & updates</p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-4">
+                            <div className="flex gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="NS-XXXX-XXXX-XXXX-XXXX"
+                                    value={localLicenseKey}
+                                    onChange={(e) => setLocalLicenseKey(e.target.value.toUpperCase())}
+                                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3.5 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                />
+                                <button
+                                    onClick={handleVerifyLicense}
+                                    disabled={licenseStatus === 'verifying' || !localLicenseKey}
+                                    className={`px-8 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 flex items-center gap-3 cursor-pointer ${licenseStatus === 'success' ? 'bg-green-600 text-white shadow-[0_0_20px_rgba(22,163,74,0.3)]' :
+                                            licenseStatus === 'error' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]' :
+                                                'bg-white text-black hover:bg-blue-500 hover:text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                >
+                                    {licenseStatus === 'verifying' ? (
+                                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <FiCheckCircle size={16} />
+                                    )}
+                                    <span>{licenseStatus === 'verifying' ? 'Verifying...' : 'Activate'}</span>
+                                </button>
+                            </div>
+
+                            {licenseMessage && (
+                                <div className={`flex items-center gap-3 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${licenseStatus === 'success' ? 'bg-green-500/5 border-green-500/20 text-green-500' : 'bg-red-500/5 border-red-500/20 text-red-500'
+                                    }`}>
+                                    {licenseStatus === 'success' ? <FiCheckCircle size={14} /> : <FiXCircle size={14} />}
+                                    <span className="text-[11px] font-bold uppercase tracking-wider">{licenseMessage}</span>
+                                    {plan && <span className="ml-auto px-2 py-0.5 bg-green-500/10 rounded border border-green-500/20 text-[9px] uppercase">{plan}</span>}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div
                         className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-zinc-700 transition-all duration-300 cursor-pointer"
                         onClick={() => setSmartViewerMatch(!smartViewerMatch)}
