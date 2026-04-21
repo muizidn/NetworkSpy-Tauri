@@ -10,6 +10,8 @@ use uuid::Uuid;
 use keyring::Entry;
 use std::sync::RwLock;
 use once_cell::sync::Lazy;
+use sha2::{Sha256, Digest};
+use mac_address::get_mac_address;
 
 const SERVICE_NAME: &str = "app.networkspy.license";
 const KEYCHAIN_USER: &str = "networkspy_user";
@@ -26,38 +28,29 @@ static CACHED_LICENSE: Lazy<RwLock<LicenseState>> = Lazy::new(|| {
     })
 });
 
-
-fn save_license_to_keychain(key: &str) -> Result<(), String> {
-    println!("DEBUG: Keychain Save - Service: {}, User: {}", SERVICE_NAME, KEYCHAIN_USER);
-    let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
-    entry.set_password(key).map_err(|e: keyring::Error| e.to_string())?;
-    
-    // Immediate verify
-    match entry.get_password() {
-        Ok(_) => println!("DEBUG: Immediate keychain verify SUCCESS"),
-        Err(e) => println!("DEBUG: Immediate keychain verify FAILED: {}", e),
+fn get_stable_device_id() -> String {
+    if let Ok(Some(ma)) = get_mac_address() {
+        let mut hasher = Sha256::new();
+        hasher.update(ma.to_string());
+        format!("{:x}", hasher.finalize())
+    } else {
+        "stable-id-fallback".to_string()
     }
-    Ok(())
 }
 
-fn get_license_from_keychain() -> Result<String, String> {
-    println!("DEBUG: Keychain Fetch - Service: {}, User: {}", SERVICE_NAME, KEYCHAIN_USER);
+fn save_license_to_keychain(key: &str) -> Result<(), String> {
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
-    match entry.get_password() {
-        Ok(p) => {
-            println!("DEBUG: Keychain Fetch SUCCESS");
-            Ok(p)
-        },
-        Err(e) => {
-            println!("DEBUG: Keychain Fetch FAILED: {}", e);
-            Err(e.to_string())
-        }
-    }
+    entry.set_password(key).map_err(|e: keyring::Error| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_license_from_keychain() -> Result<String, String> {
+    let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e: keyring::Error| e.to_string())?;
+    entry.get_password().map_err(|e: keyring::Error| e.to_string())
 }
 
 #[tauri::command]
 pub fn revoke_license_from_keychain() -> Result<(), String> {
-    println!("DEBUG: Keychain REVOKE called");
     let entry = Entry::new(SERVICE_NAME, KEYCHAIN_USER).map_err(|e| e.to_string())?;
     let _ = entry.delete_credential();
 
@@ -124,20 +117,17 @@ pub async fn verify_license(
         }
     };
     
-    // 1. Get or generate Device ID
-    let mut device_id = {
-        let settings = state.0.read().map_err(|e| e.to_string())?;
-        settings.device_id.clone()
-    };
+    // 1. Get or generate Stable Device ID
+    let device_id = get_stable_device_id();
 
-    if device_id.is_empty() {
-        device_id = Uuid::new_v4().to_string();
+    // Update settings if it changed (optional, but keeps it in sync)
+    {
         let mut settings = state.0.write().map_err(|e| e.to_string())?;
-        settings.device_id = device_id.clone();
-        
-        // Save to DB
-        let val = serde_json::to_string(&*settings).map_err(|e| e.to_string())?;
-        let _ = db.set_setting("proxy_settings", &val);
+        if settings.device_id != device_id {
+            settings.device_id = device_id.clone();
+            let val = serde_json::to_string(&*settings).map_err(|e| e.to_string())?;
+            let _ = db.set_setting("proxy_settings", &val);
+        }
     }
 
     let device_name = hostname::get()
@@ -239,14 +229,8 @@ pub async fn verify_license(
         .map_err(|e| format!("Failed to parse decrypted result: {}", e))?;
 
     if result.success {
-        println!("DEBUG: Verification successful, plan: {:?}", result.plan);
         // Save to keychain
-        println!("DEBUG: Attempting to save key to keychain: {}", license_key);
-        if let Err(e) = save_license_to_keychain(&license_key) {
-            println!("ERROR: Failed to save license to keychain: {}", e);
-        } else {
-            println!("DEBUG: License saved to keychain successfully");
-        }
+        let _ = save_license_to_keychain(&license_key);
 
         // Update Cache
         let mut cache = CACHED_LICENSE.write().map_err(|e| e.to_string())?;

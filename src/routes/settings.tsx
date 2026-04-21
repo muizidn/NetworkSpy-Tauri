@@ -99,33 +99,47 @@ export default function Settings() {
 
                         <div className="flex flex-col gap-4">
                             {isVerified ? (
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-green-500/5 border border-green-500/20 animate-in fade-in zoom-in duration-500">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
-                                            <FiCheckCircle size={20} />
+                                <div className="relative group overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                    <div className="relative flex items-center justify-between p-6 rounded-2xl bg-zinc-900/40 border border-green-500/20 backdrop-blur-sm animate-in fade-in zoom-in duration-500">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500 shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                                                <FiShield size={24} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-3">
+                                                    <h3 className="text-sm font-black text-white tracking-tight uppercase">License Active</h3>
+                                                    <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[9px] font-black uppercase tracking-widest rounded border border-green-500/30">
+                                                        {plan || 'Personal'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                                                    <FiCheckCircle size={10} />
+                                                    Backend Verified • Secure Storage Active
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="text-sm font-black text-white tracking-tight uppercase">License Active</h3>
-                                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{plan || 'Professional'} Plan • Multi-device</p>
-                                        </div>
+                                        <button
+                                            onClick={revokeLicense}
+                                            className="px-5 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-red-500 hover:border-red-500/50 hover:bg-red-500/5 transition-all cursor-pointer z-10"
+                                        >
+                                            Revoke License
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={revokeLicense}
-                                        className="px-5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-red-500 hover:border-red-500/50 hover:bg-red-500/5 transition-all cursor-pointer"
-                                    >
-                                        Revoke License
-                                    </button>
                                 </div>
                             ) : (
-                                <>
+                                <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="flex gap-3">
-                                        <input
-                                            type="text"
-                                            placeholder="NS-XXXX-XXXX-XXXX-XXXX"
-                                            value={localLicenseKey}
-                                            onChange={(e) => setLocalLicenseKey(e.target.value.toUpperCase())}
-                                            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-3.5 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                                        />
+                                        <div className="relative flex-1 group">
+                                            <FiKey className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                            <input
+                                                type="text"
+                                                placeholder="NS-XXXX-XXXX-XXXX-XXXX"
+                                                value={localLicenseKey}
+                                                onChange={(e) => setLocalLicenseKey(e.target.value.toUpperCase())}
+                                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-5 py-4 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                            />
+                                        </div>
                                         <button
                                             onClick={handleVerifyLicense}
                                             disabled={licenseStatus === 'verifying' || !localLicenseKey}
@@ -137,7 +151,7 @@ export default function Settings() {
                                             {licenseStatus === 'verifying' ? (
                                                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                             ) : (
-                                                <FiCheckCircle size={16} />
+                                                <FiShield size={16} />
                                             )}
                                             <span>{licenseStatus === 'verifying' ? 'Verifying...' : 'Activate'}</span>
                                         </button>
@@ -147,11 +161,13 @@ export default function Settings() {
                                         <div className={`flex items-center gap-3 p-4 rounded-xl border animate-in fade-in slide-in-from-top-2 duration-300 ${licenseStatus === 'success' ? 'bg-green-500/5 border-green-500/20 text-green-500' : 'bg-red-500/5 border-red-500/20 text-red-500'
                                             }`}>
                                             {licenseStatus === 'success' ? <FiCheckCircle size={14} /> : <FiXCircle size={14} />}
-                                            <span className="text-[11px] font-bold uppercase tracking-wider">{licenseMessage}</span>
-                                            {plan && <span className="ml-auto px-2 py-0.5 bg-green-500/10 rounded border border-green-500/20 text-[9px] uppercase">{plan}</span>}
+                                            <div className="flex-1">
+                                                <span className="text-[11px] font-black uppercase tracking-wider">{licenseMessage}</span>
+                                                {plan && <span className="ml-2 px-2 py-0.5 bg-zinc-900 rounded border border-current text-[9px] font-black uppercase tracking-widest">{plan}</span>}
+                                            </div>
                                         </div>
                                     )}
-                                </>
+                                </div>
                             )}
                         </div>
                     </div>
