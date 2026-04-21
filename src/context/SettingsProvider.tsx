@@ -27,7 +27,8 @@ interface SettingsContextInterface {
   plan: string | null;
   isVerified: boolean;
   apiFeatures: any | null;
-  verifyLicense: (key: string) => Promise<any>;
+  isSyncing: boolean;
+  verifyLicense: (key: string | null) => Promise<any>;
   revokeLicense: () => Promise<void>;
 }
 
@@ -51,6 +52,7 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   plan: null,
   isVerified: false,
   apiFeatures: null,
+  isSyncing: false,
   verifyLicense: async () => { },
   revokeLicense: async () => { }
 });
@@ -71,24 +73,41 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [smartViewerMatch, setSmartViewerMatch] = useState(() => {
     return localStorage.getItem("ns_smart_viewer_match") === "true";
   });
-  const [plan, setPlan] = useState<string | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
-  const [apiFeatures, setApiFeatures] = useState<any | null>(null);
+  const [plan, setPlan] = useState<string | null>(() => localStorage.getItem("ns_license_plan"));
+  const [isVerified, setIsVerified] = useState(() => localStorage.getItem("ns_license_verified") === "true");
+  const [apiFeatures, setApiFeatures] = useState<any | null>(() => {
+    const saved = localStorage.getItem("ns_license_features");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const verifyLicense = async (key: string | null = null) => {
+    setIsSyncing(true);
     try {
       const result: any = await invoke("verify_license", { licenseKey: key });
       if (result.success) {
         setIsVerified(true);
         setPlan(result.plan);
         setApiFeatures(result.features || null);
+        
+        // Cache result
+        localStorage.setItem("ns_license_verified", "true");
+        localStorage.setItem("ns_license_plan", result.plan || "");
+        localStorage.setItem("ns_license_features", JSON.stringify(result.features || null));
       } else {
         setIsVerified(false);
         setPlan(null);
         setApiFeatures(null);
+        
+        // Clear cache
+        localStorage.removeItem("ns_license_verified");
+        localStorage.removeItem("ns_license_plan");
+        localStorage.removeItem("ns_license_features");
       }
+      setIsSyncing(false);
       return result;
     } catch (e) {
+      setIsSyncing(false);
       console.error("License verification failed", e);
       setIsVerified(false);
       setPlan(null);
@@ -103,6 +122,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       setIsVerified(false);
       setPlan(null);
       setApiFeatures(null);
+      
+      // Clear cache
+      localStorage.removeItem("ns_license_verified");
+      localStorage.removeItem("ns_license_plan");
+      localStorage.removeItem("ns_license_features");
     } catch (e) {
       console.error("Failed to revoke license", e);
     }
@@ -185,6 +209,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         plan,
         isVerified,
         apiFeatures,
+        isSyncing,
         verifyLicense,
         revokeLicense,
       }}>

@@ -22,6 +22,7 @@ export default function Settings() {
         isVerified,
         verifyLicense,
         revokeLicense,
+        isSyncing,
     } = useSettingsContext();
 
     const [appVersion, setAppVersion] = useState<string>('0.0.0');
@@ -112,10 +113,16 @@ export default function Settings() {
                                                     <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[9px] font-black uppercase tracking-widest rounded border border-green-500/30">
                                                         {plan || 'Personal'}
                                                     </span>
+                                                    {isSyncing && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[8px] font-black uppercase tracking-[0.2em] rounded animate-pulse">
+                                                            <div className="w-1 h-1 rounded-full bg-current" />
+                                                            Syncing
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
                                                     <FiCheckCircle size={10} />
-                                                    Backend Verified • Secure Storage Active
+                                                    {isSyncing ? 'Refreshing Verification...' : 'Backend Verified • Secure Storage Active'}
                                                 </p>
                                             </div>
                                         </div>
