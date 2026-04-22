@@ -46,6 +46,17 @@ pub fn create_table(conn: &Connection) -> rusqlite::Result<()> {
         [],
     )?;
 
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS proxy_rules (
+            id TEXT PRIMARY KEY,
+            enabled INTEGER DEFAULT 1,
+            name TEXT,
+            pattern TEXT,
+            action TEXT
+        )",
+        [],
+    )?;
+
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_uri ON traffic(uri)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_method ON traffic(method)", [])?;

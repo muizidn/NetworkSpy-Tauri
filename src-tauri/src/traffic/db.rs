@@ -417,6 +417,75 @@ impl TrafficDb {
     pub fn delete_breakpoint(&self, id: String) -> rusqlite::Result<()> {
         crate::traffic::schema::breakpoints::delete_breakpoint(&self.conn.lock().unwrap(), id)
     }
+
+    pub fn get_proxy_rules(&self) -> rusqlite::Result<Vec<ProxyRule>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare("SELECT id, enabled, name, pattern, action FROM proxy_rules")?;
+        let rows = stmt.query_map([], |row| {
+            Ok(ProxyRule {
+                id: row.get(0)?,
+                enabled: row.get::<_, i32>(1)? != 0,
+                name: row.get(2)?,
+                pattern: row.get(3)?,
+                action: row.get(4)?,
+            })
+        })?;
+        let mut rules = Vec::new();
+        for row in rows {
+            rules.push(row?);
+        }
+        
+        // Migration if empty
+        if rules.is_empty() {
+            let allow_list = crate::traffic::schema::traffic::get_allow_list(&conn)?;
+            for (i, domain) in allow_list.into_iter().enumerate() {
+                let id = uuid::Uuid::new_v4().to_string();
+                let name = format!("Migrated Intercept: {}", domain);
+                conn.execute(
+                    "INSERT INTO proxy_rules (id, enabled, name, pattern, action) VALUES (?1, ?2, ?3, ?4, ?5)",
+                    params![id, 1, name, domain, "INTERCEPT"],
+                )?;
+            }
+            // Re-fetch
+            let mut stmt = conn.prepare("SELECT id, enabled, name, pattern, action FROM proxy_rules")?;
+            let rows = stmt.query_map([], |row| {
+                Ok(ProxyRule {
+                    id: row.get(0)?,
+                    enabled: row.get::<_, i32>(1)? != 0,
+                    name: row.get(2)?,
+                    pattern: row.get(3)?,
+                    action: row.get(4)?,
+                })
+            })?;
+            rules = Vec::new();
+            for row in rows {
+                rules.push(row?);
+            }
+        }
+        
+        Ok(rules)
+    }
+
+    pub fn save_proxy_rule(&self, rule: ProxyRule) -> rusqlite::Result<()> {
+        self.conn.lock().unwrap().execute(
+            "INSERT INTO proxy_rules (id, enabled, name, pattern, action) VALUES (?1, ?2, ?3, ?4, ?5) 
+             ON CONFLICT(id) DO UPDATE SET 
+                enabled = excluded.enabled, 
+                name = excluded.name, 
+                pattern = excluded.pattern, 
+                action = excluded.action",
+            params![rule.id, if rule.enabled { 1 } else { 0 }, rule.name, rule.pattern, rule.action],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete_proxy_rule(&self, id: String) -> rusqlite::Result<()> {
+        self.conn.lock().unwrap().execute(
+            "DELETE FROM proxy_rules WHERE id = ?1",
+            params![id],
+        )?;
+        Ok(())
+    }
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
@@ -428,6 +497,15 @@ pub struct BreakpointRule {
     pub matching_rule: String,
     pub request: bool,
     pub response: bool,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct ProxyRule {
+    pub id: String,
+    pub enabled: bool,
+    pub name: String,
+    pub pattern: String,
+    pub action: String, // 'INTERCEPT' or 'TUNNEL'
 }
 
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {

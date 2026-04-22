@@ -16,6 +16,15 @@ pub struct MyTrafficListener {
 
 #[async_trait]
 impl TrafficListener for MyTrafficListener {
+    async fn get_client_name(&self, client_addr: &str) -> String {
+        let info = traffic::process_info::get_client_info(client_addr);
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&info) {
+            val["name"].as_str().unwrap_or("Unknown").to_string()
+        } else {
+            "Unknown".to_string()
+        }
+    }
+
     async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) -> Request<Bytes> {
         self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
         self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);

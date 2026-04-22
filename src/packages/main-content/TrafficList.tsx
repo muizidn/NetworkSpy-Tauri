@@ -174,6 +174,47 @@ class TrafficListContextMenuRenderer
             },
           },
           {
+            id: "add_to_proxy_domain",
+            text: "Add to Proxy List (Domain)",
+            enabled: items.length === 1,
+            action: async () => {
+                const item = items[0];
+                let domain = "";
+                try {
+                    domain = new URL(item.url as string).hostname;
+                } catch {
+                    domain = String(item.url);
+                }
+                await invoke("save_proxy_rule", {
+                    rule: {
+                        id: "",
+                        enabled: true,
+                        name: `Intercept ${domain}`,
+                        pattern: domain,
+                        action: "INTERCEPT"
+                    }
+                });
+            }
+          },
+          {
+            id: "add_to_proxy_client",
+            text: "Add to Proxy List (Client)",
+            enabled: items.length === 1,
+            action: async () => {
+                const item = items[0];
+                const client = String(item.client || "Unknown Client");
+                await invoke("save_proxy_rule", {
+                    rule: {
+                        id: "",
+                        enabled: true,
+                        name: `Intercept ${client}`,
+                        pattern: `client:${client}`,
+                        action: "INTERCEPT"
+                    }
+                });
+            }
+          },
+          {
             id: "delete_selected",
             text: `Delete ${items.length === 1 ? 'item' : `${items.length} items`}`,
             enabled: items.length > 0,

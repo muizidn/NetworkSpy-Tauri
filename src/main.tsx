@@ -41,6 +41,7 @@ import ExtensionsPage from "./routes/extensions";
 import SessionPage from "./routes/sessions";
 import ViewersPage from "./routes/viewers";
 import FiltersPage from "./routes/filters";
+import ProxyList from "./routes/tools/ProxyList";
 import { SessionProvider } from "./context/SessionContext";
 import { ViewerProvider } from "./context/ViewerContext";
 import { BreakpointHitView } from "./packages/breakpoint/BreakpointHitView";
@@ -112,6 +113,10 @@ const router = createBrowserRouter([
       {
         path: "/filters",
         element: <FiltersPage />,
+      },
+      {
+        path: "/proxylist",
+        element: <ProxyList />,
       },
       {
         path: "/breakpoint-hit",

@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { useState, Suspense } from "react";
 
 import { SelectionViewer } from "../main-content/SelectionViewer";
@@ -181,18 +182,55 @@ export const BottomPane = () => {
                           <FiShield size={16} />
                         </div>
                       </div>
-                      <h2 className="text-2xl font-black text-white mb-3 tracking-tight">ENCRYPTED TUNNEL</h2>
+                      <h2 className="text-2xl font-black text-white mb-3 tracking-tight uppercase tracking-[0.2em]">Proxy Not Intercepted</h2>
                       <p className="text-zinc-500 max-w-md text-sm leading-relaxed mb-10">
-                        Traffic to <span className="text-zinc-300 font-mono font-bold">{new URL(selected.url as string).hostname}</span> is currently being tunneled directly to ensure privacy. Deep inspection is disabled.
+                        This traffic to <span className="text-zinc-300 font-mono font-bold">{new URL(selected.url as string).hostname}</span> is currently being tunneled directly. To decrypt and inspect this traffic, add it to your <span className="text-indigo-400 font-bold uppercase tracking-widest text-[10px]">Proxy Intercept List</span>.
                       </p>
-                      <button
-                        onClick={handleIntercept}
-                        disabled={isIntercepting}
-                        className="flex items-center gap-3 px-8 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-sm transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-purple-900/40 uppercase tracking-tight"
-                      >
-                        <FiUnlock size={18} />
-                        {isIntercepting ? "Wait..." : "Enable Interception for this host"}
-                      </button>
+                      <div className="flex flex-col gap-4">
+                          <button
+                            onClick={handleIntercept}
+                            disabled={isIntercepting}
+                            className="flex items-center justify-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-indigo-900/40 uppercase tracking-widest min-w-[280px]"
+                          >
+                            <FiUnlock size={18} />
+                            {isIntercepting ? "Adding..." : "Add Domain to Proxy List"}
+                          </button>
+                          
+                          {selected.client && (
+                              <button
+                                onClick={async () => {
+                                    try {
+                                        setIsIntercepting(true);
+                                        const client = JSON.parse(selected.client as string).name;
+                                        await invoke("save_proxy_rule", {
+                                            rule: {
+                                                id: "",
+                                                enabled: true,
+                                                name: `Intercept ${client}`,
+                                                pattern: `client:${client}`,
+                                                action: "INTERCEPT"
+                                            }
+                                        });
+                                        setDialogConfig({
+                                            isOpen: true,
+                                            title: 'Interception Updated',
+                                            message: `Client ${client} has been added to the Proxy Intercept List. All future traffic from this app will be decrypted.`,
+                                            type: 'success'
+                                        });
+                                    } catch (e) {
+                                        console.error(e);
+                                    } finally {
+                                        setIsIntercepting(false);
+                                    }
+                                }}
+                                disabled={isIntercepting}
+                                className="flex items-center justify-center gap-3 px-8 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 border border-zinc-800 uppercase tracking-widest min-w-[280px]"
+                              >
+                                <FiShield size={18} />
+                                {isIntercepting ? "Adding..." : `Intercept all from ${JSON.parse(selected.client as string).name}`}
+                              </button>
+                          )}
+                      </div>
                     </div>
                   );
                 }

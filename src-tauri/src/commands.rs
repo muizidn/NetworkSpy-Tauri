@@ -140,6 +140,49 @@ pub fn delete_script(id: String, db: tauri::State<'_, Arc<TrafficDb>>) -> Result
     db.delete_script(id).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub fn get_proxy_rules(db: tauri::State<'_, Arc<TrafficDb>>) -> Result<Vec<traffic::db::ProxyRule>, String> {
+    db.get_proxy_rules().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn save_proxy_rule(
+    rule: traffic::db::ProxyRule, 
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    state: tauri::State<'_, InterceptAllowList>
+) -> Result<(), String> {
+    db.save_proxy_rule(rule).map_err(|e| e.to_string())?;
+    refresh_active_allow_list(&state, &db).await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_proxy_rule(
+    id: String, 
+    db: tauri::State<'_, Arc<TrafficDb>>,
+    state: tauri::State<'_, InterceptAllowList>
+) -> Result<(), String> {
+    db.delete_proxy_rule(id).map_err(|e| e.to_string())?;
+    refresh_active_allow_list(&state, &db).await?;
+    Ok(())
+}
+
+async fn refresh_active_allow_list(
+    state: &InterceptAllowList,
+    db: &TrafficDb,
+) -> Result<(), String> {
+    let rules = db.get_proxy_rules().map_err(|e| e.to_string())?;
+    let mut new_list = Vec::new();
+    for rule in rules {
+        if rule.enabled && rule.action == "INTERCEPT" {
+            new_list.push(rule.pattern);
+        }
+    }
+    let mut list = state.0.write().await;
+    *list = new_list;
+    Ok(())
+}
+
 pub static PROXY_TOGGLE: OnceCell<ProxyToggle> = OnceCell::new();
 pub static CERTIFICATE_INSTALLER: OnceCell<CertificateInstaller> = OnceCell::new();
 
@@ -180,7 +223,7 @@ pub fn get_app_data_dir() -> std::path::PathBuf {
 
 #[tauri::command]
 pub fn install_certificate(app: tauri::AppHandle, state: tauri::State<'_, ManagedProxySettings>, cert_path: String) -> Result<String, String> {
-    print!("INSTALL CERTIFICATE");
+    println!("INSTALL CERTIFICATE");
     let stream_logs = state.0.read()
         .map(|s| s.stream_certificate_logs)
         .unwrap_or(false);
@@ -319,16 +362,21 @@ pub async fn export_selected_to_csv(path: String, ids: Vec<String>, db: tauri::S
     let mut csv_content = String::from("ID,Timestamp,Method,URI,Status,Client,RequestBody,ResponseBody\n");
     
     for (meta, req_body, res_body, req_ct, _, res_ct, _) in data {
+        let uri = meta.uri.unwrap_or_default().replace('\"', "\"\"");
+        let client = meta.client.unwrap_or_default().replace('\"', "\"\"");
+        let req_s = body_to_string(&req_body, &req_ct).replace('\"', "\"\"");
+        let res_s = body_to_string(&res_body, &res_ct).replace('\"', "\"\"");
+        
         let line = format!(
             "{},\"{}\",{},\"{}\",{},\"{}\",\"{}\",\"{}\"\n",
             meta.id,
             meta.timestamp,
             meta.method.unwrap_or_default(),
-            meta.uri.unwrap_or_default().replace('\"', "\"\""),
+            uri,
             meta.status_code.unwrap_or(0),
-            meta.client.unwrap_or_default().replace('\"', "\"\""),
-            body_to_string(&req_body, &req_ct).replace('\"', "\"\""),
-            body_to_string(&res_body, &res_ct).replace('\"', "\"\"")
+            client,
+            req_s,
+            res_s
         );
         csv_content.push_str(&line);
     }

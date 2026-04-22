@@ -189,18 +189,11 @@ fn main() {
             // Start MCP Server for LLM/Claude Code integration
             mcp::spawn_mcp_server(app_handle.clone());
 
-            let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
-            if list.is_empty() {
-                list = vec![
-                    "google.com".to_string(),
-                    "facebook.com".to_string(),
-                    "openai.com".to_string(),
-                    "anthropic.com".to_string(),
-                ];
-                for domain in &list {
-                     let _ = traffic_db.add_to_allow_list(domain.to_string());
-                }
-            }
+            let rules = traffic_db.get_proxy_rules().expect("Failed to get proxy rules from DB");
+            let list: Vec<String> = rules.into_iter()
+                .filter(|r| r.enabled && r.action == "INTERCEPT")
+                .map(|r| r.pattern)
+                .collect();
             let allow_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
 
@@ -371,6 +364,9 @@ fn main() {
                     }
                     "tools-tag" | "tools_tag" => {
                         let _ = open_new_window_internal(&app_handle_menu, "tag".to_string(), "Tag Tools".to_string());
+                    }
+                    "proxylist" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "proxylist".to_string(), "Proxy Intercept Rules".to_string());
                     }
                     "breakpoints" => {
                         let _ = open_new_window_internal(&app_handle_menu, "breakpoint".to_string(), "Traffic Breakpoints".to_string());

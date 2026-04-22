@@ -59,8 +59,8 @@ sha2 = "0.10.8"
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62.2", features = ["Win32_Networking_WinInet", "Win32_Foundation"] }
 
-# [patch."https://github.com/muizidn/NetworkSpyProxy.git"]
-# network_spy_proxy = { path = "../../NetworkSpyProxy" }
+[patch."https://github.com/muizidn/NetworkSpyProxy.git"]
+network_spy_proxy = { path = "../../NetworkSpyProxy" }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
