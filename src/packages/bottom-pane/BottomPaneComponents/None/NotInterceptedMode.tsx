@@ -151,7 +151,11 @@ export const NotInterceptedMode: React.FC<NotInterceptedModeProps> = ({
                     className="flex items-center justify-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 shadow-2xl shadow-indigo-900/40 min-w-[280px]"
                 >
                     <FiUnlock size={18} />
-                    {isIntercepting ? "Adding..." : `Add "${domain}" to Proxy List`}
+                    {isIntercepting ? "Adding..." : (
+                        <span>
+                            Add "<span className="text-yellow-500 font-mono">{domain}</span>" to Proxy List
+                        </span>
+                    )}
                 </button>
 
                 {clientName && clientName !== "-" && (
@@ -161,7 +165,11 @@ export const NotInterceptedMode: React.FC<NotInterceptedModeProps> = ({
                         className="flex items-center justify-center gap-3 px-8 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 border border-zinc-800 min-w-[280px]"
                     >
                         <FiShield size={18} />
-                        {isIntercepting ? "Adding..." : `Intercept all from "${clientName}"`}
+                        {isIntercepting ? "Adding..." : (
+                            <span>
+                                Intercept all from "<span className="text-yellow-400 font-mono">{clientName}</span>"
+                            </span>
+                        )}
                     </button>
                 )}
             </div>
