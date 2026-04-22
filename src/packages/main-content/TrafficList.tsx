@@ -196,24 +196,34 @@ class TrafficListContextMenuRenderer
                 });
             }
           },
-          {
-            id: "add_to_proxy_client",
-            text: "Add to Proxy List (Client)",
-            enabled: items.length === 1,
-            action: async () => {
-                const item = items[0];
-                const client = String(item.client || "Unknown Client");
-                await invoke("save_proxy_rule", {
+          (() => {
+            const item = items[0];
+            if (!item || !item.client) return { id: "add_to_proxy_client", text: "Add to Proxy List (Client)", enabled: false };
+            
+            try {
+              const clientInfo = JSON.parse(item.client as string);
+              const client = clientInfo.name || "-";
+              
+              return {
+                id: "add_to_proxy_client",
+                text: `Add to Proxy List (Client: ${client})`,
+                enabled: items.length === 1 && client !== "-",
+                action: async () => {
+                  await invoke("save_proxy_rule", {
                     rule: {
-                        id: "",
-                        enabled: true,
-                        name: `Intercept ${client}`,
-                        pattern: `client:${client}`,
-                        action: "INTERCEPT"
+                      id: "",
+                      enabled: true,
+                      name: `Intercept ${client}`,
+                      pattern: `client:${client}`,
+                      action: "INTERCEPT"
                     }
-                });
+                  });
+                }
+              };
+            } catch {
+              return { id: "add_to_proxy_client", text: "Add to Proxy List (Client)", enabled: false };
             }
-          },
+          })(),
           {
             id: "delete_selected",
             text: `Delete ${items.length === 1 ? 'item' : `${items.length} items`}`,

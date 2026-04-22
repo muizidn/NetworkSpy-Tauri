@@ -19,9 +19,9 @@ impl TrafficListener for MyTrafficListener {
     async fn get_client_name(&self, client_addr: &str) -> String {
         let info = traffic::process_info::get_client_info(client_addr);
         if let Ok(val) = serde_json::from_str::<serde_json::Value>(&info) {
-            val["name"].as_str().unwrap_or("Unknown").to_string()
+            val["name"].as_str().unwrap_or("-").to_string()
         } else {
-            "Unknown".to_string()
+            "-".to_string()
         }
     }
 

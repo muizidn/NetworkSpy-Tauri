@@ -78,7 +78,7 @@ export class ClientRenderer implements Renderer<TrafficItemMap> {
   }
 
   render({ input }: { input: TrafficItemMap }): React.ReactNode {
-    const clientStr = (input[this.type] as string) || "Unknown";
+    const clientStr = (input[this.type] as string) || "-";
     
     let name = clientStr;
     let osIcon: string | null = null;
@@ -86,7 +86,7 @@ export class ClientRenderer implements Renderer<TrafficItemMap> {
     if (clientStr.startsWith('{')) {
         try {
             const info = JSON.parse(clientStr);
-            name = info.name || "Unknown";
+            name = info.name || "-";
             osIcon = info.icon;
         } catch (e) {
             console.error("Failed to parse client info", e);

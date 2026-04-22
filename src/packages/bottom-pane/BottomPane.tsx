@@ -196,40 +196,48 @@ export const BottomPane = () => {
                             {isIntercepting ? "Adding..." : "Add Domain to Proxy List"}
                           </button>
                           
-                          {selected.client && (
-                              <button
-                                onClick={async () => {
-                                    try {
-                                        setIsIntercepting(true);
-                                        const client = JSON.parse(selected.client as string).name;
-                                        await invoke("save_proxy_rule", {
-                                            rule: {
-                                                id: "",
-                                                enabled: true,
-                                                name: `Intercept ${client}`,
-                                                pattern: `client:${client}`,
-                                                action: "INTERCEPT"
+                          {(() => {
+                              if (!selected.client) return null;
+                              try {
+                                  const client = JSON.parse(selected.client as string).name;
+                                  if (client === "-") return null;
+                                  return (
+                                      <button
+                                        onClick={async () => {
+                                            try {
+                                                setIsIntercepting(true);
+                                                await invoke("save_proxy_rule", {
+                                                    rule: {
+                                                        id: "",
+                                                        enabled: true,
+                                                        name: `Intercept ${client}`,
+                                                        pattern: `client:${client}`,
+                                                        action: "INTERCEPT"
+                                                    }
+                                                });
+                                                setDialogConfig({
+                                                    isOpen: true,
+                                                    title: 'Interception Updated',
+                                                    message: `Client ${client} has been added to the Proxy Intercept List. All future traffic from this app will be decrypted.`,
+                                                    type: 'success'
+                                                });
+                                            } catch (e) {
+                                                console.error(e);
+                                            } finally {
+                                                setIsIntercepting(false);
                                             }
-                                        });
-                                        setDialogConfig({
-                                            isOpen: true,
-                                            title: 'Interception Updated',
-                                            message: `Client ${client} has been added to the Proxy Intercept List. All future traffic from this app will be decrypted.`,
-                                            type: 'success'
-                                        });
-                                    } catch (e) {
-                                        console.error(e);
-                                    } finally {
-                                        setIsIntercepting(false);
-                                    }
-                                }}
-                                disabled={isIntercepting}
-                                className="flex items-center justify-center gap-3 px-8 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 border border-zinc-800 uppercase tracking-widest min-w-[280px]"
-                              >
-                                <FiShield size={18} />
-                                {isIntercepting ? "Adding..." : `Intercept all from ${JSON.parse(selected.client as string).name}`}
-                              </button>
-                          )}
+                                        }}
+                                        disabled={isIntercepting}
+                                        className="flex items-center justify-center gap-3 px-8 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-2xl font-black text-xs transition-all active:scale-95 disabled:opacity-50 border border-zinc-800 uppercase tracking-widest min-w-[280px]"
+                                      >
+                                        <FiShield size={18} />
+                                        {isIntercepting ? "Adding..." : `Intercept all from ${client}`}
+                                      </button>
+                                  );
+                              } catch (e) {
+                                  return null;
+                              }
+                          })()}
                       </div>
                     </div>
                   );
