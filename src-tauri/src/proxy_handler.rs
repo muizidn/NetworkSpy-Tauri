@@ -26,6 +26,12 @@ impl TrafficListener for MyTrafficListener {
     }
 
     async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) -> Request<Bytes> {
+        if let Some(toggle) = PROXY_TOGGLE.get() {
+            if !toggle.is_on() {
+                return request;
+            }
+        }
+
         self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
         self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
         
@@ -168,6 +174,12 @@ impl TrafficListener for MyTrafficListener {
     }
 
     async fn response(&self, id: u64, mut response: Response<Bytes>, intercepted: bool, client_addr: String) -> Response<Bytes> {
+        if let Some(toggle) = PROXY_TOGGLE.get() {
+            if !toggle.is_on() {
+                return response;
+            }
+        }
+        
         self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
         
         let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
