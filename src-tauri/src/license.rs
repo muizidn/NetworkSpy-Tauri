@@ -297,3 +297,13 @@ pub fn license_get_limit(limit_name: String) -> i32 {
         _ => 0,
     }
 }
+
+#[tauri::command]
+pub fn license_get_plan() -> String {
+    let cache = match CACHED_LICENSE.read() {
+        Ok(c) => c,
+        Err(_) => return "free".to_string(),
+    };
+
+    cache.plan.clone().unwrap_or_else(|| "free".to_string())
+}

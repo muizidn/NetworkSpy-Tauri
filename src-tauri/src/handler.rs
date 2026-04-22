@@ -86,6 +86,7 @@ macro_rules! generate_handler {
             crate::license::revoke_license_from_keychain,
             crate::license::license_check_feature,
             crate::license::license_get_limit,
+            crate::license::license_get_plan,
         ]
     };
 }

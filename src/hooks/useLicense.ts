@@ -26,5 +26,17 @@ export const useLicense = () => {
         }
     };
 
-    return { checkFeature, getLimit };
+    /**
+     * Get the current plan name (e.g., 'free', 'personal', 'pro').
+     */
+    const getPlan = async (): Promise<string> => {
+        try {
+            return await invoke<string>("license_get_plan");
+        } catch (e) {
+            console.error("Plan check failed", e);
+            return "free";
+        }
+    };
+
+    return { checkFeature, getLimit, getPlan };
 };
