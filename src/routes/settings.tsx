@@ -6,8 +6,6 @@ import { getVersion } from '@tauri-apps/api/app';
 
 export default function Settings() {
     const {
-        showConnectMethod,
-        setShowConnectMethod,
         streamCertificateLogs,
         setStreamCertificateLogs,
         mcpStdioEnabled,
@@ -202,28 +200,6 @@ export default function Settings() {
                         </button>
                     </div>
 
-                    <div
-                        className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-zinc-700 transition-all duration-300 cursor-pointer"
-                        onClick={() => setShowConnectMethod(!showConnectMethod)}
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                                <FiTarget size={20} />
-                            </div>
-                            <div>
-                                <h3 className="text-sm font-bold text-white mb-0.5">Show CONNECT Method</h3>
-                                <p className="text-xs text-zinc-500 max-w-md leading-relaxed">
-                                    Show HTTP CONNECT requests used to establish TLS tunnels. These are usually uninformative but can be useful for debugging proxies.
-                                </p>
-                            </div>
-                        </div>
-
-                        <button
-                            className={`w-12 h-6 rounded-full relative transition-all duration-300 ${showConnectMethod ? 'bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'bg-zinc-800'}`}
-                        >
-                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300 ${showConnectMethod ? 'left-7' : 'left-1'}`} />
-                        </button>
-                    </div>
 
                     <div
                         className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-zinc-700 transition-all duration-300 cursor-pointer"
@@ -343,15 +319,6 @@ export default function Settings() {
                         </div>
                     )}
 
-                    <div className="p-8 rounded-2xl bg-gradient-to-br from-zinc-900/50 to-transparent border border-zinc-800/50 flex flex-col gap-4">
-                        <div className="flex items-center gap-2 text-zinc-500">
-                            <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
-                            <span className="text-[10px] uppercase font-bold tracking-widest">Heads up</span>
-                        </div>
-                        <p className="text-xs text-zinc-500 leading-relaxed italic">
-                            By default, Network Spy filters out CONNECT requests to keep your traffic list clean and focused on actual application data. Enable this only if you specifically need to inspect the handshake process.
-                        </p>
-                    </div>
                 </div>
 
                 <div className="mt-24 pt-8 border-t border-zinc-900 flex items-center justify-between">

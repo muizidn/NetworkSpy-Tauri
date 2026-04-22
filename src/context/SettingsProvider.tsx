@@ -12,8 +12,6 @@ interface SettingsContextInterface {
   setTheme: (theme: string) => void;
   sizesCenterPane: number[];
   setSizesCenterPane: (sizesCenterPane: number[]) => void;
-  showConnectMethod: boolean;
-  setShowConnectMethod: (show: boolean) => void;
   streamCertificateLogs: boolean;
   setStreamCertificateLogs: (stream: boolean) => void;
   mcpStdioEnabled: boolean;
@@ -37,8 +35,6 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   setTheme: () => { },
   sizesCenterPane: [],
   setSizesCenterPane: () => { },
-  showConnectMethod: false,
-  setShowConnectMethod: () => { },
   streamCertificateLogs: false,
   setStreamCertificateLogs: () => { },
   mcpStdioEnabled: false,
@@ -65,7 +61,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const saved = localStorage.getItem("ns_center_pane_sizes");
     return saved ? JSON.parse(saved) : [0, 0];
   });
-  const [showConnectMethod, setShowConnectMethod] = useState(false);
   const [streamCertificateLogs, setStreamCertificateLogs] = useState(false);
   const [mcpStdioEnabled, setMcpStdioEnabled] = useState(false);
   const [mcpHttpEnabled, setMcpHttpEnabled] = useState(false);
@@ -136,7 +131,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     invoke<{
-      show_connect_method: boolean;
       stream_certificate_logs: boolean;
       mcp_stdio_enabled: boolean;
       mcp_http_enabled: boolean;
@@ -145,7 +139,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }>("get_proxy_settings")
       .then((settings) => {
         if (settings) {
-          setShowConnectMethod(settings.show_connect_method);
           setStreamCertificateLogs(settings.stream_certificate_logs);
           setMcpStdioEnabled(settings.mcp_stdio_enabled);
           setMcpHttpEnabled(settings.mcp_http_enabled);
@@ -178,14 +171,13 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
     invoke("update_proxy_settings", {
       newSettings: {
-        show_connect_method: showConnectMethod,
         stream_certificate_logs: streamCertificateLogs,
         mcp_stdio_enabled: mcpStdioEnabled,
         mcp_http_enabled: mcpHttpEnabled,
         mcp_http_port: mcpHttpPort
       }
     }).catch(console.error);
-  }, [showConnectMethod, streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled, mcpHttpPort, isLoaded]);
+  }, [streamCertificateLogs, mcpStdioEnabled, mcpHttpEnabled, mcpHttpPort, isLoaded]);
 
   return (
     <SettingsContext.Provider
@@ -194,8 +186,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         setTheme,
         sizesCenterPane,
         setSizesCenterPane,
-        showConnectMethod,
-        setShowConnectMethod,
         streamCertificateLogs,
         setStreamCertificateLogs,
         mcpStdioEnabled,

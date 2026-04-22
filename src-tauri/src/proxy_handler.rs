@@ -46,13 +46,7 @@ impl TrafficListener for MyTrafficListener {
         
         let method = request.method().as_str().to_string();
  
-        let show_connect = if let Ok(settings) = self.proxy_settings.read() {
-            settings.show_connect_method
-        } else {
-            false
-        };
- 
-        if !show_connect && method.trim().to_uppercase() == "CONNECT" {
+        if intercepted && method.trim().to_uppercase() == "CONNECT" {
             return request;
         }
  
