@@ -438,7 +438,7 @@ impl TrafficDb {
         // Migration if empty
         if rules.is_empty() {
             let allow_list = crate::traffic::schema::traffic::get_allow_list(&conn)?;
-            for (i, domain) in allow_list.into_iter().enumerate() {
+            for (_i, domain) in allow_list.into_iter().enumerate() {
                 let id = uuid::Uuid::new_v4().to_string();
                 let name = format!("Migrated Intercept: {}", domain);
                 conn.execute(
