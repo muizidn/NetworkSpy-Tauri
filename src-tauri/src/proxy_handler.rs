@@ -86,7 +86,7 @@ impl TrafficListener for MyTrafficListener {
  
         let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
  
-        let traffic_id = format!("{}_{}", self.session_id, id);
+        let traffic_id = format!("{}_{}", id, self.session_id);
  
         self.traffic_db.insert_request(TrafficEvent::Request {
             id: traffic_id.clone(),
@@ -104,7 +104,12 @@ impl TrafficListener for MyTrafficListener {
         
         // Async tagging for request body if needed
         self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
- 
+        
+        // CHECK THE RUST SIDE WHEN TRAFFIC URI is -
+        if intercepted && (uri == "-" || method == "-") {
+            println!("Traffic URI is -: {} {}", uri, method);
+        }
+
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
@@ -213,7 +218,7 @@ impl TrafficListener for MyTrafficListener {
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
  
-        let traffic_id = format!("{}_{}", self.session_id, id);
+        let traffic_id = format!("{}_{}", id, self.session_id);
  
         self.traffic_db.insert_response(TrafficEvent::Response {
             id: traffic_id.clone(),
