@@ -190,9 +190,15 @@ fn main() {
             mcp::spawn_mcp_server(app_handle.clone());
 
             let rules = traffic_db.get_proxy_rules().expect("Failed to get proxy rules from DB");
-            let list: Vec<String> = rules.into_iter()
-                .filter(|r| r.enabled && r.action == "INTERCEPT")
-                .map(|r| r.pattern)
+            let list: Vec<network_spy_proxy::ProxyRule> = rules.into_iter()
+                .map(|rule| network_spy_proxy::ProxyRule {
+                    id: rule.id,
+                    enabled: rule.enabled,
+                    name: rule.name,
+                    pattern: rule.pattern,
+                    client: rule.client,
+                    action: rule.action,
+                })
                 .collect();
             let proxy_intercept_list = Arc::new(RwLock::new(list));
             app_handle.manage(InterceptAllowList(Arc::clone(&proxy_intercept_list)));

@@ -32,4 +32,4 @@ impl Default for ProxySettings {
 }
 
 pub struct ManagedProxySettings(pub Arc<StdRwLock<ProxySettings>>);
-pub struct InterceptAllowList(pub Arc<AsyncRwLock<Vec<String>>>);
+pub struct InterceptAllowList(pub Arc<AsyncRwLock<Vec<network_spy_proxy::ProxyRule>>>);

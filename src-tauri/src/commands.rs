@@ -32,7 +32,7 @@ pub async fn update_proxy_settings(
 #[tauri::command]
 pub async fn update_intercept_proxy_intercept_list(
     state: tauri::State<'_, InterceptAllowList>,
-    new_list: Vec<String>,
+    new_list: Vec<network_spy_proxy::ProxyRule>,
 ) -> Result<(), String> {
     let mut list = state.0.write().await;
     *list = new_list;
@@ -167,16 +167,15 @@ async fn refresh_active_proxy_intercept_list(
     let rules = db.get_proxy_rules().map_err(|e| e.to_string())?;
     let mut new_list = Vec::new();
     for rule in rules {
-        if rule.enabled && rule.action == "INTERCEPT" {
-            if let Some(client) = rule.client {
-                if !client.is_empty() {
-                    new_list.push(format!("client:{}", client));
-                }
-            }
-            if !rule.pattern.is_empty() {
-                new_list.push(rule.pattern);
-            }
-        }
+        // Map traffic::db::ProxyRule to network_spy_proxy::ProxyRule
+        new_list.push(network_spy_proxy::ProxyRule {
+            id: rule.id,
+            enabled: rule.enabled,
+            name: rule.name,
+            pattern: rule.pattern,
+            client: rule.client,
+            action: rule.action,
+        });
     }
     let mut list = state.0.write().await;
     *list = new_list;

@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::Manager;
 use hostname;
-use uuid::Uuid;
 use keyring::Entry;
 use std::sync::RwLock;
 use once_cell::sync::Lazy;
