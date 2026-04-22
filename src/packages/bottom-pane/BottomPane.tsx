@@ -14,6 +14,7 @@ import { renderMode } from "./renderMode";
 import { NotInterceptedMode } from "./BottomPaneComponents/None/NotInterceptedMode";
 import { useLicense } from "@src/hooks/useLicense";
 import { v4 as uuidv4 } from "uuid";
+import { useUpgradeDialog } from "@src/context/UpgradeContext";
 
 import { InterceptionActionBar } from "./BottomPaneComponents/InterceptionActionBar";
 
@@ -41,21 +42,17 @@ export const BottomPane = () => {
   const selected = selections.firstSelected;
   const isAdded = selected && addedIds.has(String(selected.id));
   const { getLimit } = useLicense();
+  const { openUpgradeDialog } = useUpgradeDialog();
 
   const checkRuleLimit = async () => {
     try {
-      const limit = await getLimit('max_proxy_rules');
-      const currentRules = await invoke<any[]>("get_proxy_rules");
-      if (currentRules.length >= limit) {
-        setDialogConfig({
-          isOpen: true,
-          title: 'Rule Limit Reached',
-          message: `You've reached the limit of ${limit} proxy rules for your current plan. Please upgrade to Personal or Pro for unlimited rules.`,
-          type: 'error'
-        });
-        return false;
-      }
-      return true;
+        const limit = await getLimit('max_proxy_rules');
+        const currentRules = await invoke<any[]>("get_proxy_rules");
+        if (currentRules.length >= limit) {
+          openUpgradeDialog();
+          return false;
+        }
+        return true;
     } catch (e) {
       console.error("Limit check failed:", e);
       return true; // Allow if check fails to avoid blocking users unnecessarily

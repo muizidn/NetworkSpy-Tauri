@@ -135,30 +135,33 @@ import { TauriEnvProvider } from "@src/packages/app-env";
 import { PaneProvider } from "./context/PaneProvider";
 import { FilterPresetProvider } from "./context/FilterPresetContext";
 import { AnalyticsProvider } from "./context/AnalyticsProvider";
+import { UpgradeProvider } from "./context/UpgradeContext";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <AnalyticsProvider>
       <TauriProvider>
-        <TagProvider>
-          <SessionProvider>
-            <ViewerProvider>
-              <SettingsProvider>
-                <FilterPresetProvider>
-                  <TrafficListProvider>
-                    <TauriEnvProvider>
-                      <PaneProvider>
-                        <DndProvider backend={HTML5Backend}>
-                          <RouterProvider router={router} />
-                        </DndProvider>
-                      </PaneProvider>
-                    </TauriEnvProvider>
-                  </TrafficListProvider>
-                </FilterPresetProvider>
-              </SettingsProvider>
-            </ViewerProvider>
-          </SessionProvider>
-        </TagProvider>
+        <UpgradeProvider>
+          <TagProvider>
+            <SessionProvider>
+              <ViewerProvider>
+                <SettingsProvider>
+                  <FilterPresetProvider>
+                    <TrafficListProvider>
+                      <TauriEnvProvider>
+                        <PaneProvider>
+                          <DndProvider backend={HTML5Backend}>
+                            <RouterProvider router={router} />
+                          </DndProvider>
+                        </PaneProvider>
+                      </TauriEnvProvider>
+                    </TrafficListProvider>
+                  </FilterPresetProvider>
+                </SettingsProvider>
+              </ViewerProvider>
+            </SessionProvider>
+          </TagProvider>
+        </UpgradeProvider>
       </TauriProvider>
     </AnalyticsProvider>
   </React.StrictMode>

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from "react";
 import { FilterNode, PredefinedFilter, FilterTypes, FilterOperators } from "../models/Filter";
 import { invoke } from "@tauri-apps/api/core";
+import { useLicense } from "../hooks/useLicense";
+import { useUpgradeDialog } from "./UpgradeContext";
 
 interface FilterPresetContextState {
   predefinedFilters: PredefinedFilter[];
@@ -101,6 +103,9 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   });
 
+  const { getLimit } = useLicense();
+  const { openUpgradeDialog } = useUpgradeDialog();
+
   // Load from DB on mount
   useEffect(() => {
     const loadFromDb = async () => {
@@ -144,6 +149,16 @@ export const FilterPresetProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   const addPreset = async (name: string, filters: FilterNode[], description?: string) => {
+    try {
+        const limit = await getLimit('max_filters');
+        if (userFilters.length >= limit) {
+          openUpgradeDialog();
+          return "";
+        }
+    } catch (e) {
+        console.error("Failed to check filter limit", e);
+    }
+
     const newId = `user-${Date.now()}`;
     const newPredefined: PredefinedFilter = {
       id: newId,

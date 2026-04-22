@@ -9,7 +9,7 @@ import { PortDialog } from "./components/PortDialog";
 import { SaveSessionDialog } from "./components/SaveSessionDialog";
 import { FiPause } from "react-icons/fi";
 import { useLicense } from "@src/hooks/useLicense";
-import { UpgradeDialog } from "./components/UpgradeDialog";
+import { useUpgradeDialog } from "@src/context/UpgradeContext";
 
 interface HeaderProps {
   toggleBottomPane: () => void;
@@ -70,7 +70,7 @@ export const HeaderLeft = () => {
   const { pausedBreakpoints, openNewWindow } = useAppProvider();
   const [isPortDialogOpen, setIsPortDialogOpen] = React.useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = React.useState(false);
-  const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = React.useState(false);
+  const { openUpgradeDialog } = useUpgradeDialog();
   const [plan, setPlan] = React.useState<string | null>(null);
   const { getPlan } = useLicense();
 
@@ -115,7 +115,7 @@ export const HeaderLeft = () => {
         <div className="flex items-center gap-1.5 ">
           {plan === 'free' && (
             <div 
-              onClick={() => setIsUpgradeDialogOpen(true)}
+              onClick={openUpgradeDialog}
               className="flex items-center px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 shadow-inner group relative cursor-pointer hover:bg-zinc-800 hover:border-zinc-700 transition-all active:scale-95"
             >
               <span className="text-[9px] font-black tracking-widest text-zinc-400 uppercase group-hover:text-zinc-200">Free Plan</span>
@@ -216,10 +216,6 @@ export const HeaderLeft = () => {
             alert("Failed to save session: " + e);
           }
         }}
-      />
-      <UpgradeDialog
-        isOpen={isUpgradeDialogOpen}
-        onClose={() => setIsUpgradeDialogOpen(false)}
       />
     </>
   );

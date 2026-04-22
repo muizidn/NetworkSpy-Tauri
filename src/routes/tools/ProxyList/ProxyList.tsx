@@ -7,6 +7,7 @@ import { FiShield, FiCheck, FiTrash2, FiEdit3, FiZap, FiLock } from "react-icons
 import { twMerge } from "tailwind-merge";
 import { invoke } from "@tauri-apps/api/core";
 import { useLicense } from "@src/hooks/useLicense";
+import { useUpgradeDialog } from "@src/context/UpgradeContext";
 
 export class ProxyRuleCellRenderer implements Renderer<IProxyRuleModel> {
   type: keyof IProxyRuleModel | "actions";
@@ -143,13 +144,14 @@ const ProxyList: React.FC = () => {
   };
 
   const { getLimit } = useLicense();
+  const { openUpgradeDialog } = useUpgradeDialog();
   const handleSave = async (rule: IProxyRuleModel) => {
     try {
         const limit = await getLimit('max_proxy_rules');
         const isNew = !rule.id;
         
         if (isNew && data.length >= limit) {
-          alert(`You've reached the limit of ${limit} proxy rules for your current plan. Please upgrade to Personal or Pro for unlimited rules.`);
+          openUpgradeDialog();
           return;
         }
 
