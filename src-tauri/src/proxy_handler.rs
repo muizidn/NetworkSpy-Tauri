@@ -48,6 +48,13 @@ impl TrafficListener for MyTrafficListener {
             if uri.ends_with(":80") {
                 uri = uri[..uri.len() - 3].to_string();
             }
+        } else if !uri.contains("://") {
+            // Likely a CONNECT request or raw host:port
+            if uri.ends_with(":443") {
+                uri = uri[..uri.len() - 4].to_string();
+            } else if uri.ends_with(":80") {
+                uri = uri[..uri.len() - 3].to_string();
+            }
         }
         
         let method = request.method().as_str().to_string();
