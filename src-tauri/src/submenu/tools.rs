@@ -8,7 +8,7 @@ pub fn create_tools_submenu() -> Submenu {
     let map_remote = CustomMenuItem::new("map_remote".to_string(), "Map Remote");
     let breakpoint = CustomMenuItem::new("breakpoint".to_string(), "Breakpoint");
     let block_list = CustomMenuItem::new("block_list".to_string(), "Block List");
-    let allow_list = CustomMenuItem::new("allow_list".to_string(), "Allow List");
+    let proxy_intercept_list = CustomMenuItem::new("proxy_intercept_list".to_string(), "Allow List");
 
     let tools_menu = Menu::new()
         .add_item(tag)
@@ -16,7 +16,7 @@ pub fn create_tools_submenu() -> Submenu {
         .add_item(map_remote)
         .add_item(breakpoint)
         .add_item(block_list)
-        .add_item(allow_list);
+        .add_item(proxy_intercept_list);
 
     Submenu::new("Tools", tools_menu)
 }
@@ -68,10 +68,10 @@ pub fn handle_tools_menu_event(
                 "/block-list",
             );
         }
-        "allow_list" => {
+        "proxy_intercept_list" => {
             create_window(
                 window.clone(),
-                "allow_list_window",
+                "proxy_intercept_list_window",
                 "Allow List",
                 "/allow-list",
             );

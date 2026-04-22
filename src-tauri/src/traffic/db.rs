@@ -230,13 +230,7 @@ impl TrafficDb {
         )
     }
 
-    pub fn get_allow_list(&self) -> rusqlite::Result<Vec<String>> {
-        crate::traffic::schema::traffic::get_allow_list(&self.conn.lock().unwrap())
-    }
 
-    pub fn add_to_allow_list(&self, domain: String) -> rusqlite::Result<()> {
-        crate::traffic::schema::traffic::add_to_allow_list(&self.conn.lock().unwrap(), domain)
-    }
 
     pub fn get_all_traffic_with_bodies(&self) -> rusqlite::Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
         crate::traffic::schema::traffic::get_all_traffic_with_bodies(&self.conn.lock().unwrap())
@@ -433,34 +427,6 @@ impl TrafficDb {
         let mut rules = Vec::new();
         for row in rows {
             rules.push(row?);
-        }
-        
-        // Migration if empty
-        if rules.is_empty() {
-            let allow_list = crate::traffic::schema::traffic::get_allow_list(&conn)?;
-            for (_i, domain) in allow_list.into_iter().enumerate() {
-                let id = uuid::Uuid::new_v4().to_string();
-                let name = format!("Migrated Intercept: {}", domain);
-                conn.execute(
-                    "INSERT INTO proxy_rules (id, enabled, name, pattern, action) VALUES (?1, ?2, ?3, ?4, ?5)",
-                    params![id, 1, name, domain, "INTERCEPT"],
-                )?;
-            }
-            // Re-fetch
-            let mut stmt = conn.prepare("SELECT id, enabled, name, pattern, action FROM proxy_rules")?;
-            let rows = stmt.query_map([], |row| {
-                Ok(ProxyRule {
-                    id: row.get(0)?,
-                    enabled: row.get::<_, i32>(1)? != 0,
-                    name: row.get(2)?,
-                    pattern: row.get(3)?,
-                    action: row.get(4)?,
-                })
-            })?;
-            rules = Vec::new();
-            for row in rows {
-                rules.push(row?);
-            }
         }
         
         Ok(rules)

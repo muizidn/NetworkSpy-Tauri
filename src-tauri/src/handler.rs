@@ -11,7 +11,7 @@ macro_rules! generate_handler {
             crate::commands::open_new_window,
             crate::traffic::request_pair::get_request_pair_data,
             crate::traffic::response_pair::get_response_pair_data,
-            crate::commands::update_intercept_allow_list,
+            crate::commands::update_intercept_proxy_intercept_list,
             crate::commands::get_recent_traffic,
             crate::commands::get_all_metadata,
             crate::commands::get_proxy_settings,

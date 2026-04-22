@@ -30,19 +30,12 @@ pub async fn update_proxy_settings(
 }
 
 #[tauri::command]
-pub async fn update_intercept_allow_list(
+pub async fn update_intercept_proxy_intercept_list(
     state: tauri::State<'_, InterceptAllowList>,
-    db: tauri::State<'_, Arc<TrafficDb>>,
     new_list: Vec<String>,
 ) -> Result<(), String> {
     let mut list = state.0.write().await;
-    *list = new_list.clone();
-    
-    for domain in new_list {
-        if let Err(e) = db.add_to_allow_list(domain) {
-            return Err(e.to_string());
-        }
-    }
+    *list = new_list;
     Ok(())
 }
 
@@ -152,7 +145,7 @@ pub async fn save_proxy_rule(
     state: tauri::State<'_, InterceptAllowList>
 ) -> Result<(), String> {
     db.save_proxy_rule(rule).map_err(|e| e.to_string())?;
-    refresh_active_allow_list(&state, &db).await?;
+    refresh_active_proxy_intercept_list(&state, &db).await?;
     Ok(())
 }
 
@@ -163,11 +156,11 @@ pub async fn delete_proxy_rule(
     state: tauri::State<'_, InterceptAllowList>
 ) -> Result<(), String> {
     db.delete_proxy_rule(id).map_err(|e| e.to_string())?;
-    refresh_active_allow_list(&state, &db).await?;
+    refresh_active_proxy_intercept_list(&state, &db).await?;
     Ok(())
 }
 
-async fn refresh_active_allow_list(
+async fn refresh_active_proxy_intercept_list(
     state: &InterceptAllowList,
     db: &TrafficDb,
 ) -> Result<(), String> {

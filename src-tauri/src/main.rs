@@ -194,8 +194,8 @@ fn main() {
                 .filter(|r| r.enabled && r.action == "INTERCEPT")
                 .map(|r| r.pattern)
                 .collect();
-            let allow_list = Arc::new(RwLock::new(list));
-            app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
+            let proxy_intercept_list = Arc::new(RwLock::new(list));
+            app_handle.manage(InterceptAllowList(Arc::clone(&proxy_intercept_list)));
 
             let actual_port = (9090..65535)
                 .find(|port| std::net::TcpListener::bind(("127.0.0.1", *port)).is_ok())
@@ -213,7 +213,7 @@ fn main() {
 
             let app_handle_outer_task = app_handle.clone();
             let traffic_db_outer = Arc::clone(&traffic_db);
-            let allow_list_outer = Arc::clone(&allow_list);
+            let proxy_intercept_list_outer = Arc::clone(&proxy_intercept_list);
             let proxy_settings_outer = Arc::clone(&proxy_settings);
             let tag_manager_outer = Arc::clone(&tag_manager);
             let tray_stats_for_proxy = tray_stats.clone();
@@ -225,7 +225,7 @@ fn main() {
                 loop {
                     let app_handle_inner = app_handle_outer_task.clone();
                     let traffic_db_inner = Arc::clone(&traffic_db_outer);
-                    let allow_list_inner = Arc::clone(&allow_list_outer);
+                    let proxy_intercept_list_inner = Arc::clone(&proxy_intercept_list_outer);
                     let proxy_settings_inner = Arc::clone(&proxy_settings_outer);
                     let tag_manager_inner = Arc::clone(&tag_manager_outer);
                     let tray_stats_deep = tray_stats_for_proxy.clone();
@@ -246,7 +246,7 @@ fn main() {
                     println!("Proxy server listening on port: {}", current_port);
                     
                     let listener_task = tauri::async_runtime::spawn(async move {
-                        proxy.run_proxy(listener, allow_list_inner).await;
+                        proxy.run_proxy(listener, proxy_intercept_list_inner).await;
                     });
 
                     // Wait for a restart signal
