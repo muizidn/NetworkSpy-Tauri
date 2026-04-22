@@ -114,8 +114,8 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                 <div className="px-4 @sm:px-6 py-4 border-b border-zinc-900 flex justify-between items-center bg-[#0c0c0c] shrink-0">
                     <div className="flex items-center gap-4 flex-1">
                         <div>
-                            <h2 className="text-lg font-black text-white italic tracking-tighter uppercase">Viewer Selector</h2>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Apply custom inspection logic</div>
+                            <h2 className="text-lg font-black text-white italic tracking-tighter">Viewer Selector</h2>
+                            <div className="text-[9px] text-zinc-500 font-bold tracking-widest mt-0.5">Apply custom inspection logic</div>
                         </div>
 
                         <div className="relative flex-1 max-w-md ml-8">
@@ -152,7 +152,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                     {selectedViewer && (
                         <div className="flex items-center gap-3 bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-2">
                             <FiEye size={14} className="text-blue-400" />
-                            <span className="text-xs font-bold text-zinc-300 uppercase tracking-widest">{selectedViewer.name}</span>
+                            <span className="text-xs font-bold text-zinc-300 tracking-widest">{selectedViewer.name}</span>
                             <button
                                 onClick={() => { setSelectedViewer(null); setRunningViewers({}); }}
                                 className="ml-2 text-zinc-600 hover:text-red-400 transition-colors"
@@ -170,7 +170,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                     <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-30 grayscale cursor-default">
                         <FiLayers className="text-6xl text-zinc-500" />
                         <div className="text-center">
-                            <div className="text-sm font-black text-zinc-400 uppercase tracking-widest">No Viewer Selected</div>
+                            <div className="text-sm font-black text-zinc-400 tracking-widest">No Viewer Selected</div>
                             <div className="text-[10px] text-zinc-600 font-medium">Search and select a custom viewer above to start analysis.</div>
                         </div>
                     </div>
@@ -178,7 +178,7 @@ export const CustomViewerMode: React.FC<CustomViewerModeProps> = ({ viewerId }) 
                     <div className="h-full flex items-center justify-center">
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-8 h-8 @sm:w-10 @sm:h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">Executing Logic Blocks...</span>
+                            <span className="text-[10px] font-black text-zinc-600 tracking-[0.2em]">Executing Logic Blocks...</span>
                         </div>
                     </div>
                 ) : (
@@ -197,7 +197,7 @@ const Placeholder = ({ text }: { text: string }) => (
     <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a]">
         <div className="text-center">
             <div className="text-5xl font-black opacity-5 mb-4 italic tracking-tighter">CUSTOM VIEWER</div>
-            <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-700">{text}</div>
+            <div className="text-xs tracking-[0.2em] font-bold text-zinc-700">{text}</div>
         </div>
     </div>
 )

@@ -61,9 +61,9 @@ export const RabbitMQViewerMode = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white tracking-tight uppercase italic">RabbitMQ Inspector</h2>
+                        <h2 className="text-sm font-black text-white tracking-tight italic">RabbitMQ Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Protocol: </span>
+                            <span className="text-[9px] font-bold text-zinc-500 tracking-widest">Protocol: </span>
                             <span className="text-[9px] font-mono text-orange-400/80">AMQP 0-9-1</span>
                         </div>
                     </div>
@@ -84,12 +84,12 @@ export const RabbitMQViewerMode = () => {
                 <div className="w-80 bg-[#0d0d0d] border-r border-white/5 flex flex-col p-4 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-3 bg-orange-500 rounded-full"></div>
-                        <h3 className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Envelope Details</h3>
+                        <h3 className="text-[9px] font-black text-zinc-400 tracking-[0.2em]">Envelope Details</h3>
                     </div>
                     <div className="space-y-1.5">
                         {Object.entries(amqpMetadata).map(([k, v]) => (
                             <div key={k} className="flex flex-col bg-orange-500/[0.02] p-2.5 rounded-xl border border-white/5 space-y-1 hover:border-orange-500/20 transition-colors">
-                                <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">{k}</span>
+                                <span className="text-[8px] font-black text-zinc-600 tracking-widest">{k}</span>
                                 <span className="text-[10px] font-mono text-orange-200/90 truncate">{v}</span>
                             </div>
                         ))}
@@ -100,7 +100,7 @@ export const RabbitMQViewerMode = () => {
                     <div className="p-3 bg-zinc-900/40 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <FiInbox size={12} className="text-zinc-500" />
-                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Payload Body</span>
+                            <span className="text-[10px] font-black text-zinc-400 tracking-widest">Payload Body</span>
                         </div>
                     </div>
                     <div className="flex-grow relative h-full">
@@ -119,8 +119,8 @@ const Placeholder = ({ text }: { text: string }) => (
                 <div className="absolute inset-0 bg-orange-500/5 blur-2xl rounded-full animate-pulse"></div>
                 <SiRabbitmq size={40} className="relative z-10" />
             </div>
-            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase text-orange-500">AMQP</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Message Broker Standby</div>
+            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter text-orange-500">AMQP</div>
+            <div className="text-[10px] font-bold tracking-widest text-zinc-600 mb-2">Message Broker Standby</div>
             <div className="text-xs italic">{text}</div>
         </div>
     </div>

@@ -70,10 +70,10 @@ export const GRPCViewerMode = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white tracking-tight uppercase italic">gRPC Observer</h2>
+                        <h2 className="text-sm font-black text-white tracking-tight italic">gRPC Observer</h2>
                         <div className="flex items-center gap-2 mt-0.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                            <span className="text-[9px] font-mono text-teal-400 font-bold uppercase tracking-widest">HTTP/2 Framed Stream</span>
+                            <span className="text-[9px] font-mono text-teal-400 font-bold tracking-widest">HTTP/2 Framed Stream</span>
                         </div>
                     </div>
                 </div>
@@ -92,7 +92,7 @@ export const GRPCViewerMode = () => {
             <div className="flex-grow flex h-full overflow-hidden">
                 <div className="flex-grow relative bg-[#050505] border-r border-white/5">
                     <div className="absolute top-4 left-4 z-10">
-                        <span className="text-[9px] font-black text-zinc-600 bg-black/40 px-2 py-1 rounded border border-white/5 uppercase tracking-[0.2em]">Protobuf Payload</span>
+                        <span className="text-[9px] font-black text-zinc-600 bg-black/40 px-2 py-1 rounded border border-white/5 tracking-[0.2em]">Protobuf Payload</span>
                     </div>
                     <CodeView data={decodedMessage} language="json" />
                 </div>
@@ -100,12 +100,12 @@ export const GRPCViewerMode = () => {
                 <div className="w-80 bg-[#0d0d0d] p-4 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-3 bg-teal-500 rounded-full"></div>
-                        <h3 className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Stream Telemetry</h3>
+                        <h3 className="text-[9px] font-black text-zinc-400 tracking-[0.2em]">Stream Telemetry</h3>
                     </div>
                     <div className="space-y-1.5">
                         {Object.entries(grpcMetadata).map(([k, v]) => (
                             <div key={k} className="flex flex-col bg-teal-500/[0.02] p-2.5 rounded-xl border border-white/5 space-y-1 hover:border-teal-500/30 transition-all">
-                                <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">{k}</span>
+                                <span className="text-[8px] font-black text-zinc-600 tracking-widest">{k}</span>
                                 <span className={`text-[10px] font-mono truncate ${k === 'grpc-status' ? 'text-emerald-400 font-bold' : 'text-zinc-300'}`}>{v}</span>
                             </div>
                         ))}
@@ -114,7 +114,7 @@ export const GRPCViewerMode = () => {
                     <div className="pt-4 border-t border-white/5">
                         <div className="flex items-center gap-2 text-zinc-500">
                             <FiHash size={12} />
-                            <span className="text-[9px] font-black uppercase tracking-widest">Channel ID: c-7788</span>
+                            <span className="text-[9px] font-black tracking-widest">Channel ID: c-7788</span>
                         </div>
                     </div>
                 </div>
@@ -130,8 +130,8 @@ const Placeholder = ({ text }: { text: string }) => (
                 <div className="absolute inset-0 bg-teal-500/5 blur-2xl rounded-full"></div>
                 <FiZap size={40} className="relative z-10 brightness-125" />
             </div>
-            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase text-teal-500">GRPC</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Synchronous Stream Standby</div>
+            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter text-teal-500">GRPC</div>
+            <div className="text-[10px] font-bold tracking-widest text-zinc-600 mb-2">Synchronous Stream Standby</div>
             <div className="text-xs italic">{text}</div>
         </div>
     </div>

@@ -104,11 +104,11 @@ export const MultipartFormDataMode = () => {
                         <FiDatabase className="text-blue-500" size={16} />
                     </div>
                     <div className="flex flex-col">
-                        <h2 className="text-sm font-black text-white tracking-widest uppercase">Multipart Inspector</h2>
+                        <h2 className="text-sm font-black text-white tracking-widest">Multipart Inspector</h2>
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-tighter">{parts.length} Fields</span>
+                            <span className="text-[10px] text-zinc-600 font-bold tracking-tighter">{parts.length} Fields</span>
                             <span className="text-[10px] text-zinc-800">•</span>
-                            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-tighter">Total: {totalSize.toLocaleString()} B</span>
+                            <span className="text-[10px] text-zinc-600 font-bold tracking-tighter">Total: {totalSize.toLocaleString()} B</span>
                             {boundary && (
                                 <>
                                     <span className="text-[10px] text-zinc-800">•</span>
@@ -152,7 +152,7 @@ export const MultipartFormDataMode = () => {
                                     <span>{part.filename}</span>
                                 </div>
                             )}
-                            <div className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-1">
+                            <div className="flex items-center gap-1.5 text-[9px] font-bold text-zinc-600 tracking-widest mt-1">
                                 <FiTag size={10} />
                                 <span className="truncate">{part.contentType}</span>
                             </div>
@@ -161,7 +161,7 @@ export const MultipartFormDataMode = () => {
                     {filteredParts.length === 0 && (
                         <div className="flex flex-col items-center justify-center p-12 text-center">
                             <FiSearch size={48} className="text-zinc-800 mb-4 opacity-50" />
-                            <p className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em]">No fields match search</p>
+                            <p className="text-[10px] text-zinc-600 font-black tracking-[0.2em]">No fields match search</p>
                         </div>
                     )}
                 </div>
@@ -186,7 +186,7 @@ export const MultipartFormDataMode = () => {
                                     {selectedPart.contentType.toLowerCase().includes("json") && (
                                         <button
                                             onClick={() => setIsBeautified(!isBeautified)}
-                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${isBeautified ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'}`}
+                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all border ${isBeautified ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)]' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'}`}
                                         >
                                             {isBeautified ? 'Raw' : 'Beautify'}
                                         </button>
@@ -194,13 +194,13 @@ export const MultipartFormDataMode = () => {
                                     {(selectedPart.contentType.toLowerCase().includes("octet-stream") || selectedPart.filename !== "-") && (
                                         <button
                                             onClick={() => setViewMode(viewMode === 'hex' ? 'text' : 'hex')}
-                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${viewMode === 'hex' ? 'bg-purple-600 text-white border-purple-400 shadow-[0_0_15px_rgba(147,51,234,0.3)]' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'}`}
+                                            className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest transition-all border ${viewMode === 'hex' ? 'bg-purple-600 text-white border-purple-400 shadow-[0_0_15px_rgba(147,51,234,0.3)]' : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'}`}
                                         >
                                             {viewMode === 'hex' ? 'Text View' : 'Hex View'}
                                         </button>
                                     )}
                                     <button
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-zinc-700 transition-all active:scale-95 shadow-xl"
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] font-black tracking-widest text-zinc-400 hover:text-white hover:border-zinc-700 transition-all active:scale-95 shadow-xl"
                                         onClick={() => {
                                             const blob = new Blob([selectedPart.value as any], { type: selectedPart.contentType });
                                             const url = URL.createObjectURL(blob);
@@ -244,7 +244,7 @@ export const MultipartFormDataMode = () => {
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-zinc-900">
                             <FiEye size={80} className="mb-6 opacity-10" />
-                            <p className="text-xs font-black uppercase tracking-[0.4em] text-zinc-700">Select a part to analyze</p>
+                            <p className="text-xs font-black tracking-[0.4em] text-zinc-700">Select a part to analyze</p>
                         </div>
                     )}
                 </div>

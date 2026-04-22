@@ -61,9 +61,9 @@ export const KafkaViewerMode = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white tracking-tight uppercase italic">Apache Kafka Inspector</h2>
+                        <h2 className="text-sm font-black text-white tracking-tight italic">Apache Kafka Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Transport: </span>
+                            <span className="text-[9px] font-bold text-zinc-500 tracking-widest">Transport: </span>
                             <span className="text-[9px] font-mono text-indigo-400 font-bold">Binary Wave</span>
                         </div>
                     </div>
@@ -84,12 +84,12 @@ export const KafkaViewerMode = () => {
                 <div className="w-80 bg-[#0d0d0d] border-r border-white/5 flex flex-col p-4 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-1 h-3 bg-indigo-500 rounded-full"></div>
-                        <h3 className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em]">Segment Metadata</h3>
+                        <h3 className="text-[9px] font-black text-zinc-400 tracking-[0.2em]">Segment Metadata</h3>
                     </div>
                     <div className="space-y-1.5">
                         {Object.entries(kafkaMetadata).map(([k, v]) => (
                             <div key={k} className="flex flex-col bg-white/[0.01] p-2.5 rounded-xl border border-white/5 space-y-1 hover:border-indigo-500/30 transition-all">
-                                <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">{k}</span>
+                                <span className="text-[8px] font-black text-zinc-600 tracking-widest">{k}</span>
                                 <span className="text-[10px] font-mono text-zinc-100 truncate">{v}</span>
                             </div>
                         ))}
@@ -97,14 +97,14 @@ export const KafkaViewerMode = () => {
 
                     <div className="pt-4 border-t border-white/5 flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Broker ID: 101-East</span>
+                        <span className="text-[9px] font-black text-zinc-500 tracking-widest">Broker ID: 101-East</span>
                     </div>
                 </div>
 
                 <div className="flex-grow relative bg-[#050505] flex flex-col">
                     <div className="p-3 bg-zinc-900/40 border-b border-white/5 flex items-center gap-2">
                         <FiGrid size={12} className="text-zinc-500" />
-                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Stream Payload</span>
+                        <span className="text-[10px] font-black text-zinc-400 tracking-widest">Stream Payload</span>
                     </div>
                     <div className="flex-grow relative h-full">
                         <CodeView data={decodedPayload} language="json" />
@@ -122,8 +122,8 @@ const Placeholder = ({ text }: { text: string }) => (
                 <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full"></div>
                 <SiApachekafka size={40} className="relative z-10" />
             </div>
-            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase text-white">KAFKA</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Event Stream Standby</div>
+            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter text-white">KAFKA</div>
+            <div className="text-[10px] font-bold tracking-widest text-zinc-600 mb-2">Event Stream Standby</div>
             <div className="text-xs italic">{text}</div>
         </div>
     </div>

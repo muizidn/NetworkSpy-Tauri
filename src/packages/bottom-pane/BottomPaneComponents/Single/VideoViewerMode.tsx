@@ -36,7 +36,7 @@ export const VideoViewerMode = () => {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-                                        <span className="text-xs font-black text-white uppercase tracking-widest">Live Stream</span>
+                                        <span className="text-xs font-black text-white tracking-widest">Live Stream</span>
                                     </div>
                                     <div className="flex items-center gap-4 text-zinc-400">
                                         <FiSettings size={14} className="hover:text-white cursor-pointer" />
@@ -56,14 +56,14 @@ export const VideoViewerMode = () => {
                 {/* Metadata & Stats */}
                 <div className="mt-6 flex gap-4">
                     <div className="flex-grow bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-4">
-                        <h3 className="text-[10px] uppercase font-bold text-zinc-500 mb-2 tracking-widest">Stream Info</h3>
+                        <h3 className="text-[10px] font-bold text-zinc-500 mb-2 tracking-widest">Stream Info</h3>
                         <div className="grid grid-cols-2 gap-y-2">
                             <div className="flex flex-col">
-                                <span className="text-[9px] text-zinc-600 uppercase font-bold">Format</span>
+                                <span className="text-[9px] text-zinc-600 font-bold">Format</span>
                                 <span className="text-[11px] text-zinc-300">{data?.content_type || 'HLS (m3u8)'}</span>
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[9px] text-zinc-600 uppercase font-bold">Bitrate</span>
+                                <span className="text-[9px] text-zinc-600 font-bold">Bitrate</span>
                                 <span className="text-[11px] text-zinc-300">4.2 Mbps (Simulated)</span>
                             </div>
                         </div>

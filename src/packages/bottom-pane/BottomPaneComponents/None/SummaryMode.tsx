@@ -64,7 +64,7 @@ export const SummaryMode = () => {
                 hosts[url.hostname] = (hosts[url.hostname] || 0) + 1;
                 endpoints[url.pathname] = (endpoints[url.pathname] || 0) + 1;
                 if (url.protocol === 'https:') secureCount++;
-            } catch (e) {}
+            } catch (e) { }
         });
 
         return {
@@ -97,44 +97,44 @@ export const SummaryMode = () => {
                 {/* Header */}
                 <header className="flex flex-col gap-3 pt-4">
                     <div className="flex items-center justify-between">
-                         <h1 className="text-2xl @sm:text-4xl font-black uppercase tracking-tighter leading-none italic text-zinc-100">Intelligence Dashboard</h1>
-                         <div className="hidden @md:flex items-center gap-2 px-4 py-1.5 bg-white/5 rounded-full border border-white/10">
+                        <h1 className="text-2xl @sm:text-4xl font-black tracking-tighter leading-none italic text-zinc-100">Intelligence Dashboard</h1>
+                        <div className="hidden @md:flex items-center gap-2 px-4 py-1.5 bg-white/5 rounded-full border border-white/10">
                             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">System Ready</span>
-                         </div>
+                            <span className="text-[10px] font-black tracking-widest text-zinc-400">System Ready</span>
+                        </div>
                     </div>
-                    <p className="text-xs @sm:text-sm text-zinc-500 font-bold uppercase tracking-[0.2em] italic pl-1">Real-time Cross-Request Analysis</p>
+                    <p className="text-xs @sm:text-sm text-zinc-500 font-bold tracking-[0.2em] italic pl-1">Real-time Cross-Request Analysis</p>
                 </header>
 
                 {/* Hero Stats */}
                 <div className="grid grid-cols-2 @lg:grid-cols-4 gap-4 @sm:gap-6">
-                    <StatCard 
-                       title="Total Traffic" 
-                       value={stats.total} 
-                       subValue={`${stats.successRate}% Success`}
-                       icon={<FiActivity size={18} />}
-                       themeColor="text-blue-400"
+                    <StatCard
+                        title="Total Traffic"
+                        value={stats.total}
+                        subValue={`${stats.successRate}% Success`}
+                        icon={<FiActivity size={18} />}
+                        themeColor="text-blue-400"
                     />
-                    <StatCard 
-                       title="Avg Latency" 
-                       value={`${stats.avgLatency}ms`}
-                       subValue={stats.latencyBuckets.slow > 0 ? `${stats.latencyBuckets.slow} Slow Req` : "Optimal Performance"}
-                       icon={<FiClock size={18} />}
-                       themeColor="text-orange-400"
+                    <StatCard
+                        title="Avg Latency"
+                        value={`${stats.avgLatency}ms`}
+                        subValue={stats.latencyBuckets.slow > 0 ? `${stats.latencyBuckets.slow} Slow Req` : "Optimal Performance"}
+                        icon={<FiClock size={18} />}
+                        themeColor="text-orange-400"
                     />
-                    <StatCard 
-                       title="Throughput" 
-                       value={stats.totalThroughput}
-                       subValue={`${stats.totalReqSize} ↑ / ${stats.totalResSize} ↓`}
-                       icon={<FiActivity size={18} />}
-                       themeColor="text-emerald-400"
+                    <StatCard
+                        title="Throughput"
+                        value={stats.totalThroughput}
+                        subValue={`${stats.totalReqSize} ↑ / ${stats.totalResSize} ↓`}
+                        icon={<FiActivity size={18} />}
+                        themeColor="text-emerald-400"
                     />
-                    <StatCard 
-                       title="Security" 
-                       value={`${stats.secureRate}%`}
-                       subValue={`${stats.secureCount} HTTPS`}
-                       icon={<FiLock size={18} />}
-                       themeColor="text-purple-400"
+                    <StatCard
+                        title="Security"
+                        value={`${stats.secureRate}%`}
+                        subValue={`${stats.secureCount} HTTPS`}
+                        icon={<FiLock size={18} />}
+                        themeColor="text-purple-400"
                     />
                 </div>
 
@@ -148,26 +148,26 @@ export const SummaryMode = () => {
                                 <BucketRow label="Slow (>500ms)" count={stats.latencyBuckets.slow} total={stats.total} color="bg-red-400" />
                             </div>
                         </Section>
-                        
+
                         <Section title="System Telemetry" icon={<FiCpu className="text-emerald-400" />} className="hidden @sm:flex">
-                           <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="grid grid-cols-2 gap-4 pt-2">
                                 <div className="flex flex-col items-center justify-center py-5 px-3 bg-white/5 rounded-3xl border border-white/5">
-                                    <div className="text-[11px] font-black text-zinc-500 uppercase tracking-widest mb-1.5 px-1 text-center">Encrypted</div>
+                                    <div className="text-[11px] font-black text-zinc-500 tracking-widest mb-1.5 px-1 text-center">Encrypted</div>
                                     <div className="text-xl font-black text-emerald-400 italic tracking-tighter">{stats.secureCount}</div>
                                 </div>
                                 <div className="flex flex-col items-center justify-center py-5 px-3 bg-white/5 rounded-3xl border border-white/5">
-                                    <div className="text-[11px] font-black text-zinc-500 uppercase tracking-widest mb-1.5 px-1 text-center">Success</div>
+                                    <div className="text-[11px] font-black text-zinc-500 tracking-widest mb-1.5 px-1 text-center">Success</div>
                                     <div className="text-xl font-black text-blue-400 italic tracking-tighter">{stats.successRate}%</div>
                                 </div>
-                           </div>
+                            </div>
                         </Section>
                     </div>
 
                     {/* Conditional Section */}
-                    <Section 
-                      title={showHosts ? "Top Destinations" : "Most Frequented Paths"} 
-                      icon={showHosts ? <FiGlobe className="text-blue-400" /> : <FiTrendingUp className="text-blue-400" />} 
-                      className="@lg:col-span-1 min-h-[350px]"
+                    <Section
+                        title={showHosts ? "Top Destinations" : "Most Frequented Paths"}
+                        icon={showHosts ? <FiGlobe className="text-blue-400" /> : <FiTrendingUp className="text-blue-400" />}
+                        className="@lg:col-span-1 min-h-[350px]"
                     >
                         <div className="space-y-4 pt-2 flex-grow">
                             {(showHosts ? stats.hosts.slice(0, 5) : stats.endpoints).map(([item, count], i) => (
@@ -196,16 +196,16 @@ export const SummaryMode = () => {
                         <Section title="Status Diagnostics" icon={<FiAlertCircle className="text-red-400" />}>
                             <div className="space-y-4 pt-2">
                                 {stats.statuses.slice(0, 4).map(([status, count]) => (
-                                    <BucketRow 
-                                      key={status} 
-                                      label={status} 
-                                      count={count} 
-                                      total={stats.total} 
-                                      color={
-                                        status.startsWith('2') ? "bg-emerald-400" :
-                                        status.startsWith('3') ? "bg-blue-400" :
-                                        status.startsWith('4') ? "bg-orange-400" : "bg-red-400"
-                                      } 
+                                    <BucketRow
+                                        key={status}
+                                        label={status}
+                                        count={count}
+                                        total={stats.total}
+                                        color={
+                                            status.startsWith('2') ? "bg-emerald-400" :
+                                                status.startsWith('3') ? "bg-blue-400" :
+                                                    status.startsWith('4') ? "bg-orange-400" : "bg-red-400"
+                                        }
                                     />
                                 ))}
                             </div>
@@ -220,12 +220,12 @@ export const SummaryMode = () => {
 const StatCard = ({ title, value, subValue, icon, themeColor }: { title: string; value: string | number; subValue?: string; icon: React.ReactNode; themeColor: string }) => (
     <div className="bg-zinc-950 p-6 @sm:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl group transition-all duration-500 hover:border-white/20 relative overflow-hidden">
         <div className="flex items-start justify-between mb-4 @sm:mb-6">
-            <div className="text-zinc-500 text-xs uppercase font-black tracking-[0.1em]">{title}</div>
+            <div className="text-zinc-500 text-xs font-black tracking-[0.1em]">{title}</div>
             <div className={twMerge("p-2.5 bg-white/5 rounded-2xl transition-colors duration-500 group-hover:bg-white/10", themeColor)}>{icon}</div>
         </div>
         <div className="flex flex-col">
             <div className="text-3xl @sm:text-4xl font-black italic tracking-tighter leading-none text-zinc-100">{value}</div>
-            <div className="text-[11px] text-zinc-400 font-bold uppercase tracking-[0.15em] mt-3 opacity-80 truncate">{subValue}</div>
+            <div className="text-[11px] text-zinc-400 font-bold tracking-[0.15em] mt-3 opacity-80 truncate">{subValue}</div>
         </div>
         <div className={twMerge("absolute top-0 right-0 w-32 h-[1px] opacity-30", themeColor.replace('text', 'bg'))} />
     </div>
@@ -233,7 +233,7 @@ const StatCard = ({ title, value, subValue, icon, themeColor }: { title: string;
 
 const Section = ({ title, icon, children, className = "" }: { title: string; icon?: React.ReactNode; children: React.ReactNode; className?: string }) => (
     <div className={twMerge("bg-zinc-950 p-7 @sm:p-8 rounded-[3rem] border border-white/5 shadow-[inset_0_0_80px_rgba(255,255,255,0.02)] flex flex-col", className)}>
-        <h3 className="text-xs font-black text-zinc-400 uppercase tracking-[0.25em] mb-6 flex items-center gap-3 italic px-1">
+        <h3 className="text-xs font-black text-zinc-400 tracking-[0.25em] mb-6 flex items-center gap-3 italic px-1">
             {icon} {title}
         </h3>
         {children}
@@ -244,7 +244,7 @@ const BucketRow = ({ label, count, total, color }: { label: string; count: numbe
     const percentage = total > 0 ? (count / total) * 100 : 0;
     return (
         <div className="space-y-2.5 group/row px-1">
-            <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-wider">
+            <div className="flex justify-between items-center text-[11px] font-black tracking-wider">
                 <span className="text-zinc-400 group-hover/row:text-zinc-200 transition-colors">{label}</span>
                 <span className="text-zinc-300 font-mono tracking-tighter">{count} <span className="text-zinc-500 ml-1">({percentage.toFixed(0)}%)</span></span>
             </div>
@@ -261,7 +261,7 @@ const EmptyState = () => (
             <FiActivity size={40} className="group-hover:text-blue-400/50 transition-colors duration-1000" />
             <div className="absolute inset-0 bg-blue-500/5 opacity-0 rounded-[2.5rem] group-hover:opacity-100 transition-opacity duration-1000" />
         </div>
-        <h3 className="text-zinc-200 font-black mb-3 italic uppercase tracking-tighter text-xl">Sensor Network Standby</h3>
-        <p className="text-xs text-zinc-500 max-w-[250px] font-bold uppercase tracking-[0.2em] leading-relaxed opacity-60">Aggregate real-time telemetry from connected agents</p>
+        <h3 className="text-zinc-200 font-black mb-3 italic tracking-tighter text-xl">Sensor Network Standby</h3>
+        <p className="text-xs text-zinc-500 max-w-[250px] font-bold tracking-[0.2em] leading-relaxed opacity-60">Aggregate real-time telemetry from connected agents</p>
     </div>
 );

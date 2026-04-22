@@ -182,7 +182,7 @@ export const LLMStreamingMode = () => {
             <FiZap className={isStreaming ? "text-amber-500 animate-pulse" : "text-emerald-500"} size={18} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">LLM Stream Viewer</h2>
+            <h2 className="text-sm font-bold text-white tracking-wider">LLM Stream Viewer</h2>
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-zinc-500 flex items-center gap-1">
                 <FiActivity size={10} />
@@ -214,7 +214,7 @@ export const LLMStreamingMode = () => {
             </div>
           )}
           <div className="flex flex-col items-end px-3 py-1 bg-black/20 rounded-md border border-zinc-800/50">
-            <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-tighter">Event Count</span>
+            <span className="text-[8px] font-bold text-zinc-600 tracking-tighter">Event Count</span>
             <span className="text-xs font-mono text-blue-400 font-bold">{chunks.length}</span>
           </div>
           <button className="p-2 hover:bg-zinc-800 rounded-md text-zinc-500 hover:text-white transition-colors">
@@ -231,12 +231,12 @@ export const LLMStreamingMode = () => {
           <div className="px-4 py-2 bg-zinc-900/40 border-b border-zinc-800 shrink-0 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FiTerminal size={12} className="text-zinc-500" />
-              <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-widest">Raw Chunks</span>
+              <span className="text-[10px] font-bold text-zinc-400 tracking-widest">Raw Chunks</span>
             </div>
             <button
               onClick={() => setIsBeautified(!isBeautified)}
               className={twMerge(
-                "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest transition-all",
+                "px-2 py-0.5 rounded text-[9px] font-black tracking-widest transition-all",
                 isBeautified ? "bg-amber-600 text-white shadow-lg" : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
               )}
             >
@@ -266,7 +266,7 @@ export const LLMStreamingMode = () => {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <span className={twMerge(
-                      "text-[9px] px-1.5 py-0.5 rounded uppercase font-bold",
+                      "text-[9px] px-1.5 py-0.5 rounded font-bold",
                       chunk.event === 'control' ? "bg-amber-500/20 text-amber-500" : "bg-blue-500/20 text-blue-400"
                     )}>
                       {chunk.event}
@@ -309,7 +309,7 @@ export const LLMStreamingMode = () => {
           <div className="px-4 py-2 bg-zinc-900/40 border-b border-zinc-800 shrink-0 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FiDatabase size={12} className="text-zinc-500" />
-              <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-widest">Accumulated Output</span>
+              <span className="text-[10px] font-bold text-zinc-400 tracking-widest">Accumulated Output</span>
             </div>
             <span className="text-[10px] font-mono text-zinc-600">{accumulatedText.length} bytes</span>
           </div>
@@ -337,7 +337,7 @@ export const LLMStreamingMode = () => {
 
                 {toolCalls.length > 0 && (
                   <div className="mt-8 space-y-4 border-t border-zinc-800 pt-6">
-                    <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-zinc-500 tracking-widest">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 tracking-widest">
                       <FiZap size={12} className="text-amber-500" /> Tool Calls
                     </div>
                     {toolCalls.map((tc, idx) => {
@@ -370,7 +370,7 @@ export const LLMStreamingMode = () => {
             </div>
             {!accumulatedText && !isStreaming && (
               <div className="h-full flex flex-col items-center justify-center text-zinc-600">
-                <p className="text-xs uppercase tracking-widest font-bold">No output generated</p>
+                <p className="text-xs tracking-widest font-bold">No output generated</p>
               </div>
             )}
           </div>

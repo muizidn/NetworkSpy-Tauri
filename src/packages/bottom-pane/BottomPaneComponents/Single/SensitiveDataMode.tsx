@@ -43,13 +43,13 @@ const FindingCard = ({ finding }: { finding: SensitiveDataFinding & { isCustom?:
                     <div>
                         <div className="flex items-center gap-2">
                             <span className={twMerge(
-                                "text-xs font-black uppercase tracking-widest",
+                                "text-xs font-black tracking-widest",
                                 finding.isError ? "text-red-500" : "text-orange-500"
                             )}>
                                 {finding.type}
                             </span>
-                            <span className="px-2 py-0.5 bg-black/50 text-[9px] text-zinc-500 rounded-full border border-zinc-800 uppercase font-bold">{finding.location}</span>
-                            {finding.isCustom && <span className="px-2 py-0.5 bg-blue-950/30 text-[9px] text-blue-500 rounded-full border border-blue-900/30 uppercase font-black tracking-tighter">Custom</span>}
+                            <span className="px-2 py-0.5 bg-black/50 text-[9px] text-zinc-500 rounded-full border border-zinc-800 font-bold">{finding.location}</span>
+                            {finding.isCustom && <span className="px-2 py-0.5 bg-blue-950/30 text-[9px] text-blue-500 rounded-full border border-blue-900/30 font-black tracking-tighter">Custom</span>}
                         </div>
                         <div className={twMerge(
                             "text-sm font-mono mt-2 break-all p-3 rounded-xl border",
@@ -61,7 +61,7 @@ const FindingCard = ({ finding }: { finding: SensitiveDataFinding & { isCustom?:
                         </div>
                     </div>
                     <div className={twMerge(
-                        "text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-tighter shadow-sm animate-pulse",
+                        "text-[10px] font-black px-3 py-1 rounded-full border tracking-tighter shadow-sm animate-pulse",
                         finding.isError
                             ? "bg-red-600 text-white border-red-500"
                             : "bg-red-950/30 text-red-500 border-red-900/30"
@@ -76,7 +76,7 @@ const FindingCard = ({ finding }: { finding: SensitiveDataFinding & { isCustom?:
                         finding.isError ? "bg-red-950/10 border-red-900/20" : "bg-orange-950/10 border-orange-900/20"
                     )}>
                         <div className={twMerge(
-                            "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest mb-2",
+                            "flex items-center gap-2 text-[10px] font-black tracking-widest mb-2",
                             finding.isError ? "text-red-500" : "text-orange-500"
                         )}>
                             {finding.isError ? <FiAlertTriangle size={12} /> : <FiShield size={12} />}
@@ -89,7 +89,7 @@ const FindingCard = ({ finding }: { finding: SensitiveDataFinding & { isCustom?:
                         finding.isError ? "bg-red-950/10 border-red-900/20" : "bg-emerald-950/10 border-emerald-900/20"
                     )}>
                         <div className={twMerge(
-                            "flex items-center gap-2 text-[10px] font-black uppercase tracking-widest mb-2",
+                            "flex items-center gap-2 text-[10px] font-black tracking-widest mb-2",
                             finding.isError ? "text-red-500" : "text-emerald-500"
                         )}>
                             {finding.isError ? <FiEdit2 size={12} /> : <FiCheckCircle size={12} />}
@@ -164,17 +164,17 @@ export const SensitiveDataMode = () => {
                         <FiShield size={20} />
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white uppercase italic tracking-tighter">Leak Detective</h2>
+                        <h2 className="text-sm font-black text-white italic tracking-tighter">Leak Detective</h2>
                         <div className="flex gap-4 mt-1">
                             <button
                                 onClick={() => setTab('results')}
-                                className={twMerge("text-[10px] font-black uppercase tracking-widest", tab === 'results' ? "text-orange-500" : "text-zinc-500 hover:text-zinc-300")}
+                                className={twMerge("text-[10px] font-black tracking-widest", tab === 'results' ? "text-orange-500" : "text-zinc-500 hover:text-zinc-300")}
                             >
                                 Results
                             </button>
                             <button
                                 onClick={() => setTab('checkers')}
-                                className={twMerge("text-[10px] font-black uppercase tracking-widest", tab === 'checkers' ? "text-orange-500" : "text-zinc-500 hover:text-zinc-300")}
+                                className={twMerge("text-[10px] font-black tracking-widest", tab === 'checkers' ? "text-orange-500" : "text-zinc-500 hover:text-zinc-300")}
                             >
                                 Custom Scripts
                             </button>
@@ -192,7 +192,7 @@ export const SensitiveDataMode = () => {
                                     <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-500 mx-auto mb-6">
                                         <FiCheckCircle size={32} />
                                     </div>
-                                    <h3 className="text-lg font-bold text-emerald-400 mb-2 font-mono uppercase tracking-widest">Safe Payload Detected</h3>
+                                    <h3 className="text-lg font-bold text-emerald-400 mb-2 font-mono tracking-widest">Safe Payload Detected</h3>
                                     <p className="text-sm text-zinc-500 max-w-sm mx-auto italic leading-relaxed">
                                         No common PII (Personally Identifiable Information), raw credentials, or exposed secrets were found in the visible payload.
                                     </p>
@@ -201,7 +201,7 @@ export const SensitiveDataMode = () => {
                                 <div className="space-y-12">
                                     {internalFindings.length > 0 && (
                                         <div className="space-y-6">
-                                            <div className="flex items-center gap-2 text-[10px] font-black text-orange-600 uppercase tracking-widest pl-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-black text-orange-600 tracking-widest pl-2">
                                                 Core Detective Findings ({internalFindings.length})
                                             </div>
                                             {internalFindings.map((finding, i) => (
@@ -212,7 +212,7 @@ export const SensitiveDataMode = () => {
 
                                     {customFindings.length > 0 && (
                                         <div className="space-y-6">
-                                            <div className="flex items-center gap-2 text-[10px] font-black text-blue-500 uppercase tracking-widest pl-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-black text-blue-500 tracking-widest pl-2">
                                                 Custom Checker Section ({customFindings.length})
                                             </div>
                                             {customFindings.map((finding, i) => (
@@ -237,7 +237,7 @@ const Placeholder = ({ text, icon }: { text: string, icon?: React.ReactNode }) =
     <div className="h-full flex items-center justify-center text-zinc-500 font-sans">
         <div className="text-center">
             <div className="text-4xl font-black mb-4 flex justify-center opacity-20">{icon || <FiShield />}</div>
-            <div className="text-xs uppercase tracking-widest font-black italic">{text}</div>
+            <div className="text-xs tracking-widest font-black italic">{text}</div>
         </div>
     </div>
 );

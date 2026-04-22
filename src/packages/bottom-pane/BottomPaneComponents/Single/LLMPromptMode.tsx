@@ -49,13 +49,13 @@ export const LLMPromptMode = () => {
     const body = data?.body;
     const parsed = parseBodyAsJson(body);
     if (!parsed) {
-        if (!body) return null;
-        return {
-            prompt: decodeBody(body),
-            model: "raw-text"
-        };
+      if (!body) return null;
+      return {
+        prompt: decodeBody(body),
+        model: "raw-text"
+      };
     }
-    
+
     try {
       if (parsed.messages && Array.isArray(parsed.messages)) {
         return {
@@ -65,25 +65,25 @@ export const LLMPromptMode = () => {
           stream: parsed.stream,
         };
       }
-      
+
       if (parsed.prompt) {
         return {
           prompt: parsed.prompt,
           model: parsed.model || "unknown"
         };
       }
-      
+
       if (typeof parsed === 'string' || parsed.text) {
-          return {
-              prompt: parsed.text || parsed,
-              model: "generic-input"
-          };
+        return {
+          prompt: parsed.text || parsed,
+          model: "generic-input"
+        };
       }
     } catch (e) {
-        return {
-            prompt: decodeBody(body),
-            model: "raw-text"
-        };
+      return {
+        prompt: decodeBody(body),
+        model: "raw-text"
+      };
     }
     return null;
   }, [data]);
@@ -97,7 +97,7 @@ export const LLMPromptMode = () => {
       const matchesRole = roleFilter === "all" || msg.role === roleFilter;
       const contentStr = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content || "");
       const toolCallsStr = msg.tool_calls ? JSON.stringify(msg.tool_calls) : "";
-      const matchesSearch = searchQuery === "" || 
+      const matchesSearch = searchQuery === "" ||
         contentStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
         msg.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
         toolCallsStr.toLowerCase().includes(searchQuery.toLowerCase());
@@ -117,9 +117,9 @@ export const LLMPromptMode = () => {
             if (part.type === 'image_url') {
               return (
                 <div key={idx} className="relative group overflow-hidden rounded-lg border border-white/10 bg-black/40">
-                  <img 
-                    src={part.image_url.url} 
-                    alt="Prompt context" 
+                  <img
+                    src={part.image_url.url}
+                    alt="Prompt context"
                     className="max-w-full h-auto max-h-64 object-contain transition-transform group-hover:scale-105"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1 text-[8px] font-mono text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -148,7 +148,7 @@ export const LLMPromptMode = () => {
           <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-900/20">AI</div>
           <div>
             <div className="text-sm font-bold text-zinc-200">{llmData.model}</div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">LLM PROMPT CONFIG</div>
+            <div className="text-[10px] text-zinc-500 tracking-widest font-black">LLM PROMPT CONFIG</div>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -170,7 +170,7 @@ export const LLMPromptMode = () => {
                 key={role}
                 onClick={() => setRoleFilter(role)}
                 className={twMerge(
-                  "px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all",
+                  "px-3 py-1 rounded-md text-[10px] font-bold transition-all",
                   roleFilter === role ? "bg-zinc-700 text-white shadow-md" : "text-zinc-500 hover:text-zinc-400"
                 )}
               >
@@ -179,13 +179,13 @@ export const LLMPromptMode = () => {
             ))}
           </div>
           <div className="relative flex-1 min-w-[150px]">
-             <input 
-               type="text" 
-               placeholder="Search messages..." 
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full bg-black/40 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-300 outline-none focus:border-emerald-500/50 transition-colors"
-             />
+            <input
+              type="text"
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-black/40 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-300 outline-none focus:border-emerald-500/50 transition-colors"
+            />
           </div>
         </div>
       )}
@@ -194,7 +194,7 @@ export const LLMPromptMode = () => {
       <div className="flex-grow overflow-auto p-4 @sm:p-6 space-y-6 custom-scrollbar bg-black/20">
         {llmData.prompt ? (
           <div className="bg-zinc-900 rounded-xl p-5 border border-zinc-800 shadow-xl">
-            <div className="text-[10px] font-bold text-zinc-500 mb-3 uppercase tracking-widest">Prompt</div>
+            <div className="text-[10px] font-bold text-zinc-500 mb-3 tracking-widest">Prompt</div>
             <div className="text-zinc-300 whitespace-pre-wrap text-sm leading-relaxed font-serif">{llmData.prompt}</div>
           </div>
         ) : (
@@ -205,7 +205,7 @@ export const LLMPromptMode = () => {
             )}>
               <div className="flex items-center gap-2 px-1">
                 <span className={twMerge(
-                  "text-[9px] uppercase font-bold tracking-widest flex items-center gap-1.5",
+                  "text-[9px] font-bold tracking-widest flex items-center gap-1.5",
                   msg.role === 'system' ? 'text-zinc-500'
                     : msg.role === 'user' ? 'text-blue-400'
                       : msg.role === 'tool' ? 'text-amber-500'
@@ -239,7 +239,7 @@ export const LLMPromptMode = () => {
                 <div key={j} className="bg-purple-950/20 border border-purple-900/30 rounded-xl p-4 w-full animate-in slide-in-from-right-2 duration-300 shadow-lg text-left">
                   <div className="flex items-center gap-2 mb-2">
                     <FiBox className="text-purple-400" size={14} />
-                    <span className="text-[10px] font-bold uppercase text-purple-400 tracking-widest">Tool Call Request</span>
+                    <span className="text-[10px] font-bold text-purple-400 tracking-widest">Tool Call Request</span>
                   </div>
                   <div className="flex flex-col gap-1.5 bg-black/40 rounded-lg p-3 border border-purple-900/20">
                     <span className="text-xs font-bold text-white font-mono">{tc.function.name}()</span>
@@ -260,8 +260,8 @@ export const LLMPromptMode = () => {
         )}
         {llmData.messages && filteredMessages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-50 py-20">
-             <FiInfo size={40} className="mb-4" />
-             <p className="text-sm">No messages match your current filters</p>
+            <FiInfo size={40} className="mb-4" />
+            <p className="text-sm">No messages match your current filters</p>
           </div>
         )}
       </div>

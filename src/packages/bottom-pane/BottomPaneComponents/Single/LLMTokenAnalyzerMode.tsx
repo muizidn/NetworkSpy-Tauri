@@ -155,9 +155,9 @@ export const LLMTokenAnalyzerMode = () => {
               <FiHash className="text-indigo-500" size={18} />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">Token Intelligence</h2>
+              <h2 className="text-sm font-bold text-white tracking-wider">Token Intelligence</h2>
               <div className="flex items-center gap-2 font-mono">
-                <span className="text-[10px] text-zinc-500 uppercase">Encoding:</span>
+                <span className="text-[10px] text-zinc-500">Encoding:</span>
                 <select
                   value={encodingName}
                   onChange={(e) => setEncodingName(e.target.value as any)}
@@ -176,7 +176,7 @@ export const LLMTokenAnalyzerMode = () => {
             <button
               onClick={() => setViewMode("input")}
               className={twMerge(
-                "px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-2",
+                "px-4 py-1.5 rounded-md text-[10px] font-bold transition-all flex items-center gap-2",
                 viewMode === "input" ? "bg-indigo-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
               )}
             >
@@ -186,7 +186,7 @@ export const LLMTokenAnalyzerMode = () => {
             <button
               onClick={() => setViewMode("output")}
               className={twMerge(
-                "px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all flex items-center gap-2",
+                "px-4 py-1.5 rounded-md text-[10px] font-bold transition-all flex items-center gap-2",
                 viewMode === "output" ? "bg-indigo-600 text-white shadow-lg" : "text-zinc-500 hover:text-zinc-300"
               )}
             >
@@ -236,7 +236,7 @@ export const LLMTokenAnalyzerMode = () => {
         {/* Left: Token Visualizer */}
         <div className="w-2/3 flex flex-col border-r border-zinc-900 bg-black/10">
           <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800 bg-zinc-900/40">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            <span className="text-[10px] font-bold tracking-widest text-zinc-500">
               Visual Breakdown - {viewMode.toUpperCase()}
             </span>
             <button
@@ -251,7 +251,7 @@ export const LLMTokenAnalyzerMode = () => {
             {activeToolCalls.length > 0 && (
               <div className="mb-8 p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-[10px] font-bold text-amber-500 tracking-widest flex items-center gap-2">
                     <FiZap size={12} /> Structured Tool Calls Detected
                   </h3>
                   <span className="text-[9px] text-zinc-600 italic">Excluded from text token count</span>
@@ -294,7 +294,7 @@ export const LLMTokenAnalyzerMode = () => {
         {/* Right: Technical Details & Cost */}
         <div className="w-1/3 flex flex-col bg-[#111314]">
           <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900/40">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Technical Specs</span>
+            <span className="text-[10px] font-bold tracking-widest text-zinc-500">Technical Specs</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 @sm:p-6 space-y-8 custom-scrollbar">
@@ -304,7 +304,7 @@ export const LLMTokenAnalyzerMode = () => {
                 <div className="p-1.5 bg-indigo-500/20 rounded">
                   <FiDatabase className="text-indigo-400" size={14} />
                 </div>
-                <span className="text-xs font-bold text-white uppercase tracking-tighter">Full Transaction Cost</span>
+                <span className="text-xs font-bold text-white tracking-tighter">Full Transaction Cost</span>
               </div>
               <div className="space-y-3">
                 <CostItem
@@ -326,7 +326,7 @@ export const LLMTokenAnalyzerMode = () => {
 
             {/* Character Details */}
             <div className="space-y-4">
-              <h3 className="text-[10px] uppercase font-bold text-zinc-600 tracking-widest">{viewMode} Byte Distribution</h3>
+              <h3 className="text-[10px] font-bold text-zinc-600 tracking-widest">{viewMode} Byte Distribution</h3>
               <div className="h-2 w-full bg-zinc-800 rounded-full overflow-hidden flex">
                 <div className="h-full bg-indigo-500 w-[60%]" />
                 <div className="h-full bg-emerald-500 w-[20%]" />
@@ -342,7 +342,7 @@ export const LLMTokenAnalyzerMode = () => {
             </div>
           </div>
 
-          <div className="p-4 border-t border-zinc-900 bg-black/20 text-[9px] text-zinc-600 uppercase font-black tracking-widest text-center">
+          <div className="p-4 border-t border-zinc-900 bg-black/20 text-[9px] text-zinc-600 font-black tracking-widest text-center">
             Powered by Tiktoken WASM-Free Bridge
           </div>
         </div>
@@ -353,7 +353,7 @@ export const LLMTokenAnalyzerMode = () => {
 
 const StatBox = ({ label, value, icon, color }: { label: string, value: any, icon: any, color: string }) => (
   <div className="flex flex-col items-end">
-    <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-tighter flex items-center gap-1">
+    <span className="text-[8px] font-bold text-zinc-600 tracking-tighter flex items-center gap-1">
       {icon} {label}
     </span>
     <span className={twMerge("text-sm font-mono font-bold leading-none mt-1", color)}>{value}</span>
@@ -364,7 +364,7 @@ const CostItem = ({ label, rate, input, output, cost }: { label: string, rate: s
   <div className="flex justify-between items-start group border-b border-white/5 pb-2">
     <div className="flex flex-col">
       <span className="text-[10px] font-bold text-zinc-400 group-hover:text-white transition-colors">{label}</span>
-      <span className="text-[8px] text-zinc-600 uppercase mb-1">{rate}</span>
+      <span className="text-[8px] text-zinc-600 mb-1">{rate}</span>
       <div className="flex gap-2 text-[8px] font-mono text-zinc-500">
         <span>IN: {input}</span>
         <span>OUT: {output}</span>

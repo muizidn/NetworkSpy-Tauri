@@ -16,9 +16,9 @@ const SnippetCard = ({ label, content, lang, isRunning }: { label: string, conte
         <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{label}</span>
+                <span className="text-[10px] font-black text-zinc-400 tracking-widest">{label}</span>
             </div>
-            <div className="bg-black/50 backdrop-blur-md border border-white/5 rounded-lg px-3 py-1 text-[8px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+            <div className="bg-black/50 backdrop-blur-md border border-white/5 rounded-lg px-3 py-1 text-[8px] font-black text-zinc-500 tracking-widest flex items-center gap-2">
                 {isRunning ? <FiCpu className="animate-spin" /> : <FiTerminal />}
                 {lang.toUpperCase()} TEMPLATE
             </div>
@@ -44,14 +44,14 @@ const SnippetCard = ({ label, content, lang, isRunning }: { label: string, conte
     </div>
 );
 
-const CustomDropdown = ({ 
-    options, 
-    selectedId, 
-    onSelect, 
-    isRunning 
-}: { 
-    options: { id: string, label: string, icon: React.ReactNode, isCustom?: boolean }[], 
-    selectedId: string, 
+const CustomDropdown = ({
+    options,
+    selectedId,
+    onSelect,
+    isRunning
+}: {
+    options: { id: string, label: string, icon: React.ReactNode, isCustom?: boolean }[],
+    selectedId: string,
     onSelect: (id: string) => void,
     isRunning: boolean
 }) => {
@@ -73,7 +73,7 @@ const CustomDropdown = ({
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={twMerge(
-                    "w-full flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 transition-all shadow-xl group",
+                    "w-full flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-[10px] font-black tracking-widest text-zinc-400 hover:text-emerald-500 hover:border-emerald-500/30 transition-all shadow-xl group",
                     isOpen && "border-emerald-500 text-emerald-500 bg-black shadow-emerald-500/10"
                 )}
             >
@@ -88,13 +88,13 @@ const CustomDropdown = ({
 
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl z-[100] overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="px-3 py-1 text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 select-none">Built-in Templates</div>
+                    <div className="px-3 py-1 text-[8px] font-black text-zinc-600 tracking-widest mb-1 select-none">Built-in Templates</div>
                     {options.filter(o => !o.isCustom).map(o => (
                         <button
                             key={o.id}
                             onClick={() => { onSelect(o.id); setIsOpen(false); }}
                             className={twMerge(
-                                "w-full flex items-center justify-between px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:bg-emerald-600/10 hover:text-emerald-500 transition-all",
+                                "w-full flex items-center justify-between px-4 py-2.5 text-[10px] font-black tracking-widest text-zinc-500 hover:bg-emerald-600/10 hover:text-emerald-500 transition-all",
                                 selectedId === o.id && "text-emerald-500 bg-emerald-600/5"
                             )}
                         >
@@ -109,13 +109,13 @@ const CustomDropdown = ({
                     {options.some(o => o.isCustom) && (
                         <>
                             <div className="h-px bg-white/5 my-2 mx-2" />
-                            <div className="px-3 py-1 text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 select-none">Custom Generator Results</div>
+                            <div className="px-3 py-1 text-[8px] font-black text-zinc-600 tracking-widest mb-1 select-none">Custom Generator Results</div>
                             {options.filter(o => o.isCustom).map(o => (
                                 <button
                                     key={o.id}
                                     onClick={() => { onSelect(o.id); setIsOpen(false); }}
                                     className={twMerge(
-                                        "w-full flex items-center justify-between px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:bg-emerald-600/10 hover:text-emerald-500 transition-all",
+                                        "w-full flex items-center justify-between px-4 py-2.5 text-[10px] font-black tracking-widest text-zinc-500 hover:bg-emerald-600/10 hover:text-emerald-500 transition-all",
                                         selectedId === o.id && "text-emerald-500 bg-emerald-600/5"
                                     )}
                                 >
@@ -187,12 +187,12 @@ print(response.json())`;
     const activeSnippet = useMemo(() => {
         if (selectedOption === "javascript") return { content: builtInSnippets.javascript, lang: "javascript", label: "JavaScript (Fetch)" };
         if (selectedOption === "python") return { content: builtInSnippets.python, lang: "python", label: "Python (Requests)" };
-        
+
         const custom = customFindings.find(f => f.type === selectedOption);
-        return { 
-            content: custom?.value || "// No output from script", 
-            lang: "javascript", 
-            label: custom?.type || selectedOption 
+        return {
+            content: custom?.value || "// No output from script",
+            lang: "javascript",
+            label: custom?.type || selectedOption
         };
     }, [selectedOption, builtInSnippets, customFindings]);
 
@@ -227,8 +227,8 @@ print(response.json())`;
                             <FiTerminal size={18} />
                         </div>
                         <div>
-                            <h2 className="text-sm font-black text-white uppercase tracking-tighter">Code Snippet Engine</h2>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic leading-none whitespace-nowrap italic">
+                            <h2 className="text-sm font-black text-white tracking-tighter">Code Snippet Engine</h2>
+                            <div className="text-[9px] text-zinc-500 font-bold tracking-widest italic leading-none whitespace-nowrap italic">
                                 {activeTab === "Snippets" && viewMode === "stacked" ? "Stacked: Review Mode" : "Perspective Switcher"}
                             </div>
                         </div>
@@ -237,7 +237,7 @@ print(response.json())`;
                     <div className="flex items-center gap-4">
                         {activeTab === "Snippets" && (
                             <div className="flex items-center bg-zinc-900/50 rounded-xl p-1 border border-zinc-800">
-                                <button 
+                                <button
                                     onClick={() => setViewMode("dropdown")}
                                     className={twMerge(
                                         "p-2 rounded-lg transition-all",
@@ -247,7 +247,7 @@ print(response.json())`;
                                 >
                                     <FiLayers size={14} />
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setViewMode("stacked")}
                                     className={twMerge(
                                         "p-2 rounded-lg transition-all",
@@ -259,17 +259,17 @@ print(response.json())`;
                                 </button>
                             </div>
                         )}
-                        
+
                         {activeTab === "Snippets" && (
                             viewMode === "dropdown" ? (
-                                <CustomDropdown 
-                                    options={options} 
-                                    selectedId={selectedOption} 
-                                    onSelect={setSelectedOption} 
+                                <CustomDropdown
+                                    options={options}
+                                    selectedId={selectedOption}
+                                    onSelect={setSelectedOption}
                                     isRunning={isRunning}
                                 />
                             ) : (
-                                <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-2">
+                                <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl px-4 py-2 text-[9px] font-black tracking-widest text-emerald-500 flex items-center gap-2">
                                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
                                     All Results Active
                                 </div>
@@ -284,7 +284,7 @@ print(response.json())`;
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={twMerge(
-                                "pb-3 text-[11px] font-black uppercase tracking-widest transition-all relative",
+                                "pb-3 text-[11px] font-black tracking-widest transition-all relative",
                                 activeTab === tab ? tab === "Custom Scripts" ? "text-orange-500" : "text-emerald-500" : "text-zinc-600 hover:text-zinc-400"
                             )}
                         >
@@ -310,7 +310,7 @@ print(response.json())`;
                         {viewMode === "dropdown" ? (
                             <div className="h-full flex flex-col">
                                 <div className="flex-grow rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl relative">
-                                <MonacoEditor
+                                    <MonacoEditor
                                         height="100%"
                                         language={activeSnippet.lang}
                                         theme="vs-dark"
@@ -325,7 +325,7 @@ print(response.json())`;
                                             padding: { top: 20, bottom: 20 }
                                         }}
                                     />
-                                    <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 text-[9px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                                    <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg px-3 py-1.5 text-[9px] font-black text-zinc-400 tracking-widest flex items-center gap-2">
                                         {isRunning ? <FiCpu className="animate-spin" /> : <FiTerminal />}
                                         {activeSnippet.label}
                                     </div>
@@ -334,11 +334,11 @@ print(response.json())`;
                         ) : (
                             <div className="max-w-5xl mx-auto pb-20">
                                 {getAllSnippets.map(snippet => (
-                                    <SnippetCard 
-                                        key={snippet.id} 
-                                        label={snippet.label} 
-                                        content={snippet.content} 
-                                        lang={snippet.lang} 
+                                    <SnippetCard
+                                        key={snippet.id}
+                                        label={snippet.label}
+                                        content={snippet.content}
+                                        lang={snippet.lang}
                                         isRunning={isRunning}
                                     />
                                 ))}

@@ -54,7 +54,7 @@ AI Insights:
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-white tracking-tight">AI Debugger</h2>
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Autonomous Logical Analysis & Fault Localization</p>
+                        <p className="text-[10px] text-zinc-500 font-bold tracking-widest">Autonomous Logical Analysis & Fault Localization</p>
                     </div>
                 </div>
 
@@ -74,8 +74,8 @@ AI Insights:
                 ) : (
                     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 animate-in zoom-in duration-300">
                         <div className="flex justify-between items-center mb-6 pb-4 border-b border-zinc-800">
-                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AI EXPLANATION</span>
-                            <button onClick={() => setDebugInfo(null)} className="text-[10px] text-zinc-600 font-bold hover:text-white uppercase">Reset</button>
+                            <span className="text-[10px] font-black text-indigo-400 tracking-widest">AI EXPLANATION</span>
+                            <button onClick={() => setDebugInfo(null)} className="text-[10px] text-zinc-600 font-bold hover:text-white">Reset</button>
                         </div>
                         <div className="prose prose-invert prose-sm">
                             <pre className="whitespace-pre-wrap text-zinc-300 font-sans leading-relaxed text-sm">

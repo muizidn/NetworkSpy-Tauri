@@ -67,10 +67,10 @@ export const XMLViewerMode = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white tracking-tight uppercase italic">XML / SOAP Inspector</h2>
+                        <h2 className="text-sm font-black text-white tracking-tight italic">XML / SOAP Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Type: </span>
-                            <span className="text-[9px] font-mono text-orange-400/80 font-bold uppercase tracking-wider">{data?.content_type || 'application/xml'}</span>
+                            <span className="text-[9px] font-bold text-zinc-500 tracking-widest">Type: </span>
+                            <span className="text-[9px] font-mono text-orange-400/80 font-bold tracking-wider">{data?.content_type || 'application/xml'}</span>
                         </div>
                     </div>
                 </div>
@@ -79,8 +79,8 @@ export const XMLViewerMode = () => {
                     <button
                         onClick={() => setIsFormatted(!isFormatted)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-300 border ${isFormatted
-                                ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
-                                : 'bg-zinc-800/50 border-white/5 text-zinc-500 hover:text-zinc-300'
+                            ? 'bg-orange-500/10 border-orange-500/30 text-orange-400'
+                            : 'bg-zinc-800/50 border-white/5 text-zinc-500 hover:text-zinc-300'
                             }`}
                     >
                         <FiWind size={12} />
@@ -104,7 +104,7 @@ export const XMLViewerMode = () => {
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-zinc-500 bg-orange-500/5 rounded-2xl border border-orange-500/10 m-4 italic">
-                        <div className="text-xs mb-1 font-bold uppercase tracking-widest text-orange-500/40">XML Mismatch</div>
+                        <div className="text-xs mb-1 font-bold tracking-widest text-orange-500/40">XML Mismatch</div>
                         <div className="text-[10px] text-zinc-600">This payload does not appear to be valid XML</div>
                     </div>
                 )}
@@ -120,8 +120,8 @@ const Placeholder = ({ text }: { text: string }) => (
                 <div className="absolute inset-0 bg-orange-500/5 blur-2xl rounded-full"></div>
                 <FiLayers size={40} className="relative z-10" />
             </div>
-            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase text-orange-500">STRUCTURE</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">XML DOM Standby</div>
+            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter text-orange-500">STRUCTURE</div>
+            <div className="text-[10px] font-bold tracking-widest text-zinc-600 mb-2">XML DOM Standby</div>
             <div className="text-xs italic">{text}</div>
         </div>
     </div>

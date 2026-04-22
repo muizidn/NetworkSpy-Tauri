@@ -23,11 +23,11 @@ export const HealthTimelineMode = () => {
     filteredTraffic.forEach((item, index) => {
       const bucketIdx = Math.floor(index / bucketSize);
       if (bucketIdx >= buckets) return;
-      
+
       if (!comparativeTimeGroups[bucketIdx]) {
         comparativeTimeGroups[bucketIdx] = { name: `T-${bucketIdx + 1}`, success: 0, error: 0, other: 0, avgLatency: 0, count: 0 };
       }
-      
+
       const code = String(item.code || "");
       if (code.startsWith("2")) comparativeTimeGroups[bucketIdx].success++;
       else if (code.startsWith("4") || code.startsWith("5")) comparativeTimeGroups[bucketIdx].error++;
@@ -61,7 +61,7 @@ export const HealthTimelineMode = () => {
           <p className="text-zinc-500 text-xs @sm:text-sm">Visualizing system stability and performance trends over time.</p>
         </div>
         <div className="text-left @sm:text-right">
-          <span className="block text-[10px] text-zinc-500 uppercase font-semibold">Sample Size</span>
+          <span className="block text-[10px] text-zinc-500 font-semibold">Sample Size</span>
           <span className="text-base @sm:text-lg font-mono text-blue-400">{filteredTraffic.length} requests</span>
         </div>
       </div>
@@ -72,28 +72,28 @@ export const HealthTimelineMode = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} />
             <XAxis dataKey="name" stroke="#52525b" fontSize={9} tickLine={false} axisLine={false} dy={5} />
             <YAxis yAxisId="count" stroke="#52525b" fontSize={9} tickLine={false} axisLine={false} />
-            <YAxis 
-              yAxisId="latency" 
-              orientation="right" 
-              stroke="#a855f7" 
-              fontSize={9} 
-              tickLine={false} 
-              axisLine={false} 
-              unit="ms" 
+            <YAxis
+              yAxisId="latency"
+              orientation="right"
+              stroke="#a855f7"
+              fontSize={9}
+              tickLine={false}
+              axisLine={false}
+              unit="ms"
             />
-            <Tooltip 
+            <Tooltip
               contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: '10px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
             />
             <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
             <Line yAxisId="count" type="monotone" dataKey="success" name="Success" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
             <Line yAxisId="count" type="monotone" dataKey="error" name="Errors" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-            <Line 
-              yAxisId="latency" 
-              type="monotone" 
-              dataKey="avgLatency" 
-              name="Avg Latency" 
-              stroke="#a855f7" 
-              strokeWidth={1} 
+            <Line
+              yAxisId="latency"
+              type="monotone"
+              dataKey="avgLatency"
+              name="Avg Latency"
+              stroke="#a855f7"
+              strokeWidth={1}
               strokeDasharray="5 5"
               dot={false}
             />

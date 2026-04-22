@@ -26,7 +26,7 @@ const TrafficFlow = ({ intercepted = false }: { intercepted?: boolean }) => (
                 <FiCpu size={32} className={intercepted ? 'text-emerald-500/50' : 'text-zinc-400'} />
                 {!intercepted && <TrafficLightIndicator />}
             </div>
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Client App</span>
+            <span className="text-[10px] font-bold text-zinc-500 tracking-widest">Client App</span>
         </div>
 
         {/* Flow Path */}
@@ -50,12 +50,12 @@ const TrafficFlow = ({ intercepted = false }: { intercepted?: boolean }) => (
                 {intercepted ? (
                     <div className="flex items-center gap-2 text-emerald-400">
                         <FiCheckCircle size={14} />
-                        <span className="text-[10px] font-black uppercase tracking-tighter">Intercepted</span>
+                        <span className="text-[10px] font-black tracking-tighter">Intercepted</span>
                     </div>
                 ) : (
                     <div className="flex items-center gap-2 text-zinc-500">
                         <FiLock size={14} />
-                        <span className="text-[10px] font-black uppercase tracking-tighter">Tunneled</span>
+                        <span className="text-[10px] font-black tracking-tighter">Tunneled</span>
                     </div>
                 )}
             </div>
@@ -67,7 +67,7 @@ const TrafficFlow = ({ intercepted = false }: { intercepted?: boolean }) => (
                 <FiGlobe size={32} className={intercepted ? 'text-emerald-500/50' : 'text-zinc-400'} />
                 {!intercepted && <TrafficLightIndicator />}
             </div>
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Server</span>
+            <span className="text-[10px] font-bold text-zinc-500 tracking-widest">Server</span>
         </div>
 
         <style dangerouslySetInnerHTML={{
@@ -142,7 +142,7 @@ export const NotInterceptedMode: React.FC<NotInterceptedModeProps> = ({
             <TrafficFlow />
             <h2 className="text-2xl font-black text-white mb-3 tracking-tight tracking-[0.2em]">Traffic Not Intercepted</h2>
             <p className="text-zinc-500 max-w-md text-sm leading-relaxed mb-10">
-                This traffic to <span className="text-zinc-300 font-mono font-bold">{domain}</span> is currently being tunneled directly. To decrypt and inspect this traffic, add it to your <span className="text-indigo-400 font-bold uppercase tracking-widest text-[10px]">Proxy Intercept List</span>.
+                This traffic to <span className="text-zinc-300 font-mono font-bold">{domain}</span> is currently being tunneled directly. To decrypt and inspect this traffic, add it to your <span className="text-indigo-400 font-bold tracking-widest text-[10px]">Proxy Intercept List</span>.
             </p>
             <div className="flex flex-col gap-4">
                 <button

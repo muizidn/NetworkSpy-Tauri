@@ -43,7 +43,7 @@ export const ReplayMode = () => {
             </svg>
           </div>
           <h3 className="text-lg font-bold text-white mb-2">Request Replayer</h3>
-          <p className="text-xs text-zinc-500 mb-6 uppercase tracking-widest font-black">ID: {trafficId}</p>
+          <p className="text-xs text-zinc-500 mb-6 tracking-widest font-black">ID: {trafficId}</p>
 
           <button
             onClick={handleReplay}
@@ -56,7 +56,7 @@ export const ReplayMode = () => {
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-[10px] font-black uppercase text-zinc-600 tracking-widest pl-2">Previous Replays</h4>
+          <h4 className="text-[10px] font-black text-zinc-600 tracking-widest pl-2">Previous Replays</h4>
           <div className="space-y-2">
             {replays.length === 0 ? (
               <div className="text-center py-8 bg-zinc-900/20 border border-dashed border-zinc-800 rounded-lg text-zinc-600 text-xs">No replay history for this session</div>
