@@ -163,7 +163,10 @@ export const BottomPane = () => {
 
                 if (isMultiple) return renderMode(mode, sizes, setSizes);
 
-                if (selected.intercepted) {
+                const url = (selected.url as string) || "";
+                const isEncrypted = url.startsWith("https://") || url.startsWith("wss://");
+
+                if (selected.intercepted || !isEncrypted) {
                   return renderMode(mode, sizes, setSizes);
                 }
 
@@ -231,6 +234,7 @@ export const BottomPane = () => {
           handleIntercept={handleIntercept}
           handleInterceptAll={handleInterceptAll}
           isIntercepted={!!selected.intercepted}
+          isUnencrypted={!((selected.url as string || "").startsWith("https://") || (selected.url as string || "").startsWith("wss://"))}
         />
       )}
 

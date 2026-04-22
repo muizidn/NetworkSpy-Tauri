@@ -10,6 +10,7 @@ interface InterceptionActionBarProps {
   handleIntercept: () => void;
   handleInterceptAll: () => void;
   isIntercepted: boolean;
+  isUnencrypted?: boolean;
 }
 
 export const InterceptionActionBar: React.FC<InterceptionActionBarProps> = ({
@@ -20,7 +21,8 @@ export const InterceptionActionBar: React.FC<InterceptionActionBarProps> = ({
   isIntercepting,
   handleIntercept,
   handleInterceptAll,
-  isIntercepted
+  isIntercepted,
+  isUnencrypted
 }) => {
   return (
     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-[#1a1c1e]/90 backdrop-blur-md border border-white/5 rounded-xl shadow-2xl shadow-black/50 z-50">
@@ -42,6 +44,11 @@ export const InterceptionActionBar: React.FC<InterceptionActionBarProps> = ({
               <>
                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
                 <span className="text-[10px] font-bold text-emerald-400/80 tracking-widest">Interception Active</span>
+              </>
+            ) : isUnencrypted ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]" />
+                <span className="text-[10px] font-bold text-blue-400/80 tracking-widest">Plaintext Visible</span>
               </>
             ) : (
               <>
