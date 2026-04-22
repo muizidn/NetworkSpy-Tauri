@@ -191,10 +191,8 @@ fn main() {
 
             let rules = traffic_db.get_proxy_rules().expect("Failed to get proxy rules from DB");
             let list: Vec<network_spy_proxy::ProxyRule> = rules.into_iter()
+                .filter(|rule| rule.enabled)
                 .map(|rule| network_spy_proxy::ProxyRule {
-                    id: rule.id,
-                    enabled: rule.enabled,
-                    name: rule.name,
                     pattern: rule.pattern,
                     client: rule.client,
                     action: rule.action,
