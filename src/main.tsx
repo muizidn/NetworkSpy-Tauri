@@ -41,6 +41,7 @@ import ExtensionsPage from "./routes/extensions";
 import SessionPage from "./routes/sessions";
 import ViewersPage from "./routes/viewers";
 import FiltersPage from "./routes/filters";
+import ProxyList from "./routes/tools/ProxyList";
 import { SessionProvider } from "./context/SessionContext";
 import { ViewerProvider } from "./context/ViewerContext";
 import { BreakpointHitView } from "./packages/breakpoint/BreakpointHitView";
@@ -114,6 +115,10 @@ const router = createBrowserRouter([
         element: <FiltersPage />,
       },
       {
+        path: "/proxylist",
+        element: <ProxyList />,
+      },
+      {
         path: "/breakpoint-hit",
         element: <BreakpointHitView />,
       },
@@ -130,30 +135,33 @@ import { TauriEnvProvider } from "@src/packages/app-env";
 import { PaneProvider } from "./context/PaneProvider";
 import { FilterPresetProvider } from "./context/FilterPresetContext";
 import { AnalyticsProvider } from "./context/AnalyticsProvider";
+import { UpgradeProvider } from "./context/UpgradeContext";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <AnalyticsProvider>
       <TauriProvider>
-        <TagProvider>
-          <SessionProvider>
-            <ViewerProvider>
-              <SettingsProvider>
-                <FilterPresetProvider>
-                  <TrafficListProvider>
-                    <TauriEnvProvider>
-                      <PaneProvider>
-                        <DndProvider backend={HTML5Backend}>
-                          <RouterProvider router={router} />
-                        </DndProvider>
-                      </PaneProvider>
-                    </TauriEnvProvider>
-                  </TrafficListProvider>
-                </FilterPresetProvider>
-              </SettingsProvider>
-            </ViewerProvider>
-          </SessionProvider>
-        </TagProvider>
+        <UpgradeProvider>
+          <TagProvider>
+            <SessionProvider>
+              <ViewerProvider>
+                <SettingsProvider>
+                  <FilterPresetProvider>
+                    <TrafficListProvider>
+                      <TauriEnvProvider>
+                        <PaneProvider>
+                          <DndProvider backend={HTML5Backend}>
+                            <RouterProvider router={router} />
+                          </DndProvider>
+                        </PaneProvider>
+                      </TauriEnvProvider>
+                    </TrafficListProvider>
+                  </FilterPresetProvider>
+                </SettingsProvider>
+              </ViewerProvider>
+            </SessionProvider>
+          </TagProvider>
+        </UpgradeProvider>
       </TauriProvider>
     </AnalyticsProvider>
   </React.StrictMode>

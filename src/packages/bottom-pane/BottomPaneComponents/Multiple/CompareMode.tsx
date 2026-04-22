@@ -20,7 +20,7 @@ export const CompareMode = () => {
         <table className="min-w-full border-collapse text-xs">
           <thead>
             <tr className="bg-zinc-900">
-              <th className="border border-zinc-700 p-2 text-left text-zinc-500 uppercase sticky left-0 z-10 bg-zinc-900">Property</th>
+              <th className="border border-zinc-700 p-2 text-left text-zinc-500 sticky left-0 z-10 bg-zinc-900">Property</th>
               {selectedItems.map((item) => (
                 <th key={String(item.id)} className="border border-zinc-700 p-2 text-left min-w-[250px]">
                   <div className="flex items-center gap-2">

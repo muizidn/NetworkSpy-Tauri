@@ -2,12 +2,12 @@ import { FiActivity, FiBox, FiSettings, FiGrid, FiClock, FiEye, FiFilter } from 
 import { useNavigate, useLocation } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { Tooltip } from "../ui/Tooltip";
+import { useSettingsContext } from "../../context/SettingsProvider";
 
 interface LeftSidebarProps {
-  onProClick: (status: 'trial' | 'pro') => void;
 }
 
-export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onProClick }) => {
+export const LeftSidebar: React.FC<LeftSidebarProps> = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -57,20 +57,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({ onProClick }) => {
       </div>
 
       <div className="flex flex-col items-center gap-4 w-full mb-2 px-1.5">
-        <Tooltip text="PRO">
-          <div 
-            onClick={() => onProClick('pro')}
-            className="flex flex-col items-center gap-0.5 cursor-pointer group"
-          >
-            <span className="text-[7px] font-black text-blue-500 uppercase tracking-widest leading-none group-hover:text-blue-400 transition-colors">
-              Pro
-            </span>
-            <span className="text-[6px] font-mono text-zinc-600 leading-none mt-0.5">
-              v0.9.4
-            </span>
-          </div>
-        </Tooltip>
-
         <Tooltip text="Account Settings">
           <div 
             onClick={() => navigate("/account")}

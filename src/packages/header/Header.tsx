@@ -8,6 +8,8 @@ import { Icon } from "../ui/Icon";
 import { PortDialog } from "./components/PortDialog";
 import { SaveSessionDialog } from "./components/SaveSessionDialog";
 import { FiPause } from "react-icons/fi";
+import { useLicense } from "@src/hooks/useLicense";
+import { useUpgradeDialog } from "@src/context/UpgradeContext";
 
 interface HeaderProps {
   toggleBottomPane: () => void;
@@ -68,6 +70,13 @@ export const HeaderLeft = () => {
   const { pausedBreakpoints, openNewWindow } = useAppProvider();
   const [isPortDialogOpen, setIsPortDialogOpen] = React.useState(false);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = React.useState(false);
+  const { openUpgradeDialog } = useUpgradeDialog();
+  const [plan, setPlan] = React.useState<string | null>(null);
+  const { getPlan } = useLicense();
+
+  React.useEffect(() => {
+    getPlan().then(setPlan);
+  }, []);
 
   const handleUpdatePort = async (newPort: number) => {
     try {
@@ -104,16 +113,17 @@ export const HeaderLeft = () => {
         <div className="h-4 w-px bg-zinc-800/50" />
 
         <div className="flex items-center gap-1.5 ">
-          <ControlButton
-            id="menu"
-            icon="Menu"
-            label="Application Menu"
-            onClick={() => { }}
-          />
-
-          <div className="w-1" />
-
-          <div className="w-1" />
+          {plan === 'free' && (
+            <div 
+              onClick={openUpgradeDialog}
+              className="flex items-center px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 shadow-inner group relative cursor-pointer hover:bg-zinc-800 hover:border-zinc-700 transition-all active:scale-95"
+            >
+              <span className="text-[9px] font-black tracking-widest text-zinc-400 uppercase group-hover:text-zinc-200">Free Plan</span>
+              <div className="absolute top-full left-0 mt-2 w-48 p-2 bg-[#0d0d0d] border border-zinc-800 rounded-lg shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[999] pointer-events-none">
+                <p className="text-[9px] text-zinc-400 font-bold leading-relaxed tracking-tight">You are currently using the Free plan. Some features have limits. <span className="text-indigo-400">Click to see premium benefits.</span></p>
+              </div>
+            </div>
+          )}
 
           {!isReviewMode && (
             <ControlButton
@@ -172,7 +182,7 @@ export const HeaderLeft = () => {
           {pausedBreakpoints.length > 0 && (
             <>
               <div className="h-4 w-px bg-zinc-800/50 mx-1" />
-              <div 
+              <div
                 onClick={() => openNewWindow("breakpoint-hit", "Paused Traffic Review")}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:bg-amber-500/20 hover:border-amber-500/50 transition-all cursor-pointer group shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)] animate-in slide-in-from-top-2 duration-300"
               >

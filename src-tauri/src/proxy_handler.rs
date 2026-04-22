@@ -16,7 +16,22 @@ pub struct MyTrafficListener {
 
 #[async_trait]
 impl TrafficListener for MyTrafficListener {
+    async fn get_client_name(&self, client_addr: &str) -> String {
+        let info = traffic::process_info::get_client_info(client_addr);
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(&info) {
+            val["name"].as_str().unwrap_or("-").to_string()
+        } else {
+            "-".to_string()
+        }
+    }
+
     async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) -> Request<Bytes> {
+        if let Some(toggle) = PROXY_TOGGLE.get() {
+            if !toggle.is_on() {
+                return request;
+            }
+        }
+
         self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
         self.tray_stats.tx_bytes.fetch_add(request.body().len() as u64, Ordering::Relaxed);
         
@@ -37,13 +52,7 @@ impl TrafficListener for MyTrafficListener {
         
         let method = request.method().as_str().to_string();
  
-        let show_connect = if let Ok(settings) = self.proxy_settings.read() {
-            settings.show_connect_method
-        } else {
-            false
-        };
- 
-        if !show_connect && method.trim().to_uppercase() == "CONNECT" {
+        if intercepted && method.trim().to_uppercase() == "CONNECT" {
             return request;
         }
  
@@ -77,7 +86,7 @@ impl TrafficListener for MyTrafficListener {
  
         let tags = self.tag_manager.sync_tagging(&uri, &method, &headers);
  
-        let traffic_id = format!("{}_{}", self.session_id, id);
+        let traffic_id = format!("{}_{}", id, self.session_id);
  
         self.traffic_db.insert_request(TrafficEvent::Request {
             id: traffic_id.clone(),
@@ -95,7 +104,12 @@ impl TrafficListener for MyTrafficListener {
         
         // Async tagging for request body if needed
         self.tag_manager.async_tagging(traffic_id.clone(), uri.clone(), method.clone(), headers.clone(), decompressed_body.clone(), self.app_handle.clone());
- 
+        
+        // CHECK THE RUST SIDE WHEN TRAFFIC URI is -
+        if intercepted && (uri == "-" || method == "-") {
+            println!("Traffic URI is -: {} {}", uri, method);
+        }
+
         let _result = self.app_handle.emit(
             "traffic_event",
             Payload {
@@ -165,6 +179,12 @@ impl TrafficListener for MyTrafficListener {
     }
 
     async fn response(&self, id: u64, mut response: Response<Bytes>, intercepted: bool, client_addr: String) -> Response<Bytes> {
+        if let Some(toggle) = PROXY_TOGGLE.get() {
+            if !toggle.is_on() {
+                return response;
+            }
+        }
+        
         self.tray_stats.rx_bytes.fetch_add(response.body().len() as u64, Ordering::Relaxed);
         
         let (start_time, uri, method) = match self.request_times.lock().unwrap().remove(&id) {
@@ -198,7 +218,7 @@ impl TrafficListener for MyTrafficListener {
         let content_type = headers.get("content-type").or_else(|| headers.get("Content-Type")).cloned();
         let content_encoding = headers.get("content-encoding").or_else(|| headers.get("Content-Encoding")).cloned();
  
-        let traffic_id = format!("{}_{}", self.session_id, id);
+        let traffic_id = format!("{}_{}", id, self.session_id);
  
         self.traffic_db.insert_response(TrafficEvent::Response {
             id: traffic_id.clone(),

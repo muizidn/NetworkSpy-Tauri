@@ -62,6 +62,7 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
         run: |
           echo "APP_NAME=$APP_NAME" > .env
           echo "VITE_PUBLIC_POSTHOG_KEY=$POSTHOG_KEY" >> .env
@@ -69,6 +70,7 @@ jobs:
           echo "VITE_SENTRY_DSN=$VITE_SENTRY_DSN" >> .env
           echo "SENTRY_DSN=$SENTRY_DSN" >> .env
           echo "SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN" >> .env
+          echo "API_BASE_URL=$API_BASE_URL" >> .env
           
           # Verify file contents (Secrets will stay masked by GitHub)
           cat .env

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Viewer, ViewerBlock, ViewerContent, useViewerContext } from "@src/context/ViewerContext";
+import { Viewer, ViewerBlock, ViewerContent, ViewerMatcher, useViewerContext } from "@src/context/ViewerContext";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
 import { useSessionContext } from "@src/context/SessionContext";
 import { useAppProvider } from "@src/packages/app-env";
@@ -25,6 +25,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     }, [initialViewer.content]);
 
     const [blocks, setBlocks] = useState<ViewerBlock[]>(parsedContent.blocks);
+    const [matchers, setMatchers] = useState<ViewerMatcher[]>(parsedContent.matchers || []);
     const [testSource, setTestSource] = useState<'live' | 'session'>(parsedContent.previewConfig?.testSource || 'live');
     const [selectedSessionId, setSelectedSessionId] = useState<string>(parsedContent.previewConfig?.selectedSessionId || "");
     const [selectedTrafficId, setSelectedTrafficId] = useState<string>(parsedContent.previewConfig?.selectedTrafficId || "");
@@ -99,11 +100,13 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         setSelectedSessionId(parsedContent.previewConfig?.selectedSessionId || "");
         setSelectedTrafficId(parsedContent.previewConfig?.selectedTrafficId || "");
         setFilter(parsedContent.previewConfig?.filter || "");
+        setMatchers(parsedContent.matchers || []);
     }, [initialViewer, parsedContent]);
 
     const handleSave = async () => {
         const content: ViewerContent = {
             blocks,
+            matchers,
             previewConfig: {
                 testSource,
                 selectedSessionId,
@@ -153,6 +156,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         viewerName, setViewerName,
         isEditingName, setIsEditingName,
         blocks, setBlocks,
+        matchers, setMatchers,
         testSource, setTestSource,
         selectedSessionId, setSelectedSessionId,
         selectedTrafficId, setSelectedTrafficId,

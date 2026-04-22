@@ -50,10 +50,10 @@ export const HexViewerMode = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white tracking-tight uppercase italic">Binary Heap Inspector</h2>
+                        <h2 className="text-sm font-black text-white tracking-tight italic">Binary Heap Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Address Space: </span>
-                            <span className="text-[9px] font-mono text-emerald-400/80 font-bold uppercase tracking-wider">{byteCount} Bytes (0x{byteCount.toString(16).toUpperCase()})</span>
+                            <span className="text-[9px] font-bold text-zinc-500 tracking-widest">Address Space: </span>
+                            <span className="text-[9px] font-mono text-emerald-400/80 font-bold tracking-wider">{byteCount} Bytes (0x{byteCount.toString(16).toUpperCase()})</span>
                         </div>
                     </div>
                 </div>
@@ -86,8 +86,8 @@ const Placeholder = ({ text }: { text: string }) => (
                 <div className="absolute inset-0 bg-emerald-500/5 blur-2xl rounded-full"></div>
                 <FiHash size={40} className="relative z-10" />
             </div>
-            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase text-emerald-500">BINARY</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Segment Engine Standby</div>
+            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter text-emerald-500">BINARY</div>
+            <div className="text-[10px] font-bold tracking-widest text-zinc-600 mb-2">Segment Engine Standby</div>
             <div className="text-xs italic">{text}</div>
         </div>
     </div>

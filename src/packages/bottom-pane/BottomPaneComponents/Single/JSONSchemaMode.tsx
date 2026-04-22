@@ -199,14 +199,14 @@ export const JSONSchemaMode = () => {
             <div className="px-4 @sm:px-6 py-4 border-b border-zinc-900 bg-[#0c0c0c] flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4 @sm:p-6">
                     <div>
-                        <h2 className="text-xl font-black text-white italic tracking-tighter uppercase font-mono">JSON Blueprint</h2>
-                        <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Schema Design & Validation</div>
+                        <h2 className="text-xl font-black text-white italic tracking-tighter font-mono">JSON Blueprint</h2>
+                        <div className="text-[9px] text-zinc-500 font-bold tracking-widest mt-0.5">Schema Design & Validation</div>
                     </div>
 
                     <div className="flex bg-zinc-900/50 rounded-xl p-1 border border-zinc-800">
                         <button
                             onClick={() => setMode("builder")}
-                            className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${mode === "builder" ? 'bg-blue-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 ${mode === "builder" ? 'bg-blue-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             <FiCpu className={mode === "builder" ? "animate-pulse" : ""} />
                             Builder
@@ -216,7 +216,7 @@ export const JSONSchemaMode = () => {
                                 setMode("validator");
                                 setTimeout(handleValidate, 100);
                             }}
-                            className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all flex items-center gap-2 ${mode === "validator" ? 'bg-purple-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            className={`px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 ${mode === "validator" ? 'bg-purple-600 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
                         >
                             <FiCheckCircle />
                             Validator
@@ -228,13 +228,13 @@ export const JSONSchemaMode = () => {
                     <div className="flex bg-zinc-900 rounded-lg p-0.5 border border-zinc-800">
                         <button
                             onClick={() => setActiveSource("request")}
-                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase transition-all ${activeSource === "request" ? 'bg-zinc-700 text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+                            className={`px-3 py-1 rounded-md text-[9px] font-black transition-all ${activeSource === "request" ? 'bg-zinc-700 text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
                         >
                             Request
                         </button>
                         <button
                             onClick={() => setActiveSource("response")}
-                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase transition-all ${activeSource === "response" ? 'bg-zinc-700 text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+                            className={`px-3 py-1 rounded-md text-[9px] font-black transition-all ${activeSource === "response" ? 'bg-zinc-700 text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
                         >
                             Response
                         </button>
@@ -246,7 +246,7 @@ export const JSONSchemaMode = () => {
                 {/* Left: Schema Editor */}
                 <div className="flex-1 flex flex-col border-r border-zinc-900">
                     <div className="px-4 py-2 border-b border-zinc-900 bg-[#080808] flex justify-between items-center">
-                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                        <span className="text-[10px] font-black text-zinc-500 tracking-widest flex items-center gap-2">
                             <FiCode /> {mode === "builder" ? "Schema Generator" : "Schema Definition"}
                         </span>
                         {mode === "builder" && (
@@ -256,7 +256,7 @@ export const JSONSchemaMode = () => {
                                     setMode("validator");
                                     setTimeout(handleValidate, 100);
                                 }}
-                                className="text-[9px] font-black text-blue-400 hover:text-blue-300 uppercase underline decoration-dotted underline-offset-4"
+                                className="text-[9px] font-black text-blue-400 hover:text-blue-300 underline decoration-dotted underline-offset-4"
                             >
                                 Use as Contract
                             </button>
@@ -286,13 +286,13 @@ export const JSONSchemaMode = () => {
                 {/* Right: Body Viewer & Validation */}
                 <div className="flex-1 flex flex-col">
                     <div className="px-4 py-2 border-b border-zinc-900 bg-[#080808] flex justify-between items-center">
-                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                        <span className="text-[10px] font-black text-zinc-500 tracking-widest flex items-center gap-2">
                             <FiDatabase /> Data Payload
                         </span>
                         {mode === "validator" && (
                             <button
                                 onClick={handleValidate}
-                                className="flex items-center gap-2 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-full text-[9px] font-black uppercase shadow-lg transition-all"
+                                className="flex items-center gap-2 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-full text-[9px] font-black shadow-lg transition-all"
                             >
                                 <FiActivity /> Re-Validate
                             </button>
@@ -321,18 +321,18 @@ export const JSONSchemaMode = () => {
                 {/* Sidebar: Validation Results */}
                 <div className="w-72 bg-[#080808] border-l border-zinc-900 overflow-auto">
                     <div className="p-4 @sm:p-6 space-y-6">
-                        <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Analysis Results</h3>
+                        <h3 className="text-[10px] font-black text-zinc-600 tracking-widest">Analysis Results</h3>
 
                         {validationSuccess === null && validationErrors.length === 0 ? (
                             <div className="py-12 text-center opacity-20">
                                 <FiCheckCircle className="text-4xl mx-auto mb-3" />
-                                <div className="text-[10px] font-bold uppercase">Ready to Validate</div>
+                                <div className="text-[10px] font-bold">Ready to Validate</div>
                             </div>
                         ) : validationSuccess ? (
                             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl">
                                 <div className="flex items-center gap-3 text-green-400 mb-2">
                                     <FiCheckCircle className="text-lg" />
-                                    <span className="text-[10px] font-black uppercase">Valid Contract</span>
+                                    <span className="text-[10px] font-black">Valid Contract</span>
                                 </div>
                                 <p className="text-[9px] text-zinc-500 leading-relaxed italic">
                                     Zero structural violations detected in the payload.
@@ -343,7 +343,7 @@ export const JSONSchemaMode = () => {
                                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
                                     <div className="flex items-center gap-3 text-red-400 mb-2">
                                         <FiAlertTriangle className="text-lg" />
-                                        <span className="text-[10px] font-black uppercase">Contract Breaches</span>
+                                        <span className="text-[10px] font-black">Contract Breaches</span>
                                     </div>
                                     <p className="text-[9px] text-zinc-500 leading-relaxed">
                                         Found {validationErrors.length} issues in the data payload.
@@ -363,14 +363,14 @@ export const JSONSchemaMode = () => {
                                             }}
                                             className="w-full text-left p-3 bg-zinc-900 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-all group"
                                         >
-                                            <div className="text-[8px] font-black text-zinc-500 uppercase mb-1 group-hover:text-zinc-300">
+                                            <div className="text-[8px] font-black text-zinc-500 mb-1 group-hover:text-zinc-300">
                                                 Path: {err.path}
                                             </div>
                                             <div className="text-[9px] text-red-400 font-mono leading-tight">
                                                 {err.message}
                                             </div>
                                             {err.line && (
-                                                <div className="text-[7px] text-zinc-600 mt-1 uppercase">Line {err.line}</div>
+                                                <div className="text-[7px] text-zinc-600 mt-1">Line {err.line}</div>
                                             )}
                                         </button>
                                     ))}
@@ -380,7 +380,7 @@ export const JSONSchemaMode = () => {
 
                         <div className="pt-6 border-t border-zinc-900">
                             <div className="p-4 bg-zinc-900/30 border border-dashed border-zinc-800 rounded-xl">
-                                <h4 className="text-[9px] font-black text-zinc-500 uppercase mb-2">Architect Tip</h4>
+                                <h4 className="text-[9px] font-black text-zinc-500 mb-2">Architect Tip</h4>
                                 <p className="text-[9px] text-zinc-600 leading-relaxed">
                                     Click an error to jump directly to the failing node in the data payload.
                                 </p>
@@ -397,7 +397,7 @@ const Placeholder = ({ text }: { text: string }) => (
     <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0a0a0a]">
         <div className="text-center">
             <div className="text-5xl font-black opacity-5 mb-4 italic tracking-tighter">BLUEPRINT</div>
-            <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-700">{text}</div>
+            <div className="text-xs tracking-[0.2em] font-bold text-zinc-700">{text}</div>
         </div>
     </div>
 );

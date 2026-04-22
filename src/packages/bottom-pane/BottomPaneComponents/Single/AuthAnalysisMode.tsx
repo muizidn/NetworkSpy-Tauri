@@ -19,15 +19,15 @@ const FindingCard = ({ finding }: { finding: AuthFinding & { isCustom?: boolean,
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                     <span className={twMerge(
-                        "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
+                        "text-[10px] font-black tracking-widest px-2 py-0.5 rounded",
                         finding.isError ? "bg-red-500 text-white" : "bg-blue-600 text-white"
                     )}>
                         {finding.type}
                     </span>
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-1">Auth Insight</span>
+                    <span className="text-[10px] font-black text-zinc-500 tracking-widest pl-1">Auth Insight</span>
                 </div>
                 <div className={twMerge(
-                    "text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-tighter shadow-sm",
+                    "text-[8px] font-black px-2 py-0.5 rounded-full border tracking-tighter shadow-sm",
                     finding.isError
                         ? "bg-red-600 text-white border-red-500"
                         : "bg-blue-950 text-blue-400 border-blue-900/30"
@@ -47,13 +47,13 @@ const FindingCard = ({ finding }: { finding: AuthFinding & { isCustom?: boolean,
 
             <div className="grid grid-cols-2 gap-3">
                 <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
-                    <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    <div className="text-[8px] font-black text-zinc-600 tracking-widest mb-1 flex items-center gap-1">
                         {finding.isError ? <FiAlertTriangle size={8} /> : <FiShield size={8} />} {finding.isError ? "Cause" : "Risk"}
                     </div>
                     <div className="text-[10px] text-zinc-400 italic font-medium leading-tight">{finding.risk}</div>
                 </div>
                 <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
-                    <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    <div className="text-[8px] font-black text-zinc-600 tracking-widest mb-1 flex items-center gap-1">
                         {finding.isError ? <FiEdit2 size={8} /> : <FiCheckCircle size={8} />} {finding.isError ? "Fix" : "Result"}
                     </div>
                     <div className="text-[10px] text-zinc-400 italic font-medium leading-tight">{finding.solution}</div>
@@ -183,8 +183,8 @@ export const AuthAnalysisMode = () => {
                             <FiLock size={18} />
                         </div>
                         <div>
-                            <h2 className="text-sm font-black text-white uppercase tracking-tighter">Auth Auditor</h2>
-                            <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Session & Token Inspector</div>
+                            <h2 className="text-sm font-black text-white tracking-tighter">Auth Auditor</h2>
+                            <div className="text-[9px] text-zinc-500 font-bold tracking-widest mt-0.5">Session & Token Inspector</div>
                         </div>
                     </div>
 
@@ -195,7 +195,7 @@ export const AuthAnalysisMode = () => {
                                     key={i}
                                     onClick={() => setSelectedTokenIndex(i)}
                                     className={twMerge(
-                                        "px-3 py-1 rounded-md text-[9px] font-black uppercase transition-all whitespace-nowrap",
+                                        "px-3 py-1 rounded-md text-[9px] font-black transition-all whitespace-nowrap",
                                         selectedTokenIndex === i ? "bg-blue-600 text-white shadow-lg" : "text-zinc-600 hover:text-zinc-400"
                                     )}
                                 >
@@ -212,7 +212,7 @@ export const AuthAnalysisMode = () => {
                             key={t}
                             onClick={() => setTab(t)}
                             className={twMerge(
-                                "pb-3 text-[11px] font-black uppercase tracking-widest transition-all relative",
+                                "pb-3 text-[11px] font-black tracking-widest transition-all relative",
                                 tab === t ? t === "Custom Scripts" ? "text-orange-500" : "text-blue-500" : "text-zinc-600 hover:text-zinc-400"
                             )}
                         >
@@ -237,10 +237,10 @@ export const AuthAnalysisMode = () => {
                             {customFindings.length > 0 && (
                                 <div>
                                     <div className="flex items-center justify-between mb-4 pl-2">
-                                        <div className="flex items-center gap-2 text-[10px] font-black text-blue-500 uppercase tracking-widest">
+                                        <div className="flex items-center gap-2 text-[10px] font-black text-blue-500 tracking-widest">
                                             <FiShield size={12} /> Custom Auth Insights
                                         </div>
-                                        {isRunning && <span className="text-[10px] text-blue-500 animate-pulse font-black uppercase">Executing...</span>}
+                                        {isRunning && <span className="text-[10px] text-blue-500 animate-pulse font-black">Executing...</span>}
                                     </div>
                                     {customFindings.map((f, i) => <FindingCard key={i} finding={f} />)}
                                 </div>
@@ -249,7 +249,7 @@ export const AuthAnalysisMode = () => {
                             {detectedTokens.length === 0 && cookies.length === 0 ? (
                                 <div className="py-20 text-center bg-zinc-900/10 rounded-3xl border border-dashed border-zinc-800/50">
                                     <div className="text-zinc-500 text-sm italic font-medium">No standard authentication tokens detected.</div>
-                                    <div className="text-[10px] text-zinc-700 uppercase font-black tracking-widest mt-4">Scanned: Headers, Cookies, JSON Body</div>
+                                    <div className="text-[10px] text-zinc-700 font-black tracking-widest mt-4">Scanned: Headers, Cookies, JSON Body</div>
                                 </div>
                             ) : (
                                 <div className="space-y-8">
@@ -259,10 +259,10 @@ export const AuthAnalysisMode = () => {
                                                 <div className="px-6 py-4 bg-zinc-800/50 border-b border-zinc-800 flex justify-between items-center">
                                                     <div className="flex items-center gap-3">
                                                         <FiKey className="text-blue-500" />
-                                                        <span className="text-xs font-black uppercase text-zinc-300 tracking-tighter">{activeDetails.label || 'Token'} Payload</span>
-                                                        <span className="text-[8px] bg-zinc-950 text-zinc-500 px-2 py-1 rounded-lg font-mono uppercase tracking-widest border border-white/5">{activeDetails.source}</span>
+                                                        <span className="text-xs font-black text-zinc-300 tracking-tighter">{activeDetails.label || 'Token'} Payload</span>
+                                                        <span className="text-[8px] bg-zinc-950 text-zinc-500 px-2 py-1 rounded-lg font-mono tracking-widest border border-white/5">{activeDetails.source}</span>
                                                     </div>
-                                                    <span className="text-[9px] bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full font-black tracking-widest uppercase border border-blue-500/20">Auto-Decoded</span>
+                                                    <span className="text-[9px] bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full font-black tracking-widest border border-blue-500/20">Auto-Decoded</span>
                                                 </div>
                                                 <div className="p-6 overflow-auto max-h-[500px] bg-black/40">
                                                     <pre className="text-xs text-blue-300/60 font-mono leading-relaxed whitespace-pre-wrap selection:bg-blue-500/30">
@@ -273,13 +273,13 @@ export const AuthAnalysisMode = () => {
 
                                             <div className="grid grid-cols-1 @sm:grid-cols-3 gap-4">
                                                 <div className="bg-zinc-900/50 border border-white/5 p-5 rounded-3xl group hover:border-blue-500/30 transition-all shadow-lg">
-                                                    <div className="text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-widest opacity-60">Algorithm</div>
+                                                    <div className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest opacity-60">Algorithm</div>
                                                     <div className="text-sm font-black text-white italic tracking-tighter">{activeDetails.token?.split('.')[0] ? (JSON.parse(atob(activeDetails.token.split('.')[0])).alg || 'Unknown') : 'Unknown'}</div>
                                                 </div>
                                                 <div className="bg-zinc-900/50 border border-white/5 p-5 rounded-3xl group hover:border-blue-500/30 transition-all shadow-lg">
-                                                    <div className="text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-widest opacity-60">Issued At (iat)</div>
+                                                    <div className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest opacity-60">Issued At (iat)</div>
                                                     <div className="space-y-1">
-                                                        <div className="text-xs font-black text-white uppercase italic tracking-tighter">
+                                                        <div className="text-xs font-black text-white italic tracking-tighter">
                                                             {activeDetails.jwt.iat ? new Date(activeDetails.jwt.iat * 1000).toUTCString().replace('GMT', '') : 'N/A'}
                                                             <span className="ml-1 text-[8px] text-blue-500/50">UTC</span>
                                                         </div>
@@ -289,9 +289,9 @@ export const AuthAnalysisMode = () => {
                                                     </div>
                                                 </div>
                                                 <div className="bg-zinc-900/50 border border-white/5 p-5 rounded-3xl group hover:border-blue-500/30 transition-all shadow-lg">
-                                                    <div className="text-[10px] font-black text-zinc-500 uppercase mb-2 tracking-widest opacity-60">Expires (exp)</div>
+                                                    <div className="text-[10px] font-black text-zinc-500 mb-2 tracking-widest opacity-60">Expires (exp)</div>
                                                     <div className="space-y-1">
-                                                        <div className="text-xs font-black text-white uppercase italic tracking-tighter">
+                                                        <div className="text-xs font-black text-white italic tracking-tighter">
                                                             {activeDetails.jwt.exp ? new Date(activeDetails.jwt.exp * 1000).toUTCString().replace('GMT', '') : 'N/A'}
                                                             <span className="ml-1 text-[8px] text-blue-500/50">UTC</span>
                                                         </div>
@@ -306,7 +306,7 @@ export const AuthAnalysisMode = () => {
 
                                     {cookies.length > 0 && (
                                         <div className="space-y-4">
-                                            <h3 className="text-[10px] font-black uppercase text-zinc-600 tracking-widest pl-2 flex items-center gap-2">
+                                            <h3 className="text-[10px] font-black text-zinc-600 tracking-widest pl-2 flex items-center gap-2">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 animate-pulse" />
                                                 Session Cookies ({cookies.length})
                                             </h3>
@@ -325,7 +325,7 @@ export const AuthAnalysisMode = () => {
                                         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                                             <FiShield size={80} className="rotate-12" />
                                         </div>
-                                        <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-3">Auditor Security Advice</h4>
+                                        <h4 className="text-[10px] font-black text-blue-500 tracking-[0.2em] mb-3">Auditor Security Advice</h4>
                                         <p className="text-[11px] text-zinc-500 leading-relaxed italic max-w-2xl">
                                             {activeDetails?.label === 'Refresh Token' ?
                                                 'CRITICAL: Refresh tokens are highly sensitive long-lived credentials. They must be stored in secure HTTP-only cookies or encrypted local storage and require rotation policies to prevent replay attacks.' :
@@ -348,8 +348,8 @@ const Placeholder = ({ text }: { text: string }) => (
             <FiLock size={32} className="group-hover:text-blue-500 transition-colors" />
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-600 rounded-full animate-ping opacity-20"></div>
         </div>
-        <h3 className="text-zinc-400 font-black mb-2 italic tracking-tight uppercase">Auth Inspector Ready</h3>
-        <p className="text-[11px] text-zinc-600 leading-relaxed max-w-[200px] uppercase font-bold tracking-widest">{text}</p>
+        <h3 className="text-zinc-400 font-black mb-2 italic tracking-tight">Auth Inspector Ready</h3>
+        <p className="text-[11px] text-zinc-600 leading-relaxed max-w-[200px] font-bold tracking-widest">{text}</p>
     </div>
 );
 

@@ -30,7 +30,7 @@ export const CookieViewerMode = () => {
   useEffect(() => {
     if (!selected) return;
     setLoading(true);
-    
+
     Promise.all([
       provider.getRequestPairData(String(selected.id)).catch(() => null),
       provider.getResponsePairData(String(selected.id)).catch(() => null)
@@ -74,7 +74,7 @@ export const CookieViewerMode = () => {
       const parts = h.value.split(';');
       const [nameValue, ...attributes] = parts;
       const [name, ...valueParts] = nameValue.split('=');
-      
+
       if (name) {
         const rawValue = valueParts.join('=');
         const cookie: CookieData = {
@@ -106,8 +106,8 @@ export const CookieViewerMode = () => {
   const filteredCookies = useMemo(() => {
     if (!filter) return allCookies;
     const lowFilter = filter.toLowerCase();
-    return allCookies.filter(c => 
-      c.name.toLowerCase().includes(lowFilter) || 
+    return allCookies.filter(c =>
+      c.name.toLowerCase().includes(lowFilter) ||
       c.decodedValue.toLowerCase().includes(lowFilter) ||
       c.domain?.toLowerCase().includes(lowFilter)
     );
@@ -130,9 +130,9 @@ export const CookieViewerMode = () => {
             <FiDatabase className="text-teal-500" size={18} />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Cookie Jar</h2>
+            <h2 className="text-sm font-bold text-white tracking-wider">Cookie Jar</h2>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-tighter">
+              <span className="text-[10px] text-zinc-500 font-bold tracking-tighter">
                 {allCookies.filter(c => c.source === 'request').length} Request • {allCookies.filter(c => c.source === 'response').length} Response
               </span>
             </div>
@@ -142,7 +142,7 @@ export const CookieViewerMode = () => {
         <div className="flex items-center gap-3">
           <div className="relative group">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-teal-500 transition-colors" size={12} />
-            <input 
+            <input
               type="text"
               placeholder="Search cookies..."
               value={filter}
@@ -156,16 +156,16 @@ export const CookieViewerMode = () => {
       {/* Main Container */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 @sm:p-6">
         <div className="max-w-6xl mx-auto space-y-6">
-          
+
           <div className="grid grid-cols-1 gap-4">
             {filteredCookies.map((cookie) => (
               <div key={cookie.id} className="group flex flex-col rounded-xl border border-zinc-800 bg-black/20 hover:bg-zinc-800/30 transition-all duration-300 overflow-hidden shadow-lg">
-                
+
                 {/* Cookie Header */}
                 <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800 bg-zinc-900/40">
                   <div className="flex items-center gap-3">
                     <span className={twMerge(
-                      "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border",
+                      "px-2 py-0.5 rounded text-[9px] font-black tracking-widest border",
                       cookie.source === 'request' ? "bg-blue-600/10 border-blue-500/20 text-blue-400" : "bg-emerald-600/10 border-emerald-500/20 text-emerald-400"
                     )}>
                       {cookie.source}
@@ -177,7 +177,7 @@ export const CookieViewerMode = () => {
                   <div className="flex items-center gap-2">
                     {cookie.httpOnly && <FiLock size={12} className="text-amber-500" title="HttpOnly" />}
                     {cookie.secure && <FiShield size={12} className="text-blue-500" title="Secure" />}
-                    <button 
+                    <button
                       onClick={() => copyToClipboard(cookie.value)}
                       className="p-1 text-zinc-600 hover:text-white transition-colors"
                       title="Copy Raw Value"
@@ -190,7 +190,7 @@ export const CookieViewerMode = () => {
                 {/* Values Section */}
                 <div className="p-5 flex flex-col gap-4">
                   <div>
-                    <span className="text-[9px] uppercase font-black text-zinc-600 tracking-widest block mb-2">Decoded Value</span>
+                    <span className="text-[9px] font-black text-zinc-600 tracking-widest block mb-2">Decoded Value</span>
                     <div className="p-3 bg-black/40 rounded-lg border border-zinc-900 font-mono text-[11px] text-zinc-300 break-all leading-relaxed relative">
                       {(() => {
                         try {
@@ -204,7 +204,7 @@ export const CookieViewerMode = () => {
                           return cookie.decodedValue;
                         }
                       })()}
-                      <button 
+                      <button
                         onClick={() => {
                           try {
                             const parsed = JSON.parse(cookie.decodedValue);
@@ -236,7 +236,7 @@ export const CookieViewerMode = () => {
             {filteredCookies.length === 0 && (
               <div className="py-20 text-center space-y-2">
                 <FiDatabase size={40} className="mx-auto text-zinc-800 mb-4" />
-                <p className="text-zinc-600 font-bold uppercase text-xs tracking-widest">No matching cookies</p>
+                <p className="text-zinc-600 font-bold text-xs tracking-widest">No matching cookies</p>
                 <p className="text-zinc-700 text-[11px] italic">Try searching for key names or content</p>
               </div>
             )}
@@ -245,13 +245,13 @@ export const CookieViewerMode = () => {
       </div>
 
       <div className="px-6 py-3 border-t border-zinc-900 bg-[#0c0e10] flex gap-4 @sm:p-6 shrink-0">
-          <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
-             <span className="w-2 h-2 rounded-full bg-teal-500/40" />
-             Active Cookie Engine
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest border-l border-zinc-800 pl-6">
-             Parsed {filteredCookies.length} entities
-          </div>
+        <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold tracking-widest">
+          <span className="w-2 h-2 rounded-full bg-teal-500/40" />
+          Active Cookie Engine
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold tracking-widest border-l border-zinc-800 pl-6">
+          Parsed {filteredCookies.length} entities
+        </div>
       </div>
     </div>
   );
@@ -259,7 +259,7 @@ export const CookieViewerMode = () => {
 
 const Attr = ({ label, value, icon }: { label: string, value?: string, icon?: any }) => (
   <div className="flex flex-col">
-    <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-tighter flex items-center gap-1">
+    <span className="text-[8px] font-bold text-zinc-600 tracking-tighter flex items-center gap-1">
       {icon} {label}
     </span>
     <span className="text-[10px] font-mono text-zinc-500 mt-0.5 truncate" title={value}>
@@ -271,7 +271,7 @@ const Attr = ({ label, value, icon }: { label: string, value?: string, icon?: an
 const Placeholder = ({ text, icon = null }: { text: string, icon?: React.ReactNode }) => (
   <div className="h-full flex items-center justify-center text-zinc-500 bg-[#0d0f11] p-6 @sm:p-10 text-center">
     <div className="flex flex-col items-center gap-4">
-      {icon || <div className="text-4xl text-teal-950 font-bold opacity-30 tracking-tighter uppercase">Cookie Inspector</div>}
+      {icon || <div className="text-4xl text-teal-950 font-bold opacity-30 tracking-tighter">Cookie Inspector</div>}
       <div className="text-sm max-w-md mx-auto font-medium text-zinc-600">{text}</div>
     </div>
   </div>

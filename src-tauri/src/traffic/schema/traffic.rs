@@ -39,12 +39,20 @@ pub fn create_table(conn: &Connection) -> rusqlite::Result<()> {
     let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_type TEXT", []);
     let _ = conn.execute("ALTER TABLE body ADD COLUMN res_content_encoding TEXT", []);
 
+
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS allow_list (
-            domain TEXT PRIMARY KEY
+        "CREATE TABLE IF NOT EXISTS proxy_rules (
+            id TEXT PRIMARY KEY,
+            enabled INTEGER DEFAULT 1,
+            name TEXT,
+            pattern TEXT,
+            client TEXT,
+            action TEXT
         )",
         [],
     )?;
+
+    let _ = conn.execute("ALTER TABLE proxy_rules ADD COLUMN client TEXT", []);
 
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_uri ON traffic(uri)", [])?;
@@ -242,23 +250,6 @@ pub fn get_filtered_metadata(
     Ok(results)
 }
 
-pub fn get_allow_list(conn: &Connection) -> rusqlite::Result<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT domain FROM allow_list")?;
-    let rows = stmt.query_map([], |row| row.get(0))?;
-    let mut list = Vec::new();
-    for row in rows {
-        list.push(row?);
-    }
-    Ok(list)
-}
-
-pub fn add_to_allow_list(conn: &Connection, domain: String) -> rusqlite::Result<()> {
-    conn.execute(
-        "INSERT OR IGNORE INTO allow_list (domain) VALUES (?1)",
-        params![domain],
-    )?;
-    Ok(())
-}
 
 pub fn get_all_traffic_with_bodies(conn: &Connection) -> rusqlite::Result<Vec<(TrafficMetadata, Option<Vec<u8>>, Option<Vec<u8>>, Option<String>, Option<String>, Option<String>, Option<String>)>> {
     let mut stmt = conn.prepare(

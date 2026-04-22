@@ -59,9 +59,9 @@ export const SOAPViewerMode = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-white tracking-tight uppercase italic">Enterprise SOAP Inspector</h2>
+                        <h2 className="text-sm font-black text-white tracking-tight italic">Enterprise SOAP Inspector</h2>
                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">WSDL Endpoint: </span>
+                            <span className="text-[9px] font-bold text-zinc-500 tracking-widest">WSDL Endpoint: </span>
                             <span className="text-[9px] font-mono text-blue-400/80 font-bold tracking-wider">SOAP 1.1 / 1.2</span>
                         </div>
                     </div>
@@ -79,7 +79,7 @@ export const SOAPViewerMode = () => {
 
             <div className="flex-grow relative bg-[#050505]">
                 <div className="absolute top-4 left-4 z-10">
-                    <span className="text-[9px] font-black text-blue-500/40 bg-black/40 px-2 py-1 rounded border border-blue-500/10 uppercase tracking-[0.2em]">XML Payload</span>
+                    <span className="text-[9px] font-black text-blue-500/40 bg-black/40 px-2 py-1 rounded border border-blue-500/10 tracking-[0.2em]">XML Payload</span>
                 </div>
                 <CodeView data={formattedSOAP} language="xml" />
             </div>
@@ -94,8 +94,8 @@ const Placeholder = ({ text }: { text: string }) => (
                 <div className="absolute inset-0 bg-blue-500/5 blur-2xl rounded-full"></div>
                 <FiShare2 size={40} className="relative z-10" />
             </div>
-            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter uppercase text-blue-500/50">WSDL</div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-2">Service Descriptor Standby</div>
+            <div className="text-5xl font-black opacity-5 mb-3 italic tracking-tighter text-blue-500/50">WSDL</div>
+            <div className="text-[10px] font-bold tracking-widest text-zinc-600 mb-2">Service Descriptor Standby</div>
             <div className="text-xs italic">{text}</div>
         </div>
     </div>

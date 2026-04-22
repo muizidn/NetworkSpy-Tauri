@@ -14,6 +14,8 @@ pub mod settings;
 // pub mod submenu;
 pub mod traffic;
 pub mod mcp;
+pub mod license;
+pub mod handler;
 
 pub use breakpoints::*;
 pub use scripting::*;
@@ -37,11 +39,10 @@ use tauri::{AppHandle, Manager, Emitter};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tokio::sync::RwLock;
 use traffic::db::{TrafficDb, TrafficEvent};
-use traffic::{request_pair::get_request_pair_data, response_pair::get_response_pair_data};
-use traffic::tags::{TagManager, get_tags_from_db, add_tag_to_db, update_tag_in_db, delete_tag_from_db, toggle_tag_in_db, toggle_folder_in_db, move_tag_to_folder, get_tag_folders, add_tag_folder, rename_tag_folder, delete_tag_folder_from_db};
-use traffic::sessions::{SessionManager, get_saved_sessions, get_session_folders, create_session_folder, delete_session_folder, rename_session_folder, move_session_to_folder, delete_saved_session, save_current_capture, save_capture_to_folder, get_session_traffic, import_session_from_har, import_session_to_folder, export_session_data, get_session_request_data, get_session_response_data};
-use traffic::viewers::{ViewerManager, get_custom_viewers, get_viewer_folders, create_viewer_folder, delete_viewer_folder, rename_viewer_folder, move_viewer_to_folder, delete_custom_viewer, save_custom_viewer};
-use traffic::bottom_pane::{BottomPaneManager, get_custom_checkers, save_custom_checker, delete_custom_checker};
+use traffic::tags::TagManager;
+use traffic::sessions::SessionManager;
+use traffic::viewers::ViewerManager;
+use traffic::bottom_pane::BottomPaneManager;
 use std::sync::atomic::Ordering;
 use tokio::sync::mpsc;
 
@@ -188,20 +189,17 @@ fn main() {
             // Start MCP Server for LLM/Claude Code integration
             mcp::spawn_mcp_server(app_handle.clone());
 
-            let mut list = traffic_db.get_allow_list().expect("Failed to get allow list from DB");
-            if list.is_empty() {
-                list = vec![
-                    "google.com".to_string(),
-                    "facebook.com".to_string(),
-                    "openai.com".to_string(),
-                    "anthropic.com".to_string(),
-                ];
-                for domain in &list {
-                     let _ = traffic_db.add_to_allow_list(domain.to_string());
-                }
-            }
-            let allow_list = Arc::new(RwLock::new(list));
-            app_handle.manage(InterceptAllowList(Arc::clone(&allow_list)));
+            let rules = traffic_db.get_proxy_rules().expect("Failed to get proxy rules from DB");
+            let list: Vec<network_spy_proxy::ProxyRule> = rules.into_iter()
+                .filter(|rule| rule.enabled)
+                .map(|rule| network_spy_proxy::ProxyRule {
+                    pattern: rule.pattern,
+                    client: rule.client,
+                    action: rule.action,
+                })
+                .collect();
+            let proxy_intercept_list = Arc::new(RwLock::new(list));
+            app_handle.manage(InterceptAllowList(Arc::clone(&proxy_intercept_list)));
 
             let actual_port = (9090..65535)
                 .find(|port| std::net::TcpListener::bind(("127.0.0.1", *port)).is_ok())
@@ -219,7 +217,7 @@ fn main() {
 
             let app_handle_outer_task = app_handle.clone();
             let traffic_db_outer = Arc::clone(&traffic_db);
-            let allow_list_outer = Arc::clone(&allow_list);
+            let proxy_intercept_list_outer = Arc::clone(&proxy_intercept_list);
             let proxy_settings_outer = Arc::clone(&proxy_settings);
             let tag_manager_outer = Arc::clone(&tag_manager);
             let tray_stats_for_proxy = tray_stats.clone();
@@ -231,7 +229,7 @@ fn main() {
                 loop {
                     let app_handle_inner = app_handle_outer_task.clone();
                     let traffic_db_inner = Arc::clone(&traffic_db_outer);
-                    let allow_list_inner = Arc::clone(&allow_list_outer);
+                    let proxy_intercept_list_inner = Arc::clone(&proxy_intercept_list_outer);
                     let proxy_settings_inner = Arc::clone(&proxy_settings_outer);
                     let tag_manager_inner = Arc::clone(&tag_manager_outer);
                     let tray_stats_deep = tray_stats_for_proxy.clone();
@@ -252,7 +250,7 @@ fn main() {
                     println!("Proxy server listening on port: {}", current_port);
                     
                     let listener_task = tauri::async_runtime::spawn(async move {
-                        proxy.run_proxy(listener, allow_list_inner).await;
+                        proxy.run_proxy(listener, proxy_intercept_list_inner).await;
                     });
 
                     // Wait for a restart signal
@@ -371,6 +369,9 @@ fn main() {
                     "tools-tag" | "tools_tag" => {
                         let _ = open_new_window_internal(&app_handle_menu, "tag".to_string(), "Tag Tools".to_string());
                     }
+                    "proxylist" => {
+                        let _ = open_new_window_internal(&app_handle_menu, "proxylist".to_string(), "Proxy Intercept Rules".to_string());
+                    }
                     "breakpoints" => {
                         let _ = open_new_window_internal(&app_handle_menu, "breakpoint".to_string(), "Traffic Breakpoints".to_string());
                     }
@@ -429,84 +430,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
-            commands::greet,
-            commands::turn_on_proxy,
-            commands::turn_off_proxy,
-            commands::install_certificate,
-            commands::auto_install_certificate,
-            commands::uninstall_certificate,
-            commands::open_new_window,
-            get_request_pair_data,
-            get_response_pair_data,
-            commands::update_intercept_allow_list,
-            commands::get_recent_traffic,
-            commands::get_all_metadata,
-            commands::get_proxy_settings,
-            commands::update_proxy_settings,
-            commands::save_session,
-            commands::load_session,
-            commands::get_filter_presets,
-            commands::add_filter_preset,
-            commands::update_filter_preset,
-            commands::delete_filter_preset,
-            commands::export_selected_to_har,
-            commands::export_selected_to_csv,
-            commands::export_selected_to_sqlite,
-            commands::change_proxy_port,
-            get_tags_from_db,
-            add_tag_to_db,
-            update_tag_in_db,
-            delete_tag_from_db,
-            toggle_tag_in_db,
-            toggle_folder_in_db,
-            move_tag_to_folder,
-            get_tag_folders,
-            add_tag_folder,
-            rename_tag_folder,
-            delete_tag_folder_from_db,
-            get_saved_sessions,
-            get_session_folders,
-            create_session_folder,
-            delete_session_folder,
-            rename_session_folder,
-            move_session_to_folder,
-            delete_saved_session,
-            save_current_capture,
-            save_capture_to_folder,
-            get_session_traffic,
-            import_session_from_har,
-            import_session_to_folder,
-            export_session_data,
-            get_session_request_data,
-            get_session_response_data,
-            get_custom_viewers,
-            get_viewer_folders,
-            create_viewer_folder,
-            delete_viewer_folder,
-            rename_viewer_folder,
-            move_viewer_to_folder,
-            delete_custom_viewer,
-            save_custom_viewer,
-            get_custom_checkers,
-            save_custom_checker,
-            delete_custom_checker,
-            commands::set_breakpoint_enabled,
-            commands::get_breakpoint_enabled,
-            commands::resume_breakpoint,
-            commands::get_paused_breakpoints,
-            commands::get_breakpoints,
-            commands::save_breakpoint,
-            commands::delete_breakpoint,
-            commands::get_paused_data,
-            commands::get_app_data_dir,
-            commands::get_scripts,
-            commands::save_script,
-            commands::delete_script,
-            commands::get_script_enabled,
-            commands::set_script_enabled,
-            commands::validate_filter_preset_command,
-        ])
+        .invoke_handler(generate_handler!())
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|_app_handle, event| match event {

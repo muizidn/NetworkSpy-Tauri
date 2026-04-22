@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FiGrid, FiSearch, FiDownload, FiInfo, FiCreditCard, FiShoppingCart, FiCpu, FiPlay, FiX, FiCheck, FiChevronRight, FiTrendingUp, FiLock, FiTerminal } from 'react-icons/fi';
+import { FiGrid, FiSearch, FiDownload, FiInfo, FiCreditCard, FiShoppingCart, FiCpu, FiPlay, FiX, FiCheck, FiChevronRight, FiTrendingUp, FiLock, FiTerminal, FiEye, FiZap } from 'react-icons/fi';
 import { Dialog } from '../packages/ui/Dialog';
 import { createPortal } from 'react-dom';
+import { useSettingsContext } from '../context/SettingsProvider';
 
 interface Extension {
     id: string;
@@ -20,6 +21,74 @@ export default function ExtensionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedExtension, setSelectedExtension] = useState<Extension | null>(null);
   const [isIncomingDialogOpen, setIsIncomingDialogOpen] = useState(false);
+  const { plan, isVerified } = useSettingsContext();
+
+  const isPro = isVerified && plan?.toLowerCase() === "pro";
+
+  if (!isPro) {
+    return (
+        <div className="flex flex-col h-full bg-[#050505] items-center justify-center p-12 overflow-y-auto">
+            <div className="max-w-xl w-full">
+                <div className="text-center mb-12">
+                    <div className="w-20 h-20 bg-blue-600/10 border border-blue-500/20 rounded-[2rem] flex items-center justify-center text-blue-500 mx-auto mb-8 shadow-[0_0_50px_rgba(37,99,235,0.1)]">
+                        <FiGrid size={40} />
+                    </div>
+                    <h1 className="text-4xl font-black text-white tracking-tight mb-4 uppercase">Extension Marketplace</h1>
+                    <p className="text-zinc-500 leading-relaxed">
+                        Supercharge your debugging workflow with specialized protocol analyzers, security scanners, and custom data visualizers.
+                    </p>
+                </div>
+
+                <div className="bg-[#0a0a0a] border border-zinc-800 rounded-[2.5rem] p-10 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity duration-700 pointer-events-none">
+                        <FiZap size={200} />
+                    </div>
+
+                    <div className="relative z-10">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest mb-8">
+                            <FiLock size={10} className="mr-1" />
+                            Pro Feature
+                        </div>
+
+                        <h2 className="text-2xl font-black text-white mb-8">Unlock the Full Ecosystem</h2>
+
+                        <div className="space-y-6 mb-12">
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-blue-500 shrink-0">
+                                    <FiZap size={18} />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-white mb-1">Advanced Protocol Support</h4>
+                                    <p className="text-xs text-zinc-500 leading-relaxed">Deep inspection for gRPC, MQTT, GraphQL, and proprietary enterprise protocols.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-purple-500 shrink-0">
+                                    <FiLock size={18} />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-white mb-1">Security Analyzers</h4>
+                                    <p className="text-xs text-zinc-500 leading-relaxed">Automated PCI compliance checking, sensitive data masking, and auth-flow validation.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => window.open('https://networkspy.pro/pricing', '_blank')}
+                            className="w-full py-4 rounded-2xl bg-white text-black font-black text-sm uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all duration-300 shadow-xl hover:shadow-blue-500/30 flex items-center justify-center gap-3"
+                        >
+                            Upgrade to Pro
+                        </button>
+                    </div>
+                </div>
+
+                <p className="text-center text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mt-10">
+                    Available on the NetworkSpy Professional Plan
+                </p>
+            </div>
+        </div>
+    );
+  }
 
   const extensions: Extension[] = [
     {

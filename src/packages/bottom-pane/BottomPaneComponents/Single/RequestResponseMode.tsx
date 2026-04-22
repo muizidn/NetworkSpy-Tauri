@@ -72,7 +72,7 @@ export const RequestResponseMode = ({
                 <div className="flex items-center gap-4 text-[10px] overflow-hidden">
                   {/* Request Metadata */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-[9px] text-zinc-600 font-black uppercase tracking-tighter">REQ</span>
+                    <span className="text-[9px] text-zinc-600 font-black tracking-tighter">REQ</span>
                     <span className="text-zinc-400 font-mono">{reqLen || '0'} B</span>
                     <span className="text-zinc-500 opacity-70 italic truncate max-w-[100px]">{reqType}</span>
                     {origin && <span className="text-blue-500/50 font-mono truncate max-w-[150px]" title={origin}>({origin})</span>}
@@ -81,7 +81,7 @@ export const RequestResponseMode = ({
                   {/* Response Metadata */}
                   {traffic.response && (
                     <div className="flex items-center gap-1.5 shrink-0 border-l border-zinc-800/50 pl-4">
-                      <span className="text-[9px] text-zinc-600 font-black uppercase tracking-tighter">RES</span>
+                      <span className="text-[9px] text-zinc-600 font-black tracking-tighter">RES</span>
                       <span className="text-zinc-400 font-mono">{resLen || '0'} B</span>
                       <span className="text-zinc-500 opacity-70 italic truncate max-w-[100px]">{resType}</span>
                       {server && <span className="text-purple-500/50 font-mono truncate max-w-[150px]" title={server}>({server})</span>}
@@ -90,7 +90,7 @@ export const RequestResponseMode = ({
                 </div>
               </>
             ) : (
-              <span className="text-[10px] text-zinc-600 font-black uppercase tracking-widest">Inspection</span>
+              <span className="text-[10px] text-zinc-600 font-black tracking-widest">Inspection</span>
             )}
           </div>
 
@@ -98,7 +98,7 @@ export const RequestResponseMode = ({
             <button
               onClick={() => setViewMode("request")}
               className={twMerge(
-                "px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
+                "px-2 py-1 rounded text-[9px] font-black tracking-tighter transition-all duration-300",
                 viewMode === "request"
                   ? "bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.2)]"
                   : "text-zinc-600 hover:text-zinc-400"
@@ -109,7 +109,7 @@ export const RequestResponseMode = ({
             <button
               onClick={() => setViewMode("both")}
               className={twMerge(
-                "px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
+                "px-2 py-1 rounded text-[9px] font-black tracking-tighter transition-all duration-300",
                 viewMode === "both"
                   ? "bg-zinc-700 text-white"
                   : "text-zinc-600 hover:text-zinc-400"
@@ -120,7 +120,7 @@ export const RequestResponseMode = ({
             <button
               onClick={() => setViewMode("response")}
               className={twMerge(
-                "px-2 py-1 rounded text-[9px] font-black uppercase tracking-tighter transition-all duration-300",
+                "px-2 py-1 rounded text-[9px] font-black tracking-tighter transition-all duration-300",
                 viewMode === "response"
                   ? "bg-green-600 text-white shadow-[0_0_10px_rgba(22,163,74,0.2)]"
                   : "text-zinc-600 hover:text-zinc-400"

@@ -16,13 +16,13 @@ const formatTimestamp = (date: Date) => {
 };
 
 export interface CustomChecker {
-    id: string;
-    name: string;
-    description: string;
-    script: string;
-    enabled: boolean;
-    category: string;
-    createdAt?: string;
+  id: string;
+  name: string;
+  description: string;
+  script: string;
+  enabled: boolean;
+  category: string;
+  createdAt?: string;
 }
 
 export interface BreakpointHit {
@@ -106,7 +106,7 @@ export class TauriAppProvider implements IAppProvider {
   }
 
   async updateInterceptAllowList(newList: string[]): Promise<void> {
-    return tauriInvoke("update_intercept_allow_list", { newList });
+    return tauriInvoke("update_intercept_proxy_intercept_list", { newList });
   }
 
   async message(messageText: string, options?: { title?: string, type?: 'info' | 'error' | 'warning' }): Promise<void> {

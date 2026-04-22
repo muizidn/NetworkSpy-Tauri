@@ -45,7 +45,7 @@ const HEADER_DB: Record<string, HeaderExplanation> = {
 const CustomHeaderIcon = () => (
   <div className="flex items-center gap-1 text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded border border-purple-500/20">
     <FiLock size={10} />
-    <span className="font-black uppercase tracking-widest">Custom Header</span>
+    <span className="font-black tracking-widest">Custom Header</span>
   </div>
 );
 
@@ -60,15 +60,15 @@ const FindingCard = ({ finding }: { finding: HeaderFinding & { isCustom?: boolea
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <span className={twMerge(
-            "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded",
+            "text-[10px] font-black tracking-widest px-2 py-0.5 rounded",
             finding.isError ? "bg-red-500 text-white" : "bg-blue-600 text-white"
           )}>
             {finding.type}
           </span>
-          <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-1">Protocol Finding</span>
+          <span className="text-[10px] font-black text-zinc-500 tracking-widest pl-1">Protocol Finding</span>
         </div>
         <div className={twMerge(
-          "text-[8px] font-black px-2 py-0.5 rounded-full border uppercase tracking-tighter shadow-sm",
+          "text-[8px] font-black px-2 py-0.5 rounded-full border tracking-tighter shadow-sm",
           finding.isError
             ? "bg-red-600 text-white border-red-500"
             : "bg-blue-950 text-blue-400 border-blue-900/30"
@@ -88,13 +88,13 @@ const FindingCard = ({ finding }: { finding: HeaderFinding & { isCustom?: boolea
 
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
-          <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+          <div className="text-[8px] font-black text-zinc-600 tracking-widest mb-1 flex items-center gap-1">
             {finding.isError ? <FiAlertTriangle size={8} /> : <FiInfo size={8} />} {finding.isError ? "Cause" : "Info"}
           </div>
           <div className="text-[10px] text-zinc-400 italic font-medium leading-tight">{finding.risk}</div>
         </div>
         <div className="bg-black/20 p-2.5 rounded-xl border border-white/5">
-          <div className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1 flex items-center gap-1">
+          <div className="text-[8px] font-black text-zinc-600 tracking-widest mb-1 flex items-center gap-1">
             {finding.isError ? <FiEdit2 size={8} /> : <FiCheckCircle size={8} />} {finding.isError ? "Fix" : "Result"}
           </div>
           <div className="text-[10px] text-zinc-400 italic font-medium leading-tight">{finding.solution}</div>
@@ -135,8 +135,8 @@ export const HeaderExplainerMode = () => {
 
   const headers = useMemo(() => {
     const list = activeTab === "Request" ? (reqData?.headers || []) : (resData?.headers || []);
-    const filtered = list.filter(h => 
-      h.key.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const filtered = list.filter(h =>
+      h.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
       h.value.toLowerCase().includes(searchQuery.toLowerCase())
     );
     return filtered.map(h => {
@@ -179,25 +179,25 @@ export const HeaderExplainerMode = () => {
               <FiInfo size={18} />
             </div>
             <div>
-              <h2 className="text-sm font-black text-white uppercase tracking-tighter">Header Explainer</h2>
-              <div className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest italic leading-none">Intelligence Layer</div>
+              <h2 className="text-sm font-black text-white tracking-tighter">Header Explainer</h2>
+              <div className="text-[9px] text-zinc-500 font-bold tracking-widest italic leading-none">Intelligence Layer</div>
             </div>
           </div>
 
           {activeTab !== "Custom Scripts" && (
             <div className="flex items-center gap-2 bg-black/40 border border-zinc-800 rounded-lg px-3 py-1.5 focus-within:border-blue-500/50 transition-all">
               <FiInfo size={12} className="text-zinc-600" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder={`Search ${activeTab.toLowerCase()} headers...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-transparent border-none outline-none text-[10px] text-zinc-300 placeholder:text-zinc-600 w-32 @sm:w-48 font-medium"
               />
               {searchQuery && (
-                <button 
+                <button
                   onClick={() => setSearchQuery("")}
-                  className="text-[10px] text-zinc-600 hover:text-zinc-400 font-black uppercase tracking-widest"
+                  className="text-[10px] text-zinc-600 hover:text-zinc-400 font-black tracking-widest"
                 >
                   Clear
                 </button>
@@ -212,7 +212,7 @@ export const HeaderExplainerMode = () => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={twMerge(
-                "pb-3 text-[11px] font-black uppercase tracking-widest transition-all relative",
+                "pb-3 text-[11px] font-black tracking-widest transition-all relative",
                 activeTab === tab ? tab === "Custom Scripts" ? "text-orange-500" : "text-blue-500" : "text-zinc-600 hover:text-zinc-400"
               )}
             >
@@ -237,16 +237,16 @@ export const HeaderExplainerMode = () => {
           <>
             {customFindings.length > 0 && (
               <div className="mb-8">
-                <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4 pl-1 flex items-center gap-2">
+                <div className="text-[10px] font-black text-blue-500 tracking-widest mb-4 pl-1 flex items-center gap-2">
                   <FiShield size={12} /> Custom Header Insights
                 </div>
                 {customFindings.map((finding, i) => <FindingCard key={i} finding={finding} />)}
               </div>
             )}
 
-            <div className="text-[10px] font-black text-zinc-600 uppercase tracking-widest pl-1 mb-4 flex items-center justify-between">
+            <div className="text-[10px] font-black text-zinc-600 tracking-widest pl-1 mb-4 flex items-center justify-between">
               <span>Protocol Explanations ({headers.length})</span>
-              {isRunning && <span className="text-blue-500 animate-pulse uppercase">Scanning...</span>}
+              {isRunning && <span className="text-blue-500 animate-pulse">Scanning...</span>}
             </div>
 
             {headers.length === 0 && (
@@ -270,7 +270,7 @@ export const HeaderExplainerMode = () => {
                   {header.explanation && (
                     <div className="flex items-center gap-2 px-2 py-1 bg-zinc-800 rounded-lg shrink-0">
                       {header.explanation.icon}
-                      <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{header.explanation.category}</span>
+                      <span className="text-[9px] font-black text-zinc-400 tracking-widest">{header.explanation.category}</span>
                     </div>
                   )}
                 </div>
@@ -281,7 +281,7 @@ export const HeaderExplainerMode = () => {
 
                 {header.explanation && (
                   <div className="flex flex-col gap-1.5 border-l-2 border-zinc-800 pl-3">
-                    <div className="text-[10px] font-black text-blue-400/80 uppercase tracking-wider">{header.explanation.title}</div>
+                    <div className="text-[10px] font-black text-blue-400/80 tracking-wider">{header.explanation.title}</div>
                     <p className="text-xs text-zinc-500 leading-relaxed italic">
                       {header.explanation.description}
                     </p>
@@ -291,15 +291,15 @@ export const HeaderExplainerMode = () => {
                 {header.cookieAnalysis && (
                   <div className="mt-4 pt-4 border-t border-zinc-800/50 grid grid-cols-1 @sm:grid-cols-3 gap-3">
                     <div className={twMerge("p-2 rounded-lg text-center border", header.cookieAnalysis.isHttpOnly ? "bg-green-600/10 border-green-500/20 text-green-500" : "bg-red-600/10 border-red-500/20 text-red-500")}>
-                      <div className="text-[8px] font-black uppercase mb-1 opacity-60">HttpOnly</div>
+                      <div className="text-[8px] font-black mb-1 opacity-60">HttpOnly</div>
                       <div className="text-[10px] font-bold">{header.cookieAnalysis.isHttpOnly ? "SECURE" : "INSECURE"}</div>
                     </div>
                     <div className={twMerge("p-2 rounded-lg text-center border", header.cookieAnalysis.isSecure ? "bg-green-600/10 border-green-500/20 text-green-500" : "bg-red-600/10 border-red-500/20 text-red-500")}>
-                      <div className="text-[8px] font-black uppercase mb-1 opacity-60">Secure</div>
+                      <div className="text-[8px] font-black mb-1 opacity-60">Secure</div>
                       <div className="text-[10px] font-bold">{header.cookieAnalysis.isSecure ? "ENABLED" : "MISSING"}</div>
                     </div>
                     <div className="p-2 bg-zinc-800/50 rounded-lg text-center border border-zinc-700/50">
-                      <div className="text-[8px] font-black text-zinc-500 uppercase mb-1">SameSite</div>
+                      <div className="text-[8px] font-black text-zinc-500 mb-1">SameSite</div>
                       <div className="text-[10px] font-bold text-zinc-300">{header.cookieAnalysis.sameSite}</div>
                     </div>
                   </div>

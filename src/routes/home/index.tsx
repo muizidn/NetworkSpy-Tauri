@@ -16,6 +16,8 @@ import { RightSidebar } from "@src/packages/sidebar/RightSidebar";
 import { NSTabs } from "@src/packages/ui/NSTabs";
 import { WelcomeDialog } from "@src/packages/ui/WelcomeDialog";
 import { CenterPane } from "./CenterPane";
+import { useLicense } from "@src/hooks/useLicense";
+import { useUpgradeDialog } from "@src/context/UpgradeContext";
 
 const Content = () => {
   const paneSizeConfig = {
@@ -40,6 +42,8 @@ const Content = () => {
   const { isDisplayPane, setIsDisplayPane } = usePaneContext();
   const { provider, isRun, setIsRun, clearData } = useAppProvider();
   const { isReviewMode } = useSessionContext();
+  const { getLimit } = useLicense();
+  const { openUpgradeDialog } = useUpgradeDialog();
 
   const [showWelcomeCert, setShowWelcomeCert] = useState(false);
 
@@ -122,7 +126,13 @@ const Content = () => {
   //   }
   // }, [isReviewMode, provider, setTrafficList, setTrafficSet]);
 
-  const handleAddTab = () => {
+  const handleAddTab = async () => {
+    const limit = await getLimit('max_tabs');
+    if (tabs.length >= limit) {
+      openUpgradeDialog();
+      return;
+    }
+    
     const newId = `tab-${Date.now()}`;
     const newTab = {
       id: newId,

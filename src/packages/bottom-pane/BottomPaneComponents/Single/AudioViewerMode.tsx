@@ -32,7 +32,7 @@ export const AudioViewerMode = () => {
                 </div>
 
                 <h3 className="text-sm font-bold text-white mb-1">Audio Stream Detected</h3>
-                <p className="text-[10px] text-zinc-500 mb-8 uppercase tracking-widest">{data?.content_type || 'Unknown Format'}</p>
+                <p className="text-[10px] text-zinc-500 mb-8 tracking-widest">{data?.content_type || 'Unknown Format'}</p>
 
                 {isAudio ? (
                     <div className="w-full flex flex-col gap-4">

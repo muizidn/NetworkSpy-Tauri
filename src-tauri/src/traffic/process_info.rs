@@ -12,7 +12,7 @@ pub fn get_client_info(client_addr: &str) -> String {
     // client_addr is usually "127.0.0.1:12345"
     let port = client_addr.split(':').last().unwrap_or("");
     if port.is_empty() {
-        return serde_json::json!({ "name": "Unknown", "icon": null }).to_string();
+        return serde_json::json!({ "name": "-", "icon": null }).to_string();
     }
 
     // Check cache first
@@ -42,7 +42,7 @@ pub fn get_client_info(client_addr: &str) -> String {
     }).to_string();
 
     // Cache it if found
-    if name != "Unknown" {
+    if name != "-" {
         let mut cache = PROCESS_CACHE.lock().unwrap();
         cache.insert(port.to_string(), info.clone());
     }
@@ -198,5 +198,5 @@ fn find_process_by_port(port: &str) -> (String, Option<String>) {
         }
     }
 
-    ("Unknown".to_string(), None)
+    ("-".to_string(), None)
 }

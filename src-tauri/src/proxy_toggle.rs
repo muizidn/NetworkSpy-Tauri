@@ -43,26 +43,22 @@ impl ProxyToggle {
 
     #[cfg(target_os = "macos")]
     fn turn_on_macos(&self, port: u64) {
-        /*
-         * To ensure all network connections (Wi-Fi, Ethernet/LAN, etc.) are proxied,
-         * we list all available network services and apply the settings to each.
-         */
         let services = self.get_macos_services();
+        let port_s = port.to_string();
         for service in services {
-            let _ = self.shell("/usr/sbin/networksetup", &["-setwebproxy", &service, "127.0.0.1", &port.to_string()]);
-            let _ = self.shell("/usr/sbin/networksetup", &["-setsecurewebproxy", &service, "127.0.0.1", &port.to_string()]);
+            self.shell("/usr/sbin/networksetup", &["-setwebproxy", &service, "127.0.0.1", &port_s]);
+            self.shell("/usr/sbin/networksetup", &["-setsecurewebproxy", &service, "127.0.0.1", &port_s]);
+            self.shell("/usr/sbin/networksetup", &["-setwebproxystate", &service, "on"]);
+            self.shell("/usr/sbin/networksetup", &["-setsecurewebproxystate", &service, "on"]);
         }
     }
 
     #[cfg(target_os = "macos")]
     fn turn_off_macos(&self) {
-        /*
-         * Iterate through all network services to disable the proxy state.
-         */
         let services = self.get_macos_services();
         for service in services {
-            let _ = self.shell("/usr/sbin/networksetup", &["-setwebproxystate", &service, "off"]);
-            let _ = self.shell("/usr/sbin/networksetup", &["-setsecurewebproxystate", &service, "off"]);
+            self.shell("/usr/sbin/networksetup", &["-setwebproxystate", &service, "off"]);
+            self.shell("/usr/sbin/networksetup", &["-setsecurewebproxystate", &service, "off"]);
         }
     }
 
@@ -78,7 +74,6 @@ impl ProxyToggle {
                 stdout.lines()
                     .filter(|line| {
                         let l = line.trim();
-                        // Skip the explanation line and disabled services (marked with *)
                         !l.is_empty() && 
                         !l.contains("denotes") && 
                         !l.starts_with('*')
@@ -86,50 +81,49 @@ impl ProxyToggle {
                     .map(|l| l.trim().to_string())
                     .collect()
             },
-            Err(_) => vec!["Wi-Fi".to_string()] // Fallback to Wi-Fi if command fails
+            Err(_) => vec!["Wi-Fi".to_string(), "Ethernet".to_string(), "Thunderbolt Bridge".to_string()]
         }
     }
 
     #[cfg(target_os = "linux")]
     fn turn_on_linux(&self, port: u64) {
-        assert!(self.shell("gsettings", &["set", "org.gnome.system.proxy", "mode", "manual"]));
-        assert!(self.shell("gsettings", &["set", "org.gnome.system.proxy.http", "host", "127.0.0.1"]));
-        assert!(self.shell("gsettings", &["set", "org.gnome.system.proxy.http", "port", &port.to_string()]));
-        assert!(self.shell("gsettings", &["set", "org.gnome.system.proxy.https", "host", "127.0.0.1"]));
-        assert!(self.shell("gsettings", &["set", "org.gnome.system.proxy.https", "port", &port.to_string()]));
+        let port_s = port.to_string();
+        // GNOME
+        self.shell("gsettings", &["set", "org.gnome.system.proxy", "mode", "manual"]);
+        self.shell("gsettings", &["set", "org.gnome.system.proxy.http", "host", "127.0.0.1"]);
+        self.shell("gsettings", &["set", "org.gnome.system.proxy.http", "port", &port_s]);
+        self.shell("gsettings", &["set", "org.gnome.system.proxy.https", "host", "127.0.0.1"]);
+        self.shell("gsettings", &["set", "org.gnome.system.proxy.https", "port", &port_s]);
+        
+        // KDE (Kioslaverc)
+        self.shell("kwriteconfig5", &["--file", "kioslaverc", "--group", "Proxy Settings", "--key", "ProxyType", "1"]);
+        self.shell("kwriteconfig5", &["--file", "kioslaverc", "--group", "Proxy Settings", "--key", "httpProxy", &format!("http://127.0.0.1:{}", port_s)]);
+        self.shell("kwriteconfig5", &["--file", "kioslaverc", "--group", "Proxy Settings", "--key", "httpsProxy", &format!("http://127.0.0.1:{}", port_s)]);
     }
 
     #[cfg(target_os = "linux")]
     fn turn_off_linux(&self) {
-        assert!(self.shell("gsettings", &["set", "org.gnome.system.proxy", "mode", "none"]));
+        // GNOME
+        self.shell("gsettings", &["set", "org.gnome.system.proxy", "mode", "none"]);
+        
+        // KDE
+        self.shell("kwriteconfig5", &["--file", "kioslaverc", "--group", "Proxy Settings", "--key", "ProxyType", "0"]);
     }
 
     #[cfg(target_os = "windows")]
     fn turn_on_windows(&self, port: u64) {
         let proxy = format!("127.0.0.1:{}", port);
-
-        // Update WinINET proxy (registry)
         self.shell("reg", &["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "1", "/f"]);
         self.shell("reg", &["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", &proxy, "/f"]);
-
-        // Notify system
         refresh_proxy();
-
-        // Optional: WinHTTP
-        self.shell("netsh", &["winhttp", "set", "proxy", &proxy]);
     }
-
 
     #[cfg(target_os = "windows")]
     fn turn_off_windows(&self) {
-        // Disable proxy
         self.shell("reg", &["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "0", "/f"]);
-
-        // Notify system
+        // It's cleaner to also clear the server string
+        self.shell("reg", &["add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", "", "/f"]);
         refresh_proxy();
-
-        // Optional: WinHTTP
-        self.shell("netsh", &["winhttp", "reset", "proxy"]);
     }
 
     fn shell(&self, launch_path: &str, args: &[&str]) -> bool {
@@ -139,19 +133,22 @@ impl ProxyToggle {
         #[cfg(target_os = "windows")]
         {
             use std::os::windows::process::CommandExt;
-            cmd.creation_flags(0x08000000);
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
         }
 
-        let status = cmd.status().expect("failed to execute process");
-        status.success()
+        match cmd.status() {
+            Ok(status) => status.success(),
+            Err(e) => {
+                eprintln!("Failed to execute {}: {}", launch_path, e);
+                false
+            }
+        }
     }
 }
 
- // Call this after registry changes
 #[cfg(target_os = "windows")]
 fn refresh_proxy() {
     use windows::Win32::Networking::WinInet::{InternetSetOptionW, INTERNET_OPTION_SETTINGS_CHANGED, INTERNET_OPTION_REFRESH};
-
     unsafe {
         InternetSetOptionW(None, INTERNET_OPTION_SETTINGS_CHANGED, None, 0);
         InternetSetOptionW(None, INTERNET_OPTION_REFRESH, None, 0);

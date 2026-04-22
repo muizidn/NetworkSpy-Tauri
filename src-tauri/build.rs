@@ -9,6 +9,7 @@ fn main() {
     "SENTRY_DSN",
     "SENTRY_AUTH_TOKEN",
     "VITE_SENTRY_DSN",
+    "API_BASE_URL",
   ].iter().cloned().collect();
 
   // Check if .env file exists in the root of the project

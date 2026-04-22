@@ -42,7 +42,7 @@ describe('API Contract Validation', () => {
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-white tracking-tight">AI Test Generator</h2>
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Automatic Test Script & Assertion Synthesis</p>
+                        <p className="text-[10px] text-zinc-500 font-bold tracking-widest">Automatic Test Script & Assertion Synthesis</p>
                     </div>
                 </div>
 
@@ -62,10 +62,10 @@ describe('API Contract Validation', () => {
                 ) : (
                     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-2 animate-in slide-in-from-bottom-4 duration-300 overflow-hidden">
                         <div className="flex justify-between items-center px-4 py-3 bg-zinc-800/40 border-b border-zinc-800">
-                            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Postman / Vitest Script</span>
+                            <span className="text-[10px] font-black text-emerald-500 tracking-widest">Postman / Vitest Script</span>
                             <div className="flex gap-4">
-                                <button onClick={() => navigator.clipboard.writeText(tests)} className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold">Copy</button>
-                                <button onClick={() => setTests(null)} className="text-[10px] text-zinc-600 hover:text-white uppercase font-bold">New</button>
+                                <button onClick={() => navigator.clipboard.writeText(tests)} className="text-[10px] text-zinc-500 hover:text-white font-bold">Copy</button>
+                                <button onClick={() => setTests(null)} className="text-[10px] text-zinc-600 hover:text-white font-bold">New</button>
                             </div>
                         </div>
                         <div className="p-4 overflow-auto max-h-[400px]">

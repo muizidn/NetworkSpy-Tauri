@@ -157,7 +157,7 @@ export const GraphQLMode = () => {
                 </div>
               )}
             </div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">
+            <div className="text-[10px] text-zinc-500 tracking-widest font-black">
               {isBatched ? `BATCHED (${gqlItems.length} OPERATIONS)` : `GRAPHQL ${activeData.type}`}
             </div>
           </div>
@@ -232,7 +232,7 @@ export const GraphQLMode = () => {
             <button
               onClick={() => setActiveTab("query")}
               className={twMerge(
-                "flex-1 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all",
+                "flex-1 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 transition-all",
                 activeTab === "query" ? "text-pink-500 bg-pink-500/5 border-b-2 border-pink-500" : "text-zinc-500"
               )}
             >
@@ -242,7 +242,7 @@ export const GraphQLMode = () => {
             <button
               onClick={() => setActiveTab("variables")}
               className={twMerge(
-                "flex-1 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all",
+                "flex-1 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 transition-all",
                 activeTab === "variables" ? "text-blue-500 bg-blue-500/5 border-b-2 border-blue-500" : "text-zinc-500"
               )}
             >
@@ -252,7 +252,7 @@ export const GraphQLMode = () => {
             <button
               onClick={() => setActiveTab("response")}
               className={twMerge(
-                "flex-1 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all",
+                "flex-1 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 transition-all",
                 activeTab === "response" ? "text-emerald-500 bg-emerald-500/5 border-b-2 border-emerald-500" : "text-zinc-500"
               )}
             >
@@ -263,7 +263,7 @@ export const GraphQLMode = () => {
               <button
                 onClick={() => setActiveTab("extensions" as any)}
                 className={twMerge(
-                  "flex-1 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all",
+                  "flex-1 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 transition-all",
                   (activeTab as any) === "extensions" ? "text-amber-500 bg-amber-500/5 border-b-2 border-amber-500" : "text-zinc-500"
                 )}
               >
@@ -284,12 +284,12 @@ export const GraphQLMode = () => {
             )}>
               <div className="flex items-center gap-2">
                 <FiCode className="text-pink-500" size={14} />
-                <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">
+                <span className="text-[10px] font-bold text-zinc-500 tracking-wider">
                   {activeData.isPersisted ? "Persisted Query ID" : "Query Definition"}
                 </span>
               </div>
               {activeData.isPersisted && (
-                <div className="text-[8px] font-black text-pink-400 uppercase bg-pink-400/10 px-2 py-0.5 rounded border border-pink-400/20">
+                <div className="text-[8px] font-black text-pink-400 bg-pink-400/10 px-2 py-0.5 rounded border border-pink-400/20">
                   Minimized
                 </div>
               )}
@@ -333,7 +333,7 @@ export const GraphQLMode = () => {
                   layoutMode === 'grid' && "@5xl:flex"
                 )}>
                   <FiLayers className="text-blue-500" size={14} />
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Variables</span>
+                  <span className="text-[10px] font-bold text-zinc-500 tracking-wider">Variables</span>
                 </div>
                 <div className="flex-grow bg-black/30">
                   <MonacoEditor
@@ -367,7 +367,7 @@ export const GraphQLMode = () => {
                     layoutMode === 'grid' && "@5xl:flex"
                   )}>
                     <FiActivity className="text-amber-500" size={14} />
-                    <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Extensions</span>
+                    <span className="text-[10px] font-bold text-zinc-500 tracking-wider">Extensions</span>
                   </div>
                   <div className="flex-grow bg-black/30">
                     <MonacoEditor
@@ -401,7 +401,7 @@ export const GraphQLMode = () => {
                   layoutMode === 'grid' && "@5xl:flex"
                 )}>
                   <FiTerminal className="text-emerald-500" size={14} />
-                  <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Response Payload</span>
+                  <span className="text-[10px] font-bold text-zinc-500 tracking-wider">Response Payload</span>
                 </div>
                 <div className="flex-grow">
                   <MonacoEditor
@@ -432,7 +432,7 @@ export const GraphQLMode = () => {
           showSidebar ? "translate-x-0" : "translate-x-full @5xl:hidden @5xl:w-0"
         )}>
           <div className="p-4 border-b border-zinc-800 bg-black/20 shrink-0">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block mb-4">Inspection</span>
+            <span className="text-[10px] font-black tracking-[0.2em] text-zinc-600 block mb-4">Inspection</span>
 
             <div className="space-y-4">
               <SidebarItem
@@ -448,7 +448,7 @@ export const GraphQLMode = () => {
           </div>
 
           <div className="p-5 flex-grow overflow-y-auto no-scrollbar pb-20">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block mb-4">Complexity</span>
+            <span className="text-[10px] font-black tracking-[0.2em] text-zinc-600 block mb-4">Complexity</span>
             <div className="space-y-4">
               <ProgressField label="Fragments" percentage={Math.min(100, activeData.fragmentsCount * 25)} color="bg-pink-500" />
               <ProgressField label="Variables" percentage={activeData.variables !== "{}" ? 100 : 0} color="bg-blue-500" />
@@ -456,7 +456,7 @@ export const GraphQLMode = () => {
             </div>
 
             <div className="mt-8 p-3 rounded bg-zinc-900/50 border border-zinc-800/50">
-              <div className="text-[9px] font-bold text-zinc-500 uppercase mb-2">Structure Details</div>
+              <div className="text-[9px] font-bold text-zinc-500 mb-2">Structure Details</div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-[10px] text-zinc-400">Fragments: <span className="text-white">{activeData.fragmentsCount}</span></div>
                 <div className="text-[10px] text-zinc-400">Directives: <span className="text-white">{activeData.directivesCount}</span></div>
@@ -465,7 +465,7 @@ export const GraphQLMode = () => {
           </div>
 
           <div className="mt-auto p-4 border-t border-zinc-800 bg-black/40 shrink-0">
-            <div className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest leading-relaxed">
+            <div className="text-[9px] text-zinc-600 font-bold tracking-widest leading-relaxed">
               Capture v2.0 <br />
               <span className="text-zinc-700">GraphQL Engine</span>
             </div>
@@ -488,7 +488,7 @@ const SidebarItem = ({ icon, label, value, color }: { icon: any, label: string, 
 
 const ProgressField = ({ label, percentage, color }: { label: string, percentage: number, color: string }) => (
   <div className="space-y-2">
-    <div className="flex justify-between text-[9px] font-bold uppercase tracking-tighter">
+    <div className="flex justify-between text-[9px] font-bold tracking-tighter">
       <span className="text-zinc-500">{label}</span>
       <span className="text-zinc-300">{percentage}%</span>
     </div>
