@@ -33,6 +33,14 @@ const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean
     const params = Array.from(urlObj.searchParams.entries());
     const displayParams = isLong && !isExpanded ? params.slice(0, 3) : params;
 
+    // Determine if protocol should be red (not SSL)
+    const isInsecure = urlObj.protocol === 'http:' || urlObj.protocol === 'ws:';
+    
+    // Determine if port should be hidden
+    const isDefaultPort = 
+      (urlObj.port === '443' && (urlObj.protocol === 'https:' || urlObj.protocol === 'wss:')) ||
+      (urlObj.port === '80' && (urlObj.protocol === 'http:' || urlObj.protocol === 'ws:'));
+
     return (
       <div className="font-mono text-[13px] leading-relaxed break-words select-text">
         {isLong && (
@@ -56,7 +64,10 @@ const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean
           />
         )}
 
-        <span className="text-zinc-500 font-bold">
+        <span className={twMerge(
+          "font-bold",
+          isInsecure ? "text-red-500" : "text-zinc-500"
+        )}>
           {urlObj.protocol}//
         </span>
 
@@ -67,7 +78,7 @@ const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean
         >
           {urlObj.hostname}
 
-          {urlObj.port && (
+          {urlObj.port && !isDefaultPort && (
             <span className="text-zinc-500">:{urlObj.port}</span>
           )}
 
@@ -107,10 +118,24 @@ const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean
       </div>
     );
   } catch {
-    const displayUrl = isLong && !isExpanded ? `${url.substring(0, 100)}...` : url;
+    // Fallback for non-standard URLs (like CONNECT host:port)
+    let processedUrl = url;
+    
+    // Remove :443 or :80 from the end or before a slash
+    processedUrl = processedUrl.replace(/:443(\/|$)/, '$1');
+    processedUrl = processedUrl.replace(/:80(\/|$)/, '$1');
+
+    const isLongProcessed = processedUrl.length > 100;
+    const displayUrl = isLongProcessed && !isExpanded ? `${processedUrl.substring(0, 100)}...` : processedUrl;
+    
+    // Check if it starts with http:// or ws:// for red coloring
+    const isInsecure = processedUrl.startsWith('http://') || processedUrl.startsWith('ws://');
+    const protocolMatch = processedUrl.match(/^(http:\/\/|ws:\/\/)/);
+    const restOfUrl = protocolMatch ? processedUrl.substring(protocolMatch[0].length) : processedUrl;
+
     return (
       <div className="font-mono text-[13px] leading-relaxed break-words select-text flex items-start group">
-        {isLong && (
+        {isLongProcessed && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className={twMerge(
@@ -122,9 +147,14 @@ const UrlColorizer = ({ url, intercepted }: { url: string; intercepted?: boolean
             {isExpanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
           </button>
         )}
-        <p className="text-zinc-300">
-          {displayUrl}
-        </p>
+        <div className="text-zinc-300">
+          {protocolMatch && (
+            <span className={twMerge("font-bold", isInsecure ? "text-red-500" : "text-zinc-500")}>
+              {protocolMatch[0]}
+            </span>
+          )}
+          {isLongProcessed && !isExpanded ? restOfUrl.substring(0, 100) + (restOfUrl.length > 100 ? "..." : "") : restOfUrl}
+        </div>
       </div>
     );
   }
