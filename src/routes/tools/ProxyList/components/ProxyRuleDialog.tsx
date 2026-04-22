@@ -8,6 +8,7 @@ export interface ProxyRuleModel {
   enabled: boolean;
   name: string;
   pattern: string;
+  client?: string | null;
   action: 'INTERCEPT' | 'TUNNEL';
 }
 
@@ -29,6 +30,7 @@ export const ProxyRuleDialog: React.FC<ProxyRuleDialogProps> = ({
     enabled: true,
     name: "",
     pattern: "*",
+    client: null,
     action: "INTERCEPT"
   });
 
@@ -44,6 +46,7 @@ export const ProxyRuleDialog: React.FC<ProxyRuleDialogProps> = ({
           enabled: true,
           name: "",
           pattern: "*",
+          client: null,
           action: "INTERCEPT"
         });
       }
@@ -94,7 +97,7 @@ export const ProxyRuleDialog: React.FC<ProxyRuleDialogProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-8 flex flex-col gap-6">
+        <div className="flex-grow overflow-y-auto max-h-[60vh] p-8 flex flex-col gap-6 custom-scrollbar">
             {/* Friendly Name */}
             <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest pl-1">Rule Name</label>
@@ -118,8 +121,20 @@ export const ProxyRuleDialog: React.FC<ProxyRuleDialogProps> = ({
                     className="bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 text-zinc-100 text-xs font-mono focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all shadow-inner"
                     placeholder="e.g. *.internal.company.com"
                 />
+            </div>
+
+            {/* Client */}
+            <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-1">Target Client App (Process Name)</label>
+                <input
+                    type="text"
+                    value={rule.client || ""}
+                    onChange={(e) => setRule(prev => ({ ...prev, client: e.target.value || null }))}
+                    className="bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 text-zinc-100 text-xs font-mono focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all shadow-inner"
+                    placeholder="e.g. Google Chrome Helper"
+                />
                 <p className="text-[9px] text-zinc-600 font-medium px-1 italic mt-1 leading-relaxed">
-                    Traffic matching this pattern will follow the action below. Use <code className="text-indigo-400 font-bold bg-indigo-400/10 px-1 rounded">client:AppName</code> to match specific applications. Non-matching traffic is tunneled by default.
+                    Traffic matching these criteria will follow the action below. Use <code className="text-zinc-400 font-bold bg-zinc-400/10 px-1 rounded">*</code> for broad matching. Non-matching traffic is tunneled by default.
                 </p>
             </div>
 

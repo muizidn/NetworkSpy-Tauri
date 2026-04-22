@@ -12,6 +12,8 @@ import { ContainerQueryProvider } from "@src/context/ContainerQueryContext";
 
 import { renderMode } from "./renderMode";
 import { NotInterceptedMode } from "./BottomPaneComponents/None/NotInterceptedMode";
+import { useLicense } from "@src/hooks/useLicense";
+import { v4 as uuidv4 } from "uuid";
 
 import { InterceptionActionBar } from "./BottomPaneComponents/InterceptionActionBar";
 
@@ -20,10 +22,10 @@ export const BottomPane = () => {
   const [sizes, setSizes] = useState<any[]>(["50%", "50%"]);
   const { selections } = useTrafficListContext();
   const { provider } = useAppProvider();
-  
+
   const [isIntercepting, setIsIntercepting] = useState(false);
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-  
+
   const [dialogConfig, setDialogConfig] = useState<{
     isOpen: boolean;
     title: string;
@@ -38,21 +40,57 @@ export const BottomPane = () => {
 
   const selected = selections.firstSelected;
   const isAdded = selected && addedIds.has(String(selected.id));
+  const { getLimit } = useLicense();
+
+  const checkRuleLimit = async () => {
+    try {
+      const limit = await getLimit('max_proxy_rules');
+      const currentRules = await invoke<any[]>("get_proxy_rules");
+      if (currentRules.length >= limit) {
+        setDialogConfig({
+          isOpen: true,
+          title: 'Rule Limit Reached',
+          message: `You've reached the limit of ${limit} proxy rules for your current plan. Please upgrade to Personal or Pro for unlimited rules.`,
+          type: 'error'
+        });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error("Limit check failed:", e);
+      return true; // Allow if check fails to avoid blocking users unnecessarily
+    }
+  };
 
   const handleIntercept = async () => {
     if (!selected || !selected.url) return;
     try {
       setIsIntercepting(true);
-      const url = new URL(selected.url as string);
+      if (!(await checkRuleLimit())) return;
+      const urlStr = selected.url as string;
+      const u = urlStr.includes("://") ? urlStr : `https://${urlStr}`;
+      const url = new URL(u);
       const domain = url.hostname;
-      await provider.updateInterceptAllowList([domain]);
+      const pattern = `${domain}*`;
+
+      await invoke("save_proxy_rule", {
+        rule: {
+          id: uuidv4(),
+          enabled: true,
+          name: domain,
+          pattern: pattern,
+          action: "INTERCEPT",
+          client: null
+        }
+      });
+
       setAddedIds(prev => new Set(prev).add(String(selected.id)));
     } catch (e) {
       console.error(e);
       setDialogConfig({
         isOpen: true,
         title: 'Update Failed',
-        message: "Failed to update interception settings. Please check console for details.",
+        message: "Failed to save interception rule. Please check console for details.",
         type: 'error'
       });
     } finally {
@@ -64,22 +102,35 @@ export const BottomPane = () => {
     if (!selections.others) return;
     try {
       setIsIntercepting(true);
-      const tunneledDomains = Array.from(new Set(
-        selections.others
-          .filter(t => t && !t.intercepted && t.url)
-          .map(t => {
-            try { return new URL(t.url as string).hostname; } catch { return null; }
-          })
-          .filter(Boolean) as string[]
-      ));
+      if (!(await checkRuleLimit())) return;
+      const tunneledItems = selections.others.filter(t => t && !t.intercepted && t.url);
 
-      if (tunneledDomains.length === 0) return;
+      for (const item of tunneledItems) {
+        try {
+          const urlStr = item.url as string;
+          const u = urlStr.includes("://") ? urlStr : `https://${urlStr}`;
+          const url = new URL(u);
+          const domain = url.hostname;
+          const pattern = `${domain}*`;
 
-      await provider.updateInterceptAllowList(tunneledDomains);
-      
+          await invoke("save_proxy_rule", {
+            rule: {
+              id: uuidv4(),
+              enabled: true,
+              name: `Intercept ${domain}`,
+              pattern: pattern,
+              action: "INTERCEPT",
+              client: null
+            }
+          });
+        } catch (err) {
+          console.error("Failed to add batch rule:", err);
+        }
+      }
+
       setAddedIds(prev => {
         const next = new Set(prev);
-        selections.others?.forEach(t => { if(t) next.add(String(t.id)); });
+        selections.others?.forEach(t => { if (t) next.add(String(t.id)); });
         return next;
       });
     } catch (e) {
@@ -110,69 +161,71 @@ export const BottomPane = () => {
         }>
           <div className="flex-grow overflow-y-auto h-full custom-scrollbar bg-[#111] pb-12 @container">
             <ContainerQueryProvider>
-            {(() => {
-              if (!selected) return renderMode(mode, sizes, setSizes);
+              {(() => {
+                if (!selected) return renderMode(mode, sizes, setSizes);
 
-              if (isMultiple) return renderMode(mode, sizes, setSizes);
+                if (isMultiple) return renderMode(mode, sizes, setSizes);
 
-              if (selected.intercepted) {
-                return renderMode(mode, sizes, setSizes);
-              }
-
-              const getHostname = (url: string) => {
-                try {
-                  const u = url.includes("://") ? url : `https://${url}`;
-                  return new URL(u).hostname;
-                } catch {
-                  return url.split(":")[0] || "-";
+                if (selected.intercepted) {
+                  return renderMode(mode, sizes, setSizes);
                 }
-              };
 
-              const domain = getHostname(selected.url as string);
-              const clientInfo = selected.client ? (() => {
-                try {
-                  return JSON.parse(selected.client as string);
-                } catch {
-                  return null;
-                }
-              })() : null;
+                const getHostname = (url: string) => {
+                  try {
+                    const u = url.includes("://") ? url : `https://${url}`;
+                    return new URL(u).hostname;
+                  } catch {
+                    return url.split(":")[0] || "-";
+                  }
+                };
 
-              return (
-                <NotInterceptedMode 
-                  domain={domain}
-                  isAdded={!!isAdded}
-                  isIntercepting={isIntercepting}
-                  handleIntercept={handleIntercept}
-                  clientName={clientInfo?.name}
-                  onInterceptClient={async (client) => {
-                    try {
-                      setIsIntercepting(true);
-                      await invoke("save_proxy_rule", {
-                        rule: {
-                          id: "",
-                          enabled: true,
-                          name: `Intercept ${client}`,
-                          pattern: `client:${client}`,
-                          action: "INTERCEPT"
-                        }
-                      });
-                      setAddedIds(prev => new Set(prev).add(String(selected.id)));
-                    } catch (e) {
-                      console.error(e);
-                    } finally {
-                      setIsIntercepting(false);
-                    }
-                  }}
-                />
-              );
-            })()}
+                const domain = getHostname(selected.url as string);
+                const clientInfo = selected.client ? (() => {
+                  try {
+                    return JSON.parse(selected.client as string);
+                  } catch {
+                    return null;
+                  }
+                })() : null;
+
+                return (
+                  <NotInterceptedMode
+                    domain={domain}
+                    isAdded={!!isAdded}
+                    isIntercepting={isIntercepting}
+                    handleIntercept={handleIntercept}
+                    clientName={clientInfo?.name}
+                    onInterceptClient={async (client) => {
+                      try {
+                        setIsIntercepting(true);
+                        if (!(await checkRuleLimit())) return;
+                        await invoke("save_proxy_rule", {
+                          rule: {
+                            id: uuidv4(),
+                            enabled: true,
+                            name: `Intercept ${client}`,
+                            pattern: "",
+                            action: "INTERCEPT",
+                            client: client
+                          }
+                        });
+                        setAddedIds(prev => new Set(prev).add(String(selected.id)));
+                      } catch (e) {
+                        console.error(e);
+                      } finally {
+                        setIsIntercepting(false);
+                      }
+                    }}
+                  />
+                );
+              })()}
             </ContainerQueryProvider>
           </div>
         </Suspense>
       </ErrorBoundary>
 
       {selected && (
-        <InterceptionActionBar 
+        <InterceptionActionBar
           isMultiple={isMultiple}
           tunneledCount={tunneledCount}
           interceptedCount={interceptedCount}
@@ -184,7 +237,7 @@ export const BottomPane = () => {
         />
       )}
 
-      <Dialog 
+      <Dialog
         isOpen={dialogConfig.isOpen}
         title={dialogConfig.title}
         message={dialogConfig.message}

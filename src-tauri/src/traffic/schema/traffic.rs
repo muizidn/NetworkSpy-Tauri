@@ -46,10 +46,13 @@ pub fn create_table(conn: &Connection) -> rusqlite::Result<()> {
             enabled INTEGER DEFAULT 1,
             name TEXT,
             pattern TEXT,
+            client TEXT,
             action TEXT
         )",
         [],
     )?;
+
+    let _ = conn.execute("ALTER TABLE proxy_rules ADD COLUMN client TEXT", []);
 
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp)", [])?;
     conn.execute("CREATE INDEX IF NOT EXISTS idx_traffic_uri ON traffic(uri)", [])?;

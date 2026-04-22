@@ -15,9 +15,9 @@ export const useLicense = () => {
     };
 
     /**
-     * Get a numerical limit (e.g., max tabs, max filters) from the secure backend.
+     * Get a numerical limit (e.g., max tabs, max filters, max rules) from the secure backend.
      */
-    const getLimit = async (limitName: 'max_tabs' | 'max_filters'): Promise<number> => {
+    const getLimit = async (limitName: 'max_tabs' | 'max_filters' | 'max_proxy_rules'): Promise<number> => {
         try {
             return await invoke<number>("license_get_limit", { limitName });
         } catch (e) {

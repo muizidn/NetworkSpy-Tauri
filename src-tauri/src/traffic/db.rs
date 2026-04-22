@@ -414,7 +414,7 @@ impl TrafficDb {
 
     pub fn get_proxy_rules(&self) -> rusqlite::Result<Vec<ProxyRule>> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, enabled, name, pattern, action FROM proxy_rules")?;
+        let mut stmt = conn.prepare("SELECT id, enabled, name, pattern, action, client FROM proxy_rules")?;
         let rows = stmt.query_map([], |row| {
             Ok(ProxyRule {
                 id: row.get(0)?,
@@ -422,6 +422,7 @@ impl TrafficDb {
                 name: row.get(2)?,
                 pattern: row.get(3)?,
                 action: row.get(4)?,
+                client: row.get(5)?,
             })
         })?;
         let mut rules = Vec::new();
@@ -434,13 +435,14 @@ impl TrafficDb {
 
     pub fn save_proxy_rule(&self, rule: ProxyRule) -> rusqlite::Result<()> {
         self.conn.lock().unwrap().execute(
-            "INSERT INTO proxy_rules (id, enabled, name, pattern, action) VALUES (?1, ?2, ?3, ?4, ?5) 
+            "INSERT INTO proxy_rules (id, enabled, name, pattern, action, client) VALUES (?1, ?2, ?3, ?4, ?5, ?6) 
              ON CONFLICT(id) DO UPDATE SET 
                 enabled = excluded.enabled, 
                 name = excluded.name, 
                 pattern = excluded.pattern, 
-                action = excluded.action",
-            params![rule.id, if rule.enabled { 1 } else { 0 }, rule.name, rule.pattern, rule.action],
+                action = excluded.action,
+                client = excluded.client",
+            params![rule.id, if rule.enabled { 1 } else { 0 }, rule.name, rule.pattern, rule.action, rule.client],
         )?;
         Ok(())
     }
@@ -472,6 +474,7 @@ pub struct ProxyRule {
     pub name: String,
     pub pattern: String,
     pub action: String, // 'INTERCEPT' or 'TUNNEL'
+    pub client: Option<String>,
 }
 
 fn update_memory_cache(cache: &Arc<RwLock<VecDeque<TrafficMetadata>>>, event: &TrafficEvent) {

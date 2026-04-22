@@ -168,7 +168,14 @@ async fn refresh_active_proxy_intercept_list(
     let mut new_list = Vec::new();
     for rule in rules {
         if rule.enabled && rule.action == "INTERCEPT" {
-            new_list.push(rule.pattern);
+            if let Some(client) = rule.client {
+                if !client.is_empty() {
+                    new_list.push(format!("client:{}", client));
+                }
+            }
+            if !rule.pattern.is_empty() {
+                new_list.push(rule.pattern);
+            }
         }
     }
     let mut list = state.0.write().await;
