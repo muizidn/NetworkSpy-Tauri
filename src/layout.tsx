@@ -10,21 +10,19 @@ export default function Layout() {
   useAppUpdater();
   const [isProDialogOpen, setIsProDialogOpen] = useState(false);
   const [proDialogStatus, setProDialogStatus] = useState<'trial' | 'pro'>('pro');
-  const [isMainWindow, setIsMainWindow] = useState(true);
+  const [isMainWindow] = useState(() => {
+    try {
+      return getCurrentWindow().label === "main";
+    } catch (e) {
+      return true;
+    }
+  });
 
   const openProDialog = (status: 'trial' | 'pro') => {
     setProDialogStatus(status);
     setIsProDialogOpen(true);
   };
 
-  useEffect(() => {
-    // Check if current window is the main dashboard
-    const checkWindow = async () => {
-      const label = getCurrentWindow().label;
-      setIsMainWindow(label === "main");
-    };
-    checkWindow();
-  }, []);
 
   return (
     <div className={twMerge(
