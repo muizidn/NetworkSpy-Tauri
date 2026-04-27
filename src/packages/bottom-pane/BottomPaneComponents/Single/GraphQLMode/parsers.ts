@@ -2,14 +2,14 @@ import { GqlMechanism, ParsedGraphQLItem, GraphQLParser } from "./types";
 
 const enrichItem = (item: any, mechanism: GqlMechanism): ParsedGraphQLItem | null => {
   try {
-    const queryStr = item.query.trim();
+    const queryStr = (item.query || "").trim();
     let type = "QUERY";
     if (queryStr.toLowerCase().startsWith("mutation")) type = "MUTATION";
     if (queryStr.toLowerCase().startsWith("subscription")) type = "SUBSCRIPTION";
 
     const fragmentsCount = (queryStr.match(/fragment\s+/g) || []).length;
     const directivesCount = (queryStr.match(/@\w+/g) || []).length;
-    const depth = Math.max(0, ...queryStr.split('\n').map((line: string) => (line.match(/\{/g) || []).length)) + 1;
+    const depth = queryStr ? Math.max(0, ...queryStr.split('\n').map((line: string) => (line.match(/\{/g) || []).length)) + 1 : 0;
 
     return {
       ...item,
@@ -25,6 +25,21 @@ const enrichItem = (item: any, mechanism: GqlMechanism): ParsedGraphQLItem | nul
 };
 
 export const graphqlParsers: Record<string, GraphQLParser> = {
+  redditSpecialized: {
+    match: (urlStr, bodyJson) => !Array.isArray(bodyJson) && typeof bodyJson === 'object' && bodyJson !== null && (!!bodyJson.operation && !!bodyJson.variables),
+    parse: (urlStr, bodyJson) => {
+      const parsed = bodyJson as any;
+      const baseItem = {
+        query: parsed.query || `// Reddit Operation: ${parsed.operation}\n// No query body provided`,
+        variables: parsed.variables ? JSON.stringify(parsed.variables, null, 2) : "{}",
+        extensions: parsed.extensions ? JSON.stringify(parsed.extensions, null, 2) : null,
+        operationName: parsed.operation || `Reddit Operation`,
+        isPersisted: !parsed.query
+      };
+      const enriched = enrichItem(baseItem, "Reddit Specialized");
+      return enriched ? [enriched] : [];
+    }
+  },
   getQueryParams: {
     match: (urlStr, bodyJson) => {
       if (!urlStr.includes("graphql")) return false;
@@ -60,7 +75,7 @@ export const graphqlParsers: Record<string, GraphQLParser> = {
     }
   },
   batchedPost: {
-    match: (urlStr, bodyJson) => Array.isArray(bodyJson) && bodyJson.length > 0 && bodyJson.some(p => p && typeof p === 'object' && (p.query || p.queryId || p.operationName || p.extensions)),
+    match: (urlStr, bodyJson) => Array.isArray(bodyJson) && bodyJson.length > 0 && bodyJson.some(p => p && typeof p === 'object' && (p.query || p.queryId || p.operationName || p.operation || p.extensions)),
     parse: (urlStr, bodyJson) => {
       const items: ParsedGraphQLItem[] = [];
       if (!Array.isArray(bodyJson)) return items;
@@ -83,7 +98,7 @@ export const graphqlParsers: Record<string, GraphQLParser> = {
     }
   },
   standardPost: {
-    match: (urlStr, bodyJson) => !Array.isArray(bodyJson) && typeof bodyJson === 'object' && bodyJson !== null && (bodyJson.query || bodyJson.queryId || bodyJson.operationName || bodyJson.extensions),
+    match: (urlStr, bodyJson) => !Array.isArray(bodyJson) && typeof bodyJson === 'object' && bodyJson !== null && (bodyJson.query || bodyJson.queryId || bodyJson.operationName || bodyJson.operation || bodyJson.extensions),
     parse: (urlStr, bodyJson) => {
       if (typeof bodyJson !== 'object' || bodyJson === null) return [];
       const parsed = bodyJson as any;

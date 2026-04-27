@@ -1,4 +1,4 @@
-export type GqlMechanism = "Standard POST" | "Batched POST" | "GET Query Params" | "Persisted Query (queryId)" | "LinkedIn Specialized";
+export type GqlMechanism = "Standard POST" | "Batched POST" | "GET Query Params" | "Persisted Query (queryId)" | "LinkedIn Specialized" | "Reddit Specialized";
 
 export interface ParsedGraphQLItem {
   query: string;
