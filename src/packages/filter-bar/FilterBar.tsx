@@ -55,7 +55,7 @@ const FilterNodeRenderer = ({
 
           <input
             type='text'
-            className='input input-xs flex-grow rounded bg-[#2a2d2c] border border-zinc-800 text-[11px] focus:outline-none focus:border-blue-500 py-0 h-6'
+            className='filter-value-input input input-xs flex-grow rounded bg-[#2a2d2c] border border-zinc-800 text-[11px] focus:outline-none focus:border-blue-500 py-0 h-6'
             placeholder={`Search ${node.type}...`}
             value={node.value}
             onChange={(e) => updateNode(node.id, { value: e.target.value })}
@@ -153,6 +153,8 @@ export const FilterBar = () => {
       return () => clearTimeout(timer);
     }
   }, [errorMsg]);
+
+
 
   const { appPredefined, userPredefined } = React.useMemo(() => {
     const filtered = predefinedFilters.filter(f =>
@@ -257,6 +259,32 @@ export const FilterBar = () => {
     };
     setFilters(removeRecursive(filters));
   };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        
+        if (filters.length === 0) {
+          addRule(null);
+          setTimeout(() => {
+            const inputs = document.querySelectorAll('.filter-value-input');
+            if (inputs.length > 0) {
+              (inputs[inputs.length - 1] as HTMLInputElement).focus();
+            }
+          }, 50);
+        } else {
+          const inputs = document.querySelectorAll('.filter-value-input');
+          if (inputs.length > 0) {
+            (inputs[0] as HTMLInputElement).focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [filters, addRule]);
 
   const [showSaveInput, setShowSaveInput] = React.useState(false);
   const [saveName, setSaveName] = React.useState("");
