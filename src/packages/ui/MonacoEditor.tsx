@@ -3,6 +3,7 @@ import { Menu, PredefinedMenuItem, MenuItemOptions } from "@tauri-apps/api/menu"
 import { useState, useCallback } from "react";
 
 export const MonacoEditor = (props: EditorProps) => {
+  const [wordWrap, setWordWrap] = useState<"on" | "off">(props.options?.wordWrap === "on" ? "on" : "off");
   const [editor, setEditor] = useState<any>(null);
   const [monaco, setMonaco] = useState<any>(null);
 
@@ -87,6 +88,17 @@ export const MonacoEditor = (props: EditorProps) => {
           item: "Separator",
         } as any,
         {
+          id: "word_wrap",
+          text: "Word Wrap",
+          checked: wordWrap === "on",
+          action: () => {
+            setWordWrap(prev => prev === "on" ? "off" : "on");
+          },
+        },
+        {
+          item: "Separator",
+        } as any,
+        {
           id: "select_all",
           text: "Select All",
           action: () => {
@@ -110,10 +122,11 @@ export const MonacoEditor = (props: EditorProps) => {
     } catch (err) {
       console.error("Failed to show context menu", err);
     }
-  }, [editor]);
+  }, [editor, monaco, wordWrap]);
 
   const editorOptions = {
     ...props.options,
+    wordWrap,
     contextmenu: false, // Force disable Monaco context menu to use native instead
   };
 
