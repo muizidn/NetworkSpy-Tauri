@@ -6,9 +6,10 @@ interface SidebarProps {
   showSidebar: boolean;
   activeData: ParsedGraphQLItem;
   responseBody: string | null;
+  hasErrors: boolean;
 }
 
-export const Sidebar = ({ showSidebar, activeData, responseBody }: SidebarProps) => {
+export const Sidebar = ({ showSidebar, activeData, responseBody, hasErrors }: SidebarProps) => {
   return (
     <div className={twMerge(
       "absolute inset-y-0 right-0 z-20 w-64 bg-[#111] border-l border-zinc-800 flex flex-col transition-all duration-500 ease-in-out shadow-2xl",
@@ -22,8 +23,8 @@ export const Sidebar = ({ showSidebar, activeData, responseBody }: SidebarProps)
           <SidebarItem
             icon={<FiCheckCircle size={14} />}
             label="Status"
-            value={responseBody?.includes('"errors"') ? "Failed" : "Success"}
-            color={responseBody?.includes('"errors"') ? "text-rose-500" : "text-emerald-500"}
+            value={hasErrors ? "Failed" : "Success"}
+            color={hasErrors ? "text-rose-500" : "text-emerald-500"}
           />
           <SidebarItem icon={<FiCpu size={14} />} label="Mechanism" value={activeData.mechanism} color="text-pink-400" />
           <SidebarItem icon={<FiBox size={14} />} label="Nested Depth" value={`${activeData.depth} Levels`} />

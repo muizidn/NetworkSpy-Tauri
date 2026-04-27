@@ -12,7 +12,8 @@ interface GraphQLRequestProps {
 export const GraphQLRequest = ({ activeData, layoutMode, activeTab }: GraphQLRequestProps) => {
   return (
     <div className={twMerge(
-      "@5xl:w-5/12 flex flex-col border-r border-zinc-900 h-full overflow-hidden transition-all duration-300",
+      "w-full flex flex-col h-full overflow-hidden transition-all duration-300",
+      layoutMode === 'grid' ? "@5xl:w-5/12 border-r border-zinc-900" : "",
       layoutMode === 'grid' ? (activeTab !== "query" && "hidden @5xl:flex") : (activeTab !== "query" && "hidden")
     )}>
       <div className={twMerge(

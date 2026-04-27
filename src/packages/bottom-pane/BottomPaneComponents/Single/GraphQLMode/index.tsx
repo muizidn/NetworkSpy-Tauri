@@ -62,6 +62,16 @@ export const GraphQLMode = () => {
     return decodeBody(responseData?.body, "application/json");
   }, [responseData]);
 
+  const hasErrors = useMemo(() => {
+    try {
+      if (!responseBody) return false;
+      const parsed = JSON.parse(responseBody);
+      return Array.isArray(parsed.errors) && parsed.errors.length > 0;
+    } catch {
+      return false;
+    }
+  }, [responseBody]);
+
   if (!trafficId || gqlItems.length === 0) return <Placeholder text="Select a GraphQL request to begin inspection" />;
   if (loading) return <Placeholder text="Analyzing GraphQL traffic..." />;
 
@@ -85,7 +95,7 @@ export const GraphQLMode = () => {
               <div className="text-sm font-bold text-zinc-200">
                 {activeData.operationName}
               </div>
-              {responseBody && responseBody.includes('"errors"') && (
+              {hasErrors && (
                 <div className="flex items-center gap-1 text-[9px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">
                   <FiAlertTriangle size={10} />
                   ERRORS
@@ -230,7 +240,7 @@ export const GraphQLMode = () => {
           </div>
         </div>
 
-        <Sidebar showSidebar={showSidebar} activeData={activeData} responseBody={responseBody} />
+        <Sidebar showSidebar={showSidebar} activeData={activeData} responseBody={responseBody} hasErrors={hasErrors} />
       </div>
     </div>
   );

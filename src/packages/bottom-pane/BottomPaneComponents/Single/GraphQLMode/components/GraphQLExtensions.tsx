@@ -14,7 +14,8 @@ export const GraphQLExtensions = ({ activeData, layoutMode, activeTab }: GraphQL
 
   return (
     <div className={twMerge(
-      "flex flex-col border-b border-zinc-900 transition-all",
+      "flex flex-col transition-all",
+      layoutMode === 'grid' ? "border-b border-zinc-900" : "",
       activeTab === "response" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
       activeTab === "variables" && (layoutMode === 'grid' ? "hidden @5xl:flex" : "hidden"),
       activeTab === "extensions" ? "flex-grow" : (layoutMode === 'grid' ? "h-1/3" : "hidden")
