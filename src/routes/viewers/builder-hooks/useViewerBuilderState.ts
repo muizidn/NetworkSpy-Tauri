@@ -37,7 +37,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     const [testResults, setTestResults] = useState<Record<string, any>>({});
     const [isRunning, setIsRunning] = useState(false);
     const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<'preview' | 'source'>('preview');
+    const [viewMode, setViewMode] = useState<'preview' | 'source' | 'json'>('preview');
 
     useEffect(() => {
         if (testSource === 'session' && selectedSessionId) {

@@ -14,8 +14,8 @@ interface BuilderHeaderProps {
     handleSave: () => void;
     blocks: ViewerBlock[];
     testResults: Record<string, any>;
-    viewMode: 'preview' | 'source';
-    setViewMode: (mode: 'preview' | 'source') => void;
+    viewMode: 'preview' | 'source' | 'json';
+    setViewMode: (mode: 'preview' | 'source' | 'json') => void;
 }
 
 export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
@@ -65,6 +65,18 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                         >
                             <FiEye size={14} />
                             PREVIEW
+                        </button>
+                        <button
+                            onClick={() => setViewMode('json')}
+                            className={twMerge(
+                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                viewMode === 'json' 
+                                    ? "bg-zinc-800 text-blue-400 shadow-lg" 
+                                    : "text-zinc-500 hover:text-zinc-300"
+                            )}
+                        >
+                            <FiLayers size={14} />
+                            JSON
                         </button>
                         <button
                             onClick={() => setViewMode('source')}

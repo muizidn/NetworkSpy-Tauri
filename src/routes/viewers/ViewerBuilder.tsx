@@ -8,6 +8,7 @@ import { Canvas } from "./builder-components/Canvas";
 import { Toolbox } from "./builder-components/Toolbox";
 import { SourceDialog } from "./builder-components/SourceDialog";
 import { FullSourceEditor } from "./builder-components/FullSourceEditor";
+import { JsonSourceEditor } from "./builder-components/JsonSourceEditor";
 
 interface ViewerBuilderProps {
     viewer: Viewer;
@@ -17,7 +18,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
     const {
         viewerName, setViewerName,
         isEditingName, setIsEditingName,
-        blocks,
+        blocks, setBlocks,
         testSource, setTestSource,
         selectedSessionId, setSelectedSessionId,
         selectedTrafficId, setSelectedTrafficId,
@@ -42,6 +43,47 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
         sessions
     } = useViewerBuilderState(initialViewer);
 
+    const mainContent = () => {
+        switch (viewMode) {
+            case 'preview':
+                return (
+                    <Canvas 
+                        blocks={blocks}
+                        maximizedBlockId={maximizedBlockId}
+                        setMaximizedBlockId={setMaximizedBlockId}
+                        testResults={testResults}
+                        updateBlock={updateBlock}
+                        deleteBlock={deleteBlock}
+                    />
+                );
+            case 'json':
+                return (
+                    <JsonSourceEditor 
+                        blocks={blocks}
+                        matchers={matchers}
+                        previewConfig={{
+                            testSource,
+                            selectedSessionId,
+                            selectedTrafficId,
+                            filter
+                        }}
+                        onUpdate={(data) => {
+                            setBlocks(data.blocks);
+                            setMatchers(data.matchers);
+                        }}
+                    />
+                );
+            case 'source':
+                return (
+                    <FullSourceEditor 
+                        viewerName={viewerName} 
+                        blocks={blocks} 
+                        testResults={testResults} 
+                    />
+                );
+        }
+    };
+
     return (
         <div className="flex flex-col h-full bg-[#050505]">
             <BuilderHeader 
@@ -60,22 +102,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
 
             <div className="flex-1 flex overflow-hidden relative">
                 <div className="flex-1 flex overflow-hidden">
-                    {viewMode === 'preview' ? (
-                         <Canvas 
-                         blocks={blocks}
-                         maximizedBlockId={maximizedBlockId}
-                         setMaximizedBlockId={setMaximizedBlockId}
-                         testResults={testResults}
-                         updateBlock={updateBlock}
-                         deleteBlock={deleteBlock}
-                     />
-                    ) : (
-                        <FullSourceEditor 
-                            viewerName={viewerName} 
-                            blocks={blocks} 
-                            testResults={testResults} 
-                        />
-                    )}
+                    {mainContent()}
                 </div>
 
                 <Toolbox 
