@@ -164,9 +164,10 @@ export const BottomPane = () => {
                 if (isMultiple) return renderMode(mode, sizes, setSizes);
 
                 const url = (selected.url as string) || "";
-                const isEncrypted = url.startsWith("https://") || url.startsWith("wss://");
+                const isEncrypted = url.startsWith("https://") || url.startsWith("wss://") || url.includes(":443") || selected.method === "CONNECT";
+                const isIntercepted = selected.intercepted === true || selected.intercepted === 1 || selected.intercepted === "true" || selected.intercepted === "1";
 
-                if (selected.intercepted || !isEncrypted) {
+                if (isIntercepted || !isEncrypted) {
                   return renderMode(mode, sizes, setSizes);
                 }
 
