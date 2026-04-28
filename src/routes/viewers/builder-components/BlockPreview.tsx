@@ -28,7 +28,7 @@ export const BlockPreview = ({ block, result, isEditingCode, isMaximized, onDebu
                             <FiAlertCircle size={18} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="text-red-400 font-black text-[10px] mb-1 uppercase tracking-widest italic">Execution Error</div>
+                            <div className="text-red-400 font-bold text-[10px] mb-1 italic">Execution error</div>
                             <div className="text-[11px] font-mono text-zinc-500 whitespace-pre-wrap leading-relaxed bg-black/20 p-3 rounded-lg border border-white/5">{result.error}</div>
                         </div>
                     </div>

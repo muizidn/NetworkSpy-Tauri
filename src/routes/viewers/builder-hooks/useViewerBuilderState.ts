@@ -80,7 +80,26 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         }
     }, [selectedTrafficId, blocks, runPreview]);
 
+    const [externalTrafficItem, setExternalTrafficItem] = useState<any | null>(null);
     const currentDataSource = testSource === 'live' ? trafficList : sessionTraffic;
+
+    // Fetch traffic metadata if the ID is known but the item is missing from the current list
+    useEffect(() => {
+        if (selectedTrafficId && testSource === 'live') {
+            const existsInList = trafficList.some(t => t.id === selectedTrafficId);
+            if (!existsInList) {
+                provider.getAllMetadata().then(all => {
+                    const found = all.find(t => t.id === selectedTrafficId);
+                    if (found) setExternalTrafficItem(found);
+                });
+            } else {
+                setExternalTrafficItem(null);
+            }
+        } else {
+            setExternalTrafficItem(null);
+        }
+    }, [selectedTrafficId, testSource, trafficList, provider]);
+
     const filteredTraffic = useMemo(() => {
         const baseItems = currentDataSource.filter((t: any) => t.intercepted);
         
@@ -94,7 +113,10 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     }, [currentDataSource, filter]);
 
     const currentIndex = filteredTraffic.findIndex(t => t.id === selectedTrafficId);
-    const selectedTraffic = filteredTraffic.find(t => t.id === selectedTrafficId);
+    const selectedTraffic = useMemo(() => {
+        const inList = currentDataSource.find(t => t.id === selectedTrafficId);
+        return inList || externalTrafficItem;
+    }, [currentDataSource, selectedTrafficId, externalTrafficItem]);
 
     useEffect(() => {
         setViewerName(initialViewer.name);

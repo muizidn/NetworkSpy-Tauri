@@ -27,7 +27,7 @@ export const TestContextOverlay: React.FC<TestContextOverlayProps> = ({
                     className="flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-800 hover:border-blue-500/50 rounded-2xl text-zinc-400 hover:text-white transition-all shadow-2xl group"
                 >
                     <FiDatabase size={18} className="opacity-50 group-hover:opacity-100" />
-                    <span className="text-[11px] font-black uppercase tracking-widest">Set Test Data Source</span>
+                    <span className="text-[11px] font-bold">Set test data source</span>
                 </button>
             </div>
         );
@@ -44,7 +44,7 @@ export const TestContextOverlay: React.FC<TestContextOverlayProps> = ({
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1.5">
                         <span className={twMerge(
-                            "px-1 py-0.5 rounded-[4px] text-[8px] font-black uppercase",
+                            "px-1 py-0.5 rounded-[4px] text-[8px] font-bold",
                             selectedTraffic.method === 'GET' ? "bg-green-500/10 text-green-500" :
                             selectedTraffic.method === 'POST' ? "bg-blue-500/10 text-blue-500" : "bg-zinc-800 text-zinc-400"
                         )}>
@@ -88,7 +88,7 @@ export const TestContextOverlay: React.FC<TestContextOverlayProps> = ({
             <button
                 onClick={runPreview}
                 disabled={isRunning}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 text-white rounded-xl text-[10px] font-bold transition-all shadow-lg shadow-blue-500/20"
             >
                 {isRunning ? (
                     <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />

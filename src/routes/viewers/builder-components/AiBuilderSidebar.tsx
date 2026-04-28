@@ -31,6 +31,7 @@ interface ChatMessage {
     tool_calls?: ToolCall[];
     tool_call_id?: string;
     name?: string;
+    duration?: number;
 }
 
 interface ActiveTool {
@@ -61,18 +62,36 @@ const TechnicalMessage: React.FC<{
 }> = ({ msg, getToolIcon }) => {
     const [isCollapsed, setIsCollapsed] = useState(true);
 
+    const title = msg.role === 'tool' 
+        ? msg.name 
+        : msg.tool_calls 
+            ? msg.tool_calls[0].function.name + (msg.tool_calls.length > 1 ? ` (+${msg.tool_calls.length - 1})` : '')
+            : "System Dispatch";
+
     return (
         <div className="flex flex-col mr-auto items-start max-w-[95%] w-full animate-in fade-in slide-in-from-left-2 duration-300">
             <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="flex items-center gap-2 mb-1.5 opacity-40 hover:opacity-100 transition-opacity cursor-pointer group"
+                className={twMerge(
+                    "flex items-center gap-2 mb-1.5 transition-all cursor-pointer group px-2 py-1 rounded-md border",
+                    isCollapsed 
+                        ? "opacity-40 hover:opacity-100 border-transparent" 
+                        : "opacity-100 bg-zinc-900/50 border-zinc-800"
+                )}
             >
-                <FiCpu size={10} />
-                <span className="text-[8px] font-black tracking-tight uppercase">System Dispatch</span>
-                {isCollapsed ? <FiChevronRight size={10} /> : <FiChevronDown size={10} />}
-                <span className="text-[7px] font-bold text-zinc-500 bg-zinc-800 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                    {isCollapsed ? "Expand logs" : "Collapse"}
-                </span>
+                <div className={twMerge(
+                    "w-3 h-3 rounded-sm flex items-center justify-center",
+                    msg.role === 'tool' ? "bg-emerald-500/20 text-emerald-500" : "bg-blue-500/20 text-blue-500"
+                )}>
+                    <FiCpu size={8} />
+                </div>
+                <span className="text-[9px] font-bold whitespace-nowrap">{title}</span>
+                {msg.duration !== undefined && (
+                    <span className="text-[7px] font-mono text-zinc-600 bg-black/20 px-1 rounded">{msg.duration}ms</span>
+                )}
+                <div className="ml-auto flex items-center gap-1">
+                    {isCollapsed ? <FiChevronRight size={10} className="text-zinc-600" /> : <FiChevronDown size={10} className="text-zinc-600" />}
+                </div>
             </button>
 
             {!isCollapsed && (
@@ -81,10 +100,10 @@ const TechnicalMessage: React.FC<{
                         <div key={idx} className="px-4 py-2.5 flex items-center justify-between border-b border-zinc-800/50 bg-zinc-900/30">
                             <div className="flex items-center gap-3">
                                 <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center text-zinc-400">
-                                    <FiCpu size={10} />
+                                    {getToolIcon(tc.function.name)}
                                 </div>
                                 <div>
-                                    <div className="text-zinc-500 text-[8px] leading-none mb-1 font-black">FUNCTION CALLED</div>
+                                    <div className="text-zinc-500 text-[8px] leading-none mb-1 font-bold">Executing tool</div>
                                     <div className="text-white font-bold">{tc.function.name}</div>
                                 </div>
                             </div>
@@ -95,12 +114,14 @@ const TechnicalMessage: React.FC<{
                         <div className="px-4 py-3 flex flex-col gap-2">
                             <div className="flex items-center gap-2 text-emerald-500/80">
                                 <FiCheck size={10} />
-                                <span className="text-[8px] font-black uppercase">Execution result</span>
-                                <span className="text-zinc-700 ml-auto">{msg.name}</span>
+                                <span className="text-[8px] font-bold">Execution result</span>
+                                <span className="text-zinc-700 ml-auto text-[7px] font-bold">{msg.tool_call_id?.substring(0, 8)}</span>
                             </div>
-                            <pre className="text-zinc-500 leading-relaxed overflow-x-auto no-scrollbar">
-                                {msg.content}
-                            </pre>
+                            <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                <pre className="text-zinc-500 leading-relaxed whitespace-pre-wrap break-all pr-2">
+                                    {msg.content}
+                                </pre>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -117,6 +138,14 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
     const [isTyping, setIsTyping] = useState(false);
     const [widthPreset, setWidthPreset] = useState<'narrow' | 'medium' | 'wide'>('narrow');
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+    }, [input]);
 
     const cycleWidth = () => {
         const presets: ('narrow' | 'medium' | 'wide')[] = ['narrow', 'medium', 'wide'];
@@ -161,7 +190,10 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
         const userMessage: ChatMessage = { role: 'user', content: textToSend };
         let updatedMessages = [...messages, userMessage];
         setMessages(updatedMessages);
-        if (!overrideInput) setInput("");
+        if (!overrideInput) {
+            setInput("");
+            if (textareaRef.current) textareaRef.current.style.height = 'auto';
+        }
         setIsTyping(true);
 
         try {
@@ -228,6 +260,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                 };
 
                 for (const toolCall of assistantMessage.tool_calls) {
+                    const startTime = Date.now();
                     const functionName = toolCall.function.name;
                     const args = JSON.parse(toolCall.function.arguments);
                     let result = "";
@@ -291,7 +324,8 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                         role: "tool",
                         tool_call_id: toolCall.id,
                         name: functionName,
-                        content: result
+                        content: result,
+                        duration: Date.now() - startTime
                     });
 
                     // Remove from active tools
@@ -382,9 +416,12 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                     </div>
                 )}
                 {messages.filter(m => m.role !== 'system').map((msg, i) => {
-                    const isTechnical = msg.role === 'tool' || (msg.role === 'assistant' && msg.tool_calls);
+                    const isToolResult = msg.role === 'tool';
+                    const isAssistantCallOnly = msg.role === 'assistant' && msg.tool_calls && !msg.content;
 
-                    if (isTechnical) {
+                    if (isAssistantCallOnly) return null;
+
+                    if (isToolResult) {
                         return <TechnicalMessage key={i} msg={msg} getToolIcon={getToolIcon} />;
                     }
 
@@ -400,7 +437,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                                 msg.role === 'user' && "flex-row-reverse"
                             )}>
                                 {msg.role === 'user' ? <FiUser size={10} /> : <FiCpu size={10} />}
-                                <span className="text-[8px] font-black tracking-tight uppercase">{msg.role}</span>
+                                <span className="text-[9px] font-bold">{msg.role}</span>
                             </div>
                             <div className={twMerge(
                                 "px-3 py-2 rounded-xl text-[10px] leading-relaxed break-words shadow-sm transition-all",
@@ -448,7 +485,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-tight">Executing tool</span>
+                                            <span className="text-[9px] font-bold text-zinc-400">Executing tool</span>
                                             <span className="text-[8px] font-mono text-zinc-600 flex items-center gap-1">
                                                 <FiClock size={8} />
                                                 {formatDuration(tool.startTime)}
@@ -480,6 +517,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                 ) : (
                     <div className="relative group">
                         <textarea
+                            ref={textareaRef}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => {
@@ -489,7 +527,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                                 }
                             }}
                             placeholder="Type your request..."
-                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-4 pr-12 py-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-blue-500/50 transition-all resize-none max-h-32"
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-4 pr-12 py-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-blue-500/50 transition-all resize-none max-h-[300px] overflow-y-auto"
                             rows={1}
                         />
                         <button

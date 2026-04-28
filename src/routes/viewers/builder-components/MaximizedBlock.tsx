@@ -20,7 +20,7 @@ export const MaximizedBlock = ({ block, result, onClose, onUpdate }: MaximizedBl
             <div className="px-8 py-4 bg-zinc-900/40 border-b border-zinc-800 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded border border-zinc-800">{block.type}</span>
+                        <span className="text-[10px] font-bold text-zinc-500 bg-black/40 px-2 py-0.5 rounded border border-zinc-800">{block.type}</span>
                         <input 
                             value={block.title}
                             onChange={(e) => onUpdate({ title: e.target.value })}
@@ -76,7 +76,7 @@ export const MaximizedBlock = ({ block, result, onClose, onUpdate }: MaximizedBl
                 {/* PREVIEW SIDE */}
                 <div className="w-[35%] min-w-[400px] bg-black/20 overflow-y-auto p-10 animate-in slide-in-from-right-4 duration-500">
                     <div className="mb-8">
-                        <h3 className="text-xs font-black text-zinc-500 uppercase tracking-widest mb-1">Live Result</h3>
+                        <h3 className="text-xs font-bold text-zinc-500 mb-1">Live result</h3>
                         <div className="h-0.5 w-8 bg-blue-500 rounded-full"></div>
                     </div>
                     {renderResult(block, result)}

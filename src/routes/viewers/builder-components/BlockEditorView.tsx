@@ -19,7 +19,7 @@ const TabItem = ({ id, label, active, onClick, color, borderColor }: { id: strin
     <button
         onClick={onClick}
         className={twMerge(
-            "text-[9px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all",
+            "text-[9px] font-bold pb-1 border-b-2 transition-all",
             active ? twMerge(color, borderColor) : "text-zinc-600 border-transparent hover:text-zinc-400"
         )}
     >
@@ -81,7 +81,7 @@ export const BlockEditorView = ({
                     )}
                 </div>
 
-                <div className="text-[8px] text-zinc-700 font-bold uppercase tracking-wider">
+                <div className="text-[8px] text-zinc-700 font-bold tracking-wider">
                     {activeTab === 'js'
                         ? 'Host Context'
                         : activeTab === 'html'
