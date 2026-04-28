@@ -44,7 +44,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                         </div>
                     ) : (
                         <div className="flex items-center gap-2 group border-b border-transparent hover:border-zinc-800 transition-all pb-0.5">
-                            <span className="text-sm font-black text-white italic tracking-tighter uppercase">{viewerName}</span>
+                            <span className="text-sm font-black text-white italic tracking-tighter">{viewerName}</span>
                             <button onClick={() => setIsEditingName(true)} className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-blue-400 transition-all">
                                 <FiEdit2 size={12} />
                             </button>
@@ -61,37 +61,37 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                         <button
                             onClick={() => setViewMode('preview')}
                             className={twMerge(
-                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black transition-all",
+                                "flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black transition-all",
                                 viewMode === 'preview' 
                                     ? "bg-zinc-800 text-white shadow-lg" 
                                     : "text-zinc-500 hover:text-zinc-300"
                             )}
                         >
-                            <FiEye size={14} />
+                            <FiEye size={13} />
                             Preview
                         </button>
                         <button
                             onClick={() => setViewMode('json')}
                             className={twMerge(
-                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black transition-all",
+                                "flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black transition-all",
                                 viewMode === 'json' 
                                     ? "bg-zinc-800 text-blue-400 shadow-lg" 
                                     : "text-zinc-500 hover:text-zinc-300"
                             )}
                         >
-                            <FiLayers size={14} />
+                            <FiLayers size={13} />
                             Json
                         </button>
                         <button
                             onClick={() => setViewMode('source')}
                             className={twMerge(
-                                "flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black transition-all",
+                                "flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-black transition-all",
                                 viewMode === 'source' 
                                     ? "bg-zinc-800 text-amber-500 shadow-lg" 
                                     : "text-zinc-500 hover:text-zinc-300"
                             )}
                         >
-                            <FiCode size={14} />
+                            <FiCode size={13} />
                             Source
                         </button>
                     </div>
@@ -101,30 +101,30 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
                     <button
                         onClick={() => setIsToolboxVisible(!isToolboxVisible)}
                         className={twMerge(
-                            "p-2.5 rounded-xl transition-all border border-transparent shadow-md active:scale-95",
+                            "p-2 rounded-xl transition-all border border-transparent shadow-md active:scale-95",
                             !isToolboxVisible ? "bg-blue-600 text-white shadow-blue-900/20" : "bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-700 shadow-black/40"
                         )}
                         title="Toggle Toolbox"
                     >
-                        <FiColumns size={18} />
+                        <FiColumns size={16} />
                     </button>
 
                     <button
                         onClick={() => setIsAiAssistantVisible(!isAiAssistantVisible)}
                         className={twMerge(
-                            "p-2.5 rounded-xl transition-all border border-transparent shadow-md active:scale-95",
+                            "p-2 rounded-xl transition-all border border-transparent shadow-md active:scale-95",
                             isAiAssistantVisible ? "bg-purple-600 text-white shadow-purple-900/20" : "bg-zinc-900 text-zinc-400 hover:text-white hover:border-zinc-700 shadow-black/40"
                         )}
                         title="AI Assistant"
                     >
-                        <FiZap size={18} />
+                        <FiZap size={16} />
                     </button>
                     
                     <button
                         onClick={handleSave}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black transition-all shadow-xl shadow-blue-600/20 active:scale-95 border border-blue-400/20"
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black transition-all shadow-xl shadow-blue-600/20 active:scale-95 border border-blue-400/20"
                     >
-                        <FiSave size={14} />
+                        <FiSave size={13} />
                         Save
                     </button>
                 </div>

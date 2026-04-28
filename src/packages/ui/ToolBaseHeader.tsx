@@ -24,7 +24,7 @@ export const ToolBaseHeader: React.FC<ToolBaseHeaderProps> = ({
   actions,
 }) => {
   return (
-    <div className="flex flex-col gap-4 px-6 py-6 bg-[#0a0a0a] border-b border-zinc-800 shrink-0">
+    <div className="flex flex-col gap-4 px-2 py-1.5 bg-[#0a0a0a] border-b border-zinc-800 shrink-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-blue-500 shadow-xl">

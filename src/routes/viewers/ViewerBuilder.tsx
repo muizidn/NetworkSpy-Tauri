@@ -10,6 +10,7 @@ import { SourceDialog } from "./builder-components/SourceDialog";
 import { FullSourceEditor } from "./builder-components/FullSourceEditor";
 import { JsonSourceEditor } from "./builder-components/JsonSourceEditor";
 import { AiBuilderSidebar } from "./builder-components/AiBuilderSidebar";
+import { TestContextOverlay } from "./builder-components/TestContextOverlay";
 
 interface ViewerBuilderProps {
     viewer: Viewer;
@@ -107,27 +108,32 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
                 setViewMode={setViewMode}
             />
 
-            <div className="flex-1 flex overflow-hidden relative">
-                <div className="flex-1 flex overflow-hidden">
-                    {mainContent()}
-                </div>
+                <div className="flex-1 flex overflow-hidden relative">
+                    <div className="flex-1 flex overflow-hidden">
+                        {mainContent()}
+                    </div>
 
-                <Toolbox 
-                    isVisible={isToolboxVisible}
-                    maximizedBlockId={maximizedBlockId}
-                    selectedTraffic={selectedTraffic}
-                    testSource={testSource}
-                    setIsSourceDialogOpen={setIsSourceDialogOpen}
-                    goPrev={goPrev}
-                    goNext={goNext}
-                    currentIndex={currentIndex}
-                    totalTraffic={filteredTraffic.length}
-                    runPreview={runPreview}
-                    isRunning={isRunning}
-                    addBlock={addBlock}
-                    matchers={matchers}
-                    setMatchers={setMatchers}
-                />
+                    {viewMode === 'preview' && (
+                        <TestContextOverlay 
+                            selectedTraffic={selectedTraffic}
+                            testSource={testSource}
+                            setIsSourceDialogOpen={setIsSourceDialogOpen}
+                            goPrev={goPrev}
+                            goNext={goNext}
+                            currentIndex={currentIndex}
+                            totalTraffic={filteredTraffic.length}
+                            runPreview={runPreview}
+                            isRunning={isRunning}
+                        />
+                    )}
+
+                    <Toolbox 
+                        isVisible={isToolboxVisible}
+                        maximizedBlockId={maximizedBlockId}
+                        addBlock={addBlock}
+                        matchers={matchers}
+                        setMatchers={setMatchers}
+                    />
 
                 <AiBuilderSidebar 
                     isVisible={isAiAssistantVisible}
