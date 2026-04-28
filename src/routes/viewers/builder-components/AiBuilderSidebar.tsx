@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FiZap, FiUser, FiCpu, FiSend, FiCheck, FiX, FiMaximize2 } from "react-icons/fi";
+import { FiZap, FiUser, FiCpu, FiSend, FiCheck, FiX, FiMaximize2, FiLoader, FiTrash2, FiEdit3, FiRotateCcw, FiClock, FiChevronDown, FiChevronRight } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -29,15 +29,78 @@ interface ChatMessage {
     name?: string;
 }
 
+interface ActiveTool {
+    id: string;
+    name: string;
+    startTime: number;
+}
+
 interface AiBuilderSidebarProps {
     isVisible: boolean;
     onClose: () => void;
     blocks: ViewerBlock[];
     onInjectBlock: (block: ViewerBlock) => void;
+    onRemoveBlock: (id: string) => void;
+    onUpdateBlock: (id: string, updates: Partial<ViewerBlock>) => void;
+    onClearBlocks: () => void;
 }
 
+const TechnicalMessage: React.FC<{ 
+    msg: ChatMessage; 
+    getToolIcon: (name: string) => React.ReactNode 
+}> = ({ msg, getToolIcon }) => {
+    const [isCollapsed, setIsCollapsed] = useState(true);
+
+    return (
+        <div className="flex flex-col mr-auto items-start max-w-[95%] w-full animate-in fade-in slide-in-from-left-2 duration-300">
+            <button 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="flex items-center gap-2 mb-1.5 opacity-40 hover:opacity-100 transition-opacity cursor-pointer group"
+            >
+                <FiCpu size={10} />
+                <span className="text-[8px] font-black tracking-tight uppercase">System Dispatch</span>
+                {isCollapsed ? <FiChevronRight size={10} /> : <FiChevronDown size={10} />}
+                <span className="text-[7px] font-bold text-zinc-500 bg-zinc-800 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                    {isCollapsed ? "Expand logs" : "Collapse"}
+                </span>
+            </button>
+            
+            {!isCollapsed && (
+                <div className="w-full bg-[#0d0d0f] border border-zinc-800/50 rounded-xl overflow-hidden font-mono text-[9px] shadow-sm">
+                    {msg.tool_calls?.map((tc, idx) => (
+                        <div key={idx} className="px-4 py-2.5 flex items-center justify-between border-b border-zinc-800/50 bg-zinc-900/30">
+                            <div className="flex items-center gap-3">
+                                <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center text-zinc-400">
+                                    <FiCpu size={10} />
+                                </div>
+                                <div>
+                                    <div className="text-zinc-500 text-[8px] leading-none mb-1 font-black">FUNCTION CALLED</div>
+                                    <div className="text-white font-bold">{tc.function.name}</div>
+                                </div>
+                            </div>
+                            <div className="text-zinc-600">[{tc.id.substring(0, 8)}]</div>
+                        </div>
+                    ))}
+                    {msg.role === 'tool' && (
+                        <div className="px-4 py-3 flex flex-col gap-2">
+                            <div className="flex items-center gap-2 text-emerald-500/80">
+                                <FiCheck size={10} />
+                                <span className="text-[8px] font-black uppercase">Execution result</span>
+                                <span className="text-zinc-700 ml-auto">{msg.name}</span>
+                            </div>
+                            <pre className="text-zinc-500 leading-relaxed overflow-x-auto no-scrollbar">
+                                {msg.content}
+                            </pre>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
-    isVisible, onClose, blocks, onInjectBlock
+    isVisible, onClose, blocks, onInjectBlock, onRemoveBlock, onUpdateBlock, onClearBlocks
 }) => {
     const { openRouterKey, openRouterModel } = useSettingsContext();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -61,6 +124,14 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    const [activeTools, setActiveTools] = useState<ActiveTool[]>([]);
+    const [currentTime, setCurrentTime] = useState(Date.now());
+
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(Date.now()), 100);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleSendMessage = async () => {
         if (!input.trim() || isTyping) return;
@@ -95,18 +166,13 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                             ...msgs
                         ],
                         tools,
-                        tool_choice: "auto"
+                        tool_choice: "auto",
+                        stream: false // Streaming tool calls is complex, we'll keep it false for now but handle it properly
                     })
                 });
 
-                if (response.status === 429) {
-                    throw new Error("Too many requests or out of credits. Please check your OpenRouter balance.");
-                }
-
-                if (!response.ok) {
-                    const errorBody = await response.json().catch(() => ({}));
-                    throw new Error(errorBody.error?.message || `API Error: ${response.status}`);
-                }
+                if (response.status === 429) throw new Error("Rate limit exceeded.");
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
                 return await response.json();
             };
@@ -114,23 +180,42 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
             let data = await fetchChatCompletion(updatedMessages);
             let assistantMessage = data.choices[0].message;
 
-            // Handle Tool Calls
-            if (assistantMessage.tool_calls) {
+            while (assistantMessage.tool_calls) {
                 updatedMessages = [...updatedMessages, assistantMessage];
                 setMessages(updatedMessages);
 
                 const toolResponses: ChatMessage[] = [];
+                
+                // Set active tools for visualization
+                const newActiveTools = assistantMessage.tool_calls.map((tc: any) => ({
+                    id: tc.id,
+                    name: tc.function.name,
+                    startTime: Date.now()
+                }));
+                setActiveTools(newActiveTools);
+
                 for (const toolCall of assistantMessage.tool_calls) {
                     const functionName = toolCall.function.name;
                     const args = JSON.parse(toolCall.function.arguments);
                     let result = "";
 
+                    // Simulate some delay for visual effect
+                    await new Promise(r => setTimeout(r, 800));
+
                     if (functionName === "get_example_block") {
-                        const example = (examples as any)[args.category] || "Example not found.";
-                        result = JSON.stringify(example);
-                    } else if (functionName === "inject_block_directly") {
+                        result = JSON.stringify((examples as any)[args.category] || "Not found");
+                    } else if (functionName === "inject_block") {
                         onInjectBlock(args.block);
-                        result = "Successfully injected the block.";
+                        result = "Success";
+                    } else if (functionName === "update_block") {
+                        onUpdateBlock(args.id, args.updates);
+                        result = "Success";
+                    } else if (functionName === "remove_block") {
+                        onRemoveBlock(args.id);
+                        result = "Success";
+                    } else if (functionName === "clear_all_blocks") {
+                        onClearBlocks();
+                        result = "Success";
                     }
 
                     toolResponses.push({
@@ -139,24 +224,24 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                         name: functionName,
                         content: result
                     });
+                    
+                    // Remove from active tools
+                    setActiveTools(prev => prev.filter(t => t.id !== toolCall.id));
                 }
 
                 updatedMessages = [...updatedMessages, ...toolResponses];
                 setMessages(updatedMessages);
 
-                // Get final response after tool calls
                 data = await fetchChatCompletion(updatedMessages);
                 assistantMessage = data.choices[0].message;
             }
 
             setMessages([...updatedMessages, assistantMessage]);
         } catch (err: any) {
-            setMessages([...updatedMessages, {
-                role: 'assistant',
-                content: `⚠️ ${err.message}`
-            }]);
+            setMessages([...updatedMessages, { role: 'assistant', content: `⚠️ ${err.message}` }]);
         } finally {
             setIsTyping(false);
+            setActiveTools([]);
         }
     };
 
@@ -170,6 +255,18 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                 alert("Failed to parse the JSON block from AI response.");
             }
         }
+    };
+
+    const formatDuration = (start: number) => {
+        return ((currentTime - start) / 1000).toFixed(1) + "s";
+    };
+
+    const getToolIcon = (name: string) => {
+        if (name.includes('remove')) return <FiTrash2 size={12} className="text-rose-500" />;
+        if (name.includes('clear')) return <FiRotateCcw size={12} className="text-amber-500" />;
+        if (name.includes('update')) return <FiEdit3 size={12} className="text-blue-500" />;
+        if (name.includes('inject')) return <FiCheck size={12} className="text-emerald-500" />;
+        return <FiLoader size={12} className="text-zinc-500 animate-spin" />;
     };
 
     if (!isVisible) return null;
@@ -210,61 +307,96 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                         <div>
                             <p className="text-[10px] font-black text-zinc-400 tracking-tight">System Ready</p>
                             <p className="text-[9px] text-zinc-600 mt-2 leading-relaxed">
-                                Ask me to generate a specific block or help with styling.
+                                Ask me to generate, update or remove blocks.
                             </p>
                         </div>
                     </div>
                 )}
-                {messages.map((msg, i) => (
-                    <div key={i} className={twMerge(
-                        "flex flex-col max-w-[90%]",
-                        msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
-                    )}>
-                        <div className={twMerge(
-                            "flex items-center gap-2 mb-1 opacity-50",
-                            msg.role === 'user' && "flex-row-reverse"
-                        )}>
-                            {msg.role === 'user' ? <FiUser size={10} /> : <FiCpu size={10} />}
-                            <span className="text-[8px] font-black tracking-tight">{msg.role}</span>
-                        </div>
-                        <div className={twMerge(
-                            "px-3 py-2 rounded-xl text-[10px] leading-relaxed break-words shadow-sm",
-                            msg.role === 'user'
-                                ? "bg-blue-600 text-white rounded-tr-none"
-                                : "bg-zinc-900 text-zinc-300 rounded-tl-none border border-zinc-800"
+                {messages.filter(m => m.role !== 'system').map((msg, i) => {
+                    const isTechnical = msg.role === 'tool' || (msg.role === 'assistant' && msg.tool_calls);
+                    
+                    if (isTechnical) {
+                        return <TechnicalMessage key={i} msg={msg} getToolIcon={getToolIcon} />;
+                    }
+
+                    if (!msg.content) return null;
+
+                    return (
+                        <div key={i} className={twMerge(
+                            "flex flex-col max-w-[90%]",
+                            msg.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
                         )}>
                             <div className={twMerge(
-                                "prose prose-invert prose-xs max-w-none",
-                                "prose-p:leading-relaxed prose-p:my-1 prose-pre:my-2 prose-pre:bg-black/50 prose-pre:border prose-pre:border-zinc-800 prose-code:text-blue-400 prose-code:bg-zinc-800/50 prose-code:px-1 prose-code:rounded",
-                                "text-[10px]",
-                                msg.role === 'user' && "prose-p:text-white"
+                                "flex items-center gap-2 mb-1 opacity-50",
+                                msg.role === 'user' && "flex-row-reverse"
                             )}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {msg.content || ""}
-                                </ReactMarkdown>
+                                {msg.role === 'user' ? <FiUser size={10} /> : <FiCpu size={10} />}
+                                <span className="text-[8px] font-black tracking-tight uppercase">{msg.role}</span>
                             </div>
-                            
-                            {msg.role === 'assistant' && msg.content && msg.content.includes('```') && (
-                                <button
-                                    onClick={() => extractAndApplyBlock(msg.content!)}
-                                    className="mt-3 w-full flex items-center justify-center gap-2 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-[9px] font-black rounded border border-blue-500/30 transition-all"
-                                >
-                                    <FiCheck size={12} />
-                                    Inject block
-                                </button>
-                            )}
+                            <div className={twMerge(
+                                "px-3 py-2 rounded-xl text-[10px] leading-relaxed break-words shadow-sm transition-all",
+                                msg.role === 'user'
+                                    ? "bg-blue-600 text-white rounded-tr-none shadow-blue-900/20"
+                                    : "bg-[#151518] text-zinc-300 rounded-tl-none border border-zinc-800"
+                            )}>
+                                <div className={twMerge(
+                                    "prose prose-invert prose-xs max-w-none",
+                                    "prose-p:leading-relaxed prose-p:my-1 prose-pre:my-2 prose-pre:bg-black/50 prose-pre:border prose-pre:border-zinc-800 prose-code:text-blue-400 prose-code:bg-zinc-800/50 prose-code:px-1 prose-code:rounded",
+                                    "text-[10px]",
+                                    msg.role === 'user' && "prose-p:text-white"
+                                )}>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {msg.content}
+                                    </ReactMarkdown>
+                                </div>
+                                
+                                {msg.role === 'assistant' && msg.content.includes('```') && (
+                                    <button
+                                        onClick={() => extractAndApplyBlock(msg.content!)}
+                                        className="mt-3 w-full flex items-center justify-center gap-2 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 text-[9px] font-black rounded border border-blue-500/30 transition-all"
+                                    >
+                                        <FiCheck size={12} />
+                                        Inject block
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
-                {isTyping && (
-                    <div className="flex flex-col mr-auto items-start max-w-[90%]">
+                    );
+                })}
+                
+                {(isTyping || activeTools.length > 0) && (
+                    <div className="flex flex-col mr-auto items-start max-w-[90%] space-y-2">
                         <div className="flex items-center gap-2 mb-1 opacity-50">
                             <FiCpu size={10} />
                             <span className="text-[8px] font-black tracking-tight">Assistant</span>
                         </div>
-                        <div className="bg-zinc-900 text-zinc-500 px-3 py-2 rounded-xl rounded-tl-none border border-zinc-800 animate-pulse italic text-[11px]">
-                            Thinking...
-                        </div>
+                        
+                        {activeTools.length > 0 ? (
+                            activeTools.map(tool => (
+                                <div key={tool.id} className="bg-[#121214] border border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 w-64 shadow-lg animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center shrink-0 border border-zinc-800">
+                                        <FiLoader className="animate-spin text-blue-500" size={14} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-zinc-400 uppercase tracking-tight">Executing tool</span>
+                                            <span className="text-[8px] font-mono text-zinc-600 flex items-center gap-1">
+                                                <FiClock size={8} />
+                                                {formatDuration(tool.startTime)}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {getToolIcon(tool.name)}
+                                            <span className="text-[10px] font-bold text-white truncate">{tool.name}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="bg-zinc-900 text-zinc-500 px-3 py-2 rounded-xl rounded-tl-none border border-zinc-800 animate-pulse italic text-[10px]">
+                                Thinking...
+                            </div>
+                        )}
                     </div>
                 )}
                 <div ref={chatEndRef} />

@@ -3,14 +3,13 @@
     "type": "function",
     "function": {
       "name": "get_example_block",
-      "description": "Get a template/example block for a specific use case (e.g., 'chart', 'html_card', 'grid').",
+      "description": "Get a template/example block for a specific use case.",
       "parameters": {
         "type": "object",
         "properties": {
           "category": {
             "type": "string",
-            "enum": ["chart", "html_card", "json_explorer", "headers_table"],
-            "description": "The category of example to retrieve."
+            "enum": ["chart", "html_card", "json_explorer", "headers_table"]
           }
         },
         "required": ["category"]
@@ -20,15 +19,15 @@
   {
     "type": "function",
     "function": {
-      "name": "inject_block_directly",
-      "description": "Inject a generated block directly into the viewer state. Use this when the user is satisfied or when creating a new block.",
+      "name": "inject_block",
+      "description": "Add a new block to the viewer.",
       "parameters": {
         "type": "object",
         "properties": {
           "block": {
             "type": "object",
-            "description": "The full block object to inject.",
             "properties": {
+              "id": { "type": "string" },
               "type": { "type": "string" },
               "title": { "type": "string" },
               "code": { "type": "string" },
@@ -39,6 +38,56 @@
           }
         },
         "required": ["block"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "update_block",
+      "description": "Update an existing block by its ID.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "The ID of the block to update." },
+          "updates": {
+            "type": "object",
+            "description": "Partial block object containing fields to update.",
+            "properties": {
+              "title": { "type": "string" },
+              "code": { "type": "string" },
+              "colSpan": { "type": "number" },
+              "html": { "type": "string" },
+              "css": { "type": "string" }
+            }
+          }
+        },
+        "required": ["id", "updates"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "remove_block",
+      "description": "Remove a block from the viewer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "description": "The ID of the block to remove." }
+        },
+        "required": ["id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "clear_all_blocks",
+      "description": "Remove all blocks from the current viewer configuration.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
       }
     }
   }

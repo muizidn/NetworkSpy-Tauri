@@ -145,6 +145,10 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         setBlocks(blocks.map(b => b.id === id ? { ...b, ...updates } : b));
     };
 
+    const clearBlocks = () => {
+        setBlocks([]);
+    };
+
     const goNext = () => {
         if (currentIndex < filteredTraffic.length - 1) {
             setSelectedTrafficId(filteredTraffic[currentIndex + 1].id);
@@ -180,6 +184,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         injectBlock,
         deleteBlock,
         updateBlock,
+        clearBlocks,
         runPreview,
         goNext,
         goPrev,

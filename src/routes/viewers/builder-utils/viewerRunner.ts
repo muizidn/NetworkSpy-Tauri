@@ -63,19 +63,40 @@ export const executeViewerBlock = async (block: ViewerBlock, options: RunnerOpti
         const userCode = block.code.trim();
         if (!userCode) return null;
 
-        const finalCode = `${userCode}\nreturn await code();`;
+        // Fetch basic metadata for the context
+        const reqHeaders = await readRequestHeaders();
+        const resHeaders = await readResponseHeaders();
+        const reqBody = await readRequestBody();
+        const resBody = await readResponseBody();
+
+        const context = {
+            request: {
+                headers: reqHeaders,
+                body: reqBody
+            },
+            response: {
+                headers: resHeaders,
+                body: resBody
+            },
+            // Legacy/Helper access
+            readRequestHeaders,
+            readRequestBody,
+            readResponseHeaders,
+            readResponseBody
+        };
+
         const wrappedCode = `
-            return (async () => {
+            return (async (context) => {
                 try {
-                    ${finalCode}
+                    ${userCode}
                 } catch (e) {
                     return { error: e.toString() };
                 }
-            })()
+            })(context)
         `;
 
-        const asyncFn = new Function('readRequestHeaders', 'readRequestBody', 'readResponseHeaders', 'readResponseBody', wrappedCode);
-        const data = await asyncFn(readRequestHeaders, readRequestBody, readResponseHeaders, readResponseBody);
+        const asyncFn = new Function('context', 'readRequestHeaders', 'readRequestBody', 'readResponseHeaders', 'readResponseBody', wrappedCode);
+        const data = await asyncFn(context, readRequestHeaders, readRequestBody, readResponseHeaders, readResponseBody);
 
         if (block.type === 'html' && data && typeof data === 'object' && !data.error) {
             return `

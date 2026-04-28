@@ -39,6 +39,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
         injectBlock,
         deleteBlock,
         updateBlock,
+        clearBlocks,
         runPreview,
         goNext,
         goPrev,
@@ -133,6 +134,9 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
                     onClose={() => setIsAiAssistantVisible(false)}
                     blocks={blocks}
                     onInjectBlock={injectBlock}
+                    onRemoveBlock={deleteBlock}
+                    onUpdateBlock={updateBlock}
+                    onClearBlocks={clearBlocks}
                 />
             </div>
 
