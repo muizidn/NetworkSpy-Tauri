@@ -5,11 +5,10 @@ import ViewerList from "@src/routes/viewers/ViewerList";
 import ViewerBuilder from "@src/routes/viewers/ViewerBuilder";
 import { Viewer } from "@src/context/ViewerContext";
 import { useSettingsContext } from "@src/context/SettingsProvider";
-import { FiLock, FiZap, FiEye, FiCpu } from "react-icons/fi";
+import { FiLock, FiZap, FiEye, FiCpu, FiLayers } from "react-icons/fi";
 
 const ViewersPage: React.FC = () => {
     const [selectedViewer, setSelectedViewer] = useState<Viewer | null>(null);
-    const [isCompact, setIsCompact] = useState(false);
     const { plan, isVerified } = useSettingsContext();
 
     const isPro = isVerified && plan?.toLowerCase() === "pro";
@@ -62,7 +61,7 @@ const ViewersPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 onClick={() => window.open('https://networkspy.pro/pricing', '_blank')}
                                 className="w-full py-4 rounded-2xl bg-white text-black font-black text-sm uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all duration-300 shadow-xl hover:shadow-blue-500/30 flex items-center justify-center gap-3"
                             >
@@ -81,32 +80,37 @@ const ViewersPage: React.FC = () => {
 
     return (
         <div className="flex h-full bg-[#050505] overflow-hidden">
-            <div className={twMerge(
-                "border-r border-zinc-900 flex flex-col h-full bg-[#080808] transition-all duration-300",
-                isCompact ? "w-16" : "w-80"
-            )}>
-                <ViewerList 
-                    selectedViewerId={selectedViewer?.id} 
-                    onSelectViewer={setSelectedViewer} 
-                    isCompact={isCompact}
-                    onToggleCompact={() => setIsCompact(!isCompact)}
-                />
-            </div>
-            
+            {!selectedViewer && (
+                <div className="border-r border-zinc-900 flex flex-col h-full bg-[#080808] w-80 animate-in slide-in-from-left duration-300">
+                    <ViewerList
+                        onSelectViewer={setSelectedViewer}
+                    />
+                </div>
+            )}
+
             <div className="flex-1 h-full overflow-hidden">
                 {selectedViewer ? (
-                    <ViewerBuilder viewer={selectedViewer} />
+                    <ViewerBuilder
+                        viewer={selectedViewer}
+                        onBack={() => setSelectedViewer(null)}
+                    />
                 ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-zinc-600 space-y-4">
-                        <div className="w-20 h-20 rounded-full bg-zinc-900/50 flex items-center justify-center border border-zinc-800/50">
-                            <span className="text-4xl">👁️</span>
+                    <div className="h-full flex flex-col items-center justify-center text-zinc-600 space-y-6 bg-[#050505] animate-in fade-in duration-500">
+                        <div className="relative">
+                            <div className="w-24 h-24 rounded-full bg-blue-600/5 flex items-center justify-center border border-blue-500/10 shadow-[0_0_50px_rgba(37,99,235,0.05)]">
+                                <FiLayers size={40} className="text-blue-500/20" />
+                            </div>
+                            <div className="absolute -top-2 -right-2 w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-blue-500 animate-bounce">
+                                <FiZap size={16} />
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <h3 className="text-zinc-300 font-bold">Custom Viewer Builder</h3>
-                            <p className="text-xs max-w-xs mt-2">
-                                Select a viewer from the list or create a new one to start building your custom inspection UI.
+                        <div className="text-center space-y-2">
+                            <h3 className="text-xl font-black text-white tracking-tight uppercase italic">Viewer Builder</h3>
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] max-w-[200px] leading-relaxed mx-auto">
+                                Select a viewer from the list to start crafting your custom inspection UI
                             </p>
                         </div>
+                        <div className="w-px h-12 bg-gradient-to-b from-blue-500/20 to-transparent"></div>
                     </div>
                 )}
             </div>

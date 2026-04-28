@@ -1,5 +1,5 @@
 import React from "react";
-import { FiCheck, FiEdit2, FiLayers, FiColumns, FiSave, FiCode, FiEye, FiZap } from "react-icons/fi";
+import { FiCheck, FiEdit2, FiLayers, FiColumns, FiSave, FiCode, FiEye, FiZap, FiChevronLeft } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { ToolBaseHeader } from "@src/packages/ui/ToolBaseHeader";
 import { ViewerBlock } from "@src/context/ViewerContext";
@@ -18,6 +18,7 @@ interface BuilderHeaderProps {
     testResults: Record<string, any>;
     viewMode: 'preview' | 'source' | 'json';
     setViewMode: (mode: 'preview' | 'source' | 'json') => void;
+    onBack?: () => void;
 }
 
 export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
@@ -25,12 +26,22 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
     isToolboxVisible, setIsToolboxVisible, 
     isAiAssistantVisible, setIsAiAssistantVisible,
     handleSave,
-    viewMode, setViewMode
+    viewMode, setViewMode,
+    onBack
 }) => {
     return (
         <ToolBaseHeader
             title={
                 <div className="flex items-center gap-2">
+                    {onBack && (
+                        <button 
+                            onClick={onBack}
+                            className="mr-2 p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-500 hover:text-white transition-all active:scale-90"
+                            title="Back to Viewer List"
+                        >
+                            <FiChevronLeft size={20} />
+                        </button>
+                    )}
                     {isEditingName ? (
                         <div className="flex items-center gap-2">
                             <input

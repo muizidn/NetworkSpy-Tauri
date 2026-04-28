@@ -14,9 +14,10 @@ import { TestContextOverlay } from "./builder-components/TestContextOverlay";
 
 interface ViewerBuilderProps {
     viewer: Viewer;
+    onBack?: () => void;
 }
 
-const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) => {
+const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, onBack }) => {
     const {
         viewerName, setViewerName,
         isEditingName, setIsEditingName,
@@ -106,6 +107,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
                 testResults={testResults}
                 viewMode={viewMode}
                 setViewMode={setViewMode}
+                onBack={onBack}
             />
 
                 <div className="flex-1 flex overflow-hidden relative">
