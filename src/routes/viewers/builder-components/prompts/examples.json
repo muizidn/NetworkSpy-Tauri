@@ -1,0 +1,29 @@
+{
+  "chart": {
+    "id": "latency-chart",
+    "type": "html",
+    "title": "Latency Analysis",
+    "colSpan": 12,
+    "code": "return { latency: context.response.timing.duration };",
+    "html": "<div class='p-4 bg-zinc-900 rounded-xl'><h3 class='text-xs font-bold text-zinc-500'>Response Time</h3><div class='text-2xl font-black text-blue-500'>{{latency}}ms</div><div class='mt-4 h-1 bg-zinc-800 rounded-full overflow-hidden'><div class='h-full bg-blue-500' style='width: {{latency}}%'></div></div></div>",
+    "css": ".font-black { font-weight: 900; }"
+  },
+  "html_card": {
+    "id": "status-card",
+    "type": "html",
+    "title": "Status Badge",
+    "colSpan": 4,
+    "code": "return { status: context.response.status, ok: context.response.status < 400 };",
+    "html": "<div class='p-6 rounded-2xl border {{#if ok}}border-emerald-500/20 bg-emerald-500/5 text-emerald-500{{else}}border-rose-500/20 bg-rose-500/5 text-rose-500{{/if}}'><div class='text-[10px] font-black uppercase tracking-widest'>Status</div><div class='text-4xl font-black mt-1'>{{status}}</div></div>",
+    "css": ""
+  },
+  "json_explorer": {
+    "id": "response-body",
+    "type": "json",
+    "title": "Body Explorer",
+    "colSpan": 8,
+    "code": "return context.response.body;",
+    "html": "",
+    "css": ""
+  }
+}

@@ -1,0 +1,45 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_example_block",
+      "description": "Get a template/example block for a specific use case (e.g., 'chart', 'html_card', 'grid').",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["chart", "html_card", "json_explorer", "headers_table"],
+            "description": "The category of example to retrieve."
+          }
+        },
+        "required": ["category"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "inject_block_directly",
+      "description": "Inject a generated block directly into the viewer state. Use this when the user is satisfied or when creating a new block.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "block": {
+            "type": "object",
+            "description": "The full block object to inject.",
+            "properties": {
+              "type": { "type": "string" },
+              "title": { "type": "string" },
+              "code": { "type": "string" },
+              "colSpan": { "type": "number" },
+              "html": { "type": "string" },
+              "css": { "type": "string" }
+            }
+          }
+        },
+        "required": ["block"]
+      }
+    }
+  }
+]

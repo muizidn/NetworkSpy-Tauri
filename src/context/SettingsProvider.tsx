@@ -26,6 +26,10 @@ interface SettingsContextInterface {
   isVerified: boolean;
   apiFeatures: any | null;
   isSyncing: boolean;
+  openRouterKey: string;
+  setOpenRouterKey: (key: string) => void;
+  openRouterModel: string;
+  setOpenRouterModel: (model: string) => void;
   verifyLicense: (key: string | null) => Promise<any>;
   revokeLicense: () => Promise<void>;
 }
@@ -49,6 +53,10 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   isVerified: false,
   apiFeatures: null,
   isSyncing: false,
+  openRouterKey: "",
+  setOpenRouterKey: () => { },
+  openRouterModel: "google/gemini-2.0-flash-001",
+  setOpenRouterModel: () => { },
   verifyLicense: async () => { },
   revokeLicense: async () => { }
 });
@@ -68,6 +76,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [smartViewerMatch, setSmartViewerMatch] = useState(() => {
     return localStorage.getItem("ns_smart_viewer_match") === "true";
   });
+  const [openRouterKey, setOpenRouterKey] = useState(() => localStorage.getItem("ns_openrouter_key") || "");
+  const [openRouterModel, setOpenRouterModel] = useState(() => localStorage.getItem("ns_openrouter_model") || "anthropic/claude-sonnet-4.6");
   const [plan, setPlan] = useState<string | null>(() => localStorage.getItem("ns_license_plan"));
   const [isVerified, setIsVerified] = useState(() => localStorage.getItem("ns_license_verified") === "true");
   const [apiFeatures, setApiFeatures] = useState<any | null>(() => {
@@ -84,7 +94,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         setIsVerified(true);
         setPlan(result.plan);
         setApiFeatures(result.features || null);
-        
+
         // Cache result
         localStorage.setItem("ns_license_verified", "true");
         localStorage.setItem("ns_license_plan", result.plan || "");
@@ -93,7 +103,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         setIsVerified(false);
         setPlan(null);
         setApiFeatures(null);
-        
+
         // Clear cache
         localStorage.removeItem("ns_license_verified");
         localStorage.removeItem("ns_license_plan");
@@ -117,7 +127,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       setIsVerified(false);
       setPlan(null);
       setApiFeatures(null);
-      
+
       // Clear cache
       localStorage.removeItem("ns_license_verified");
       localStorage.removeItem("ns_license_plan");
@@ -167,6 +177,14 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [smartViewerMatch]);
 
   useEffect(() => {
+    localStorage.setItem("ns_openrouter_key", openRouterKey);
+  }, [openRouterKey]);
+
+  useEffect(() => {
+    localStorage.setItem("ns_openrouter_model", openRouterModel);
+  }, [openRouterModel]);
+
+  useEffect(() => {
     if (!isLoaded) return;
 
     invoke("update_proxy_settings", {
@@ -196,6 +214,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         setMcpHttpPort,
         smartViewerMatch,
         setSmartViewerMatch,
+        openRouterKey,
+        setOpenRouterKey,
+        openRouterModel,
+        setOpenRouterModel,
         plan,
         isVerified,
         apiFeatures,

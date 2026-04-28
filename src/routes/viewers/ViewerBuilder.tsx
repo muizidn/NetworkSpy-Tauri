@@ -9,6 +9,7 @@ import { Toolbox } from "./builder-components/Toolbox";
 import { SourceDialog } from "./builder-components/SourceDialog";
 import { FullSourceEditor } from "./builder-components/FullSourceEditor";
 import { JsonSourceEditor } from "./builder-components/JsonSourceEditor";
+import { AiBuilderSidebar } from "./builder-components/AiBuilderSidebar";
 
 interface ViewerBuilderProps {
     viewer: Viewer;
@@ -35,12 +36,15 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
         selectedTraffic,
         handleSave,
         addBlock,
+        injectBlock,
         deleteBlock,
         updateBlock,
         runPreview,
         goNext,
         goPrev,
-        sessions
+        sessions,
+        isAiAssistantVisible,
+        setIsAiAssistantVisible
     } = useViewerBuilderState(initialViewer);
 
     const mainContent = () => {
@@ -93,6 +97,8 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
                 setIsEditingName={setIsEditingName}
                 isToolboxVisible={isToolboxVisible}
                 setIsToolboxVisible={setIsToolboxVisible}
+                isAiAssistantVisible={isAiAssistantVisible}
+                setIsAiAssistantVisible={setIsAiAssistantVisible}
                 handleSave={handleSave}
                 blocks={blocks}
                 testResults={testResults}
@@ -120,6 +126,13 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer }) 
                     addBlock={addBlock}
                     matchers={matchers}
                     setMatchers={setMatchers}
+                />
+
+                <AiBuilderSidebar 
+                    isVisible={isAiAssistantVisible}
+                    onClose={() => setIsAiAssistantVisible(false)}
+                    blocks={blocks}
+                    onInjectBlock={injectBlock}
                 />
             </div>
 

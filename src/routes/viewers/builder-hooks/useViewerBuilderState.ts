@@ -38,6 +38,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     const [isRunning, setIsRunning] = useState(false);
     const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'preview' | 'source' | 'json'>('preview');
+    const [isAiAssistantVisible, setIsAiAssistantVisible] = useState(false);
 
     useEffect(() => {
         if (testSource === 'session' && selectedSessionId) {
@@ -132,6 +133,10 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         setBlocks([...blocks, newBlock]);
     };
 
+    const injectBlock = (block: ViewerBlock) => {
+        setBlocks([...blocks, { ...block, id: block.id || Math.random().toString(36).substr(2, 9) }]);
+    };
+
     const deleteBlock = (id: string) => {
         setBlocks(blocks.filter(b => b.id !== id));
     };
@@ -172,11 +177,14 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         selectedTraffic,
         handleSave,
         addBlock,
+        injectBlock,
         deleteBlock,
         updateBlock,
         runPreview,
         goNext,
         goPrev,
-        sessions
+        sessions,
+        isAiAssistantVisible,
+        setIsAiAssistantVisible
     };
 };
