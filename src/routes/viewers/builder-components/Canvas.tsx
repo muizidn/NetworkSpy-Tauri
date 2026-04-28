@@ -15,11 +15,11 @@ interface CanvasProps {
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
-    blocks, 
-    maximizedBlockId, 
+    blocks,
+    maximizedBlockId,
     setMaximizedBlockId,
-    testResults, 
-    updateBlock, 
+    testResults,
+    updateBlock,
     deleteBlock,
     isViewerMode
 }) => {
@@ -42,7 +42,7 @@ export const Canvas: React.FC<CanvasProps> = ({
 
     return (
         <div className="h-full w-full overflow-y-auto custom-scrollbar bg-[#080808]">
-            <div className="grid grid-cols-12 w-full min-h-full">
+            <div id="viewerbuilder-canvas" className="grid grid-cols-12 w-full min-h-full items-start">
                 {blocks.length === 0 ? (
                     <div className="col-span-12 flex justify-center items-center p-20">
                         <div className="border-2 border-dashed border-zinc-800 rounded-2xl p-20 flex flex-col items-center justify-center text-zinc-600">

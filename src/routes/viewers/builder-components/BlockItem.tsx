@@ -32,7 +32,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
         )}>
             {/* CONTROL BAR */}
             {!isViewerMode && (
-                <BlockIndicator 
+                <BlockIndicator
                     block={block}
                     isEditingCode={isEditingCode}
                     isMaximized={isMaximized}
@@ -45,7 +45,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
             )}
 
             <div className={twMerge("p-0 transition-all", isSideBySide ? "grid grid-cols-2" : "flex flex-col")}>
-                <BlockPreview 
+                <BlockPreview
                     block={block}
                     result={result}
                     isEditingCode={isEditingCode}
@@ -53,7 +53,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                 />
 
                 {!isViewerMode && isEditingCode && (
-                    <BlockEditorView 
+                    <BlockEditorView
                         block={block}
                         result={result}
                         isMaximized={isMaximized}

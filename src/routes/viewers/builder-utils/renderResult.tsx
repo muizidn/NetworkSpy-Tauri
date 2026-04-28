@@ -10,9 +10,9 @@ export const renderResult = (block: ViewerBlock, data: any) => {
     const type = block.type;
     if (data === undefined || data === null) {
         return (
-            <div className="h-20 flex flex-col items-center justify-center border border-dashed border-zinc-800/50 rounded-2xl bg-zinc-950/30 m-4">
+            <div className="h-24 flex flex-col items-center justify-center border border-dashed border-zinc-800/50 rounded-2xl bg-zinc-950/30 shadow-inner">
                 <FiPlay size={18} className="text-zinc-700 mb-1" />
-                <span className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em]">Ready for {type.toUpperCase()} Preview</span>
+                <span className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.2em] px-4 text-center">Ready for {type.toUpperCase()} Preview</span>
             </div>
         );
     }

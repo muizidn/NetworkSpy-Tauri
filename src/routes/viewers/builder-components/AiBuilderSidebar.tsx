@@ -45,15 +45,15 @@ interface AiBuilderSidebarProps {
     onClearBlocks: () => void;
 }
 
-const TechnicalMessage: React.FC<{ 
-    msg: ChatMessage; 
-    getToolIcon: (name: string) => React.ReactNode 
+const TechnicalMessage: React.FC<{
+    msg: ChatMessage;
+    getToolIcon: (name: string) => React.ReactNode
 }> = ({ msg, getToolIcon }) => {
     const [isCollapsed, setIsCollapsed] = useState(true);
 
     return (
         <div className="flex flex-col mr-auto items-start max-w-[95%] w-full animate-in fade-in slide-in-from-left-2 duration-300">
-            <button 
+            <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className="flex items-center gap-2 mb-1.5 opacity-40 hover:opacity-100 transition-opacity cursor-pointer group"
             >
@@ -64,7 +64,7 @@ const TechnicalMessage: React.FC<{
                     {isCollapsed ? "Expand logs" : "Collapse"}
                 </span>
             </button>
-            
+
             {!isCollapsed && (
                 <div className="w-full bg-[#0d0d0f] border border-zinc-800/50 rounded-xl overflow-hidden font-mono text-[9px] shadow-sm">
                     {msg.tool_calls?.map((tc, idx) => (
@@ -185,7 +185,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                 setMessages(updatedMessages);
 
                 const toolResponses: ChatMessage[] = [];
-                
+
                 // Set active tools for visualization
                 const newActiveTools = assistantMessage.tool_calls.map((tc: any) => ({
                     id: tc.id,
@@ -224,7 +224,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                         name: functionName,
                         content: result
                     });
-                    
+
                     // Remove from active tools
                     setActiveTools(prev => prev.filter(t => t.id !== toolCall.id));
                 }
@@ -284,14 +284,14 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                     <h3 className="text-[10px] font-black text-white tracking-tight">AI Builder Chat</h3>
                 </div>
                 <div className="flex items-center gap-1">
-                    <button 
+                    <button
                         onClick={cycleWidth}
                         className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
                         title="Resize Sidebar"
                     >
                         <FiMaximize2 size={14} />
                     </button>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 hover:bg-zinc-800 rounded-lg text-zinc-500 transition-colors"
                     >
@@ -314,7 +314,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                 )}
                 {messages.filter(m => m.role !== 'system').map((msg, i) => {
                     const isTechnical = msg.role === 'tool' || (msg.role === 'assistant' && msg.tool_calls);
-                    
+
                     if (isTechnical) {
                         return <TechnicalMessage key={i} msg={msg} getToolIcon={getToolIcon} />;
                     }
@@ -349,7 +349,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                                         {msg.content}
                                     </ReactMarkdown>
                                 </div>
-                                
+
                                 {msg.role === 'assistant' && msg.content.includes('```') && (
                                     <button
                                         onClick={() => extractAndApplyBlock(msg.content!)}
@@ -363,14 +363,14 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                         </div>
                     );
                 })}
-                
+
                 {(isTyping || activeTools.length > 0) && (
                     <div className="flex flex-col mr-auto items-start max-w-[90%] space-y-2">
                         <div className="flex items-center gap-2 mb-1 opacity-50">
                             <FiCpu size={10} />
                             <span className="text-[8px] font-black tracking-tight">Assistant</span>
                         </div>
-                        
+
                         {activeTools.length > 0 ? (
                             activeTools.map(tool => (
                                 <div key={tool.id} className="bg-[#121214] border border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 w-64 shadow-lg animate-in fade-in slide-in-from-left-2 duration-300">
