@@ -1,5 +1,5 @@
-import React from "react";
-import { FiDatabase, FiSettings, FiChevronLeft, FiChevronRight, FiPlay, FiPlus, FiEdit2, FiLayers, FiGlobe } from "react-icons/fi";
+import React, { useState } from "react";
+import { FiDatabase, FiSettings, FiChevronLeft, FiChevronRight, FiPlay, FiPlus, FiEdit2, FiLayers, FiGlobe, FiChevronDown } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { ToolboxButton } from "./ToolboxButton";
 import { ViewerBlock, ViewerMatcher } from "@src/context/ViewerContext";
@@ -20,6 +20,47 @@ interface ToolboxProps {
     matchers: ViewerMatcher[];
     setMatchers: (matchers: ViewerMatcher[]) => void;
 }
+
+const EditorInfo: React.FC = () => {
+    const [isCollapsed, setIsCollapsed] = useState(true);
+
+    return (
+        <div className="p-4 border-t border-zinc-900">
+            <div className="bg-blue-600/5 border border-blue-500/20 rounded-xl overflow-hidden">
+                <button 
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className="w-full p-4 flex items-center justify-between hover:bg-blue-500/5 transition-colors group"
+                >
+                    <h4 className="text-[10px] font-black uppercase text-blue-400">Editor Info</h4>
+                    {isCollapsed ? (
+                        <FiChevronRight size={12} className="text-zinc-600 group-hover:text-blue-400 transition-colors" />
+                    ) : (
+                        <FiChevronDown size={12} className="text-zinc-600 group-hover:text-blue-400 transition-colors" />
+                    )}
+                </button>
+                
+                {!isCollapsed && (
+                    <div className="px-4 pb-4 text-[10px] text-zinc-500 leading-relaxed space-y-3">
+                        <p>Strictly use <code className="text-zinc-300">async function code()</code> as the entry point.</p>
+
+                        <div className="space-y-1">
+                            <div className="text-zinc-600 font-bold uppercase text-[9px]">Available (Async):</div>
+                            <ul className="space-y-0.5 text-zinc-400 font-mono text-[9px]">
+                                <li>• readRequestHeaders()</li>
+                                <li>• readRequestBody()</li>
+                                <li>• readResponseHeaders()</li>
+                                <li>• readResponseBody()</li>
+                            </ul>
+                        </div>
+                        <p className="text-[9px] bg-orange-500/10 text-orange-400 p-2 rounded border border-orange-500/20">
+                            <FiGlobe className="inline mr-1" /> Libraries: Use CDN tags!
+                        </p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export const Toolbox: React.FC<ToolboxProps> = ({
     isVisible, maximizedBlockId, selectedTraffic, testSource,
@@ -200,27 +241,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({
                 </div>
             </div>
 
-            <div className="p-4 border-t border-zinc-900">
-                <div className="bg-blue-600/5 border border-blue-500/20 rounded-xl p-4">
-                    <h4 className="text-[10px] font-black uppercase text-blue-400 mb-2">Editor Info</h4>
-                    <div className="text-[10px] text-zinc-500 leading-relaxed space-y-3">
-                        <p>Strictly use <code className="text-zinc-300">async function code()</code> as the entry point.</p>
-
-                        <div className="space-y-1">
-                            <div className="text-zinc-600 font-bold uppercase text-[9px]">Available (Async):</div>
-                            <ul className="space-y-0.5 text-zinc-400 font-mono text-[9px]">
-                                <li>• readRequestHeaders()</li>
-                                <li>• readRequestBody()</li>
-                                <li>• readResponseHeaders()</li>
-                                <li>• readResponseBody()</li>
-                            </ul>
-                        </div>
-                        <p className="text-[9px] bg-orange-500/10 text-orange-400 p-2 rounded border border-orange-500/20">
-                            <FiGlobe className="inline mr-1" /> Libraries: Use CDN tags!
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <EditorInfo />
         </div>
     );
 };
