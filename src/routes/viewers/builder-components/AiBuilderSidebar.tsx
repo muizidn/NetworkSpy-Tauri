@@ -47,6 +47,7 @@ interface AiBuilderSidebarProps {
     onRemoveBlock: (id: string) => void;
     onUpdateBlock: (id: string, updates: Partial<ViewerBlock>) => void;
     onClearBlocks: () => void;
+    onReorderBlocks: (ids: string[]) => void;
     selectedTrafficId: string;
     testSource: 'live' | 'session';
     selectedSessionId: string;
@@ -109,7 +110,7 @@ const TechnicalMessage: React.FC<{
 };
 
 export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
-    const { isVisible, onClose, blocks, onInjectBlock, onRemoveBlock, onUpdateBlock, onClearBlocks } = props;
+    const { isVisible, onClose, blocks, onInjectBlock, onRemoveBlock, onUpdateBlock, onClearBlocks, onReorderBlocks } = props;
     const { openRouterKey, openRouterModel } = useSettingsContext();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
@@ -280,6 +281,9 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
                         result = "Success";
                     } else if (functionName === "clear_all_blocks") {
                         onClearBlocks();
+                        result = "Success";
+                    } else if (functionName === "reorder_blocks") {
+                        onReorderBlocks(args.blockIds);
                         result = "Success";
                     }
 

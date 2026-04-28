@@ -101,5 +101,23 @@
         "properties": {}
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "reorder_blocks",
+      "description": "Reorder the blocks in the viewer. Provide the complete list of block IDs in the desired order.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "blockIds": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The ordered list of block IDs."
+          }
+        },
+        "required": ["blockIds"]
+      }
+    }
   }
 ]

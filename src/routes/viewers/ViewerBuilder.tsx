@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Viewer } from "@src/context/ViewerContext";
+import { Viewer, ViewerBlock } from "@src/context/ViewerContext";
 import { useViewerBuilderState } from "./builder-hooks/useViewerBuilderState";
 
 // Components
@@ -54,7 +54,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
         switch (viewMode) {
             case 'preview':
                 return (
-                    <Canvas 
+                    <Canvas
                         blocks={blocks}
                         maximizedBlockId={maximizedBlockId}
                         setMaximizedBlockId={setMaximizedBlockId}
@@ -66,7 +66,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                 );
             case 'json':
                 return (
-                    <JsonSourceEditor 
+                    <JsonSourceEditor
                         blocks={blocks}
                         matchers={matchers}
                         previewConfig={{
@@ -83,10 +83,10 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                 );
             case 'source':
                 return (
-                    <FullSourceEditor 
-                        viewerName={viewerName} 
-                        blocks={blocks} 
-                        testResults={testResults} 
+                    <FullSourceEditor
+                        viewerName={viewerName}
+                        blocks={blocks}
+                        testResults={testResults}
                     />
                 );
         }
@@ -98,14 +98,22 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
         setIsAiAssistantVisible(true);
         const block = blocks.find(b => b.id === blockId);
         setAiIncomingMessage(`I'm getting an error in my block "${block?.title || blockId}": \n\n\`\`\`\n${error}\n\`\`\`\n\nCan you analyze the current traffic and help me fix this?`);
-        
+
         // Reset the incoming message after a delay so it can be re-triggered
         setTimeout(() => setAiIncomingMessage(undefined), 1000);
     };
 
+    const reorderBlocks = (ids: string[]) => {
+        setBlocks(prev => {
+            const newBlocks = ids.map(id => prev.find(b => b.id === id)).filter(Boolean) as ViewerBlock[];
+            const remainingBlocks = prev.filter(b => !ids.includes(b.id));
+            return [...newBlocks, ...remainingBlocks];
+        });
+    };
+
     return (
         <div className="flex flex-col h-full bg-[#050505]">
-            <BuilderHeader 
+            <BuilderHeader
                 viewerName={viewerName}
                 setViewerName={setViewerName}
                 isEditingName={isEditingName}
@@ -122,34 +130,34 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                 onBack={onBack}
             />
 
-                <div className="flex-1 flex overflow-hidden relative">
-                    <div className="flex-1 flex overflow-hidden">
-                        {mainContent()}
-                    </div>
+            <div className="flex-1 flex overflow-hidden relative">
+                <div className="flex-1 flex overflow-hidden">
+                    {mainContent()}
+                </div>
 
-                    {viewMode === 'preview' && (
-                        <TestContextOverlay 
-                            selectedTraffic={selectedTraffic}
-                            testSource={testSource}
-                            setIsSourceDialogOpen={setIsSourceDialogOpen}
-                            goPrev={goPrev}
-                            goNext={goNext}
-                            currentIndex={currentIndex}
-                            totalTraffic={filteredTraffic.length}
-                            runPreview={runPreview}
-                            isRunning={isRunning}
-                        />
-                    )}
-
-                    <Toolbox 
-                        isVisible={isToolboxVisible}
-                        maximizedBlockId={maximizedBlockId}
-                        addBlock={addBlock}
-                        matchers={matchers}
-                        setMatchers={setMatchers}
+                {viewMode === 'preview' && (
+                    <TestContextOverlay
+                        selectedTraffic={selectedTraffic}
+                        testSource={testSource}
+                        setIsSourceDialogOpen={setIsSourceDialogOpen}
+                        goPrev={goPrev}
+                        goNext={goNext}
+                        currentIndex={currentIndex}
+                        totalTraffic={filteredTraffic.length}
+                        runPreview={runPreview}
+                        isRunning={isRunning}
                     />
+                )}
 
-                <AiBuilderSidebar 
+                <Toolbox
+                    isVisible={isToolboxVisible}
+                    maximizedBlockId={maximizedBlockId}
+                    addBlock={addBlock}
+                    matchers={matchers}
+                    setMatchers={setMatchers}
+                />
+
+                <AiBuilderSidebar
                     isVisible={isAiAssistantVisible}
                     onClose={() => setIsAiAssistantVisible(false)}
                     blocks={blocks}
@@ -157,6 +165,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                     onRemoveBlock={deleteBlock}
                     onUpdateBlock={updateBlock}
                     onClearBlocks={clearBlocks}
+                    onReorderBlocks={reorderBlocks}
                     selectedTrafficId={selectedTrafficId}
                     testSource={testSource}
                     selectedSessionId={selectedSessionId}
@@ -165,7 +174,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                 />
             </div>
 
-            <SourceDialog 
+            <SourceDialog
                 isOpen={isSourceDialogOpen}
                 onClose={() => setIsSourceDialogOpen(false)}
                 testSource={testSource}

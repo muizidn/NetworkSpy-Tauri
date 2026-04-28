@@ -130,19 +130,19 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
             css: type === 'html' ? getDefaultCss() : undefined,
             padding: type === 'html' ? 0 : 4
         };
-        setBlocks([...blocks, newBlock]);
+        setBlocks(prev => [...prev, newBlock]);
     };
 
     const injectBlock = (block: ViewerBlock) => {
-        setBlocks([...blocks, { ...block, id: block.id || Math.random().toString(36).substr(2, 9) }]);
+        setBlocks(prev => [...prev, { ...block, id: block.id || Math.random().toString(36).substr(2, 9) }]);
     };
 
     const deleteBlock = (id: string) => {
-        setBlocks(blocks.filter(b => b.id !== id));
+        setBlocks(prev => prev.filter(b => b.id !== id));
     };
 
     const updateBlock = (id: string, updates: Partial<ViewerBlock>) => {
-        setBlocks(blocks.map(b => b.id === id ? { ...b, ...updates } : b));
+        setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
     };
 
     const clearBlocks = () => {
