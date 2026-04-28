@@ -6,9 +6,13 @@ import remarkGfm from 'remark-gfm';
 import { useSettingsContext } from "@src/context/SettingsProvider";
 import { ViewerBlock } from "@src/context/ViewerContext";
 
+import { invoke } from "@tauri-apps/api/core";
+import { useAppProvider } from "@src/packages/app-env";
 import systemPrompt from "./prompts/viewer-builder.txt?raw";
 import tools from "./prompts/tools.json";
 import examples from "./prompts/examples.json";
+import { RequestPairData } from "@src/packages/bottom-pane/RequestTab";
+import { ResponsePairData } from "@src/packages/bottom-pane/ResponseTab";
 
 interface ToolCallFunction {
     name: string;
@@ -43,6 +47,11 @@ interface AiBuilderSidebarProps {
     onRemoveBlock: (id: string) => void;
     onUpdateBlock: (id: string, updates: Partial<ViewerBlock>) => void;
     onClearBlocks: () => void;
+    selectedTrafficId: string;
+    testSource: 'live' | 'session';
+    selectedSessionId: string;
+    testResults: Record<string, any>;
+    incomingMessage?: string;
 }
 
 const TechnicalMessage: React.FC<{
@@ -99,9 +108,8 @@ const TechnicalMessage: React.FC<{
     );
 };
 
-export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
-    isVisible, onClose, blocks, onInjectBlock, onRemoveBlock, onUpdateBlock, onClearBlocks
-}) => {
+export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = (props) => {
+    const { isVisible, onClose, blocks, onInjectBlock, onRemoveBlock, onUpdateBlock, onClearBlocks } = props;
     const { openRouterKey, openRouterModel } = useSettingsContext();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
@@ -133,17 +141,26 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
         return () => clearInterval(interval);
     }, []);
 
-    const handleSendMessage = async () => {
-        if (!input.trim() || isTyping) return;
+    useEffect(() => {
+        if (props.incomingMessage) {
+            handleSendMessage(props.incomingMessage);
+        }
+    }, [props.incomingMessage]);
+
+    const { provider } = useAppProvider();
+
+    const handleSendMessage = async (overrideInput?: string) => {
+        const textToSend = overrideInput || input;
+        if (!textToSend.trim() || isTyping) return;
         if (!openRouterKey) {
             alert("Please set your OpenRouter API Key in Settings first.");
             return;
         }
 
-        const userMessage: ChatMessage = { role: 'user', content: input };
+        const userMessage: ChatMessage = { role: 'user', content: textToSend };
         let updatedMessages = [...messages, userMessage];
         setMessages(updatedMessages);
-        setInput("");
+        if (!overrideInput) setInput("");
         setIsTyping(true);
 
         try {
@@ -161,13 +178,15 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                         messages: [
                             {
                                 role: "system",
-                                content: systemPrompt.replace("{{BLOCKS}}", JSON.stringify(blocks, null, 2))
+                                content: systemPrompt
+                                    .replace("{{BLOCKS}}", JSON.stringify(blocks, null, 2))
+                                    .replace("{{RESULTS}}", JSON.stringify(props.testResults, null, 2))
                             },
                             ...msgs
                         ],
                         tools,
                         tool_choice: "auto",
-                        stream: false // Streaming tool calls is complex, we'll keep it false for now but handle it properly
+                        stream: false
                     })
                 });
 
@@ -194,6 +213,19 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                 }));
                 setActiveTools(newActiveTools);
 
+                const normalizeHeaders = (headers: any) => {
+                    if (Array.isArray(headers)) {
+                        return headers.reduce((acc: any, h: any) => ({ ...acc, [h.key || h.name]: h.value }), {});
+                    }
+                    return headers || {};
+                };
+
+                const decodeBody = (body: any) => {
+                    if (!body) return "";
+                    if (body instanceof Uint8Array || Array.isArray(body)) return new TextDecoder().decode(new Uint8Array(body));
+                    return body;
+                };
+
                 for (const toolCall of assistantMessage.tool_calls) {
                     const functionName = toolCall.function.name;
                     const args = JSON.parse(toolCall.function.arguments);
@@ -204,6 +236,39 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
 
                     if (functionName === "get_example_block") {
                         result = JSON.stringify((examples as any)[args.category] || "Not found");
+                    } else if (functionName === "get_current_traffic_data") {
+                        if (!props.selectedTrafficId) {
+                            result = "No traffic selected. Ask the user to select an item from the context overlay first.";
+                        } else {
+                            try {
+                                const isReviewMode = props.testSource === 'session';
+                                const trafficId = props.selectedTrafficId;
+                                const sessionId = props.selectedSessionId;
+
+                                let reqData: RequestPairData | null = null;
+                                let resData: ResponsePairData | null = null;
+                                if (!isReviewMode) {
+                                    reqData = await provider.getRequestPairData(trafficId);
+                                    resData = await provider.getResponsePairData(trafficId);
+                                } else {
+                                    reqData = await invoke("get_session_request_data", { sessionId, trafficId });
+                                    resData = await invoke("get_session_response_data", { sessionId, trafficId });
+                                }
+
+                                result = JSON.stringify({
+                                    request: {
+                                        headers: normalizeHeaders(reqData?.headers),
+                                        body: decodeBody(reqData?.body)
+                                    },
+                                    response: {
+                                        headers: normalizeHeaders(resData?.headers),
+                                        body: decodeBody(resData?.body)
+                                    }
+                                });
+                            } catch (e: any) {
+                                result = "Error fetching data: " + e.message;
+                            }
+                        }
                     } else if (functionName === "inject_block") {
                         onInjectBlock(args.block);
                         result = "Success";
@@ -424,7 +489,7 @@ export const AiBuilderSidebar: React.FC<AiBuilderSidebarProps> = ({
                             rows={1}
                         />
                         <button
-                            onClick={handleSendMessage}
+                            onClick={() => handleSendMessage()}
                             disabled={!input.trim() || isTyping}
                             className="absolute right-2 bottom-2 p-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-30 text-white rounded-lg transition-all"
                         >

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Viewer } from "@src/context/ViewerContext";
 import { useViewerBuilderState } from "./builder-hooks/useViewerBuilderState";
 
@@ -61,6 +61,7 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                         testResults={testResults}
                         updateBlock={updateBlock}
                         deleteBlock={deleteBlock}
+                        onDebugWithAi={handleDebugWithAi}
                     />
                 );
             case 'json':
@@ -89,6 +90,17 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                     />
                 );
         }
+    };
+
+    const [aiIncomingMessage, setAiIncomingMessage] = useState<string | undefined>(undefined);
+
+    const handleDebugWithAi = (blockId: string, error: string) => {
+        setIsAiAssistantVisible(true);
+        const block = blocks.find(b => b.id === blockId);
+        setAiIncomingMessage(`I'm getting an error in my block "${block?.title || blockId}": \n\n\`\`\`\n${error}\n\`\`\`\n\nCan you analyze the current traffic and help me fix this?`);
+        
+        // Reset the incoming message after a delay so it can be re-triggered
+        setTimeout(() => setAiIncomingMessage(undefined), 1000);
     };
 
     return (
@@ -145,6 +157,11 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                     onRemoveBlock={deleteBlock}
                     onUpdateBlock={updateBlock}
                     onClearBlocks={clearBlocks}
+                    selectedTrafficId={selectedTrafficId}
+                    testSource={testSource}
+                    selectedSessionId={selectedSessionId}
+                    testResults={testResults}
+                    incomingMessage={aiIncomingMessage}
                 />
             </div>
 

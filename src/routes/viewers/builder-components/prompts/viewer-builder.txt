@@ -15,6 +15,9 @@ Each block has this schema:
 Current Blocks:
 {{BLOCKS}}
 
+Execution Results (Errors):
+{{RESULTS}}
+
 Instructions:
 1. When asked to generate a block, provide the JSON for that block inside a markdown code block.
 2. Be creative with HTML/CSS for 'html' type blocks.

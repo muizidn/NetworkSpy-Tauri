@@ -12,6 +12,7 @@ interface CanvasProps {
     testResults?: Record<string, any>;
     updateBlock?: (id: string, updates: Partial<ViewerBlock>) => void;
     deleteBlock?: (id: string) => void;
+    onDebugWithAi?: (blockId: string, error: string) => void;
 }
 
 export const Canvas: React.FC<CanvasProps> = ({
@@ -21,7 +22,8 @@ export const Canvas: React.FC<CanvasProps> = ({
     testResults,
     updateBlock,
     deleteBlock,
-    isViewerMode
+    isViewerMode,
+    onDebugWithAi
 }) => {
     // If a block is maximized, show only that block in full view
     if (maximizedBlockId && setMaximizedBlockId && updateBlock) {
@@ -60,6 +62,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                             result={testResults && testResults[block.id]}
                             onDelete={deleteBlock ? (() => deleteBlock(block.id)) : undefined}
                             onUpdate={updateBlock ? ((updates) => updateBlock(block.id, updates)) : undefined}
+                            onDebugWithAi={onDebugWithAi}
                         />
                     ))
                 )}

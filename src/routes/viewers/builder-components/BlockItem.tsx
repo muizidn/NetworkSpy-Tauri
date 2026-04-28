@@ -12,9 +12,10 @@ interface BlockItemProps {
     isViewerMode?: boolean;
     onDelete?: () => void;
     onUpdate?: (updates: Partial<ViewerBlock>) => void;
+    onDebugWithAi?: (blockId: string, error: string) => void;
 }
 
-export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = false }: BlockItemProps) => {
+export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = false, onDebugWithAi }: BlockItemProps) => {
     const [isEditingCode, setIsEditingCode] = useState(false);
     const [activeTab, setActiveTab] = useState<'js' | 'html' | 'css' | 'output'>('js');
     const [isMaximized, setIsMaximized] = useState(false);
@@ -50,6 +51,7 @@ export const BlockItem = ({ block, result, onDelete, onUpdate, isViewerMode = fa
                     result={result}
                     isEditingCode={isEditingCode}
                     isMaximized={isMaximized}
+                    onDebugWithAi={onDebugWithAi}
                 />
 
                 {!isViewerMode && isEditingCode && (

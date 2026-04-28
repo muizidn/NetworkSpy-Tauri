@@ -90,5 +90,16 @@
         "properties": {}
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_current_traffic_data",
+      "description": "Get the request and response data (headers and body) for the currently selected test traffic. This helps you understand the schema to generate appropriate UI.",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
   }
 ]
