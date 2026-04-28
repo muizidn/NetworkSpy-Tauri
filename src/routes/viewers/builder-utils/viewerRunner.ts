@@ -89,6 +89,10 @@ export const executeViewerBlock = async (block: ViewerBlock, options: RunnerOpti
             return (async (context) => {
                 try {
                     ${userCode}
+                    if (typeof code === 'function') {
+                        return await code();
+                    }
+                    return null;
                 } catch (e) {
                     return { error: e.toString() };
                 }
