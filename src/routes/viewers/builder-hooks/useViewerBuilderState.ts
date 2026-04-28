@@ -29,7 +29,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     const [testSource, setTestSource] = useState<'live' | 'session'>(parsedContent.previewConfig?.testSource || 'live');
     const [selectedSessionId, setSelectedSessionId] = useState<string>(parsedContent.previewConfig?.selectedSessionId || "");
     const [selectedTrafficId, setSelectedTrafficId] = useState<string>(parsedContent.previewConfig?.selectedTrafficId || "");
-    const [filter, setFilter] = useState<string>(parsedContent.previewConfig?.filter || "");
+    const [filter, setFilter] = useState<string>(parsedContent.previewConfig?.filter === "create" ? "" : (parsedContent.previewConfig?.filter || ""));
 
     const [isToolboxVisible, setIsToolboxVisible] = useState(true);
     const [maximizedBlockId, setMaximizedBlockId] = useState<string | null>(null);
@@ -82,9 +82,11 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
 
     const currentDataSource = testSource === 'live' ? trafficList : sessionTraffic;
     const filteredTraffic = useMemo(() => {
-        if (!filter.trim()) return currentDataSource;
+        const baseItems = currentDataSource.filter((t: any) => t.intercepted);
+        
+        if (!filter.trim()) return baseItems;
         const lowFilter = filter.toLowerCase();
-        return currentDataSource.filter((t: any) =>
+        return baseItems.filter((t: any) =>
             (t.method || "").toLowerCase().includes(lowFilter) ||
             (t.uri || t.url || "").toLowerCase().includes(lowFilter) ||
             t.id.includes(lowFilter)
@@ -100,7 +102,8 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         setTestSource(parsedContent.previewConfig?.testSource || 'live');
         setSelectedSessionId(parsedContent.previewConfig?.selectedSessionId || "");
         setSelectedTrafficId(parsedContent.previewConfig?.selectedTrafficId || "");
-        setFilter(parsedContent.previewConfig?.filter || "");
+        const savedFilter = parsedContent.previewConfig?.filter || "";
+        setFilter(savedFilter === "create" ? "" : savedFilter);
         setMatchers(parsedContent.matchers || []);
     }, [initialViewer, parsedContent]);
 
