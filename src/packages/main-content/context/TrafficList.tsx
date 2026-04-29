@@ -8,10 +8,14 @@ import React, {
 import { TrafficItemMap } from "../model/TrafficItemMap";
 import { Traffic } from "../../../models/Traffic";
 
+// Removed jotai import as it's no longer used here
+
+
 export type TrafficListSelection = {
   firstSelected: TrafficItemMap | null;
   others: TrafficItemMap[] | null;
 };
+
 
 export interface TrafficListContextState {
   trafficList: TrafficItemMap[];
@@ -47,14 +51,10 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
 }) => {
   const [trafficList, setTrafficList] = useState<TrafficItemMap[]>([]);
   const [trafficSet, setTrafficSet] = useState<{ [key: string]: Traffic }>({});
-  const [selections, _setSelections] = useState<TrafficListSelection>({
+  const [selections, setSelections] = useState<TrafficListSelection>({
     firstSelected: null,
     others: null,
   });
-
-  function setSelections(selections: TrafficListSelection) {
-    _setSelections(selections);
-  }
 
   return (
     <TrafficListContext.Provider

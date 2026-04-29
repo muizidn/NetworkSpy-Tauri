@@ -133,6 +133,9 @@ const FilterNodeRenderer = ({
   );
 };
 
+// mainTrafficListSearchAtom removed as requested
+
+
 export const FilterBar = () => {
   const {
     filters,

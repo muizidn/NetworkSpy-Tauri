@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Viewer, ViewerBlock, ViewerContent, ViewerMatcher, useViewerContext } from "@src/context/ViewerContext";
 import { useTrafficListContext } from "@src/packages/main-content/context/TrafficList";
@@ -6,6 +6,8 @@ import { useSessionContext } from "@src/context/SessionContext";
 import { useAppProvider } from "@src/packages/app-env";
 import { getDefaultCode, getDefaultHtml, getDefaultCss } from "../builder-utils/defaults";
 import { executeViewerBlock } from "../builder-utils/viewerRunner";
+// Atoms removed as requested
+
 
 export const useViewerBuilderState = (initialViewer: Viewer) => {
     const { saveViewer } = useViewerContext();
@@ -26,10 +28,11 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
 
     const [blocks, setBlocks] = useState<ViewerBlock[]>(parsedContent.blocks);
     const [matchers, setMatchers] = useState<ViewerMatcher[]>(parsedContent.matchers || []);
-    const [testSource, setTestSource] = useState<'live' | 'session'>(parsedContent.previewConfig?.testSource || 'live');
-    const [selectedSessionId, setSelectedSessionId] = useState<string>(parsedContent.previewConfig?.selectedSessionId || "");
-    const [selectedTrafficId, setSelectedTrafficId] = useState<string>(parsedContent.previewConfig?.selectedTrafficId || "");
-    const [filter, setFilter] = useState<string>(parsedContent.previewConfig?.filter === "create" ? "" : (parsedContent.previewConfig?.filter || ""));
+    
+    const [testSource, setTestSource] = useState<'live' | 'session'>('live');
+    const [selectedSessionId, setSelectedSessionId] = useState<string>("");
+    const [selectedTrafficId, setSelectedTrafficId] = useState<string>("");
+    const [filter, setFilter] = useState<string>("");
 
     const [isToolboxVisible, setIsToolboxVisible] = useState(true);
     const [maximizedBlockId, setMaximizedBlockId] = useState<string | null>(null);
@@ -118,16 +121,42 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         return inList || externalTrafficItem;
     }, [currentDataSource, selectedTrafficId, externalTrafficItem]);
 
+    const { selections } = useTrafficListContext();
+    // lastActiveViewerIdAtom removed
+
+
+    // Track the last loaded viewer ID to avoid redundant initializations
+    const lastLoadedId = useRef<string | null>(null);
+
     useEffect(() => {
+        // Basic viewer data (always update when viewer or content changes)
         setViewerName(initialViewer.name);
         setBlocks(parsedContent.blocks);
-        setTestSource(parsedContent.previewConfig?.testSource || 'live');
-        setSelectedSessionId(parsedContent.previewConfig?.selectedSessionId || "");
-        setSelectedTrafficId(parsedContent.previewConfig?.selectedTrafficId || "");
-        const savedFilter = parsedContent.previewConfig?.filter || "";
-        setFilter(savedFilter === "create" ? "" : savedFilter);
         setMatchers(parsedContent.matchers || []);
-    }, [initialViewer, parsedContent]);
+        // lastActiveViewerIdAtom removed
+
+
+        // Preview settings - only initialize if we're switching to a new viewer
+        if (lastLoadedId.current !== initialViewer.id) {
+            lastLoadedId.current = initialViewer.id;
+
+            const config = parsedContent.previewConfig;
+            if (config?.testSource) setTestSource(config.testSource);
+            if (config?.selectedSessionId) setSelectedSessionId(config.selectedSessionId);
+            
+            // Priority: Saved selection > Main list selection > Current atom value
+            if (config?.selectedTrafficId) {
+                setSelectedTrafficId(config.selectedTrafficId);
+            } else if (selections.firstSelected?.id) {
+                setSelectedTrafficId(String(selections.firstSelected.id));
+            }
+
+            // Filter persistence: only overwrite if the viewer has a specific saved filter
+            if (config?.filter && config.filter !== "create") {
+                setFilter(config.filter);
+            }
+        }
+    }, [initialViewer.id, parsedContent]);
 
     const handleSave = async () => {
         const content: ViewerContent = {
