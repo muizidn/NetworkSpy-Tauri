@@ -34,6 +34,11 @@ interface LLMData {
   temperature?: number;
   stream?: boolean;
   tools?: Tool[];
+  top_p?: number;
+  max_tokens?: number;
+  presence_penalty?: number;
+  frequency_penalty?: number;
+  raw_config?: Record<string, any>;
 }
 
 export const LLMPromptMode = () => {
@@ -74,6 +79,16 @@ export const LLMPromptMode = () => {
           temperature: parsed.temperature,
           stream: parsed.stream,
           tools: parsed.tools,
+          top_p: parsed.top_p,
+          max_tokens: parsed.max_tokens,
+          presence_penalty: parsed.presence_penalty,
+          frequency_penalty: parsed.frequency_penalty,
+          raw_config: Object.keys(parsed).reduce((acc, key) => {
+            if (!['messages', 'tools', 'prompt'].includes(key)) {
+              acc[key] = parsed[key];
+            }
+            return acc;
+          }, {} as Record<string, any>)
         };
       }
 
@@ -103,7 +118,7 @@ export const LLMPromptMode = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
   const [collapsedMsgs, setCollapsedMsgs] = useState<Set<number>>(new Set());
-  const [activeTab, setActiveTab] = useState<"messages" | "tools">("messages");
+  const [activeTab, setActiveTab] = useState<"messages" | "tools" | "config">("messages");
 
   // Reset selected tool when switching tabs or when tools change
   useEffect(() => {
@@ -201,12 +216,9 @@ export const LLMPromptMode = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {llmData.temperature !== undefined && (
-            <div className="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400 font-mono tracking-tighter">TEMP: {llmData.temperature}</div>
-          )}
-          {llmData.stream && (
-            <div className="text-[10px] bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-900/50 font-bold tracking-widest">STREAMING</div>
-          )}
+          <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400">
+            <FiCpu size={16} />
+          </div>
         </div>
       </div>
 
@@ -222,7 +234,7 @@ export const LLMPromptMode = () => {
           Conversation
           {activeTab === "messages" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />}
         </button>
-        {llmData.tools && llmData.tools.length > 0 && (
+        {llmData?.tools && llmData.tools.length > 0 && (
           <button 
             onClick={() => setActiveTab("tools")}
             className={twMerge(
@@ -234,12 +246,22 @@ export const LLMPromptMode = () => {
             {activeTab === "tools" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />}
           </button>
         )}
+        <button 
+          onClick={() => setActiveTab("config")}
+          className={twMerge(
+            "px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative",
+            activeTab === "config" ? "text-amber-400" : "text-zinc-500 hover:text-zinc-300"
+          )}
+        >
+          Configuration
+          {activeTab === "config" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />}
+        </button>
       </div>
 
       {activeTab === "messages" ? (
         <>
           {/* Filter / Search Bar */}
-          {llmData.messages && (
+          {llmData?.messages && (
         <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-900/50 flex flex-wrap items-center gap-3 shrink-0">
           <div className="flex bg-black/40 rounded-lg p-1 border border-zinc-800">
             {["all", "user", "assistant", "tool", "system"].map(role => (
@@ -350,15 +372,15 @@ export const LLMPromptMode = () => {
               </div>
             ))
           )}
-            {llmData.messages && filteredMessages.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-50 py-20">
-                <FiInfo size={40} className="mb-4" />
-                <p className="text-sm">No messages match your current filters</p>
-              </div>
-            )}
+          {llmData?.messages && filteredMessages.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-zinc-600 opacity-50 py-20">
+              <FiInfo size={40} className="mb-4" />
+              <p className="text-sm">No messages match your current filters</p>
+            </div>
+          )}
           </div>
         </>
-      ) : (
+      ) : activeTab === "tools" ? (
         <div className="flex-grow flex overflow-hidden">
           {/* Tool List Sidebar */}
           <div className="w-64 border-r border-zinc-800 overflow-y-auto custom-scrollbar shrink-0 bg-black/20">
@@ -422,7 +444,7 @@ export const LLMPromptMode = () => {
                   <div className="mb-8 group relative">
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">Description</div>
-                      <CopyButton text={selectedTool.function.description} />
+                      <CopyButton text={selectedTool.function.description!} />
                     </div>
                     <div className="bg-zinc-900/50 rounded-2xl p-5 text-sm text-zinc-300 leading-relaxed italic">
                       {selectedTool.function.description}
@@ -458,7 +480,75 @@ export const LLMPromptMode = () => {
             )}
           </div>
         </div>
+      ) : (
+        <div className="flex-grow overflow-y-auto p-8 custom-scrollbar bg-black/20">
+          <div className="max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-xl shadow-amber-900/20">
+                <FiInfo size={22} />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-white tracking-tight uppercase italic">Model Parameters</h2>
+                <p className="text-[10px] text-zinc-500 font-mono tracking-widest uppercase">Global configuration for this request</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 gap-4">
+              {/* Core Parameters */}
+              <ConfigCard label="Model" value={llmData?.model} icon={<FiCpu />} color="zinc" />
+              <ConfigCard 
+                label="Temperature" 
+                value={llmData?.temperature ?? "Not set"} 
+                icon={<div className="text-[10px] font-black italic">T°</div>} 
+                color={llmData?.temperature !== undefined ? "amber" : "zinc"} 
+              />
+              <ConfigCard 
+                label="Streaming" 
+                value={llmData?.stream ? "Enabled" : "Disabled"} 
+                icon={<div className="w-2 h-2 rounded-full bg-current animate-pulse" />} 
+                color={llmData?.stream ? "blue" : "zinc"} 
+              />
+              
+              {/* Optional Parameters */}
+              {llmData?.max_tokens && <ConfigCard label="Max Tokens" value={llmData.max_tokens} icon={<FiTerminal />} color="emerald" />}
+              {llmData?.top_p !== undefined && <ConfigCard label="Top P" value={llmData.top_p} icon={<div className="text-[10px] font-black">P</div>} color="emerald" />}
+              {llmData?.frequency_penalty !== undefined && <ConfigCard label="Freq Penalty" value={llmData.frequency_penalty} color="purple" />}
+              {llmData?.presence_penalty !== undefined && <ConfigCard label="Pres Penalty" value={llmData.presence_penalty} color="purple" />}
+
+              {/* Raw Config Dump */}
+              <div className="col-span-full mt-6 group">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">Raw JSON Request Configuration</div>
+                  <CopyButton text={JSON.stringify(llmData?.raw_config, null, 2)} />
+                </div>
+                <div className="bg-black/40 border border-zinc-800 rounded-2xl p-6 font-mono text-xs text-zinc-400 overflow-x-auto shadow-inner">
+                  {JSON.stringify(llmData?.raw_config, null, 2)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
+    </div>
+  );
+};
+
+const ConfigCard = ({ label, value, icon = null, color = "zinc" }: { label: string, value: any, icon?: any, color?: string }) => {
+  const colorClasses = {
+    zinc: "text-zinc-400 bg-zinc-800/20 border-zinc-800/50",
+    amber: "text-amber-400 bg-amber-500/10 border-amber-900/30",
+    blue: "text-blue-400 bg-blue-500/10 border-blue-900/30",
+    emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-900/30",
+    purple: "text-purple-400 bg-purple-500/10 border-purple-900/30"
+  }[color] || "text-zinc-400 bg-zinc-800/20 border-zinc-800/50";
+
+  return (
+    <div className={twMerge("rounded-2xl border p-4 flex flex-col gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]", colorClasses)}>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{label}</span>
+        {icon && <div className="opacity-80">{icon}</div>}
+      </div>
+      <div className="text-lg font-black text-zinc-100 tracking-tight truncate">{String(value)}</div>
     </div>
   );
 };
