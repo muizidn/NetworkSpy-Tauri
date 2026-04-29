@@ -77,18 +77,19 @@ const Content = () => {
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map((t: any) => ({
             ...t,
-            content: <CenterPane />,
+            content: <CenterPane tabId={t.id} />,
           }));
         }
       } catch (e) {
         console.error("Failed to parse saved tabs", e);
       }
     }
+    const initialId = `tab-live-${Date.now()}`;
     return [
       {
-        id: `tab-live-${Date.now()}`,
+        id: initialId,
         title: "Live Traffic",
-        content: <CenterPane />,
+        content: <CenterPane tabId={initialId} />,
       },
     ];
   });
@@ -137,7 +138,7 @@ const Content = () => {
     const newTab = {
       id: newId,
       title: `New Session ${tabs.length + 1}`,
-      content: <CenterPane />,
+      content: <CenterPane tabId={newId} />,
     };
     setTabs((prev) => [...prev, newTab]);
   };
@@ -146,11 +147,12 @@ const Content = () => {
     setTabs((prev) => {
       const remaining = prev.filter((t) => t.id !== id);
       if (remaining.length === 0) {
+        const fallbackId = `tab-live-${Date.now()}`;
         return [
           {
-            id: `tab-live-${Date.now()}`,
+            id: fallbackId,
             title: "Live Traffic",
-            content: <CenterPane />,
+            content: <CenterPane tabId={fallbackId} />,
           },
         ];
       }

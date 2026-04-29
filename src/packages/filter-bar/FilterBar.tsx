@@ -133,8 +133,8 @@ const FilterNodeRenderer = ({
   );
 };
 
-// mainTrafficListSearchAtom removed as requested
-
+import { useAtom, useAtomValue } from "jotai";
+import { mainTrafficListSearchAtom, activeTabIdAtom } from "@src/utils/atoms";
 
 export const FilterBar = () => {
   const {
@@ -147,7 +147,8 @@ export const FilterBar = () => {
     removePredefinedFilter
   } = useFilterContext();
 
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const activeTabId = useAtomValue(activeTabIdAtom);
+  const [searchTerm, setSearchTerm] = useAtom(mainTrafficListSearchAtom(activeTabId));
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {

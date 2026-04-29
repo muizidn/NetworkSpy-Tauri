@@ -44,7 +44,8 @@ import FiltersPage from "./routes/filters";
 import ProxyList from "./routes/tools/ProxyList";
 import { SessionProvider } from "./context/SessionContext";
 import { ViewerProvider } from "./context/ViewerContext";
-import { FilterProvider } from "./context/FilterContext";
+// FilterProvider removed as it is now per-tab in CenterPane
+
 import { BreakpointHitView } from "./packages/breakpoint/BreakpointHitView";
 
 // import ScriptEditor from "./routes/script-editor";
@@ -149,15 +150,13 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                 <SettingsProvider>
                   <FilterPresetProvider>
                     <TrafficListProvider>
-                      <FilterProvider>
-                        <TauriEnvProvider>
-                          <PaneProvider>
-                            <DndProvider backend={HTML5Backend}>
-                              <RouterProvider router={router} />
-                            </DndProvider>
-                          </PaneProvider>
-                        </TauriEnvProvider>
-                      </FilterProvider>
+                      <TauriEnvProvider>
+                        <PaneProvider>
+                          <DndProvider backend={HTML5Backend}>
+                            <RouterProvider router={router} />
+                          </DndProvider>
+                        </PaneProvider>
+                      </TauriEnvProvider>
                     </TrafficListProvider>
                   </FilterPresetProvider>
                 </SettingsProvider>

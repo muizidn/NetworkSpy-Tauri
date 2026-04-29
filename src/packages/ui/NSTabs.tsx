@@ -3,6 +3,8 @@ import { Icon } from "./Icon";
 import { twMerge } from "tailwind-merge";
 import Tab from "@src/stories/app/atoms/Tab";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { useAtom } from "jotai";
+import { activeTabIdAtom } from "@src/utils/atoms";
 
 export interface Tab {
   id: string;
@@ -61,7 +63,17 @@ export const NSTabs: React.FC<NSTabsProps> = ({
   extraLeftContent,
   integratedTitlebar = false,
 }) => {
-  const [currentTab, setCurrentTab] = useState(initialTab || tabs[0]?.id || "");
+  const [currentTab, setCurrentTabInternal] = useState(initialTab || tabs[0]?.id || "");
+  const [activeTabId, setActiveTabId] = useAtom(activeTabIdAtom);
+
+  const setCurrentTab = useCallback((id: string) => {
+    setCurrentTabInternal(id);
+    setActiveTabId(id);
+  }, [setActiveTabId]);
+
+  useEffect(() => {
+    if (currentTab) setActiveTabId(currentTab);
+  }, [currentTab, setActiveTabId]);
   const prevTabsLength = useRef(tabs.length);
 
   useEffect(() => {

@@ -8,13 +8,10 @@ import React, {
 import { TrafficItemMap } from "../model/TrafficItemMap";
 import { Traffic } from "../../../models/Traffic";
 
-// Removed jotai import as it's no longer used here
+import { useAtom, useAtomValue } from "jotai";
+import { mainTrafficListSelectionsAtom, activeTabIdAtom, TrafficListSelection } from "@src/utils/atoms";
 
 
-export type TrafficListSelection = {
-  firstSelected: TrafficItemMap | null;
-  others: TrafficItemMap[] | null;
-};
 
 
 export interface TrafficListContextState {
@@ -51,10 +48,8 @@ export const TrafficListProvider: React.FC<TrafficListProviderProps> = ({
 }) => {
   const [trafficList, setTrafficList] = useState<TrafficItemMap[]>([]);
   const [trafficSet, setTrafficSet] = useState<{ [key: string]: Traffic }>({});
-  const [selections, setSelections] = useState<TrafficListSelection>({
-    firstSelected: null,
-    others: null,
-  });
+  const activeTabId = useAtomValue(activeTabIdAtom);
+  const [selections, setSelections] = useAtom(mainTrafficListSelectionsAtom(activeTabId));
 
   return (
     <TrafficListContext.Provider

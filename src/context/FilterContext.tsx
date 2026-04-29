@@ -41,9 +41,9 @@ export const useFilterContext = () => {
 import { useAtom } from "jotai";
 import { mainTrafficListFiltersAtom } from "@src/utils/atoms";
 
-export const FilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const FilterProvider: React.FC<{ children: ReactNode; tabId?: string }> = ({ children, tabId = "global" }) => {
   const { trafficList } = useTrafficListContext();
-  const [filters, setFilters] = useAtom(mainTrafficListFiltersAtom);
+  const [filters, setFilters] = useAtom(mainTrafficListFiltersAtom(tabId));
   
   const { 
     predefinedFilters, 
