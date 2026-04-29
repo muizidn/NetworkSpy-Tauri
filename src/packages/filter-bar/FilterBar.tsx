@@ -134,7 +134,7 @@ const FilterNodeRenderer = ({
 };
 
 import { useAtom, useAtomValue } from "jotai";
-import { mainTrafficListSearchAtom, activeTabIdAtom } from "@src/utils/atoms";
+import { mainTrafficListSearchAtom, activeTabIdAtom } from "@src/utils/trafficAtoms";
 
 export const FilterBar = () => {
   const {

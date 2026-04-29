@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
+import { useAtom } from "jotai";
+import { activeViewerBuilderAtom } from "@src/utils/viewerBuilderAtoms";
 import { twMerge } from "tailwind-merge";
 
 import ViewerList from "@src/routes/viewers/ViewerList";
@@ -8,7 +10,7 @@ import { useSettingsContext } from "@src/context/SettingsProvider";
 import { FiLock, FiZap, FiEye, FiCpu, FiLayers } from "react-icons/fi";
 
 const ViewersPage: React.FC = () => {
-    const [selectedViewer, setSelectedViewer] = useState<Viewer | null>(null);
+    const [selectedViewer, setSelectedViewer] = useAtom(activeViewerBuilderAtom);
     const { plan, isVerified } = useSettingsContext();
 
     const isPro = isVerified && plan?.toLowerCase() === "pro";

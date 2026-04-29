@@ -6,8 +6,20 @@ import { useSessionContext } from "@src/context/SessionContext";
 import { useAppProvider } from "@src/packages/app-env";
 import { getDefaultCode, getDefaultHtml, getDefaultCss } from "../builder-utils/defaults";
 import { executeViewerBlock } from "../builder-utils/viewerRunner";
-// Atoms removed as requested
-
+import { useAtom } from "jotai";
+import { 
+    viewerBuilderBlocksAtom, 
+    viewerBuilderMatchersAtom, 
+    viewerBuilderNameAtom, 
+    viewerBuilderTestSourceAtom, 
+    viewerBuilderSelectedSessionIdAtom, 
+    viewerBuilderSelectedTrafficIdAtom, 
+    viewerBuilderFilterAtom,
+    viewerBuilderViewModeAtom,
+    viewerBuilderAiAssistantVisibleAtom,
+    viewerBuilderToolboxVisibleAtom,
+    viewerBuilderMaximizedBlockIdAtom
+} from "@src/utils/viewerBuilderAtoms";
 
 export const useViewerBuilderState = (initialViewer: Viewer) => {
     const { saveViewer } = useViewerContext();
@@ -15,7 +27,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     const { sessions } = useSessionContext();
     const { provider } = useAppProvider();
 
-    const [viewerName, setViewerName] = useState(initialViewer.name);
+    const [viewerName, setViewerName] = useAtom(viewerBuilderNameAtom(initialViewer.id));
     const [isEditingName, setIsEditingName] = useState(false);
 
     const parsedContent: ViewerContent = useMemo(() => {
@@ -26,22 +38,22 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         }
     }, [initialViewer.content]);
 
-    const [blocks, setBlocks] = useState<ViewerBlock[]>(parsedContent.blocks);
-    const [matchers, setMatchers] = useState<ViewerMatcher[]>(parsedContent.matchers || []);
+    const [blocks, setBlocks] = useAtom(viewerBuilderBlocksAtom(initialViewer.id));
+    const [matchers, setMatchers] = useAtom(viewerBuilderMatchersAtom(initialViewer.id));
     
-    const [testSource, setTestSource] = useState<'live' | 'session'>('live');
-    const [selectedSessionId, setSelectedSessionId] = useState<string>("");
-    const [selectedTrafficId, setSelectedTrafficId] = useState<string>("");
-    const [filter, setFilter] = useState<string>("");
+    const [testSource, setTestSource] = useAtom(viewerBuilderTestSourceAtom(initialViewer.id));
+    const [selectedSessionId, setSelectedSessionId] = useAtom(viewerBuilderSelectedSessionIdAtom(initialViewer.id));
+    const [selectedTrafficId, setSelectedTrafficId] = useAtom(viewerBuilderSelectedTrafficIdAtom(initialViewer.id));
+    const [filter, setFilter] = useAtom(viewerBuilderFilterAtom(initialViewer.id));
 
-    const [isToolboxVisible, setIsToolboxVisible] = useState(true);
-    const [maximizedBlockId, setMaximizedBlockId] = useState<string | null>(null);
+    const [isToolboxVisible, setIsToolboxVisible] = useAtom(viewerBuilderToolboxVisibleAtom(initialViewer.id));
+    const [maximizedBlockId, setMaximizedBlockId] = useAtom(viewerBuilderMaximizedBlockIdAtom(initialViewer.id));
     const [sessionTraffic, setSessionTraffic] = useState<any[]>([]);
     const [testResults, setTestResults] = useState<Record<string, any>>({});
     const [isRunning, setIsRunning] = useState(false);
     const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
-    const [viewMode, setViewMode] = useState<'preview' | 'source' | 'json'>('preview');
-    const [isAiAssistantVisible, setIsAiAssistantVisible] = useState(false);
+    const [viewMode, setViewMode] = useAtom(viewerBuilderViewModeAtom(initialViewer.id));
+    const [isAiAssistantVisible, setIsAiAssistantVisible] = useAtom(viewerBuilderAiAssistantVisibleAtom(initialViewer.id));
 
     useEffect(() => {
         if (testSource === 'session' && selectedSessionId) {
@@ -105,9 +117,10 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
 
     const filteredTraffic = useMemo(() => {
         const baseItems = currentDataSource.filter((t: any) => t.intercepted);
+        const activeFilter = filter || "";
         
-        if (!filter.trim()) return baseItems;
-        const lowFilter = filter.toLowerCase();
+        if (!activeFilter.trim()) return baseItems;
+        const lowFilter = activeFilter.toLowerCase();
         return baseItems.filter((t: any) =>
             (t.method || "").toLowerCase().includes(lowFilter) ||
             (t.uri || t.url || "").toLowerCase().includes(lowFilter) ||
@@ -129,47 +142,52 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     const lastLoadedId = useRef<string | null>(null);
 
     useEffect(() => {
-        // Basic viewer data (always update when viewer or content changes)
-        setViewerName(initialViewer.name);
-        setBlocks(parsedContent.blocks);
-        setMatchers(parsedContent.matchers || []);
-        // lastActiveViewerIdAtom removed
-
-
-        // Preview settings - only initialize if we're switching to a new viewer
-        if (lastLoadedId.current !== initialViewer.id) {
-            lastLoadedId.current = initialViewer.id;
-
+        // Initialize atoms only if they are null (uninitialized)
+        if (viewerName === null) setViewerName(initialViewer.name);
+        if (blocks === null) setBlocks(parsedContent.blocks);
+        if (matchers === null) setMatchers(parsedContent.matchers || []);
+        
+        if (testSource === null || selectedTrafficId === null || filter === null) {
             const config = parsedContent.previewConfig;
-            if (config?.testSource) setTestSource(config.testSource);
-            if (config?.selectedSessionId) setSelectedSessionId(config.selectedSessionId);
+            if (testSource === null) setTestSource(config?.testSource || 'live');
+            if (selectedSessionId === null) setSelectedSessionId(config?.selectedSessionId || "");
             
-            // Priority: Saved selection > Main list selection > Current atom value
-            if (config?.selectedTrafficId) {
-                setSelectedTrafficId(config.selectedTrafficId);
-            } else if (selections.firstSelected?.id) {
-                setSelectedTrafficId(String(selections.firstSelected.id));
+            if (selectedTrafficId === null) {
+                if (config?.selectedTrafficId) {
+                    setSelectedTrafficId(config.selectedTrafficId);
+                } else if (selections.firstSelected?.id) {
+                    setSelectedTrafficId(String(selections.firstSelected.id));
+                } else {
+                    setSelectedTrafficId("");
+                }
             }
 
-            // Filter persistence: only overwrite if the viewer has a specific saved filter
-            if (config?.filter && config.filter !== "create") {
-                setFilter(config.filter);
+            if (filter === null) {
+                if (config?.filter && config.filter !== "create") {
+                    setFilter(config.filter);
+                } else {
+                    setFilter("");
+                }
             }
         }
+
+        if (viewMode === null) setViewMode('preview');
+        if (isAiAssistantVisible === null) setIsAiAssistantVisible(false);
+        if (isToolboxVisible === null) setIsToolboxVisible(true);
     }, [initialViewer.id, parsedContent]);
 
     const handleSave = async () => {
         const content: ViewerContent = {
-            blocks,
-            matchers,
+            blocks: blocks || [],
+            matchers: matchers || [],
             previewConfig: {
-                testSource,
-                selectedSessionId,
-                filter,
-                selectedTrafficId
+                testSource: testSource || 'live',
+                selectedSessionId: selectedSessionId || "",
+                filter: filter || "",
+                selectedTrafficId: selectedTrafficId || ""
             }
         };
-        await saveViewer(viewerName, JSON.stringify(content), initialViewer.id, initialViewer.folderId);
+        await saveViewer(viewerName || initialViewer.name, JSON.stringify(content), initialViewer.id, initialViewer.folderId);
         alert("Viewer saved successfully!");
     };
 
@@ -216,20 +234,20 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     };
 
     return {
-        viewerName, setViewerName,
+        viewerName: viewerName || initialViewer.name, setViewerName,
         isEditingName, setIsEditingName,
-        blocks, setBlocks,
-        matchers, setMatchers,
-        testSource, setTestSource,
-        selectedSessionId, setSelectedSessionId,
-        selectedTrafficId, setSelectedTrafficId,
-        filter, setFilter,
-        isToolboxVisible, setIsToolboxVisible,
+        blocks: blocks || [], setBlocks,
+        matchers: matchers || [], setMatchers,
+        testSource: testSource || 'live', setTestSource,
+        selectedSessionId: selectedSessionId || "", setSelectedSessionId,
+        selectedTrafficId: selectedTrafficId || "", setSelectedTrafficId,
+        filter: filter || "", setFilter,
+        isToolboxVisible: isToolboxVisible ?? true, setIsToolboxVisible,
         maximizedBlockId, setMaximizedBlockId,
         testResults,
         isRunning,
         isSourceDialogOpen, setIsSourceDialogOpen,
-        viewMode, setViewMode,
+        viewMode: viewMode || 'preview', setViewMode,
         filteredTraffic,
         currentIndex,
         selectedTraffic,
@@ -243,7 +261,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
         goNext,
         goPrev,
         sessions,
-        isAiAssistantVisible,
+        isAiAssistantVisible: isAiAssistantVisible ?? false,
         setIsAiAssistantVisible
     };
 };

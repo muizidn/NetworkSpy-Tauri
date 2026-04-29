@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge";
 import Tab from "@src/stories/app/atoms/Tab";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { useAtom } from "jotai";
-import { activeTabIdAtom } from "@src/utils/atoms";
+import { activeTabIdAtom } from "@src/utils/trafficAtoms";
 
 export interface Tab {
   id: string;

@@ -9,7 +9,7 @@ import { TrafficItemMap } from "../model/TrafficItemMap";
 import { Traffic } from "../../../models/Traffic";
 
 import { useAtom, useAtomValue } from "jotai";
-import { mainTrafficListSelectionsAtom, activeTabIdAtom, TrafficListSelection } from "@src/utils/atoms";
+import { mainTrafficListSelectionsAtom, activeTabIdAtom, TrafficListSelection } from "@src/utils/trafficAtoms";
 
 
 
