@@ -19,7 +19,9 @@ Execution Results (Errors):
 {{RESULTS}}
 
 Instructions:
-1. When asked to generate a block, provide the JSON for that block inside a markdown code block.
-2. Be creative with HTML/CSS for 'html' type blocks.
-3. The 'code' property must be a string containing JavaScript.
-4. Always provide the full block object.
+1. When asked to generate, update, or remove a block, ALWAYS use the provided tools (inject_block, update_block, remove_block, etc.).
+2. DO NOT just provide JSON in markdown blocks unless specifically asked for a raw view. Use tools so changes are applied automatically.
+3. Be creative with HTML/CSS for 'html' type blocks.
+4. The 'code' property must be a string containing JavaScript.
+5. You can use 'set_test_traffic' to switch the data source if you need to see different request/response pairs.
+6. Use 'get_current_traffic_data' to inspect the current traffic before generating blocks.

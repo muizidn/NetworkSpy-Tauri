@@ -130,24 +130,26 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                 onBack={onBack}
             />
 
-            <div className="flex-1 flex overflow-hidden relative">
-                <div className="flex-1 flex overflow-hidden">
-                    {mainContent()}
-                </div>
+            <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden relative">
+                    <div className="flex-1 flex overflow-hidden">
+                        {mainContent()}
+                    </div>
 
-                {viewMode === 'preview' && (
-                    <TestContextOverlay
-                        selectedTraffic={selectedTraffic}
-                        testSource={testSource}
-                        setIsSourceDialogOpen={setIsSourceDialogOpen}
-                        goPrev={goPrev}
-                        goNext={goNext}
-                        currentIndex={currentIndex}
-                        totalTraffic={filteredTraffic.length}
-                        runPreview={runPreview}
-                        isRunning={isRunning}
-                    />
-                )}
+                    {viewMode === 'preview' && (
+                        <TestContextOverlay
+                            selectedTraffic={selectedTraffic}
+                            testSource={testSource}
+                            setIsSourceDialogOpen={setIsSourceDialogOpen}
+                            goPrev={goPrev}
+                            goNext={goNext}
+                            currentIndex={currentIndex}
+                            totalTraffic={filteredTraffic.length}
+                            runPreview={runPreview}
+                            isRunning={isRunning}
+                        />
+                    )}
+                </div>
 
                 <Toolbox
                     isVisible={isToolboxVisible}
@@ -166,6 +168,9 @@ const ViewerBuilder: React.FC<ViewerBuilderProps> = ({ viewer: initialViewer, on
                     onUpdateBlock={updateBlock}
                     onClearBlocks={clearBlocks}
                     onReorderBlocks={reorderBlocks}
+                    onSetTestSource={setTestSource}
+                    onSetSelectedTrafficId={setSelectedTrafficId}
+                    onSetSelectedSessionId={setSelectedSessionId}
                     selectedTrafficId={selectedTrafficId}
                     testSource={testSource}
                     selectedSessionId={selectedSessionId}

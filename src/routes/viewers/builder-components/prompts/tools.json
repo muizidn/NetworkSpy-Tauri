@@ -119,5 +119,21 @@
         "required": ["blockIds"]
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "set_test_traffic",
+      "description": "Select a specific network request (traffic ID) to use as the data source for previewing the viewer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "trafficId": { "type": "string", "description": "The ID of the traffic item to select." },
+          "testSource": { "type": "string", "enum": ["live", "session"], "description": "Whether to use live traffic or a saved session." },
+          "sessionId": { "type": "string", "description": "The ID of the session (required if testSource is 'session')." }
+        },
+        "required": ["trafficId"]
+      }
+    }
   }
 ]
