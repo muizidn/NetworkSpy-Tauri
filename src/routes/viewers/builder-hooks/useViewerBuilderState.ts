@@ -74,10 +74,12 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
             return executeViewerBlock(block, {
                 trafficId: selectedTrafficId,
                 isReviewMode: testSource === 'session',
-                reviewedSessionId: selectedSessionId,
+                reviewedSessionId: selectedSessionId || undefined,
                 provider
             });
         };
+
+        if (!blocks) return;
 
         const blockPromises = blocks.map(async (block) => {
             results[block.id] = await executeBlock(block);
@@ -90,7 +92,7 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
     }, [selectedTrafficId, blocks, testSource, selectedSessionId, provider]);
 
     useEffect(() => {
-        if (selectedTrafficId && blocks.length > 0) {
+        if (selectedTrafficId && blocks && blocks.length > 0) {
             runPreview();
         }
     }, [selectedTrafficId, blocks, runPreview]);
@@ -202,19 +204,19 @@ export const useViewerBuilderState = (initialViewer: Viewer) => {
             css: type === 'html' ? getDefaultCss() : undefined,
             padding: type === 'html' ? 0 : 4
         };
-        setBlocks(prev => [...prev, newBlock]);
+        setBlocks(prev => [...(prev || []), newBlock]);
     };
 
     const injectBlock = (block: ViewerBlock) => {
-        setBlocks(prev => [...prev, { ...block, id: block.id || Math.random().toString(36).substr(2, 9) }]);
+        setBlocks(prev => [...(prev || []), { ...block, id: block.id || Math.random().toString(36).substr(2, 9) }]);
     };
 
     const deleteBlock = (id: string) => {
-        setBlocks(prev => prev.filter(b => b.id !== id));
+        setBlocks(prev => (prev || []).filter(b => b.id !== id));
     };
 
     const updateBlock = (id: string, updates: Partial<ViewerBlock>) => {
-        setBlocks(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+        setBlocks(prev => (prev || []).map(b => b.id === id ? { ...b, ...updates } : b));
     };
 
     const clearBlocks = () => {
