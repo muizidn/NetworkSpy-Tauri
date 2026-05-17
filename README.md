@@ -83,8 +83,9 @@ Network Spy is designed around a core philosophy: **Viewers are a Superpower.**
 - **🧠 LLM Token Analyzer**: The first specialized tool for AI/ML developers to track token costs and stream latency.
 - **🏷️ Intelligent Tagging**: Automatically categorize and search through thousands of requests.
 - **📦 Custom Viewer Engine**: Build your own visualizers with a drag-and-drop block builder.
-  > [!NOTE]
-  > **Deep Dive**: Learn how to maximize the Custom Viewer Engine for your workflow, including AI-powered generation (Pro Feature), in the [Custom Viewer Guide](./CUSTOM_VIEWER.md).
+  
+  
+> **Deep Dive**: Learn how to maximize the Custom Viewer Engine for your workflow, including AI-powered generation (Pro Feature), in the [Custom Viewer Guide](./CUSTOM_VIEWER.md).
 
 👉 [**Explore all features in detail here**](./FEATURES.md)
 
@@ -130,6 +131,9 @@ iwr -useb https://raw.githubusercontent.com/muizidn/NetworkSpy/develop/install-d
 - **One-Click CA Setup**: Automated root certificate installation for HTTPS interception.
 - **Local Analysis**: All decryption happens on your machine. No traffic ever leaves your device.
 - **High Performance**: Rust-powered proxy engine ensures zero-latency interception.
+
+> **Deep Dive**: Learn more about our local-first security model, SSL decryption, and telemetry in the [Security Guide](./SECURITY.md).
+
 
 ---
 
