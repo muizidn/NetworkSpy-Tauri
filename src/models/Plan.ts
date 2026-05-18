@@ -12,6 +12,10 @@ export class AppPlan {
         return this.name.toLowerCase() === "personal";
     }
 
+    get isTeam(): boolean {
+        return this.name.toLowerCase() === "team";
+    }
+
     static fromString(p: string | null): AppPlan | null {
         if (!p) return null;
         switch (p.toLowerCase()) {

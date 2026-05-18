@@ -4,7 +4,7 @@ import { useSettingsContext } from '../context/SettingsProvider';
 export default function WorkspacePage() {
     const { plan, isVerified } = useSettingsContext();
 
-    const isTeam = isVerified && plan?.toLowerCase() === "team";
+    const isTeam = isVerified && plan?.isTeam;
 
     if (!isTeam) {
         return (

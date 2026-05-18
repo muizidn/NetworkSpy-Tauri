@@ -297,7 +297,7 @@ export default function Settings() {
                                 <h2 className="text-sm font-black text-white flex items-center gap-2">
                                     <FiZap size={14} className="text-blue-500" />
                                     AI Configuration
-                                    {(!isVerified || plan !== AppPlan.PRO) && (
+                                    {(!isVerified || !plan?.isPro) && (
                                         <span className="ml-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[9px] font-black uppercase tracking-widest rounded border border-yellow-500/30">
                                             Pro Only
                                         </span>
@@ -308,7 +308,7 @@ export default function Settings() {
 
                             <div className={twMerge(
                                 "p-8 rounded-3xl bg-gradient-to-br from-zinc-900 to-[#0c0c0c] border border-zinc-800 shadow-2xl relative overflow-hidden group",
-                                (!isVerified || plan !== AppPlan.PRO) && "opacity-50 cursor-not-allowed"
+                                (!isVerified || !plan?.isPro) && "opacity-50 cursor-not-allowed"
                             )}>
                                 <div className="flex flex-col gap-5">
                                     <div className="flex flex-col gap-2">
@@ -321,7 +321,7 @@ export default function Settings() {
                                                 value={openRouterKey}
                                                 onChange={(e) => setOpenRouterKey(e.target.value)}
                                                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-5 py-4 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                                                disabled={!isVerified || plan !== AppPlan.PRO}
+                                                disabled={!isVerified || !plan?.isPro}
                                             />
                                         </div>
                                     </div>
@@ -336,7 +336,7 @@ export default function Settings() {
                                                 value={openRouterModel}
                                                 onChange={(e) => setOpenRouterModel(e.target.value)}
                                                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-5 py-4 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                                                disabled={!isVerified || plan !== AppPlan.PRO}
+                                                disabled={!isVerified || !plan?.isPro}
                                             />
                                         </div>
                                         <p className="text-[10px] text-zinc-600 leading-relaxed px-1 mt-1">
@@ -354,7 +354,7 @@ export default function Settings() {
                                 <h2 className="text-sm font-black text-white flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
                                     Model Context Protocol (MCP)
-                                    {(!isVerified || plan !== AppPlan.PRO) && (
+                                    {(!isVerified || !plan?.isPro) && (
                                         <span className="ml-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[9px] font-black uppercase tracking-widest rounded border border-yellow-500/30">
                                             Pro Only
                                         </span>
@@ -366,7 +366,7 @@ export default function Settings() {
                             <div
                                 className={twMerge(
                                     "p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-purple-900/50 transition-all duration-300 cursor-pointer",
-                                    (!isVerified || plan !== AppPlan.PRO) && "opacity-50 cursor-not-allowed pointer-events-none"
+                                    (!isVerified || !plan?.isPro) && "opacity-50 cursor-not-allowed pointer-events-none"
                                 )}
                                 onClick={() => setMcpStdioEnabled(!mcpStdioEnabled)}
                             >
@@ -391,7 +391,7 @@ export default function Settings() {
                             <div
                                 className={twMerge(
                                     "p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between group hover:border-indigo-900/50 transition-all duration-300 cursor-pointer",
-                                    (!isVerified || plan !== AppPlan.PRO) && "opacity-50 cursor-not-allowed pointer-events-none"
+                                    (!isVerified || !plan?.isPro) && "opacity-50 cursor-not-allowed pointer-events-none"
                                 )}
                                 onClick={() => setMcpHttpEnabled(!mcpHttpEnabled)}
                             >
@@ -489,7 +489,7 @@ export default function Settings() {
                                                         <div className="flex items-center gap-3">
                                                             <h3 className="text-sm font-black text-white tracking-tight uppercase">License Active</h3>
                                                             <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[9px] font-black uppercase tracking-widest rounded border border-green-500/30">
-                                                                {plan || AppPlan.PERSONAL}
+                                                                {plan?.name || "Personal"}
                                                             </span>
                                                             {isSyncing && (
                                                                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[8px] font-black uppercase tracking-[0.2em] rounded animate-pulse">
@@ -548,7 +548,7 @@ export default function Settings() {
                                                     {licenseStatus === 'success' ? <FiCheckCircle size={14} /> : <FiXCircle size={14} />}
                                                     <div className="flex-1">
                                                         <span className="text-[11px] font-black uppercase tracking-wider">{licenseMessage}</span>
-                                                        {plan && <span className="ml-2 px-2 py-0.5 bg-zinc-900 rounded border border-current text-[9px] font-black uppercase tracking-widest">{plan}</span>}
+                                                        {plan && <span className="ml-2 px-2 py-0.5 bg-zinc-900 rounded border border-current text-[9px] font-black uppercase tracking-widest">{plan.name}</span>}
                                                     </div>
                                                 </div>
                                             )}
