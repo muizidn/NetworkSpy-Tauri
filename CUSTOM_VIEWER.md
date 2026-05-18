@@ -36,25 +36,27 @@ With the Custom Viewer Engine, you can build:
 The Custom Viewer feature is available on **all plans**, including the Free plan. However, there are differences in capabilities and limits depending on your account:
 
 ### 1. Manual Builder (Drag-and-Drop)
-*Available on Free and Pro plans.*
 
 For complete control, use the built-in **Block Builder** to create viewers manually.
 - Open the **Custom Viewer Builder** from the workspace.
 - Drag blocks (Text, Grid, Card, Chart, etc.) onto the canvas.
 - Map blocks to specific paths in your JSON/XML payload using simple dot notation.
 - Save and apply to matching requests.
-- **Limits**: Free plan users can create a maximum of **1 custom viewer**. Upgrade to Pro for unlimited viewers.
+- **Limits**: Free plan users can create a maximum of **1 custom viewer**. Upgrade to Personal or Pro for unlimited viewers.
 
-### 2. AI Generator (✨ Pro Feature)
-*Available only on the Pro plan.*
+### 2. AI Generator
 
-If you have a **Network Spy PRO** license, you can leverage AI to build viewers in seconds instead of creating them manually.
+You can leverage AI to build viewers in seconds instead of creating them manually. This feature is available on all plans but with different capabilities:
+- **Free**: Can use AI with the default model. Limited to 1 viewer.
+- **Personal**: Unlimited viewers, can change the AI model.
+- **Pro**: Unlimited viewers, can change the AI model, and can use custom providers (custom base URL).
+
 - **How to Use**:
     1. Select a request with the payload you want to visualize.
-    2. Open the Custom Viewer Builder and select the **AI Generate** tab.
+    2. Open the Custom Viewer Builder and select the **AI Assistant** tab.
     3. Describe what you want to see (e.g., *"Show me the user profile data in a card grid, and highlight the subscription status"*).
     4. The AI will analyze the payload and automatically generate the layout and mapping logic for you.
-- *Note: This feature requires an active Pro subscription and an OpenRouter API key configured in Settings.*
+- *Note: This feature requires an AI Provider API key (e.g., OpenRouter) configured in Settings.*
 
 ---
 

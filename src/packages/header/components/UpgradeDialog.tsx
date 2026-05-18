@@ -73,7 +73,8 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({ isOpen, onClose })
             <FeatureItem label="Map Local" free="3 Rules" pro="Unlimited" />
             <FeatureItem label="Map Remote" free="3 Rules" pro="Unlimited" />
             <FeatureItem label="MCP Support (AI Debugging)" free={false} pro={true} />
-            <FeatureItem label="Custom Viewers (Pro)" free={false} pro={true} />
+            <FeatureItem label="Custom Viewers" free="1 Viewer" pro="Unlimited" />
+            <FeatureItem label="Custom Viewer AI" free="Fixed Model" pro="Full Access" />
         </div>
 
         {/* Footer Actions */}
@@ -109,9 +110,7 @@ export const UpgradeDialog: React.FC<UpgradeDialogProps> = ({ isOpen, onClose })
                 <FiArrowRight className="group-hover:translate-x-1 transition-transform" size={16} />
             </button>
             
-            <p className="text-[10px] text-zinc-600 text-center font-bold tracking-tight">
-                One-time purchase • Lifetime updates • 30-day money-back guarantee
-            </p>
+
         </div>
       </div>
     </div>,
