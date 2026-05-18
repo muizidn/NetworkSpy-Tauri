@@ -33,6 +33,8 @@ interface SettingsContextInterface {
   setOpenRouterKey: (key: string) => void;
   openRouterModel: string;
   setOpenRouterModel: (model: string) => void;
+  aiBaseUrl: string;
+  setAiBaseUrl: (url: string) => void;
   verifyLicense: (key: string | null) => Promise<any>;
   revokeLicense: () => Promise<void>;
   startProxyOnLaunch: boolean;
@@ -65,6 +67,8 @@ export const SettingsContext = createContext<SettingsContextInterface>({
   setOpenRouterKey: () => { },
   openRouterModel: "google/gemini-2.0-flash-001",
   setOpenRouterModel: () => { },
+  aiBaseUrl: "https://openrouter.ai/api/v1",
+  setAiBaseUrl: () => { },
   verifyLicense: async () => { },
   revokeLicense: async () => { },
   startProxyOnLaunch: true,
@@ -91,6 +95,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   });
   const [openRouterKey, setOpenRouterKey] = useState(() => localStorage.getItem("ns_openrouter_key") || "");
   const [openRouterModel, setOpenRouterModel] = useState(() => localStorage.getItem("ns_openrouter_model") || "anthropic/claude-sonnet-4.6");
+  const [aiBaseUrl, setAiBaseUrl] = useState(() => localStorage.getItem("ns_ai_base_url") || "https://openrouter.ai/api/v1");
   const [plan, setPlan] = useState<AppPlan | null>(() => {
     const saved = localStorage.getItem("ns_license_plan");
     return saved ? AppPlan.fromString(saved) : null;
@@ -209,6 +214,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [openRouterModel]);
 
   useEffect(() => {
+    localStorage.setItem("ns_ai_base_url", aiBaseUrl);
+  }, [aiBaseUrl]);
+
+  useEffect(() => {
     localStorage.setItem("ns_start_proxy_on_launch", String(startProxyOnLaunch));
   }, [startProxyOnLaunch]);
 
@@ -251,6 +260,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         setOpenRouterKey,
         openRouterModel,
         setOpenRouterModel,
+        aiBaseUrl,
+        setAiBaseUrl,
         plan,
         isVerified,
         apiFeatures,

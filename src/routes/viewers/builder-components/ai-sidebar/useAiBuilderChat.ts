@@ -9,7 +9,7 @@ import { ChatMessage, ActiveTool, OpenRouterModel, AiBuilderSidebarProps } from 
 import defaultModels from "../prompts/models.json";
 
 export const useAiBuilderChat = (props: AiBuilderSidebarProps) => {
-    const { openRouterKey, openRouterModel, setOpenRouterModel } = useSettingsContext();
+    const { openRouterKey, openRouterModel, setOpenRouterModel, aiBaseUrl } = useSettingsContext();
     const { provider } = useAppProvider();
     
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -30,7 +30,7 @@ export const useAiBuilderChat = (props: AiBuilderSidebarProps) => {
             if (!openRouterKey) return;
             setIsFetchingModels(true);
             try {
-                const response = await fetch("https://openrouter.ai/api/v1/models");
+                const response = await fetch(`${aiBaseUrl}/models`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.data && Array.isArray(data.data)) {
@@ -70,7 +70,7 @@ export const useAiBuilderChat = (props: AiBuilderSidebarProps) => {
 
         try {
             const fetchChatCompletion = async (msgs: ChatMessage[]) => {
-                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                const response = await fetch(`${aiBaseUrl}/chat/completions`, {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${openRouterKey}`,

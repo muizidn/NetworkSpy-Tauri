@@ -27,6 +27,8 @@ export default function Settings() {
         setOpenRouterKey,
         openRouterModel,
         setOpenRouterModel,
+        aiBaseUrl,
+        setAiBaseUrl,
         startProxyOnLaunch,
         setStartProxyOnLaunch,
         bottomPaneTabPosition,
@@ -297,9 +299,9 @@ export default function Settings() {
                                 <h2 className="text-sm font-black text-white flex items-center gap-2">
                                     <FiZap size={14} className="text-blue-500" />
                                     AI Configuration
-                                    {(!isVerified || !plan?.isPro) && (
-                                        <span className="ml-2 px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-[9px] font-black uppercase tracking-widest rounded border border-yellow-500/30">
-                                            Pro Only
+                                    {(!plan?.isPersonal && !plan?.isPro) && (
+                                        <span className="ml-2 px-2 py-0.5 bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-widest rounded border border-blue-500/30">
+                                            Free Plan (Default Model)
                                         </span>
                                     )}
                                 </h2>
@@ -307,27 +309,31 @@ export default function Settings() {
                             </div>
 
                             <div className={twMerge(
-                                "p-8 rounded-3xl bg-gradient-to-br from-zinc-900 to-[#0c0c0c] border border-zinc-800 shadow-2xl relative overflow-hidden group",
-                                (!isVerified || !plan?.isPro) && "opacity-50 cursor-not-allowed"
+                                "p-8 rounded-3xl bg-gradient-to-br from-zinc-900 to-[#0c0c0c] border border-zinc-800 shadow-2xl relative overflow-hidden group"
                             )}>
                                 <div className="flex flex-col gap-5">
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest px-1">API Key</label>
+                                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest px-1">AI Provider API Key</label>
                                         <div className="relative group">
                                             <FiKey className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" size={16} />
                                             <input
                                                 type="password"
-                                                placeholder="OpenRouter API Key (sk-or-v1-...)"
+                                                placeholder="AI Provider API Key (e.g. sk-...)"
                                                 value={openRouterKey}
                                                 onChange={(e) => setOpenRouterKey(e.target.value)}
                                                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-5 py-4 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                                                disabled={!isVerified || !plan?.isPro}
+                                                disabled={false}
                                             />
                                         </div>
                                     </div>
 
                                     <div className="flex flex-col gap-2">
-                                        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest px-1">AI Model ID</label>
+                                        <div className="flex items-center justify-between px-1">
+                                            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">AI Model ID</label>
+                                            {!plan?.isPersonal && !plan?.isPro && (
+                                                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Locked</span>
+                                            )}
+                                        </div>
                                         <div className="relative group">
                                             <FiCpu className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" size={16} />
                                             <input
@@ -335,17 +341,50 @@ export default function Settings() {
                                                 placeholder="anthropic/claude-sonnet-4.6"
                                                 value={openRouterModel}
                                                 onChange={(e) => setOpenRouterModel(e.target.value)}
-                                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-5 py-4 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
-                                                disabled={!isVerified || !plan?.isPro}
+                                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-5 py-4 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={!plan?.isPersonal && !plan?.isPro}
                                             />
                                         </div>
                                         <p className="text-[10px] text-zinc-600 leading-relaxed px-1 mt-1">
                                             Common: <code className="text-zinc-400">anthropic/claude-sonnet-4.6</code>, <code className="text-zinc-400">google/gemini-2.0-flash-001</code>
                                         </p>
+                                        {!plan?.isPersonal && !plan?.isPro && (
+                                            <p className="text-[10px] text-yellow-600/70 leading-relaxed px-1 font-medium">
+                                                Upgrade to Personal or Pro to use custom models.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center justify-between px-1">
+                                            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">AI Base URL / Provider</label>
+                                            {!plan?.isPro && (
+                                                <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Pro Only</span>
+                                            )}
+                                        </div>
+                                        <div className="relative group">
+                                            <FiCpu className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                            <input
+                                                type="text"
+                                                placeholder="https://openrouter.ai/api/v1"
+                                                value={aiBaseUrl}
+                                                onChange={(e) => setAiBaseUrl(e.target.value)}
+                                                className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-12 pr-5 py-4 text-sm font-mono text-white placeholder:text-zinc-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={!plan?.isPro}
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-zinc-600 leading-relaxed px-1 mt-1">
+                                            Default: <code className="text-zinc-400">https://openrouter.ai/api/v1</code>. Change this to use OpenAI, Anthropic, or local models.
+                                        </p>
+                                        {!plan?.isPro && (
+                                            <p className="text-[10px] text-yellow-600/70 leading-relaxed px-1 font-medium">
+                                                Upgrade to Pro to use custom providers.
+                                            </p>
+                                        )}
                                     </div>
 
                                     <p className="text-[10px] text-zinc-600 leading-relaxed px-1 border-t border-zinc-800/50 pt-4">
-                                        Your key is stored locally and used to power the in-app AI chat for generating custom viewers. Get one at <a href="https://openrouter.ai/" target="_blank" className="text-blue-500 hover:underline">openrouter.ai</a>.
+                                        Your key is stored locally and used to power the in-app AI chat. Default provider is OpenRouter (<a href="https://openrouter.ai/" target="_blank" className="text-blue-500 hover:underline">openrouter.ai</a>).
                                     </p>
                                 </div>
                             </div>
