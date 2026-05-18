@@ -23,7 +23,7 @@ export default function ExtensionsPage() {
   const [isIncomingDialogOpen, setIsIncomingDialogOpen] = useState(false);
   const { plan, isVerified } = useSettingsContext();
 
-  const isPro = isVerified && plan?.toLowerCase() === "pro";
+  const isPro = isVerified && plan?.isPro;
 
   if (!isPro) {
     return (

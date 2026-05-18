@@ -156,5 +156,13 @@ pub async fn save_custom_viewer(
     folder_id: Option<String>,
     content: String,
 ) -> Result<Viewer, String> {
+    // Check limit if creating a new viewer (id is None)
+    if id.is_none() {
+        let limit = crate::license::license_get_limit("max_custom_viewers".to_string());
+        let current_count = manager.get_viewers().map_err(|e| e.to_string())?.len() as i32;
+        if current_count >= limit {
+            return Err("Limit of custom viewers reached. Please upgrade to Pro.".to_string());
+        }
+    }
     manager.save_viewer(id, name, folder_id, content).map_err(|e| e.to_string())
 }

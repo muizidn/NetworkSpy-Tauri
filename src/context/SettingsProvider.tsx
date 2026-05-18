@@ -8,14 +8,7 @@ import React, {
 import { invoke } from "@tauri-apps/api/core";
 import { AppPlan } from "@src/models/Plan";
 
-const mapPlan = (p: string | null): AppPlan | null => {
-  if (!p) return null;
-  switch (p.toLowerCase()) {
-    case 'personal': return AppPlan.PERSONAL;
-    case 'pro': return AppPlan.PRO;
-    default: return null;
-  }
-};
+
 
 interface SettingsContextInterface {
   theme: string;
@@ -100,7 +93,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [openRouterModel, setOpenRouterModel] = useState(() => localStorage.getItem("ns_openrouter_model") || "anthropic/claude-sonnet-4.6");
   const [plan, setPlan] = useState<AppPlan | null>(() => {
     const saved = localStorage.getItem("ns_license_plan");
-    return saved ? (saved as AppPlan) : null;
+    return saved ? AppPlan.fromString(saved) : null;
   });
   const [isVerified, setIsVerified] = useState(() => localStorage.getItem("ns_license_verified") === "true");
   const [apiFeatures, setApiFeatures] = useState<any | null>(() => {
@@ -121,14 +114,14 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const result: any = await invoke("verify_license", { licenseKey: key });
       if (result.success) {
-        const mappedPlan = mapPlan(result.plan);
+        const mappedPlan = AppPlan.fromString(result.plan);
         setIsVerified(true);
         setPlan(mappedPlan);
         setApiFeatures(result.features || null);
 
         // Cache result
         localStorage.setItem("ns_license_verified", "true");
-        localStorage.setItem("ns_license_plan", mappedPlan || "");
+        localStorage.setItem("ns_license_plan", mappedPlan?.toString() || "");
         localStorage.setItem("ns_license_features", JSON.stringify(result.features || null));
       } else {
         setIsVerified(false);

@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useCallback } from "react";
+import { useSettingsContext } from "@src/context/SettingsProvider";
+import { useUpgradeDialog } from "@src/context/UpgradeContext";
 import { FiChevronDown, FiChevronRight, FiEdit3, FiFolder, FiFolderPlus, FiPlus, FiSearch, FiTrash2, FiX, FiMove, FiEye, FiDownload, FiColumns, FiCopy } from "react-icons/fi";
 import { twMerge } from "tailwind-merge";
 import { useViewerContext, Viewer, ViewerFolder } from "@src/context/ViewerContext";
@@ -13,9 +15,13 @@ interface ViewerListProps {
 
 const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewer }) => {
     const { viewers, folders, deleteViewer, addFolder, deleteFolder, renameFolder, moveViewer, saveViewer, duplicateViewer } = useViewerContext();
+    const { plan, isVerified } = useSettingsContext();
+    const { openUpgradeDialog } = useUpgradeDialog();
     const [searchTerm, setSearchTerm] = useState("");
     const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(new Set());
     
+    const isPro = isVerified && plan?.isPro;
+
     // Modals
     const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
     const [editingFolder, setEditingFolder] = useState<ViewerFolder | null>(null);
@@ -33,6 +39,10 @@ const ViewerList: React.FC<ViewerListProps> = ({ selectedViewerId, onSelectViewe
     };
 
     const handleCreateViewer = async () => {
+        if (!isPro && viewers.length >= 1) {
+            openUpgradeDialog();
+            return;
+        }
         const name = `New Viewer ${viewers.length + 1}`;
         const content = JSON.stringify({ blocks: [] });
         const viewer = await saveViewer(name, content);

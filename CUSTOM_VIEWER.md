@@ -33,17 +33,22 @@ With the Custom Viewer Engine, you can build:
 
 ## 🏗️ How to Create: Manual vs AI
 
-There are two ways to create a Custom Viewer in Network Spy:
+The Custom Viewer feature is available on **all plans**, including the Free plan. However, there are differences in capabilities and limits depending on your account:
 
 ### 1. Manual Builder (Drag-and-Drop)
-For complete control, use the built-in **Block Builder**.
+*Available on Free and Pro plans.*
+
+For complete control, use the built-in **Block Builder** to create viewers manually.
 - Open the **Custom Viewer Builder** from the workspace.
 - Drag blocks (Text, Grid, Card, Chart, etc.) onto the canvas.
 - Map blocks to specific paths in your JSON/XML payload using simple dot notation.
 - Save and apply to matching requests.
+- **Limits**: Free plan users can create a maximum of **1 custom viewer**. Upgrade to Pro for unlimited viewers.
 
 ### 2. AI Generator (✨ Pro Feature)
-If you have a **Network Spy PRO** license, you can leverage AI to build viewers in seconds.
+*Available only on the Pro plan.*
+
+If you have a **Network Spy PRO** license, you can leverage AI to build viewers in seconds instead of creating them manually.
 - **How to Use**:
     1. Select a request with the payload you want to visualize.
     2. Open the Custom Viewer Builder and select the **AI Generate** tab.

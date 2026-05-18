@@ -358,6 +358,7 @@ pub fn license_get_limit(limit_name: String) -> i32 {
         "max_breakpoints" => if is_licensed { 999 } else { 3 },
         "max_map_local" => if is_licensed { 999 } else { 3 },
         "max_map_remote" => if is_licensed { 999 } else { 3 },
+        "max_custom_viewers" => if is_licensed { 999 } else { 1 },
         _ => 0,
     }
 }
