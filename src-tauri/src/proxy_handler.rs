@@ -31,19 +31,13 @@ impl TrafficListener for MyTrafficListener {
     }
 
     async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) -> Request<Bytes> {
-        println!("[PROXY_HANDLER_ENTER] id={} method={} uri=\"{}\" intercepted={} client=\"{}\" PROXY_TOGGLE_is_some={}",
-            id, request.method().as_str(), request.uri(), intercepted, client_addr, PROXY_TOGGLE.get().map(|t| t.is_on()).is_some());
         if let Some(toggle) = PROXY_TOGGLE.get() {
-            let is_on = toggle.is_on();
-            println!("[PROXY_HANDLER_ENTER] PROXY_TOGGLE.is_on={}", is_on);
-            if !is_on {
-                println!("[PROXY_HANDLER_ENTER] EARLY RETURN because PROXY_TOGGLE is OFF");
+            if !toggle.is_on() {
                 return request;
             }
         }
 
         if !intercepted && request.method().as_str().trim().to_uppercase() != "CONNECT" {
-            println!("[PROXY_HANDLER] not intercepted and not CONNECT, skipping id={} uri=\"{}\"", id, request.uri());
             return request;
         }
 
@@ -73,7 +67,6 @@ impl TrafficListener for MyTrafficListener {
         }
         
         let method = request.method().as_str().to_string();
-        println!("[PROXY_HANDLER] request id={} method={} uri=\"{}\" intercepted={} client=\"{}\"", id, method, uri, intercepted, client_addr);
 
         // 0. Handle Map Remote
         if self.map_remote_manager.is_enabled.load(Ordering::SeqCst) {

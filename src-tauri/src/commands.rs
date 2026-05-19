@@ -206,12 +206,7 @@ pub async fn save_proxy_rule(
     config: tauri::State<'_, Arc<crate::config::ConfigManager>>,
     state: tauri::State<'_, InterceptAllowList>
 ) -> Result<(), String> {
-    println!("[PROXY_CMD] save_proxy_rule: id={} name=\"{}\" pattern=\"{}\" action={} enabled={} client={:?}",
-        rule.id, rule.name, rule.pattern, rule.action, rule.enabled, rule.client);
-    config.save_proxy_rule(rule).map_err(|e| { 
-        eprintln!("[PROXY_CMD] save_proxy_rule config error: {}", e);
-        e.to_string()
-    })?;
+    config.save_proxy_rule(rule).map_err(|e| e.to_string())?;
     refresh_active_proxy_intercept_list(&state, &config).await?;
     Ok(())
 }
@@ -243,11 +238,6 @@ async fn refresh_active_proxy_intercept_list(
             });
         }
     }
-    println!("[PROXY_CMD] refresh_active_proxy_intercept_list: total_rules={} enabled_rules={}",
-        rules.len(), new_list.len());
-    for (i, r) in new_list.iter().enumerate() {
-        println!("[PROXY_CMD]   rule[{}]: action={} pattern=\"{}\" client={:?}", i, r.action, r.pattern, r.client);
-    }
     let mut list = state.0.write().await;
     *list = new_list;
     Ok(())
@@ -259,7 +249,6 @@ pub static CERTIFICATE_INSTALLER: OnceCell<CertificateInstaller> = OnceCell::new
 #[tauri::command]
 pub fn turn_on_proxy(app: tauri::AppHandle) -> u16 {
     let port = ACTUAL_PORT.load(Ordering::SeqCst);
-    println!("[PROXY_TOGGLE_CMD] turn_on_proxy called, port={}, stack:", port);
     PROXY_TOGGLE.get().unwrap().turn_on(port as u64);
     let _ = app.emit("proxy-status", true);
     port
@@ -267,7 +256,6 @@ pub fn turn_on_proxy(app: tauri::AppHandle) -> u16 {
 
 #[tauri::command]
 pub fn turn_off_proxy(app: tauri::AppHandle) {
-    println!("[PROXY_TOGGLE_CMD] turn_off_proxy called, stack:");
     PROXY_TOGGLE.get().unwrap().turn_off();
     let _ = app.emit("proxy-status", false);
 }
@@ -411,7 +399,6 @@ pub async fn export_selected_to_har(path: String, ids: Vec<String>, db: tauri::S
 pub fn handle_tray_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
     match event.id.as_ref() {
         "quit" => {
-            println!("[TRAY_EVENT] quit triggered");
             if let Some(toggle) = PROXY_TOGGLE.get() {
                 toggle.turn_off();
             }
@@ -424,10 +411,8 @@ pub fn handle_tray_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
             }
         }
         "reset_proxy" => {
-            println!("[TRAY_EVENT] reset_proxy triggered");
             if let Some(toggle) = PROXY_TOGGLE.get() {
                 toggle.turn_off();
-                println!("Emergency Proxy Reset from Tray");
             }
         }
         _ => {}

@@ -86,10 +86,8 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
       // Not running in Tauri (browser/mock) — assume main window
     }
     if (!isMainWindow) {
-      console.log(`[TauriEnv] Non-main window detected: skipping setListenStatus`);
       return;
     }
-    console.log(`[TauriEnv] handleProxy: isRun=${isRun} localStorage.ns_start_proxy_on_launch="${localStorage.getItem("ns_start_proxy_on_launch")}"`);
     const handleProxy = async () => {
       const port = await activeProvider.setListenStatus(isRun);
       if (isRun && typeof port === 'number') {

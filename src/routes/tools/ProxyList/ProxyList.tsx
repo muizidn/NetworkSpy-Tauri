@@ -129,15 +129,12 @@ const ProxyList: React.FC = () => {
     if (!item) return;
 
     const updatedItem = { ...item, enabled: !item.enabled };
-    console.log(`[PROXY_TOGGLE] Toggling rule id=${id} name="${item.name}" pattern="${item.pattern}" from enabled=${item.enabled} to enabled=${updatedItem.enabled}`);
     setData(prev => prev.map(d => d.id === id ? updatedItem : d));
     try {
         await invoke("save_proxy_rule", { rule: updatedItem });
-        console.log(`[PROXY_TOGGLE] save_proxy_rule succeeded for id=${id}`);
     } catch (e) {
-        console.error("[PROXY_TOGGLE] Failed to update proxy rule:", e);
+        console.error("Failed to update proxy rule:", e);
         const rules = await invoke<IProxyRuleModel[]>("get_proxy_rules");
-        console.log("[PROXY_TOGGLE] Re-fetched rules from backend:", JSON.stringify(rules));
         setData(rules);
     }
   };
