@@ -262,7 +262,7 @@ export const TitleBar: React.FC = () => {
                     active={isRun}
                     variant="success"
                     label={isRun ? "Stop Capturing" : "Start Capturing"}
-                    onClick={() => setIsRun(!isRun)}
+                    onClick={() => { console.log(`[CAPTURE_BTN] Clicked: toggling isRun from ${isRun} to ${!isRun}`); setIsRun(!isRun); }}
                   />
                   <ActionButton
                     icon={FiTrash2}

@@ -9,7 +9,7 @@ pub struct MyTrafficListener {
     pub traffic_db: Arc<TrafficDb>,
     pub tag_manager: Arc<TagManager>,
     pub proxy_settings: Arc<std::sync::RwLock<ProxySettings>>,
-    pub request_times: Mutex<HashMap<u64, (Instant, String, String)>>, // Stores start time, uri, and method
+    pub request_times: Mutex<HashMap<u64, (Instant, String, String)>>,
     pub tray_stats: Arc<TrayStats>,
     pub session_id: String,
     pub breakpoint_manager: Arc<BreakpointManager>,
@@ -31,10 +31,20 @@ impl TrafficListener for MyTrafficListener {
     }
 
     async fn request(&self, id: u64, mut request: Request<Bytes>, intercepted: bool, client_addr: String) -> Request<Bytes> {
+        println!("[PROXY_HANDLER_ENTER] id={} method={} uri=\"{}\" intercepted={} client=\"{}\" PROXY_TOGGLE_is_some={}",
+            id, request.method().as_str(), request.uri(), intercepted, client_addr, PROXY_TOGGLE.get().map(|t| t.is_on()).is_some());
         if let Some(toggle) = PROXY_TOGGLE.get() {
-            if !toggle.is_on() {
+            let is_on = toggle.is_on();
+            println!("[PROXY_HANDLER_ENTER] PROXY_TOGGLE.is_on={}", is_on);
+            if !is_on {
+                println!("[PROXY_HANDLER_ENTER] EARLY RETURN because PROXY_TOGGLE is OFF");
                 return request;
             }
+        }
+
+        if !intercepted && request.method().as_str().trim().to_uppercase() != "CONNECT" {
+            println!("[PROXY_HANDLER] not intercepted and not CONNECT, skipping id={} uri=\"{}\"", id, request.uri());
+            return request;
         }
 
         self.tray_stats.total_requests.fetch_add(1, Ordering::Relaxed);
@@ -63,6 +73,7 @@ impl TrafficListener for MyTrafficListener {
         }
         
         let method = request.method().as_str().to_string();
+        println!("[PROXY_HANDLER] request id={} method={} uri=\"{}\" intercepted={} client=\"{}\"", id, method, uri, intercepted, client_addr);
 
         // 0. Handle Map Remote
         if self.map_remote_manager.is_enabled.load(Ordering::SeqCst) {

@@ -442,12 +442,15 @@ fn main() {
                         });
                     }
                     "toggle_capture" => {
+                        println!("[MENU_EVENT] toggle_capture triggered");
                         if let Some(toggle) = PROXY_TOGGLE.get() {
                             if toggle.is_on() {
+                                println!("[MENU_EVENT] toggle_capture: turning OFF");
                                 toggle.turn_off();
                                 let _ = _app.emit("proxy-status", false);
                             } else {
                                 let port = ACTUAL_PORT.load(Ordering::SeqCst) as u64;
+                                println!("[MENU_EVENT] toggle_capture: turning ON, port={}", port);
                                 toggle.turn_on(port);
                                 let _ = _app.emit("proxy-status", true);
                             }
@@ -472,6 +475,7 @@ fn main() {
                         }
                     }
                     "reset_proxy" => {
+                        println!("[MENU_EVENT] reset_proxy triggered");
                         if let Some(toggle) = PROXY_TOGGLE.get() {
                             toggle.turn_off();
                         }

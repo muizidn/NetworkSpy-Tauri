@@ -1,4 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import React, { createContext, useContext, ReactNode, useMemo, useState, useCallback, useEffect } from "react";
 import { IAppProvider, TauriAppProvider, MockAppProvider, BreakpointHit, BreakpointData } from "./AppProvider";
 import { useTrafficListContext } from "../main-content/context/TrafficList";
@@ -73,6 +74,22 @@ export const TauriEnvProvider: React.FC<TauriEnvProviderProps> = ({
   const { setTrafficList, setTrafficSet, setSelections } = useTrafficListContext();
 
   useEffect(() => {
+    // Only the main window controls the global proxy toggle.
+    // Non-main windows (e.g. ProxyList, Breakpoint etc.) must NOT call
+    // turn_on_proxy/turn_off_proxy because they use a separate React tree
+    // with its own independent isRun state, which would overwrite the
+    // main window's proxy state globally.
+    let isMainWindow = true;
+    try {
+      isMainWindow = getCurrentWindow().label === "main";
+    } catch (_e) {
+      // Not running in Tauri (browser/mock) — assume main window
+    }
+    if (!isMainWindow) {
+      console.log(`[TauriEnv] Non-main window detected: skipping setListenStatus`);
+      return;
+    }
+    console.log(`[TauriEnv] handleProxy: isRun=${isRun} localStorage.ns_start_proxy_on_launch="${localStorage.getItem("ns_start_proxy_on_launch")}"`);
     const handleProxy = async () => {
       const port = await activeProvider.setListenStatus(isRun);
       if (isRun && typeof port === 'number') {
