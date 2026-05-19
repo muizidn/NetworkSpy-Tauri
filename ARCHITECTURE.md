@@ -6,6 +6,8 @@
 
 **Purpose**: GUI-based HTTP/HTTPS traffic inspection tool with scripting, breakpoints, map local/remote, and LLM integration (MCP).
 
+![Architecture DataFlow](./public/github/architecture-data-flow.png)
+
 ---
 
 ## Directory Structure

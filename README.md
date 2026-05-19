@@ -68,6 +68,9 @@ Network Spy operates as a **Man-in-the-Middle (MITM)** proxy. It sits between yo
 3. **Capture & Analyze**: Traffic is captured in real-time and passed through our specialized **Superpower Viewers** for automated decoding of GraphQL, LLM streams, Protobuf, and more.
 4. **Local Forever**: All data is analyzed and stored locally in a high-speed SQLite database. No traffic ever leaves your machine.
 
+
+![Architecture DataFlow](./public/github/architecture-data-flow-simple.png)
+
 <p align center>
   <img src="./github/readme/how-it-works.png" width="100%" alt="How it Works Diagram" />
 </p>
