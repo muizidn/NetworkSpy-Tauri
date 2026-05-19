@@ -206,18 +206,8 @@ pub async fn save_proxy_rule(
     config: tauri::State<'_, Arc<crate::config::ConfigManager>>,
     state: tauri::State<'_, InterceptAllowList>
 ) -> Result<(), String> {
-    #[cfg(debug_assertions)]
-    println!("[save_proxy_rule] id={}, enabled={}, name={}, pattern={}, action={}", rule.id, rule.enabled, rule.name, rule.pattern, rule.action);
-    config.save_proxy_rule(rule).map_err(|e| {
-        eprintln!("[save_proxy_rule] ConfigManager error: {}", e);
-        e.to_string()
-    })?;
-    refresh_active_proxy_intercept_list(&state, &config).await.map_err(|e| {
-        eprintln!("[save_proxy_rule] refresh error: {}", e);
-        e
-    })?;
-    #[cfg(debug_assertions)]
-    println!("[save_proxy_rule] success");
+    config.save_proxy_rule(rule).map_err(|e| e.to_string())?;
+    refresh_active_proxy_intercept_list(&state, &config).await?;
     Ok(())
 }
 

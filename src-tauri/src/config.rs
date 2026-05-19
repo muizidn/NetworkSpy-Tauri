@@ -90,11 +90,7 @@ impl ConfigManager {
         let config = self.config.read().unwrap();
         let content = serde_yaml::to_string(&*config)?;
         let path = self.config_path.read().unwrap().clone();
-        #[cfg(debug_assertions)]
-        println!("[config::save] writing {} bytes to {}", content.len(), path.display());
         fs::write(&path, content)?;
-        #[cfg(debug_assertions)]
-        println!("[config::save] write successful");
         Ok(())
     }
 

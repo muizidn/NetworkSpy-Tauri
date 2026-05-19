@@ -16,7 +16,8 @@
     "viewers",
     "filters",
     "map-local",
-    "map-remote"
+    "map-remote",
+    "proxylist"
   ],
   "permissions": [
     "core:default",
@@ -50,5 +51,4 @@
     "core:window:allow-start-dragging",
     "core:window:allow-toggle-maximize"
   ]
-
 }

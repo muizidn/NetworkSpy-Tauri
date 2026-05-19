@@ -30,17 +30,13 @@ export class ProxyRuleCellRenderer implements Renderer<IProxyRuleModel> {
   render({ input }: { input: IProxyRuleModel }): React.ReactNode {
     let content: React.ReactNode;
     const toggle = this.onToggle;
-    console.error("[ProxyRuleCellRenderer] type=" + this.type + " onToggle=" + (toggle ? "defined" : "UNDEFINED") + " id=" + input.id + " enabled=" + input.enabled);
 
     switch (this.type) {
       case "enabled":
         const isChecked = input.enabled;
         content = (
           <button
-            onClick={() => {
-              console.error("[button click] id=" + input.id + " onToggle=" + (toggle ? "defined" : "UNDEFINED"));
-              toggle?.(input.id);
-            }}
+            onClick={() => toggle?.(input.id)}
             className={twMerge(
                 "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
                 isChecked 
@@ -129,21 +125,15 @@ const ProxyList: React.FC = () => {
   }, []);
 
   const handleToggle = async (id: string) => {
-    console.error("[handleToggle] CALLED id:", id, "dataRef length:", dataRef.current.length);
     const item = dataRef.current.find(d => d.id === id);
-    if (!item) {
-        console.error("[handleToggle] item NOT FOUND in dataRef for id:", id);
-        return;
-    }
+    if (!item) return;
 
     const updatedItem = { ...item, enabled: !item.enabled };
-    console.error("[handleToggle] toggling item, new enabled:", updatedItem.enabled);
     setData(prev => prev.map(d => d.id === id ? updatedItem : d));
     try {
         await invoke("save_proxy_rule", { rule: updatedItem });
-        console.error("[handleToggle] invoke success");
     } catch (e) {
-        console.error("[handleToggle] invoke FAILED:", e);
+        console.error("Failed to update proxy rule:", e);
         const rules = await invoke<IProxyRuleModel[]>("get_proxy_rules");
         setData(rules);
     }
