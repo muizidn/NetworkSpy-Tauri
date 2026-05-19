@@ -89,7 +89,12 @@ impl ConfigManager {
     pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
         let config = self.config.read().unwrap();
         let content = serde_yaml::to_string(&*config)?;
-        fs::write(&*self.config_path.read().unwrap(), content)?;
+        let path = self.config_path.read().unwrap().clone();
+        #[cfg(debug_assertions)]
+        println!("[config::save] writing {} bytes to {}", content.len(), path.display());
+        fs::write(&path, content)?;
+        #[cfg(debug_assertions)]
+        println!("[config::save] write successful");
         Ok(())
     }
 

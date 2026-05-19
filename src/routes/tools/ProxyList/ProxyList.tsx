@@ -122,15 +122,21 @@ const ProxyList: React.FC = () => {
   }, []);
 
   const handleToggle = async (id: string) => {
+    console.log("[handleToggle] id:", id);
     const item = data.find(d => d.id === id);
-    if (!item) return;
+    if (!item) {
+        console.warn("[handleToggle] item not found for id:", id);
+        return;
+    }
 
     const updatedItem = { ...item, enabled: !item.enabled };
+    console.log("[handleToggle] updatedItem:", JSON.stringify(updatedItem));
     try {
         await invoke("save_proxy_rule", { rule: updatedItem });
+        console.log("[handleToggle] invoke success");
         setData(prev => prev.map(d => d.id === id ? updatedItem : d));
     } catch (e) {
-        console.error("Failed to update proxy rule:", e);
+        console.error("[handleToggle] Failed to update proxy rule:", e);
     }
   };
 
