@@ -67,7 +67,10 @@ impl ConfigManager {
 
     pub fn set_base_dir(&self, base_dir: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         let new_path = base_dir.join("file.networkspy");
-        *self.config_path.write().unwrap() = new_path;
+        {
+            let mut path = self.config_path.write().unwrap();
+            *path = new_path;
+        }
         self.reload()
     }
 

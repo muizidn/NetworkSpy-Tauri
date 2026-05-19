@@ -395,6 +395,7 @@ pub struct ProxyRule {
     pub name: String,
     pub pattern: String,
     pub action: String, // 'INTERCEPT' or 'TUNNEL'
+    #[serde(default)]
     pub client: Option<String>,
 }
 
