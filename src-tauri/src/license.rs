@@ -130,7 +130,7 @@ pub async fn verify_license(
     license_key: Option<String>,
 ) -> Result<LicenseVerificationResult, String> {
     let state = app.state::<ManagedProxySettings>();
-    let db = app.state::<Arc<traffic::db::TrafficDb>>();
+    let config = app.state::<Arc<crate::config::ConfigManager>>();
     
     // Determine the key to use (provided or from keychain)
     let license_key = match license_key {
@@ -159,8 +159,7 @@ pub async fn verify_license(
         let mut settings = state.0.write().map_err(|e| e.to_string())?;
         if settings.device_id != device_id {
             settings.device_id = device_id.clone();
-            let val = serde_json::to_string(&*settings).map_err(|e| e.to_string())?;
-            let _ = db.set_setting("proxy_settings", &val);
+            let _ = config.set_proxy_settings(settings.clone());
         }
     }
 
