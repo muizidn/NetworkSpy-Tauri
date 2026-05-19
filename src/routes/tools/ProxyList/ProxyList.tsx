@@ -30,7 +30,7 @@ export class ProxyRuleCellRenderer implements Renderer<IProxyRuleModel> {
   render({ input }: { input: IProxyRuleModel }): React.ReactNode {
     let content: React.ReactNode;
     const toggle = this.onToggle;
-    console.log("[ProxyRuleCellRenderer] type=" + this.type + " onToggle=" + (toggle ? "defined" : "UNDEFINED") + " id=" + input.id + " enabled=" + input.enabled);
+    console.error("[ProxyRuleCellRenderer] type=" + this.type + " onToggle=" + (toggle ? "defined" : "UNDEFINED") + " id=" + input.id + " enabled=" + input.enabled);
 
     switch (this.type) {
       case "enabled":
@@ -38,7 +38,7 @@ export class ProxyRuleCellRenderer implements Renderer<IProxyRuleModel> {
         content = (
           <button
             onClick={() => {
-              console.log("[button click] id=" + input.id + " onToggle=" + (toggle ? "defined" : "UNDEFINED"));
+              console.error("[button click] id=" + input.id + " onToggle=" + (toggle ? "defined" : "UNDEFINED"));
               toggle?.(input.id);
             }}
             className={twMerge(
