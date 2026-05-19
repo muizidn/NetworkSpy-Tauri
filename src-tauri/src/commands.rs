@@ -705,6 +705,8 @@ pub async fn select_workspace_dir(
     app_handle: tauri::AppHandle,
     config_manager: tauri::State<'_, Arc<crate::config::ConfigManager>>,
     session_manager: tauri::State<'_, Arc<crate::traffic::sessions::SessionManager>>,
+    proxy_settings_state: tauri::State<'_, ManagedProxySettings>,
+    intercept_list_state: tauri::State<'_, InterceptAllowList>,
 ) -> Result<String, String> {
     use tauri_plugin_dialog::DialogExt;
     
@@ -722,8 +724,17 @@ pub async fn select_workspace_dir(
             tauri_plugin_dialog::FilePath::Url(u) => u.to_file_path().map_err(|_| "Invalid file URL".to_string())?,
         };
         
-        // Update ConfigManager
+        // Update ConfigManager (reloads YAML)
         config_manager.set_base_dir(path_buf.clone()).map_err(|e| e.to_string())?;
+        
+        // Refresh proxy settings from new config
+        let new_settings = config_manager.get_proxy_settings();
+        if let Ok(mut settings) = proxy_settings_state.0.write() {
+            *settings = new_settings;
+        }
+        
+        // Refresh intercept list from new config
+        refresh_active_proxy_intercept_list(&intercept_list_state, &config_manager).await?;
         
         // Update SessionManager
         session_manager.set_sessions_dir(path_buf.join("sessions"));
