@@ -1,5 +1,5 @@
 import { Renderer, TableView } from "@src/packages/ui/TableView";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ToolBaseHeader } from "@src/packages/ui/ToolBaseHeader";
 import { v4 as uuidv4 } from "uuid";
 import { ProxyRuleDialog, ProxyRuleModel as IProxyRuleModel } from "./components/ProxyRuleDialog";
@@ -29,13 +29,14 @@ export class ProxyRuleCellRenderer implements Renderer<IProxyRuleModel> {
 
   render({ input }: { input: IProxyRuleModel }): React.ReactNode {
     let content: React.ReactNode;
+    const toggle = this.onToggle;
 
     switch (this.type) {
       case "enabled":
         const isChecked = input.enabled;
         content = (
           <button
-            onClick={() => this.onToggle?.(input.id)}
+            onClick={() => toggle?.(input.id)}
             className={twMerge(
                 "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
                 isChecked 
@@ -101,6 +102,8 @@ export class ProxyRuleCellRenderer implements Renderer<IProxyRuleModel> {
 const ProxyList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [data, setData] = useState<IProxyRuleModel[]>([]);
+  const dataRef = useRef(data);
+  dataRef.current = data;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<IProxyRuleModel | null>(null);
 
@@ -122,15 +125,17 @@ const ProxyList: React.FC = () => {
   }, []);
 
   const handleToggle = async (id: string) => {
-    const item = data.find(d => d.id === id);
+    const item = dataRef.current.find(d => d.id === id);
     if (!item) return;
 
     const updatedItem = { ...item, enabled: !item.enabled };
+    setData(prev => prev.map(d => d.id === id ? updatedItem : d));
     try {
         await invoke("save_proxy_rule", { rule: updatedItem });
-        setData(prev => prev.map(d => d.id === id ? updatedItem : d));
     } catch (e) {
         console.error("Failed to update proxy rule:", e);
+        const rules = await invoke<IProxyRuleModel[]>("get_proxy_rules");
+        setData(rules);
     }
   };
 

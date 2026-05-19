@@ -1,24 +1,19 @@
 use serde_json::{json, Value};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
-use crate::traffic::db::{TrafficDb, ScriptRule};
+use crate::config::ConfigManager;
 use uuid::Uuid;
 
 pub async fn handle_list_scripts(app_handle: &AppHandle) -> Result<Value, Value> {
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    match db.get_scripts() {
-        Ok(scripts) => Ok(json!(scripts)),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    let config = app_handle.state::<Arc<ConfigManager>>();
+    Ok(json!(config.get_scripts()))
 }
 
 pub async fn handle_delete_script(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
     let id = args["id"].as_str().ok_or(json!({ "message": "Missing id" }))?;
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    match db.delete_script(id.to_string()) {
-        Ok(_) => Ok(json!({ "status": "success" })),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    let config = app_handle.state::<Arc<ConfigManager>>();
+    config.delete_script(id.to_string()).map_err(|e| json!({ "code": -32000, "message": e.to_string() }))?;
+    Ok(json!({ "status": "success" }))
 }
 
 pub async fn handle_save_script(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
@@ -31,9 +26,9 @@ pub async fn handle_save_script(app_handle: &AppHandle, args: &Value) -> Result<
     let request = args["request"].as_bool().unwrap_or(true);
     let response = args["response"].as_bool().unwrap_or(true);
     
-    let db = app_handle.state::<Arc<TrafficDb>>();
+    let config = app_handle.state::<Arc<ConfigManager>>();
     
-    let rule = ScriptRule {
+    let rule = crate::traffic::db::ScriptRule {
         id,
         name: name.to_string(),
         enabled,
@@ -45,8 +40,6 @@ pub async fn handle_save_script(app_handle: &AppHandle, args: &Value) -> Result<
         error: None,
     };
     
-    match db.save_script(rule) {
-        Ok(_) => Ok(json!({ "status": "success" })),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    config.save_script(rule).map_err(|e| json!({ "code": -32000, "message": e.to_string() }))?;
+    Ok(json!({ "status": "success" }))
 }
