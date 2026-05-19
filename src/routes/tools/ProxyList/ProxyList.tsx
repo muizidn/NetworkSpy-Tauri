@@ -1,5 +1,5 @@
 import { Renderer, TableView } from "@src/packages/ui/TableView";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ToolBaseHeader } from "@src/packages/ui/ToolBaseHeader";
 import { v4 as uuidv4 } from "uuid";
 import { ProxyRuleDialog, ProxyRuleModel as IProxyRuleModel } from "./components/ProxyRuleDialog";
@@ -106,6 +106,8 @@ export class ProxyRuleCellRenderer implements Renderer<IProxyRuleModel> {
 const ProxyList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [data, setData] = useState<IProxyRuleModel[]>([]);
+  const dataRef = useRef(data);
+  dataRef.current = data;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<IProxyRuleModel | null>(null);
 
@@ -127,22 +129,21 @@ const ProxyList: React.FC = () => {
   }, []);
 
   const handleToggle = async (id: string) => {
-    console.error("[handleToggle] CALLED id:", id);
-    const item = data.find(d => d.id === id);
+    console.error("[handleToggle] CALLED id:", id, "dataRef length:", dataRef.current.length);
+    const item = dataRef.current.find(d => d.id === id);
     if (!item) {
-        console.error("[handleToggle] item NOT FOUND for id:", id);
+        console.error("[handleToggle] item NOT FOUND in dataRef for id:", id);
         return;
     }
 
     const updatedItem = { ...item, enabled: !item.enabled };
-    console.error("[handleToggle] updatedItem:", JSON.stringify(updatedItem));
+    console.error("[handleToggle] toggling item, new enabled:", updatedItem.enabled);
+    setData(prev => prev.map(d => d.id === id ? updatedItem : d));
     try {
-        const result = await invoke("save_proxy_rule", { rule: updatedItem });
-        console.error("[handleToggle] invoke success, result:", result);
-        setData(prev => prev.map(d => d.id === id ? updatedItem : d));
+        await invoke("save_proxy_rule", { rule: updatedItem });
+        console.error("[handleToggle] invoke success");
     } catch (e) {
         console.error("[handleToggle] invoke FAILED:", e);
-        // Try to re-fetch to sync
         const rules = await invoke<IProxyRuleModel[]>("get_proxy_rules");
         setData(rules);
     }
