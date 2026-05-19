@@ -262,6 +262,7 @@ fn main() {
             let script_manager_outer = Arc::clone(&script_manager);
             let map_local_manager_outer = Arc::clone(&map_local_manager);
             let map_remote_manager_outer = Arc::clone(&map_remote_manager);
+            let config_manager_outer = Arc::clone(&config_manager);
 
             tauri::async_runtime::spawn(async move {
                 let mut current_port = actual_port;
@@ -271,6 +272,7 @@ fn main() {
                     let proxy_intercept_list_inner = Arc::clone(&proxy_intercept_list_outer);
                     let proxy_settings_inner = Arc::clone(&proxy_settings_outer);
                     let tag_manager_inner = Arc::clone(&tag_manager_outer);
+                    let config_manager_inner = Arc::clone(&config_manager_outer);
                     let tray_stats_deep = tray_stats_for_proxy.clone();
 
                     let mut proxy = Proxy::new(key_pair, ca_cert, current_port.into());
@@ -286,6 +288,7 @@ fn main() {
                             script_manager: Arc::clone(&script_manager_outer),
                             map_local_manager: Arc::clone(&map_local_manager_outer),
                             map_remote_manager: Arc::clone(&map_remote_manager_outer),
+                            config_manager: Arc::clone(&config_manager_inner),
                         });
 
                     println!("Proxy server listening on port: {}", current_port);

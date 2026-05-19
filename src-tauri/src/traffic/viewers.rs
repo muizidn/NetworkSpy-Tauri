@@ -1,7 +1,4 @@
-// No imports needed for Manager if unused
-use rusqlite::{params, Connection};
-use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use chrono::Local;

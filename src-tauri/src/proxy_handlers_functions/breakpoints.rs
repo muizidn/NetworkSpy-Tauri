@@ -4,12 +4,12 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 
 use crate::eval::matches_breakpoint;
-use crate::traffic::db::TrafficDb;
+use crate::config::ConfigManager;
 use crate::{BreakpointData, BreakpointHit, BreakpointManager, PausedTask};
 
 pub async fn handle_request_breakpoints(
     breakpoint_manager: &Arc<BreakpointManager>,
-    traffic_db: &Arc<TrafficDb>,
+    config_manager: &Arc<ConfigManager>,
     uri: &str,
     method: &str,
     app_handle: &AppHandle,
@@ -22,13 +22,11 @@ pub async fn handle_request_breakpoints(
     let mut matched_rule_name = String::new();
 
     if breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
-        if let Ok(rules) = traffic_db.get_breakpoints() {
-            for rule in rules {
-                if rule.enabled && rule.request && matches_breakpoint(uri, method, &rule.matching_rule, &rule.method) {
-                    should_pause = true;
-                    matched_rule_name = rule.name.clone();
-                    break;
-                }
+        for rule in config_manager.get_breakpoints() {
+            if rule.enabled && rule.request && matches_breakpoint(uri, method, &rule.matching_rule, &rule.method) {
+                should_pause = true;
+                matched_rule_name = rule.name.clone();
+                break;
             }
         }
     }
@@ -71,7 +69,7 @@ pub async fn handle_request_breakpoints(
 
 pub async fn handle_response_breakpoints(
     breakpoint_manager: &Arc<BreakpointManager>,
-    traffic_db: &Arc<TrafficDb>,
+    config_manager: &Arc<ConfigManager>,
     uri: &str,
     method: &str,
     app_handle: &AppHandle,
@@ -85,13 +83,11 @@ pub async fn handle_response_breakpoints(
     let mut matched_rule_name = String::new();
 
     if breakpoint_manager.is_enabled.load(Ordering::SeqCst) {
-        if let Ok(rules) = traffic_db.get_breakpoints() {
-            for rule in rules {
-                if rule.enabled && rule.response && matches_breakpoint(uri, method, &rule.matching_rule, &rule.method) {
-                    should_pause = true;
-                    matched_rule_name = rule.name.clone();
-                    break;
-                }
+        for rule in config_manager.get_breakpoints() {
+            if rule.enabled && rule.response && matches_breakpoint(uri, method, &rule.matching_rule, &rule.method) {
+                should_pause = true;
+                matched_rule_name = rule.name.clone();
+                break;
             }
         }
     }

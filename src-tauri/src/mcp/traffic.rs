@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
+use crate::config::ConfigManager;
 use crate::traffic::db::{TrafficDb, FilterPreset, TrafficMetadata};
 use uuid::Uuid;
 use crate::traffic::filter_engine::FilterEngine;
@@ -32,8 +33,9 @@ pub async fn handle_get_traffic_list(app_handle: &AppHandle, args: &Value) -> Re
             return Ok(json!(traffic_results.into_iter().take(limit).collect::<Vec<_>>()));
         }
 
-        // Fetch the full preset objects from DB
-        let all_saved_presets = db.get_filter_presets().unwrap_or_default();
+        // Fetch the full preset objects from ConfigManager
+        let config = app_handle.state::<Arc<ConfigManager>>();
+        let all_saved_presets = config.get_filter_presets();
         let active_presets: Vec<FilterPreset> = all_saved_presets.into_iter()
             .filter(|p| preset_ids.iter().any(|id| id.as_str() == Some(&p.id)))
             .collect();
@@ -91,11 +93,8 @@ pub async fn handle_get_traffic_details(app_handle: &AppHandle, args: &Value) ->
 }
 
 pub async fn handle_list_filter_presets(app_handle: &AppHandle) -> Result<Value, Value> {
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    match db.get_filter_presets() {
-        Ok(presets) => Ok(json!(presets)),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    let config = app_handle.state::<Arc<ConfigManager>>();
+    Ok(json!(config.get_filter_presets()))
 }
 
 const FILTER_PRESET_TEMPLATE_JSON: &str = include_str!("schema/filter_preset_template.json");
@@ -108,7 +107,7 @@ pub async fn handle_get_filter_preset_template() -> Result<Value, Value> {
 }
 
 pub async fn handle_save_filter_preset(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
-    let db = app_handle.state::<Arc<TrafficDb>>();
+    let config = app_handle.state::<Arc<ConfigManager>>();
     let id = args["id"].as_str().map(|s| s.to_string());
     let name = args["name"].as_str();
     let description = args["description"].as_str().map(|s| s.to_string());
@@ -162,7 +161,7 @@ pub async fn handle_save_filter_preset(app_handle: &AppHandle, args: &Value) -> 
 
     match id {
         Some(existing_id) => {
-            match db.update_filter_preset(
+            match config.update_filter_preset(
                 existing_id, 
                 name.map(|s| s.to_string()), 
                 description, 
@@ -182,7 +181,7 @@ pub async fn handle_save_filter_preset(app_handle: &AppHandle, args: &Value) -> 
                 description,
                 filters: filters_val,
             };
-            match db.add_filter_preset(new_preset) {
+            match config.add_filter_preset(new_preset) {
                 Ok(_) => Ok(json!({ "status": "success", "message": "Created new preset" })),
                 Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
             }
@@ -192,11 +191,9 @@ pub async fn handle_save_filter_preset(app_handle: &AppHandle, args: &Value) -> 
 
 pub async fn handle_delete_filter_preset(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
     let id = args["id"].as_str().ok_or(json!({ "message": "Missing id" }))?;
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    match db.delete_filter_preset(id.to_string()) {
-        Ok(_) => Ok(json!({ "status": "success" })),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    let config = app_handle.state::<Arc<ConfigManager>>();
+    config.delete_filter_preset(id.to_string()).map_err(|e| json!({ "code": -32000, "message": e.to_string() }))?;
+    Ok(json!({ "status": "success" }))
 }
 
 pub async fn get_latest_traffic_resource(app_handle: &AppHandle) -> Value {

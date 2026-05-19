@@ -1,24 +1,19 @@
 use serde_json::{json, Value};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
-use crate::traffic::db::{TrafficDb, BreakpointRule};
+use crate::config::ConfigManager;
 use uuid::Uuid;
 
 pub async fn handle_list_breakpoints(app_handle: &AppHandle) -> Result<Value, Value> {
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    match db.get_breakpoints() {
-        Ok(breakpoints) => Ok(json!(breakpoints)),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    let config = app_handle.state::<Arc<ConfigManager>>();
+    Ok(json!(config.get_breakpoints()))
 }
 
 pub async fn handle_delete_breakpoint(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
     let id = args["id"].as_str().ok_or(json!({ "message": "Missing id" }))?;
-    let db = app_handle.state::<Arc<TrafficDb>>();
-    match db.delete_breakpoint(id.to_string()) {
-        Ok(_) => Ok(json!({ "status": "success" })),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    let config = app_handle.state::<Arc<ConfigManager>>();
+    config.delete_breakpoint(id.to_string()).map_err(|e| json!({ "code": -32000, "message": e.to_string() }))?;
+    Ok(json!({ "status": "success" }))
 }
 
 pub async fn handle_save_breakpoint(app_handle: &AppHandle, args: &Value) -> Result<Value, Value> {
@@ -30,9 +25,9 @@ pub async fn handle_save_breakpoint(app_handle: &AppHandle, args: &Value) -> Res
     let request = args["request"].as_bool().unwrap_or(true);
     let response = args["response"].as_bool().unwrap_or(true);
     
-    let db = app_handle.state::<Arc<TrafficDb>>();
+    let config = app_handle.state::<Arc<ConfigManager>>();
     
-    let rule = BreakpointRule {
+    let rule = crate::traffic::db::BreakpointRule {
         id,
         name: name.to_string(),
         enabled,
@@ -42,8 +37,6 @@ pub async fn handle_save_breakpoint(app_handle: &AppHandle, args: &Value) -> Res
         response,
     };
     
-    match db.save_breakpoint(rule) {
-        Ok(_) => Ok(json!({ "status": "success" })),
-        Err(e) => Err(json!({ "code": -32000, "message": e.to_string() })),
-    }
+    config.save_breakpoint(rule).map_err(|e| json!({ "code": -32000, "message": e.to_string() }))?;
+    Ok(json!({ "status": "success" }))
 }

@@ -3,12 +3,12 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 use crate::eval::{matches_breakpoint, run_script};
-use crate::traffic::db::TrafficDb;
+use crate::config::ConfigManager;
 use crate::{BreakpointData, ScriptManager};
 
 pub fn handle_request_scripts(
     script_manager: &Arc<ScriptManager>,
-    traffic_db: &Arc<TrafficDb>,
+    config_manager: &Arc<ConfigManager>,
     uri: &str,
     method: &str,
     headers: &HashMap<String, String>,
@@ -18,30 +18,28 @@ pub fn handle_request_scripts(
     let mut script_modified_data = None;
     let mut final_script_name = String::new();
     if script_manager.is_enabled.load(Ordering::SeqCst) {
-        if let Ok(scripts) = traffic_db.get_scripts() {
-            for script_rule in scripts {
-                if script_rule.enabled && script_rule.request && matches_breakpoint(uri, method, &script_rule.matching_rule, &script_rule.method) {
-                    let script_data = BreakpointData {
-                        id: format!("{}_req_script", traffic_id),
-                        headers: headers.clone(),
-                        body: decompressed_body.to_vec(),
-                        method: Some(method.to_string()),
-                        uri: Some(uri.to_string()),
-                        status_code: None,
-                    };
-                    
-                    match run_script(&script_rule.script, script_data) {
-                        Ok(modified) => {
-                            final_script_name = script_rule.name.clone();
-                            script_modified_data = Some(modified);
-                            if script_rule.error.is_some() {
-                                let _ = traffic_db.set_script_error(script_rule.id.clone(), None);
-                            }
+        for script_rule in config_manager.get_scripts() {
+            if script_rule.enabled && script_rule.request && matches_breakpoint(uri, method, &script_rule.matching_rule, &script_rule.method) {
+                let script_data = BreakpointData {
+                    id: format!("{}_req_script", traffic_id),
+                    headers: headers.clone(),
+                    body: decompressed_body.to_vec(),
+                    method: Some(method.to_string()),
+                    uri: Some(uri.to_string()),
+                    status_code: None,
+                };
+                
+                match run_script(&script_rule.script, script_data) {
+                    Ok(modified) => {
+                        final_script_name = script_rule.name.clone();
+                        script_modified_data = Some(modified);
+                        if script_rule.error.is_some() {
+                            let _ = config_manager.set_script_error(script_rule.id.clone(), None);
                         }
-                        Err(e) => {
-                            println!("[SCRIPTING] Script error in rule '{}': {}", script_rule.name, e);
-                            let _ = traffic_db.set_script_error(script_rule.id.clone(), Some(e.to_string()));
-                        }
+                    }
+                    Err(e) => {
+                        println!("[SCRIPTING] Script error in rule '{}': {}", script_rule.name, e);
+                        let _ = config_manager.set_script_error(script_rule.id.clone(), Some(e.to_string()));
                     }
                 }
             }
@@ -52,7 +50,7 @@ pub fn handle_request_scripts(
 
 pub fn handle_response_scripts(
     script_manager: &Arc<ScriptManager>,
-    traffic_db: &Arc<TrafficDb>,
+    config_manager: &Arc<ConfigManager>,
     uri: &str,
     method: &str,
     headers: &HashMap<String, String>,
@@ -63,30 +61,28 @@ pub fn handle_response_scripts(
     let mut modified_by_script = None;
     let mut script_name = String::new();
     if script_manager.is_enabled.load(Ordering::SeqCst) {
-        if let Ok(scripts) = traffic_db.get_scripts() {
-            for script_rule in scripts {
-                if script_rule.enabled && script_rule.response && matches_breakpoint(uri, method, &script_rule.matching_rule, &script_rule.method) {
-                    let script_data = BreakpointData {
-                        id: format!("{}_res_script", traffic_id),
-                        headers: headers.clone(),
-                        body: decompressed_body.to_vec(),
-                        method: Some(method.to_string()),
-                        uri: Some(uri.to_string()),
-                        status_code: Some(status_code),
-                    };
+        for script_rule in config_manager.get_scripts() {
+            if script_rule.enabled && script_rule.response && matches_breakpoint(uri, method, &script_rule.matching_rule, &script_rule.method) {
+                let script_data = BreakpointData {
+                    id: format!("{}_res_script", traffic_id),
+                    headers: headers.clone(),
+                    body: decompressed_body.to_vec(),
+                    method: Some(method.to_string()),
+                    uri: Some(uri.to_string()),
+                    status_code: Some(status_code),
+                };
 
-                    match run_script(&script_rule.script, script_data) {
-                        Ok(modified) => {
-                            script_name = script_rule.name.clone();
-                            modified_by_script = Some(modified);
-                            if script_rule.error.is_some() {
-                                let _ = traffic_db.set_script_error(script_rule.id.clone(), None);
-                            }
+                match run_script(&script_rule.script, script_data) {
+                    Ok(modified) => {
+                        script_name = script_rule.name.clone();
+                        modified_by_script = Some(modified);
+                        if script_rule.error.is_some() {
+                            let _ = config_manager.set_script_error(script_rule.id.clone(), None);
                         }
-                        Err(e) => {
-                            println!("[SCRIPTING] Script error in rule '{}': {}", script_rule.name, e);
-                            let _ = traffic_db.set_script_error(script_rule.id.clone(), Some(e.to_string()));
-                        }
+                    }
+                    Err(e) => {
+                        println!("[SCRIPTING] Script error in rule '{}': {}", script_rule.name, e);
+                        let _ = config_manager.set_script_error(script_rule.id.clone(), Some(e.to_string()));
                     }
                 }
             }

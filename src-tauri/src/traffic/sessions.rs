@@ -1,7 +1,7 @@
 use tauri::Manager;
-use rusqlite::{params, Connection};
+use rusqlite::params;
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use serde::{Serialize, Deserialize};
 use std::fs;
 use uuid::Uuid;
