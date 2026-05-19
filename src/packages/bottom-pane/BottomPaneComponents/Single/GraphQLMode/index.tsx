@@ -202,16 +202,6 @@ export const GraphQLMode = () => {
               Query
             </button>
             <button
-              onClick={() => setActiveTab("variables")}
-              className={twMerge(
-                "flex-1 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 transition-all",
-                activeTab === "variables" ? "text-blue-500 bg-blue-500/5 border-b-2 border-blue-500" : "text-zinc-500"
-              )}
-            >
-              <FiLayers size={12} />
-              Vars
-            </button>
-            <button
               onClick={() => setActiveTab("response")}
               className={twMerge(
                 "flex-1 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 transition-all",
@@ -235,16 +225,23 @@ export const GraphQLMode = () => {
             )}
           </div>
 
-          <GraphQLRequest activeData={activeData} layoutMode={layoutMode} activeTab={activeTab} />
+          {/* Left Section: Query + Variables */}
+          <div className={twMerge(
+            "flex flex-col h-full overflow-hidden transition-all duration-300",
+            layoutMode === 'grid' ? "@5xl:w-5/12 border-r border-zinc-900" : "flex-grow",
+            layoutMode === 'grid' ? (activeTab !== "query" && "hidden @5xl:flex") : (activeTab !== "query" && "hidden")
+          )}>
+            <GraphQLRequest activeData={activeData} layoutMode={layoutMode} activeTab={activeTab} />
+            <GraphQLVariables activeData={activeData} layoutMode={layoutMode} activeTab={activeTab} />
+          </div>
 
-          {/* Right Section: Variables + Extensions + Response */}
+          {/* Right Section: Extensions + Response */}
           <div className={twMerge(
             "flex flex-col overflow-hidden h-full",
             layoutMode === 'grid' ? "@5xl:w-7/12" : "flex-grow",
             layoutMode === 'grid' ? (activeTab === "query" && "hidden @5xl:flex") : (activeTab === "query" && "hidden")
           )}>
             <div className="flex-grow flex flex-col overflow-hidden">
-              <GraphQLVariables activeData={activeData} layoutMode={layoutMode} activeTab={activeTab} />
               <GraphQLExtensions activeData={activeData} layoutMode={layoutMode} activeTab={activeTab} />
               <GraphQLResponse responseBody={responseBody} layoutMode={layoutMode} activeTab={activeTab} />
             </div>
