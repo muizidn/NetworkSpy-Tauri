@@ -5,6 +5,7 @@ export const CodeView = ({ data, language }: { data: string, language?: string }
     className="w-full h-full"
     defaultLanguage={language || "text"}
     defaultValue={data}
+    theme="vs-dark"
     options={{ minimap: { enabled: false } }}
   />
 );
