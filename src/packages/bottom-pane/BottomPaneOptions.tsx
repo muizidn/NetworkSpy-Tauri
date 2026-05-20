@@ -188,6 +188,7 @@ export const BottomPaneOptions = () => {
     ],
     single: [
       { id: "request_response", title: "Request Response" },
+      { id: "raw_viewer", title: "Raw Text" },
       { id: "query_params", title: "Query Params" },
       { id: "cookies", title: "Cookies" },
       { id: "header_explainer", title: "Header Explainer" },

@@ -1,5 +1,6 @@
 import { BottomPaneMode } from "@src/context/BottomPaneContext";
 import { RequestResponseMode } from "./BottomPaneComponents/Single/RequestResponseMode";
+import { RawMode } from "./BottomPaneComponents/Single/RawMode";
 import { SummaryMode } from "./BottomPaneComponents/None/SummaryMode";
 import { HealthTimelineMode } from "./BottomPaneComponents/None/HealthTimelineMode";
 import { StatusDistributionMode } from "./BottomPaneComponents/None/StatusDistributionMode";
@@ -82,6 +83,9 @@ export const renderMode = (
 
     case "request_response":
       return <RequestResponseMode sizes={sizes} setSizes={setSizes} />;
+
+    case "raw_viewer":
+      return <RawMode />;
 
     case "header_explainer":
       return <HeaderExplainerMode />;

@@ -27,6 +27,7 @@ export type NoneMode =
 export type SingleMode =
     | "custom_viewer"
     | "request_response"
+    | "raw_viewer"
     | "graphql"
     | "llm_prompt"
     | "replay"
