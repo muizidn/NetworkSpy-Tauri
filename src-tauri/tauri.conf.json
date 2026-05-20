@@ -32,6 +32,9 @@
     }
   },
   "plugins": {
+    "shell": {
+      "open": "^https://.*$"
+    },
     "updater": {
       "active": true,
       "endpoints": [
